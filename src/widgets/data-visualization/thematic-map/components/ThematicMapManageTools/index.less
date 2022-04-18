@@ -1,0 +1,23 @@
+.thematic-map-manage-tools {
+  background-color: @white;
+  border-radius: @border-radius-base;
+  border: 1px solid @border-color-base;
+  width: 32px;
+  line-height: 1;
+  box-shadow: @box-shadow-base;
+  /deep/ .ant-row {
+    .ant-col {
+      padding: 10px 0;
+      text-align: center;
+    }
+    .anticon {
+      font-size: 18px;
+      color: @primary-color;
+      cursor: pointer;
+      vertical-align: middle;
+    }
+    &:not(:last-of-type) .ant-col {
+      border-bottom: 1px solid @border-color-base;
+    }
+  }
+}

@@ -1,0 +1,5 @@
+export { default as MpBimComponent } from './bim-component/bim-component.vue'
+export { default as MpMeasurement } from './measurement/measurement.vue'
+export { default as MpOutputImage } from './output-image/output-image.vue'
+export { default as MpSplitScreen } from './split-screen/split-screen.vue'
+export { default as MpStratifiedHousehold } from './stratified-household/stratified-household.vue'

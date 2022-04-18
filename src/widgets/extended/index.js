@@ -1,0 +1,5 @@
+export { default as MpAbindCard } from './abind-card/abind-card.vue'
+export { default as MpAbout } from './about/about.vue'
+export { default as MpFuncWarehouse } from './func-warehouse/func-warehouse.vue'
+export { default as MpKibanaV } from './kibana-v/kibana-v.vue'
+export { default as MpMapDataV } from './map-data-v/map-data-v.vue'
