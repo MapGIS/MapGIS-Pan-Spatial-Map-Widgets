@@ -1,3 +1,20 @@
+export {
+  api,
+  getRequest,
+  ProjectionTransformationUtil,
+  events,
+  eventBus,
+  baseConfigInstance,
+  loadConfigs,
+  markerIconInstance,
+  dataCatalogManagerInstance,
+  DataCatalogManager,
+  DataFlowList,
+  ActiveResultSet,
+  DataStoreCatalog,
+  ProjectorManager,
+} from './model'
+
 import {
   MpBufferAnalysis,
   MpDynamicSectionAnalysis,
@@ -139,20 +156,3 @@ const install = (Vue) => {
 export default {
   install,
 }
-
-export {
-  api,
-  getRequest,
-  ProjectionTransformationUtil,
-  events,
-  eventBus,
-  baseConfigInstance,
-  loadConfigs,
-  markerIconInstance,
-  dataCatalogManagerInstance,
-  DataCatalogManager,
-  DataFlowList,
-  ActiveResultSet,
-  DataStoreCatalog,
-  ProjectorManager,
-} from './model'
