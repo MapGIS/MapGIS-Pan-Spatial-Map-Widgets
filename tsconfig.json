@@ -19,14 +19,16 @@
     "types": ["node"],
     "rootDir": ".",
     "paths": {
-      "@vue/*": ["src"],
-      "src/*": ["src/*"],
-      "app/*": ["*"],
-      "components/*": ["src/components/*"],
-      "layouts/*": ["src/layouts/*"],
-      "pages/*": ["src/pages/*"],
-      "assets/*": ["src/assets/*"]
+      "@/*": ["src/*"],
+      "components/*": ["src/components/*"]
     }
   },
-  "exclude": ["public", "lib", "dist", "node_modules"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
+  "exclude": [
+    "node_modules",
+    "packages/*/public",
+    "packages/*/lib",
+    "packages/*/dist",
+    "packages/*/node_modules"
+  ]
 }

@@ -12,13 +12,11 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component, Watch } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpMeasurement',
-})
-export default class MpMeasurement extends Mixins(WidgetMixin) {
+  mixins: [WidgetMixin],
   onClose() {
     this.$refs[
       `${this.is2DMapMode ? 'mapgisMeasure' : 'mapgis3dMeasure'}`

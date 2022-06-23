@@ -12,7 +12,7 @@ export {
   DataFlowList,
   ActiveResultSet,
   DataStoreCatalog,
-  ProjectorManager,
+  ProjectorManager
 } from './model'
 
 import {
@@ -30,13 +30,13 @@ import {
   MpSwipe,
   MpTerrainAnalysis,
   MpTopologyAnalysis,
-  MpVisibilityAnalysis,
+  MpVisibilityAnalysis
 } from './widgets/analysis'
 
 import {
   MpAddData,
   MpBasemapManager,
-  MpDataCatalog,
+  MpDataCatalog
 } from './widgets/data-manager'
 
 import {
@@ -54,7 +54,7 @@ import {
   MpThematicMap,
   MpVectorTileCarto,
   MpViewpointManager,
-  MpZoom,
+  MpZoom
 } from './widgets/data-visualization'
 
 import { MpMarkerManager, MpOverlayManager } from './widgets/editing'
@@ -64,7 +64,7 @@ import {
   MpAbout,
   MpFuncWarehouse,
   MpKibanaV,
-  MpMapDataV,
+  MpMapDataV
 } from './widgets/extended'
 
 import { MpComprehensiveQuery, MpFeatureQuery } from './widgets/query'
@@ -72,7 +72,7 @@ import { MpComprehensiveQuery, MpFeatureQuery } from './widgets/query'
 import {
   MpBuildingGrow,
   MpCityGrow,
-  MpPondingSimulation,
+  MpPondingSimulation
 } from './widgets/simulation'
 
 import {
@@ -80,7 +80,7 @@ import {
   MpMeasurement,
   MpOutputImage,
   MpSplitScreen,
-  MpStratifiedHousehold,
+  MpStratifiedHousehold
 } from './widgets/tool'
 
 const components = [
@@ -141,11 +141,11 @@ const components = [
   MpMeasurement,
   MpOutputImage,
   MpSplitScreen,
-  MpStratifiedHousehold,
+  MpStratifiedHousehold
 ]
 
-const install = (Vue) => {
-  components.forEach((component) => {
+const install = Vue => {
+  components.forEach(component => {
     Vue.component(
       (component.options && component.options.name) || component.name,
       component
@@ -154,5 +154,5 @@ const install = (Vue) => {
 }
 
 export default {
-  install,
+  install
 }

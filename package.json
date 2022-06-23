@@ -6,7 +6,6 @@
   "author": "MapGIS",
   "license": "Apache-2.0",
   "main": "src/index.ts",
-  "private": true,
   "scripts": {},
   "dependencies": {
     "@mapgis/web-app-framework": "link:../MapGIS-Web-App-Framework",
@@ -16,11 +15,11 @@
     "@mapgis/webclient-vue-mapboxgl": "^15.6.0",
     "@mapgis/webclient-vue-ui": "^15.6.0",
     "json2csv": "^5.0.6",
-    "vue-color": "^2.8.1"
+    "vue-color": "^2.8.1",
+    "vue-property-decorator": "^8.3.0"
   },
   "devDependencies": {
     "xlsx": "^0.17.1",
-    "vue-property-decorator": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "^2.17.0",
     "@typescript-eslint/parser": "^2.17.0",
     "babel-eslint": "^10.0.1",
