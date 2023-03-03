@@ -1,43 +1,48 @@
 <template>
   <div class="select-tilematrixSet">
-    <a-select v-model="selectId" style="width:100%">
-      <a-select-option v-for="{ title, id } in Sublayers" :key="id" :value="id">
+    <mapgis-ui-select v-model="selectId" style="width: 100%">
+      <mapgis-ui-select-option
+        v-for="{ title, id } in Sublayers"
+        :key="id"
+        :value="id"
+      >
         {{ title }}
-      </a-select-option>
-    </a-select>
+      </mapgis-ui-select-option>
+    </mapgis-ui-select>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch, Prop, Emit } from 'vue-property-decorator'
 import {
   LayerType,
   OGCWMTSLayer,
-  WMTSSublayer
+  WMTSSublayer,
 } from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpChangeActiveLayer',
-  components: {}
-})
-export default class MpChangeActiveLayer extends Vue {
-  @Prop() layer!: OGCWMTSLayer
-
-  private get selectId(): string {
-    return this.layer.activeLayer.id
-  }
-
-  private set selectId(id: string) {
-    const layer: WMTSSublayer = this.Sublayers.find(
-      (item: WMTSSublayer) => item.id === id
-    )
-    this.layer.activeLayer = layer
-    this.$emit('update:layer', this.layer)
-  }
-
-  private get Sublayers(): Array<WMTSSublayer> {
-    return this.layer.sublayers
-  }
+  props: {
+    layer: {
+      type: OGCWMTSLayer,
+    },
+  },
+  computed: {
+    selectId: {
+      get() {
+        return this.layer.activeLayer.id
+      },
+      set(id: string) {
+        const layer: WMTSSublayer = this.Sublayers.find(
+          (item: WMTSSublayer) => item.id === id
+        )
+        this.layer.activeLayer = layer
+        this.$emit('update:layer', this.layer)
+      },
+    },
+    Sublayers(): Array<WMTSSublayer> {
+      return this.layer.sublayers
+    },
+  },
 }
 </script>
 

@@ -10,42 +10,49 @@
       </mp-toolbar>
     </mp-group-tab>
     <mp-setting-form layout="vertical" size="small">
-      <a-form-item label="屏数">
-        <a-select :value="screenCount" @change="onScreenCountChange">
-          <a-select-option v-for="(l, i) in layers" :key="i" :value="i + 1">
+      <mapgis-ui-form-item label="屏数">
+        <mapgis-ui-select :value="screenCount" @change="onScreenCountChange">
+          <mapgis-ui-select-option
+            v-for="(l, i) in layers"
+            :key="i"
+            :value="i + 1"
+          >
             {{ i + 1 }}
-          </a-select-option>
-        </a-select>
-      </a-form-item>
+          </mapgis-ui-select-option>
+        </mapgis-ui-select>
+      </mapgis-ui-form-item>
       <template v-if="!!screenCount">
-        <a-form-item label="图示">
-          <a-row class="diagram-grid">
-            <a-col
+        <mapgis-ui-form-item label="图示">
+          <mapgis-ui-row class="diagram-grid">
+            <mapgis-ui-col
               v-for="s in screenCount"
               :key="s"
               :span="mapSpan"
               class="diagram-col"
             >
               {{ s }}
-            </a-col>
-          </a-row>
-        </a-form-item>
-        <a-form-item
+            </mapgis-ui-col>
+          </mapgis-ui-row>
+        </mapgis-ui-form-item>
+        <mapgis-ui-form-item
           v-for="(s, i) in screenCount"
           :key="s"
           :label="`第${screenLabel[i]}屏`"
         >
-          <a-select :value="layerIds[i]" @change="onLayerChange($event, i)">
-            <a-select-option
+          <mapgis-ui-select
+            :value="layerIds[i]"
+            @change="onLayerChange($event, i)"
+          >
+            <mapgis-ui-select-option
               v-for="{ id, title } in layers"
               :key="id"
               :value="id"
               :title="title"
             >
               {{ title }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
+            </mapgis-ui-select-option>
+          </mapgis-ui-select>
+        </mapgis-ui-form-item>
       </template>
     </mp-setting-form>
   </div>
@@ -61,7 +68,7 @@ enum ScreenLabel {
   '三',
   '四',
   '五',
-  '六'
+  '六',
 }
 @Component({})
 export default class SplitScreenSetting extends Vue {
@@ -138,6 +145,16 @@ export default class SplitScreenSetting extends Vue {
   }
 }
 </script>
+
+<style lang="scss" scoped>
+.split-screen-setting {
+  .diagram-col {
+    color: $text-color;
+    border: 1px solid $border-color;
+    background-color: $base-bg-color;
+  }
+}
+</style>
 
 <style lang="less" scoped>
 @import './index.less';

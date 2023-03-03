@@ -9,7 +9,7 @@ export default class MapViewCesiumMixin extends Vue {
    */
   zoomInToRect3d(bound: Rectangle) {
     this.sceneController.cameraSetView({
-      destination: this.sceneController.getRectangleFromDegrees(bound)
+      destination: this.sceneController.getRectangleFromDegrees(bound),
     })
   }
 
@@ -23,7 +23,7 @@ export default class MapViewCesiumMixin extends Vue {
         (xmin + xmax) / 2,
         (ymin + ymax) / 2,
         this.sceneController.getPositionCartographicHeight() * 2
-      )
+      ),
     })
   }
 }

@@ -1,7 +1,7 @@
 <template>
   <div>
-    <a-tabs default-active-key="general" size="small">
-      <a-tab-pane key="general" tab="基本信息">
+    <mapgis-ui-tabs default-active-key="general" size="small">
+      <mapgis-ui-tab-pane key="general" tab="基本信息">
         <div class="info-body">
           <div
             v-for="(item, index) in generalInfo"
@@ -12,18 +12,16 @@
             <span>{{ metadata[item] }}</span>
           </div>
         </div>
-      </a-tab-pane>
-      <a-tab-pane key="layers" tab="图层信息">
+      </mapgis-ui-tab-pane>
+      <mapgis-ui-tab-pane key="layers" tab="图层信息">
         <div class="info-body">
           <div class="levels">
-            <div class="info-item-title levels-title">
-              图层信息：
-            </div>
-            <a-table
+            <div class="info-item-title levels-title">图层信息：</div>
+            <mapgis-ui-table
               bordered
               size="small"
               :scroll="{
-                x: '100%'
+                x: '100%',
               }"
               :data-source="getDataSource(metadata.layers)"
               :columns="getTableColumns(metadata.layers[0])"
@@ -33,13 +31,13 @@
                 }
               "
             >
-            </a-table>
+            </mapgis-ui-table>
           </div>
         </div>
-      </a-tab-pane>
-      <a-tab-pane key="sources" tab="sources">
-        <a-tabs type="card" size="small">
-          <a-tab-pane
+      </mapgis-ui-tab-pane>
+      <mapgis-ui-tab-pane key="sources" tab="sources">
+        <mapgis-ui-tabs type="card" size="small">
+          <mapgis-ui-tab-pane
             v-for="key in sourcesOtherInfo"
             :key="'sources' + key"
             :tab="key"
@@ -56,51 +54,54 @@
                 <span>{{ subValue }}</span>
               </div>
             </div>
-          </a-tab-pane>
-        </a-tabs>
-      </a-tab-pane>
-    </a-tabs>
+          </mapgis-ui-tab-pane>
+        </mapgis-ui-tabs>
+      </mapgis-ui-tab-pane>
+    </mapgis-ui-tabs>
   </div>
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Mixins } from 'vue-property-decorator'
 import {
   LayerType,
   IGSMapImageLayer,
   IGSVectorLayer,
   IGSTileLayer,
-  Layer
+  Layer,
 } from '@mapgis/web-app-framework'
 import MetadataInfoMixin from './mixins/metadata-info'
 
-@Component({ name: 'MpMetadataInfoVectorTitle', components: {} })
-export default class MpMetadataInfoVectorTitle extends Mixins(
-  MetadataInfoMixin
-) {
-  arr = ['layers', 'sources', 'metadata']
+export default {
+  name: 'MpMetadataInfoVectorTitle',
+  mixins: [MetadataInfoMixin],
+  data() {
+    return {
+      arr: ['layers', 'sources', 'metadata'],
+    }
+  },
+  computed: {
+    generalInfo() {
+      return Object.keys(this.metadata).filter((item) => {
+        return !this.arr.includes(item)
+      })
+    },
 
-  private get generalInfo() {
-    return Object.keys(this.metadata).filter(item => {
-      return !this.arr.includes(item)
-    })
-  }
+    layers() {
+      return Object.keys(this.metadata.layers)
+    },
 
-  private get layers() {
-    return Object.keys(this.metadata.layers)
-  }
+    tileStorageInfo() {
+      return this.metadata.tileInfo
+    },
 
-  private get tileStorageInfo() {
-    return this.metadata.tileInfo
-  }
+    sourcesInfo() {
+      return this.metadata.sources || {}
+    },
 
-  private get sourcesInfo() {
-    return this.metadata.sources || {}
-  }
-
-  private get sourcesOtherInfo() {
-    return Object.keys(this.sourcesInfo)
-  }
+    sourcesOtherInfo() {
+      return Object.keys(this.sourcesInfo)
+    },
+  },
 }
 </script>
 

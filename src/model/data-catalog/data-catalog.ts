@@ -1,6 +1,7 @@
 import {
   Layer,
   LayerType,
+  RenderType,
   LoadStatus,
   LOD,
   TileInfo,
@@ -22,9 +23,15 @@ import {
   ModelCacheLayer,
   ModelCacheFormat,
   GraphicsLayer,
+  STKTerrainLayer,
+  KMLLayer,
+  KMZLayer,
+  CZMLLayer,
+  OSMLayer,
   UUID,
   Catalog,
   UrlUtil,
+  PlotLayer,
 } from '@mapgis/web-app-framework'
 import baseConfigInstance from '../config/base'
 import axios from 'axios'
@@ -74,6 +81,14 @@ export class DataCatalogManager {
     return type
   }
 
+  public static getGeoJsonUrl(url: string, gdbp: string) {
+    if (!url) return ''
+    const arr = url.split('//')
+    const ipList = arr[1].split('/')
+    const ipInfo = ipList[0].split(':')
+    return `${arr[0]}//${ipInfo[0]}:${ipInfo[1]}/igs/rest/mrfs/layer/query?f=geojson&gdbp=${gdbp}`
+  }
+
   /**
    * 根据数据目录中图层节点的配置信息生成webclient-store对应的图层
    * 注意：当前webClient-store中图层类型和图层对象的定义不够规范和成熟，如:LayerType和SubLayerType的划分标准不统一。图层类型对象不全面、
@@ -102,7 +117,7 @@ export class DataCatalogManager {
     let modelCacheFormat = ModelCacheFormat.m3d
     const layerID = layerConfig.guid
     const layerTitle = layerConfig.name
-    const tokenKey = layerConfig.tokenKey ? layerConfig.tokenKey : ''
+    const tokenKey = layerConfig.tokenKey ? layerConfig.tokenKey : 'token'
     const tokenValue = layerConfig.tokenValue ? layerConfig.tokenValue : ''
 
     switch (layerConfig.serverType) {
@@ -145,7 +160,6 @@ export class DataCatalogManager {
         }
 
         layer = new IGSPanoramicLayer({ url })
-        console.log(layer)
         break
       case LayerType.IGSVector:
         // 在老的图层配置中serverURL存的是gdbps。
@@ -154,6 +168,7 @@ export class DataCatalogManager {
           layerConfig.serverURL !== '' &&
           UrlUtil.isUrlValid(layerConfig.serverURL)
         ) {
+          // IGSVector客户端渲染需要查询geojson数据，然后使用geojson-layer展示效果
           url = UrlUtil.getQueryPath(layerConfig.serverURL)
           const queryParams = UrlUtil.getQueryParams(layerConfig.serverURL)
 
@@ -167,7 +182,21 @@ export class DataCatalogManager {
           gdbps = layerConfig.gdbps
         }
 
-        layer = new IGSVectorLayer({ url, gdbps })
+        layer = new IGSVectorLayer({
+          url,
+          gdbps,
+          layerStyle: {
+            highlightStyle: layerConfig.highlightStyle,
+            featureStyle: layerConfig.featureStyle,
+          },
+          renderType: layerConfig.renderType
+            ? RenderType[layerConfig.renderType]
+            : RenderType.Unknown,
+          geojsonUrl:
+            layerConfig.renderType === 'CLIENT'
+              ? this.getGeoJsonUrl(url, gdbps)
+              : '',
+        })
         break
       case LayerType.OGCWMTS:
         url = layerConfig.serverURL
@@ -233,6 +262,21 @@ export class DataCatalogManager {
         }
 
         break
+      case LayerType.Plot:
+        if (layerConfig.serverURL && layerConfig.serverURL !== '') {
+          url = layerConfig.serverURL
+
+          ip = layerConfig.ip || defaultIp
+          port = layerConfig.port || defaultPort
+
+          url = `http://${ip}:${port}/${layerConfig.serverURL}`
+
+          layer = new PlotLayer({ ...layerConfig, url })
+        } else {
+          layer = new PlotLayer(layerConfig)
+        }
+
+        break
       case LayerType.ModelCache:
         if (layerConfig.serverURL && layerConfig.serverURL !== '') {
           url = layerConfig.serverURL
@@ -252,6 +296,57 @@ export class DataCatalogManager {
         break
       case LayerType.Graphics:
         layer = new GeoJsonLayer(layerConfig)
+
+        break
+
+      case LayerType.STKTerrain:
+        if (layerConfig.serverURL && layerConfig.serverURL !== '') {
+          url = layerConfig.serverURL
+
+          layer = new STKTerrainLayer({ ...layerConfig, url })
+        } else {
+          layer = new STKTerrainLayer(layerConfig)
+        }
+
+        break
+      case LayerType.KML:
+        if (layerConfig.serverURL && layerConfig.serverURL !== '') {
+          url = layerConfig.serverURL
+
+          layer = new KMLLayer({ ...layerConfig, url })
+        } else {
+          layer = new KMLLayer(layerConfig)
+        }
+
+        break
+      case LayerType.KMZ:
+        if (layerConfig.serverURL && layerConfig.serverURL !== '') {
+          url = layerConfig.serverURL
+
+          layer = new KMZLayer({ ...layerConfig, url })
+        } else {
+          layer = new KMZLayer(layerConfig)
+        }
+
+        break
+      case LayerType.CZML:
+        if (layerConfig.serverURL && layerConfig.serverURL !== '') {
+          url = layerConfig.serverURL
+
+          layer = new CZMLLayer({ ...layerConfig, url })
+        } else {
+          layer = new CZMLLayer(layerConfig)
+        }
+
+        break
+      case LayerType.OSM:
+        if (layerConfig.serverURL && layerConfig.serverURL !== '') {
+          url = layerConfig.serverURL
+
+          layer = new OSMLayer({ ...layerConfig, url })
+        } else {
+          layer = new OSMLayer(layerConfig)
+        }
 
         break
       default:
@@ -753,6 +848,19 @@ export class DataCatalogManager {
      * @type {string}
      */
     IGSScene: 'IGSScene',
+
+    /**
+     * Cesium的STK地形
+     * 10.5.6.13版本中新增，与LayerType的枚举名保持一致。
+     * @type {string}
+     */
+    STKTERRAIN: 'STKTerrain',
+
+    /**
+     * OSM服务
+     * @type {string}
+     */
+    OSM: 'OSM',
   }
 
   // 将老版本的配置转换为新版本的配置
@@ -768,8 +876,8 @@ export class DataCatalogManager {
       serverName: this.config.paramConfig.SERVERNAME, // 服务名(可选)
       serverType: 'serverType', // 服务类型
       serverURL: this.config.paramConfig.SERVERURL, // 服务URL(可选)
-      tokenName: 'tokenName', // token名称(可选),已废弃,请使用customParameters记录该信息
-      tokenValue: this.config.paramConfig.TOKEN, // token值(可选),已废弃,请使用customParameters记录该信息
+      tokenKey: this.config.paramConfig.TOKENKEY, // tokenKey(可选)
+      tokenValue: this.config.paramConfig.TOKEN, // token值(可选)
       ip: this.config.paramConfig.SERVERIP, // 服务ip(可选)
       port: this.config.paramConfig.SERVERPORT, // 服务端口(可选)
       bindData: 'bindData', // 绑定数据：与该服务图层相关联的服务信息,比如：与该瓦片服务对应的地图服务。应用中利用该字段可实现对瓦片服务的查询功能
@@ -798,7 +906,6 @@ export class DataCatalogManager {
     } else {
       const treeArr = []
       this.convertCloudToTreeData(this.serviceTreeData, treeArr)
-      debugger
       treeData = this.convertTreeData(treeArr, 0)
     }
 
@@ -815,6 +922,9 @@ export class DataCatalogManager {
    * 将云管数据目录转换为一张图的treeData
    */
   private convertCloudToTreeData(serviceTreeData, treeArr) {
+    if (!serviceTreeData) {
+      return
+    }
     serviceTreeData.forEach((treeData) => {
       const { name, type, children, resource, treeInfo } = treeData
       const treeChildren = []
@@ -1002,7 +1112,7 @@ export class DataCatalogManager {
               node[this.configConverted.keyConfig.children] || undefined, // 子节点数组
             serverName: node[this.configConverted.keyConfig.serverName] || '', // 服务名(可选)
             serverURL: node[this.configConverted.keyConfig.serverURL] || '', // 服务URL(可选)
-            tokenName: node[this.configConverted.keyConfig.tokenName] || '', // token名称(可选)
+            tokenKey: node[this.configConverted.keyConfig.tokenKey] || '', // token名称(可选)
             tokenValue: node[this.configConverted.keyConfig.tokenValue] || '', // token值(可选)
             ip: node[this.configConverted.keyConfig.ip] || '', // 服务ip(可选)
             port: node[this.configConverted.keyConfig.port] || '', // 服务端口(可选)
@@ -1155,6 +1265,21 @@ export class DataCatalogManager {
         break
       case this.layerServiceType.GEOJSON:
         serverType = LayerType.GeoJson
+        break
+      case this.layerServiceType.STKTERRAIN:
+        serverType = LayerType.STKTerrain
+        break
+      case this.layerServiceType.KML:
+        serverType = LayerType.KML
+        break
+      case this.layerServiceType.KMZ:
+        serverType = LayerType.KMZ
+        break
+      case this.layerServiceType.CZML:
+        serverType = LayerType.CZML
+        break
+      case this.layerServiceType.OSM:
+        serverType = LayerType.OSM
         break
       default:
         break

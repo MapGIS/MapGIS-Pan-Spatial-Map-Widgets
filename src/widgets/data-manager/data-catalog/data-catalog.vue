@@ -1,22 +1,29 @@
 <template>
   <div class="mp-widget-data-catalog">
     <div class="toolbar">
-      <a-input-search
+      <mapgis-ui-input-search
         v-model="searchValue"
         placeholder="搜索数据"
         allow-clear
         @search="onSearch"
-      ></a-input-search>
-      <a-dropdown :trigger="['click']" class="action-more">
-        <a-icon type="more"></a-icon>
-        <a-menu slot="overlay">
-          <a-menu-item key="0" @click="refreshTree">刷新</a-menu-item>
-          <a-menu-item key="1" @click="bookMarksCheck">收藏</a-menu-item>
-        </a-menu>
-      </a-dropdown>
+      ></mapgis-ui-input-search>
+      <mapgis-ui-dropdown :trigger="['click']" class="action-more">
+        <mapgis-ui-iconfont
+          type="mapgis-more"
+          v-show="isChangeDataCatalog"
+        ></mapgis-ui-iconfont>
+        <mapgis-ui-menu slot="overlay">
+          <mapgis-ui-menu-item key="0" @click="refreshTree"
+            >刷新</mapgis-ui-menu-item
+          >
+          <mapgis-ui-menu-item key="1" @click="bookMarksCheck"
+            >收藏</mapgis-ui-menu-item
+          >
+        </mapgis-ui-menu>
+      </mapgis-ui-dropdown>
     </div>
     <div class="tree-container beauty-scroll">
-      <a-tree
+      <mapgis-ui-tree
         checkable
         block-node
         :tree-data="dataCatalogTreeData"
@@ -26,6 +33,7 @@
         :filterTreeNode="searchValue !== '' ? filterTree : filterEmpty"
         :selectedKeys="selectedKeys"
         @expand="onExpand"
+        @select="onSelect"
       >
         <span slot="custom" slot-scope="item" class="tree-item-handle">
           <img
@@ -33,19 +41,19 @@
             :src="baseUrl + widgetInfo.config.iconConfig[nodeLevel(item)]"
             class="tree-item-icon"
           />
-          <a-dropdown
+          <mapgis-ui-dropdown
             v-if="item.children && item.children.length > 0"
             :trigger="['contextmenu']"
           >
-            <a-menu slot="overlay">
-              <a-menu-item
+            <mapgis-ui-menu slot="overlay">
+              <mapgis-ui-menu-item
                 v-if="item.metaData"
                 key="1"
                 @click="showMetaDataInfo(item)"
               >
                 元数据信息
-              </a-menu-item>
-            </a-menu>
+              </mapgis-ui-menu-item>
+            </mapgis-ui-menu>
             <span class="tree-node" :id="`tree_${item.guid}`">
               <span
                 v-if="
@@ -89,8 +97,8 @@
                 }}</span></span
               >
             </span>
-          </a-dropdown>
-          <a-dropdown
+          </mapgis-ui-dropdown>
+          <mapgis-ui-dropdown
             v-else
             :trigger="['contextmenu']"
             :class="
@@ -136,8 +144,8 @@
             <span v-else @click="onClick(item)" :title="item.description">{{
               item.name
             }}</span>
-            <a-menu slot="overlay">
-              <a-menu-item
+            <mapgis-ui-menu slot="overlay">
+              <mapgis-ui-menu-item
                 v-if="
                   item.serverType && !isNonSpatial(item) && !isDataFlow(item)
                 "
@@ -145,9 +153,16 @@
                 @click="showMetaDataInfo(item)"
               >
                 元数据信息
-              </a-menu-item>
-              <a-menu-item key="2" @click="addToMark(item)">收藏</a-menu-item>
-              <a-menu-item
+              </mapgis-ui-menu-item>
+              <mapgis-ui-menu-item
+                key="2"
+                v-if="item.serverType"
+                @click="addToMark(item)"
+                >{{
+                  isChangeDataCatalog ? '收藏' : '取消收藏'
+                }}</mapgis-ui-menu-item
+              >
+              <mapgis-ui-menu-item
                 v-if="
                   hasLegend(item) && !isNonSpatial(item) && !isDataFlow(item)
                 "
@@ -155,13 +170,13 @@
                 @click="onUploadLegend(item)"
               >
                 上传图例
-              </a-menu-item>
-            </a-menu>
-          </a-dropdown>
+              </mapgis-ui-menu-item>
+            </mapgis-ui-menu>
+          </mapgis-ui-dropdown>
         </span>
-      </a-tree>
+      </mapgis-ui-tree>
     </div>
-    <a-modal
+    <mapgis-ui-modal
       v-model="showUploader"
       :dialog-style="{ top: '150px' }"
       :width="300"
@@ -169,13 +184,13 @@
       title="上传图例"
       :footer="null"
     >
-      <a-alert
+      <mapgis-ui-alert
         message="建议上传宽高比为1:1的图片"
         type="info"
         show-icon
         style="margin-bottom: 16px"
       />
-      <a-upload
+      <mapgis-ui-upload
         name="file"
         accept=".jpg, image/*"
         :action="uploadUrl"
@@ -185,12 +200,15 @@
         :before-upload="beforeUpload"
         @change="onChangeFile"
       >
-        <a-button>
-          <a-icon type="upload" :style="{ fontSize: '18px' }" />
+        <mapgis-ui-button>
+          <mapgis-ui-iconfont
+            type="mapgis-upload"
+            :style="{ fontSize: '18px' }"
+          />
           上传图片
-        </a-button>
-      </a-upload>
-    </a-modal>
+        </mapgis-ui-button>
+      </mapgis-ui-upload>
+    </mapgis-ui-modal>
 
     <mp-window-wrapper :visible="showMetaData">
       <mp-window
@@ -217,12 +235,12 @@
         :visible.sync="showNoSpatial"
       >
         <template>
-          <non-spatial
+          <NonSpatial
             :nonSpatialUrl="nonSpatialUrl"
             :url="nonSpatialFileListUrl"
             :type="nonSpatialType"
             :treeConfig="widgetConfig"
-          ></non-spatial>
+          ></NonSpatial>
         </template>
       </mp-window>
     </mp-window-wrapper>
@@ -326,6 +344,15 @@ export default {
       widgetConfig: {},
 
       imposeNode: {},
+
+      // 目录树更多按钮展示/隐藏
+      isChangeDataCatalog: true,
+
+      // 存放从接口获取到的书签信息
+      bookmarkData: [],
+
+      // 存放数据目录勾选key
+      checkedNodeKeysCopy: [],
     }
   },
   computed: {
@@ -340,9 +367,6 @@ export default {
       return function (node) {
         return node.pos.split('-').length - 1
       }
-    },
-    checkedLayerConfigIDs() {
-      return this.dataCatalogManager.checkedLayerConfigIDs
     },
   },
   created() {
@@ -372,6 +396,8 @@ export default {
     eventBus.$on(events.IMPOSE_SERVICE_PREVIEW_EVENT, this.imposeService)
     this.$root.$on(events.SCENE_LOADEN_ON_MAP, this.sceneLoadedCallback)
     eventBus.$emit(events.DATA_CATALOG_ON_IMPOSE_SERVICE_EVENT)
+    eventBus.$on(events.DATA_CATALOG_TAB, this.changeDataCatalog)
+    eventBus.$on(events.BOOKMARK_TAB, this.changeBookmark)
   },
   watch: {
     checkedNodeKeys: {
@@ -389,48 +415,87 @@ export default {
   },
   methods: {
     onCheckedNodeKeysChenged() {
-      let newChecked = []
-      let newUnChecked = []
+      // 兼容收藏夹tab页中的勾选
       eventBus.$emit(
         events.DATA_SELECTION_KEYS_CHANGE_EVENT,
-        this.checkedNodeKeys
+        this.isChangeDataCatalog
+          ? this.checkedNodeKeys
+          : this.getCheckedNodeKeys()
       )
+      let newChecked = []
+      let newUnChecked = []
 
-      if (this.preCheckedNodeKeys.length === 0) {
-        newChecked = this.checkedNodeKeys
-      } else if (this.checkedNodeKeys.length === 0) {
-        newUnChecked = this.preCheckedNodeKeys
-      } else {
-        // 计算哪些是新选中的,哪些时新取消选中的。
+      if (this.isChangeDataCatalog) {
+        if (this.preCheckedNodeKeys.length === 0) {
+          newChecked = this.checkedNodeKeys
+        } else if (this.checkedNodeKeys.length === 0) {
+          newUnChecked = this.preCheckedNodeKeys
+        } else {
+          // 计算哪些是新选中的,哪些时新取消选中的。
 
-        // 查找新选中的(在之前的选中中没有,在当前的选中中有)
-        for (let i = 0; i < this.checkedNodeKeys.length; i++) {
-          let isFind = false
-          for (let j = 0; j < this.preCheckedNodeKeys.length; j++) {
-            if (this.checkedNodeKeys[i] === this.preCheckedNodeKeys[j]) {
-              isFind = true
-              break
+          // 查找新选中的(在之前的选中中没有,在当前的选中中有)
+          for (let i = 0; i < this.checkedNodeKeys.length; i++) {
+            let isFind = false
+            for (let j = 0; j < this.preCheckedNodeKeys.length; j++) {
+              if (this.checkedNodeKeys[i] === this.preCheckedNodeKeys[j]) {
+                isFind = true
+                break
+              }
+            }
+
+            if (!isFind) {
+              newChecked.push(this.checkedNodeKeys[i])
             }
           }
 
-          if (!isFind) {
-            newChecked.push(this.checkedNodeKeys[i])
+          // 查找新取消选中的(在之前的选中中有,在当前的选中中没有)
+          for (let i = 0; i < this.preCheckedNodeKeys.length; i++) {
+            let isFind = false
+            for (let j = 0; j < this.checkedNodeKeys.length; j++) {
+              if (this.preCheckedNodeKeys[i] === this.checkedNodeKeys[j]) {
+                isFind = true
+                break
+              }
+            }
+
+            if (!isFind) {
+              newUnChecked.push(this.preCheckedNodeKeys[i])
+            }
           }
         }
 
-        // 查找新取消选中的(在之前的选中中有,在当前的选中中没有)
-        for (let i = 0; i < this.preCheckedNodeKeys.length; i++) {
-          let isFind = false
-          for (let j = 0; j < this.checkedNodeKeys.length; j++) {
-            if (this.preCheckedNodeKeys[i] === this.checkedNodeKeys[j]) {
-              isFind = true
-              break
-            }
-          }
+        // 给dataCatalogManager中的变量赋值
+        const checkedLayerConfigIDs = this.getCheckedLayerConfigIDs()
 
-          if (!isFind) {
-            newUnChecked.push(this.preCheckedNodeKeys[i])
-          }
+        // 如果两者不相等则重新赋值
+        if (
+          this.dataCatalogManager.checkedLayerConfigIDs.toString() !==
+          checkedLayerConfigIDs.toString()
+        ) {
+          this.dataCatalogManager.checkedLayerConfigIDs = checkedLayerConfigIDs
+        }
+      } else {
+        // 收藏夹页面操作逻辑
+        newChecked = this.checkedNodeKeys.filter(
+          (item) => !this.checkedNodeKeysCopy.includes(item)
+        )
+        // 获取收藏夹所有guid
+        const bookmarkKeys = this.dataCatalogTreeData.map((item) => item.guid)
+        const unChecked = this.checkedNodeKeysCopy.filter(
+          (item) => !this.checkedNodeKeys.includes(item)
+        )
+        newUnChecked = bookmarkKeys.filter((item) => unChecked.includes(item))
+        // 更新checkedNodeKeysCopy
+        this.checkedNodeKeysCopy = [...this.checkedNodeKeysCopy, ...newChecked]
+        this.checkedNodeKeysCopy = this.checkedNodeKeysCopy.filter(
+          (item) => !newUnChecked.includes(item)
+        )
+        if (
+          this.dataCatalogManager.checkedLayerConfigIDs.toString() !==
+          this.getCheckedNodeKeys().toString()
+        ) {
+          this.dataCatalogManager.checkedLayerConfigIDs =
+            this.getCheckedNodeKeys()
         }
       }
 
@@ -440,20 +505,11 @@ export default {
       // 将新选中的图层节点添加到document
       this.modifyDocument(newChecked, true)
 
-      // 给dataCatalogManager中的变量赋值
-      const checkedLayerConfigIDs = this.getCheckedLayerConfigIDs()
-
-      // 如果两者不相等则重新赋值
-      if (
-        this.dataCatalogManager.checkedLayerConfigIDs.toString() !==
-        checkedLayerConfigIDs.toString()
-      ) {
-        this.dataCatalogManager.checkedLayerConfigIDs = checkedLayerConfigIDs
-      }
-
       // 修改说明：原有代码赋址属于浅拷贝，指向同一内存地址，checkedNodeKeys变化时preCheckedNodeKeys也会变化，这样preCheckedNodeKeys就无法记录上一次勾选的checkedNodeKeys。
       // 修改人：何龙 2021年04月21日
-      this.preCheckedNodeKeys = JSON.parse(JSON.stringify(this.checkedNodeKeys))
+      this.preCheckedNodeKeys = this.isChangeDataCatalog
+        ? JSON.parse(JSON.stringify(this.checkedNodeKeys))
+        : this.getCheckedNodeKeys()
     },
     onCheckedLayerConfigIDsChanged() {
       // 如果两者不相等则重新赋值
@@ -622,6 +678,18 @@ export default {
     // 目录树展开/收起节点时触发
     onExpand(expandedKeys) {
       this.expandedKeys = expandedKeys
+    },
+
+    // 选中目录树节点触发展开/收起
+    onSelect(selectedKeys) {
+      const flag = this.expandedKeys.includes(selectedKeys[0])
+      if (flag) {
+        this.expandedKeys = this.expandedKeys.filter(
+          (item) => item !== selectedKeys[0]
+        )
+      } else {
+        this.expandedKeys.push(selectedKeys[0])
+      }
     },
 
     // 筛选所有包含搜索关键字的节点
@@ -835,11 +903,23 @@ export default {
 
     // 右键菜单收藏按钮响应事件
     addToMark(item) {
-      eventBus.$emit(
-        events.ADD_DATA_BOOKMARK_EVENT,
-        { params: item, type: this.widgetInfo.label },
-        this.dataCatalogTreeData
-      )
+      // isChangeDataCatalog值为true时处于数据目录中，进行收藏。反之则在收藏夹中，取消收藏
+      if (this.isChangeDataCatalog) {
+        eventBus.$emit(
+          events.ADD_DATA_BOOKMARK_EVENT,
+          { params: item, type: this.widgetInfo.label },
+          this.dataCatalogTreeData
+        )
+      } else {
+        this.dataCatalogTreeData = this.dataCatalogTreeData.filter(
+          (mark) => mark.guid !== item.guid
+        )
+        const index = this.bookmarkData[0].children.findIndex(
+          (mark) => mark.guid === item.guid
+        )
+        this.bookmarkData[0].children.splice(index, 1)
+        this.saveBookmarks()
+      }
     },
 
     // 监听书签项点击事件
@@ -1026,6 +1106,74 @@ export default {
       // console.log(item)
       return { leafTotal, leafChecked }
     },
+    changeDataCatalog() {
+      this.isChangeDataCatalog = true
+      this.expandedKeys = []
+      if (
+        JSON.stringify(this.checkedNodeKeys) !==
+        JSON.stringify(this.checkedNodeKeysCopy)
+      ) {
+        this.checkedNodeKeys = this.getCheckedNodeKeys()
+      }
+      this.refreshTree()
+    },
+
+    async changeBookmark() {
+      this.isChangeDataCatalog = false
+      this.checkedNodeKeysCopy = JSON.parse(
+        JSON.stringify(this.checkedNodeKeys)
+      )
+      const config = await api.getWidgetConfig('bookmark')
+      this.bookmarkData = config
+      const bookmarkData = config[0].children
+      const treeData = []
+      bookmarkData.forEach((item) => {
+        const find = this.allTreeDataConfigs.find(
+          (mark) => mark.guid === item.guid
+        )
+        find && treeData.push(find)
+      })
+      this.dataCatalogTreeData = treeData
+    },
+
+    /**
+     * 收藏夹中勾选会给checkedNodeKeys重新赋值，因为在数据目录中的勾选如果在收藏夹中没有的key则会消失，导致数据目录中的勾选不正确
+     *
+     * 1.数据未改变
+     *
+     * 2.收藏夹中取消勾选
+     *
+     * 3.收藏夹中新增勾选
+     *
+     * */
+    getCheckedNodeKeys() {
+      const notInBookmarkKeys = []
+      // 获取收藏夹列表的所有key值
+      const bookmarkKeys = this.bookmarkData[0].children.map(
+        (item) => item.guid
+      )
+      // 获取不在bookmarkKeys中但已被勾选的值
+      this.checkedNodeKeysCopy.forEach((item) => {
+        !bookmarkKeys.includes(item) && notInBookmarkKeys.push(item)
+      })
+      return [...new Set([...notInBookmarkKeys, ...this.checkedNodeKeys])]
+    },
+
+    saveBookmarks() {
+      api
+        .saveWidgetConfig({
+          name: 'bookmark',
+          config: JSON.stringify(this.bookmarkData),
+        })
+        .catch(() => {
+          this.$message.config({
+            top: '100px',
+            duration: 1,
+            maxCount: 3,
+          })
+          this.$message.error('配置文件更新失败')
+        })
+    },
   },
 }
 </script>
@@ -1040,12 +1188,10 @@ export default {
     justify-content: center;
     align-content: center;
     .action-more {
+      display: flex;
+      align-items: center;
       font-size: 17px;
-      color: @text-color;
       padding-left: 12px;
-      &:hover {
-        color: @primary-color;
-      }
     }
   }
   .tree-container {
@@ -1073,7 +1219,7 @@ export default {
   }
 }
 
-.ant-dropdown-trigger.anticon-more {
+.mapgis-ui-dropdown-trigger.anticon-more {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1083,13 +1229,6 @@ export default {
 
 .filter-dropdown {
   flex-direction: row;
-}
-
-.unfilter-words {
-  color: @text-color !important;
-}
-.filter-words {
-  color: @primary-color !important;
 }
 
 .total-text {

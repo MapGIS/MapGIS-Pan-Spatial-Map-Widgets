@@ -1,7 +1,11 @@
 <template>
   <div class="mapbox-view">
     <!-- 二维地图组件 -->
-    <mp-web-map-pro @map-load="onMapLoad" :document="document" />
+    <mp-web-map-pro
+      @map-load="onMapLoad"
+      :document="document"
+      :splitScreen="splitScreen"
+    />
     <!-- 二维地图绘制组件 -->
     <mp-draw-pro v-if="isMapLoaded" ref="draw" @finished="onDrawFinished" />
   </div>
@@ -17,6 +21,11 @@ export default class MapboxView extends Vue {
   @Prop({ default: () => ({}) }) readonly layer!: Layer
 
   isMapLoaded = false
+
+  /**
+   * 是否处于分屏状态
+   */
+  splitScreen = true
 
   get drawComponent() {
     return this.$refs.draw
@@ -66,6 +75,10 @@ export default class MapboxView extends Vue {
   onMapLoad(payload) {
     this.isMapLoaded = true
     this.$emit('load', payload)
+    // 禁用鼠标右键事件
+    document.getElementsByClassName('mapbox-view').forEach((element) => {
+      element.oncontextmenu = () => false
+    })
   }
 }
 </script>

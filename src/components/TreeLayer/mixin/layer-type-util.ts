@@ -293,20 +293,29 @@ export default class LayerTypeUtil extends Mixins(AppMixin) {
   /**
    * 获取结果集查询参数
    */
-  async getExhibition(layer, titleType) {
+  getExhibition(layer, titleType) {
     const parent = layer.layer
     let exhibition: Record<string, any> | null = null
     const arr: Array<Record<string, any>> = [
       {
         type: parent && this.isIgsDocLayer(parent),
-        setValue: async () => {
+        setValue: () => {
           const { ip, port, docName } = parent._parseUrl(parent.url)
-          const { isDataStoreQuery, DNSName } =
-            await FeatureQuery.isDataStoreQuery({
-              ip,
-              port,
-              gdbp: layer.url,
-            })
+          // const {
+          //   isDataStoreQuery,
+          //   DNSName
+          // } = await FeatureQuery.isDataStoreQuery({
+          //   ip,
+          //   port,
+          //   gdbp: layer.url
+          // })
+          /**
+           * 修改说明：IGS地图文档和图层服务全部都走IGS的接口，不再判断是否为pg数据
+           * 修改人：龚跃健
+           * 日期：2022-5-10
+           */
+          const isDataStoreQuery = false
+          const DNSName = undefined
           const ipPortObj = this.getIpPort({ isDataStoreQuery, ip, port })
           exhibition = {
             id: `${parent.title} ${layer.title} ${layer.id}`,
@@ -331,15 +340,17 @@ export default class LayerTypeUtil extends Mixins(AppMixin) {
       },
       {
         type: this.isIgsVectorLayer(layer),
-        setValue: async () => {
+        setValue: () => {
           const igsVectorLayer = layer.dataRef
           const { ip, port, docName } = igsVectorLayer._parseUrl(layer.url)
-          const { isDataStoreQuery, DNSName } =
-            await FeatureQuery.isDataStoreQuery({
-              ip,
-              port,
-              gdbp: igsVectorLayer.gdbps,
-            })
+          // const { isDataStoreQuery, DNSName } =
+          //   await FeatureQuery.isDataStoreQuery({
+          //     ip,
+          //     port,
+          //     gdbp: igsVectorLayer.gdbps,
+          //   })
+          const isDataStoreQuery = false
+          const DNSName = undefined
           const ipPortObj = this.getIpPort({ isDataStoreQuery, ip, port })
           exhibition = {
             id: `${igsVectorLayer.title} ${igsVectorLayer.id}`,
@@ -422,7 +433,7 @@ export default class LayerTypeUtil extends Mixins(AppMixin) {
     for (let index = 0; index < arr.length; index++) {
       const item = arr[index]
       if (item.type) {
-        await item.setValue()
+        item.setValue()
       }
     }
     return exhibition

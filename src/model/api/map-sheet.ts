@@ -29,7 +29,7 @@ export function getFrameNoByCoord(
       scale,
       srsId: originSrs,
       f: 'json',
-      objSrsId: destSrs
+      objSrsId: destSrs,
     })
   )
 }
@@ -50,7 +50,7 @@ export function getFrameExtentByNo(ip, port, frameNo, originSrs, destSrs) {
       frameNo,
       srsId: originSrs,
       objSrsId: destSrs,
-      f: 'json'
+      f: 'json',
     })
   )
 }
@@ -91,7 +91,7 @@ export function getFrameNoList(
       gdbp,
       url: `http://${ip}:${port}/onemap/cliprect/clipList`,
       pageNumber,
-      pageSize
-    }
+      pageSize,
+    },
   })
 }

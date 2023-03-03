@@ -26,6 +26,7 @@
       :height="mapViewHeight"
       :layer="mapViewLayer"
       :document="mapViewDocument"
+      :isAll3d="isAll3d"
     />
     <!-- 高亮查询的要素 -->
     <feature-highlight
@@ -66,7 +67,7 @@ import {
   Rectangle3D,
   Objects,
 } from '@mapgis/web-app-framework'
-import { MpQueryResultTree } from '../../../../../components'
+import MpQueryResultTree from '../../../../../components/QueryResultsTree/QueryResultsTree.vue'
 import MapViewMixin from './mixins/map-view'
 import { OperationType } from './store/map-view-state'
 import MapboxView from './components/MapboxView'

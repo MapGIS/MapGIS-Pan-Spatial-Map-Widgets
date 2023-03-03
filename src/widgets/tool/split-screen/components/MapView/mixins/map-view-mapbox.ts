@@ -14,10 +14,10 @@ export default class MapViewMapboxMixin extends Vue {
       this.ssMap.fitBounds(
         [
           [xmax, ymin],
-          [xmin, ymax]
+          [xmin, ymax],
         ],
         {
-          animate: false
+          animate: false,
         }
       )
     }

@@ -6,22 +6,29 @@
   "author": "MapGIS",
   "license": "Apache-2.0",
   "main": "src/index.ts",
-  "scripts": {},
+  "scripts": {
+    "build": "node --max_old_space_size=12288 ./node_modules/@vue/cli-service/bin/vue-cli-service build --target lib --name mapgis-pan-spatial-map-widgets src/index.ts"
+  },
   "dependencies": {
     "@mapgis/web-app-framework": "link:../MapGIS-Web-App-Framework",
-    "@mapgis/webclient-es6-mapboxgl": "^15.6.0",
-    "@mapgis/webclient-es6-service": "^15.6.0",
-    "@mapgis/webclient-vue-cesium": "^15.6.0",
-    "@mapgis/webclient-vue-mapboxgl": "^15.6.0",
-    "@mapgis/webclient-vue-ui": "^15.6.0",
+    "@mapgis/webclient-es6-mapboxgl": "^16.0.0",
+    "@mapgis/webclient-es6-service": "^16.0.0",
+    "@mapgis/webclient-vue-cesium": "^16.0.0",
+    "@mapgis/webclient-vue-mapboxgl": "^16.0.0",
+    "@mapgis/webclient-vue-ui": "^16.0.0",
+    "ant-design-vue": "1.7.2",
     "json2csv": "^5.0.6",
+    "vue": "2.6.11",
     "vue-color": "^2.8.1",
     "vue-property-decorator": "^8.3.0"
   },
   "devDependencies": {
-    "xlsx": "^0.17.1",
     "@typescript-eslint/eslint-plugin": "^2.17.0",
     "@typescript-eslint/parser": "^2.17.0",
+    "@vue/cli-plugin-babel": "~4.4.4",
+    "@vue/cli-plugin-eslint": "~4.4.4",
+    "@vue/cli-plugin-typescript": "~4.4.4",
+    "@vue/cli-service": "~4.4.4",
     "babel-eslint": "^10.0.1",
     "concurrently": "^5.2.0",
     "eslint": "^6.8.0",
@@ -29,6 +36,13 @@
     "eslint-config-prettier": "^6.11.0",
     "eslint-loader": "^3.0.3",
     "eslint-plugin-import": "^2.20.1",
-    "eslint-plugin-vue": "^6.1.2"
+    "eslint-plugin-vue": "^6.1.2",
+    "less": "^3.12.2",
+    "less-loader": "^7.0.2",
+    "style-resources-loader": "^1.3.2",
+    "typescript": "~3.9.3",
+    "vue-cli-plugin-style-resources-loader": "^0.1.4",
+    "vue-template-compiler": "2.6.11",
+    "xlsx": "^0.17.1"
   }
 }

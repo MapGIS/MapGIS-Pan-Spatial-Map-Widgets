@@ -1,3 +1,7 @@
+import MapgisUi from '@mapgis/webclient-vue-ui'
+import VueMapbox from '@mapgis/webclient-vue-mapboxgl'
+import VueCesium from '@mapgis/webclient-vue-cesium'
+
 export {
   api,
   getRequest,
@@ -12,7 +16,7 @@ export {
   DataFlowList,
   ActiveResultSet,
   DataStoreCatalog,
-  ProjectorManager
+  ProjectorManager,
 } from './model'
 
 import {
@@ -30,13 +34,13 @@ import {
   MpSwipe,
   MpTerrainAnalysis,
   MpTopologyAnalysis,
-  MpVisibilityAnalysis
+  MpVisibilityAnalysis,
 } from './widgets/analysis'
 
 import {
   MpAddData,
   MpBasemapManager,
-  MpDataCatalog
+  MpDataCatalog,
 } from './widgets/data-manager'
 
 import {
@@ -54,7 +58,7 @@ import {
   MpThematicMap,
   MpVectorTileCarto,
   MpViewpointManager,
-  MpZoom
+  MpZoom,
 } from './widgets/data-visualization'
 
 import { MpMarkerManager, MpOverlayManager } from './widgets/editing'
@@ -64,7 +68,7 @@ import {
   MpAbout,
   MpFuncWarehouse,
   MpKibanaV,
-  MpMapDataV
+  MpMapDataV,
 } from './widgets/extended'
 
 import { MpComprehensiveQuery, MpFeatureQuery } from './widgets/query'
@@ -72,7 +76,7 @@ import { MpComprehensiveQuery, MpFeatureQuery } from './widgets/query'
 import {
   MpBuildingGrow,
   MpCityGrow,
-  MpPondingSimulation
+  MpPondingSimulation,
 } from './widgets/simulation'
 
 import {
@@ -80,10 +84,13 @@ import {
   MpMeasurement,
   MpOutputImage,
   MpSplitScreen,
-  MpStratifiedHousehold
+  MpStratifiedHousehold,
 } from './widgets/tool'
 
+// import RightPopover from './components/TreeLayer/components/RightPopover/index.vue'
+
 const components = [
+  // RightPopover,
   // analysis
   MpBufferAnalysis,
   MpDynamicSectionAnalysis,
@@ -141,18 +148,21 @@ const components = [
   MpMeasurement,
   MpOutputImage,
   MpSplitScreen,
-  MpStratifiedHousehold
+  MpStratifiedHousehold,
 ]
 
-const install = Vue => {
-  components.forEach(component => {
+const install = (Vue) => {
+  components.forEach((component) => {
     Vue.component(
       (component.options && component.options.name) || component.name,
       component
     )
   })
+  Vue.use(VueMapbox)
+  Vue.use(VueCesium)
+  Vue.use(MapgisUi)
 }
 
 export default {
-  install
+  install,
 }

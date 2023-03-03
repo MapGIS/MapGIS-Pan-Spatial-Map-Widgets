@@ -38,29 +38,29 @@ export default class Tools extends Vue {
     {
       label: '查询',
       icon: 'search',
-      type: OperationType.QUERY
+      type: OperationType.QUERY,
     },
     {
       label: '放大',
       icon: 'zoom-in',
-      type: OperationType.ZOOMIN
+      type: OperationType.ZOOMIN,
     },
     {
       label: '缩小',
       icon: 'zoom-out',
-      type: OperationType.ZOOMOUT
+      type: OperationType.ZOOMOUT,
     },
 
     {
       label: '复位',
       icon: 'redo',
-      type: OperationType.RESTORE
+      type: OperationType.RESTORE,
     },
     {
       label: '清除',
       icon: 'delete',
-      type: OperationType.CLEAR
-    }
+      type: OperationType.CLEAR,
+    },
   ]
 
   get resTools() {
@@ -76,10 +76,12 @@ export default class Tools extends Vue {
   }
 }
 </script>
-<style lang="less" scoped>
+
+<style lang="scss" scoped>
 .mp-split-screen-toolbar {
-  /deep/ .mp-toolbar-title {
-    color: @primary-color;
+  // 有穿透
+  .mp-toolbar-title {
+    color: $primary-color;
   }
 }
 </style>

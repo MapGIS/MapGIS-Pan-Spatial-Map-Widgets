@@ -15,6 +15,7 @@
         :enable="isMapLoaded"
         :interval="30"
         :excludes="['default']"
+        :isAll3d="isAll3d"
       />
       <!-- 绘制组件 -->
       <mp-3d-draw-pro
@@ -32,7 +33,7 @@ import {
   Layer,
   Rectangle3D,
   Objects,
-  UUID
+  UUID,
 } from '@mapgis/web-app-framework'
 
 @Component
@@ -48,6 +49,9 @@ export default class CesiumView extends Vue {
   @Prop({ default: () => ({}) }) readonly layer!: Layer
 
   @Prop({ default: 500 }) readonly height!: number
+
+  // 是否全部三维屏
+  @Prop({ default: false }) readonly isAll3d!: boolean
 
   isMapLoaded = false
 
@@ -101,7 +105,7 @@ export default class CesiumView extends Vue {
    * @param {unknown}
    */
   toRect3D(shape, transform) {
-    const positions = shape.map(item => {
+    const positions = shape.map((item) => {
       const { x, y, z } = this.sceneController.globelPositionToLocalPosition(
         item,
         transform
@@ -109,7 +113,7 @@ export default class CesiumView extends Vue {
       return {
         x,
         y,
-        z: item.z
+        z: item.z,
       }
     })
     let xmin = 0
@@ -141,7 +145,7 @@ export default class CesiumView extends Vue {
       xmax,
       ymax,
       zmin,
-      zmax
+      zmax,
     }
   }
 
@@ -177,7 +181,7 @@ export default class CesiumView extends Vue {
           const rect = this.toRect2D(shape)
           payload = {
             geometry,
-            rect
+            rect,
           }
           break
         }
@@ -185,7 +189,7 @@ export default class CesiumView extends Vue {
           const rect = this.getRect(shape)
           payload = {
             geometry: rect,
-            rect
+            rect,
           }
           break
         }
@@ -209,7 +213,7 @@ export default class CesiumView extends Vue {
    * @param {object}
    */
   onMapLoad(payload) {
-    this.vueCesium.getViewerByInterval(viewer => {
+    this.vueCesium.getViewerByInterval((viewer) => {
       this.sceneController = Objects.SceneController.getInstance(
         this.Cesium,
         this.vueCesium,

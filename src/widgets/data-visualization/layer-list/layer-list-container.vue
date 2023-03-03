@@ -23,63 +23,73 @@
           v-show="tab === 'opacity'"
           :layers="document.defaultMap.layers()"
         />
+        <mapgis-ui-list :gutter="10">
+          <template v-for="item in ['aaa', 'nnn', 'ccc']">
+            <mapgis-ui-list-item :key="item">
+              {{ item }}
+            </mapgis-ui-list-item>
+          </template>
+        </mapgis-ui-list>
       </div>
-      <a-empty v-show="!showWidget" :image="simpleImage" />
+      <!-- 主要是空白时候的图片可能不显示的情况 -->
+      <mapgis-ui-empty v-show="!showWidget" :image="simpleImage" />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import {
-  Mixins,
-  Component,
-  Watch,
-  Inject,
-  Prop,
-  InjectReactive,
-} from 'vue-property-decorator'
-import { WidgetMixin, AppMixin } from '@mapgis/web-app-framework'
-import { Empty } from 'ant-design-vue'
-// import treeLayer from '../../components/TreeLayer/index.vue'
+import { AppMixin } from '@mapgis/web-app-framework'
+import { MapgisUiEmpty } from '@mapgis/webclient-vue-ui'
+import { MpTreeLayer } from '../../../components'
 import layerOpacity from './layer-opacity.vue'
 import { api, dataCatalogManagerInstance } from '../../../model'
 
-@Component({
+export default {
   name: 'MpLayerListContainer',
-  components: { layerOpacity },
-})
-export default class MpLayerListContainer extends Mixins(AppMixin) {
-  @Prop() widgetRouters
-
-  @Prop() widgetInfo
-
-  @Prop() mode: 'max' | 'normal'
-
-  private tab = 'tree'
-
-  private dataCatalog = null
-
-  private tabs = [
-    { key: 'tree', label: '图层树' },
-    { key: 'opacity', label: '透明度' },
-  ]
-
-  get showWidget() {
-    return (
-      this.document &&
-      this.document.defaultMap &&
-      this.document.defaultMap.layers() &&
-      this.document.defaultMap.layers().length > 0
-    )
-  }
+  components: { layerOpacity, MpTreeLayer },
+  mixins: [AppMixin],
+  props: {
+    widgetRouters: {
+      type: Array,
+    },
+    widgetInfo: {
+      type: Object,
+    },
+    mode: {
+      default: 'max' | 'normal',
+    },
+  },
+  data() {
+    return {
+      tab: 'tree',
+      dataCatalog: null,
+      tabs: [
+        { key: 'tree', label: '图层树' },
+        { key: 'opacity', label: '透明度' },
+      ],
+    }
+  },
+  computed: {
+    showWidget() {
+      return (
+        this.document &&
+        this.document.defaultMap &&
+        this.document.defaultMap.layers() &&
+        this.document.defaultMap.layers().length > 0
+      )
+    },
+  },
 
   beforeCreate() {
-    this.simpleImage = Empty.PRESENTED_IMAGE_SIMPLE
-  }
+    this.simpleImage = MapgisUiEmpty.PRESENTED_IMAGE_SIMPLE
+  },
+  created() {
+    console.log(this.$root, 'layerlist', this)
+  },
 }
 </script>
 
-<style lang="less">
+<style lang="scss">
 .mp-widget-layer-list {
   flex: 1 1 0%;
   overflow: hidden;
@@ -93,7 +103,6 @@ export default class MpLayerListContainer extends Mixins(AppMixin) {
     flex-direction: column;
   }
   .top-tab-nav {
-    border-bottom: 1px @border-color solid;
     flex-shrink: 0;
     list-style: none;
     display: flex;
@@ -101,35 +110,36 @@ export default class MpLayerListContainer extends Mixins(AppMixin) {
     margin: 0;
     padding: 0;
     margin-bottom: 8px;
+    border-bottom: 1px $border-color solid;
     li {
       height: 100%;
       padding: 0 5px;
       margin-right: 21px;
       border-bottom: 2px transparent solid;
       &:hover {
-        color: @primary-color;
         cursor: pointer;
+        color: $primary-color;
       }
     }
     .active-color {
-      border-bottom-color: @primary-color;
       transition: background, linear 0.5s;
+      border-bottom-color: $primary-color;
     }
   }
-  .ant-empty-normal {
+  .mapgis-ui-empty-normal {
     margin: 8px 0;
   }
 }
 .layer-list-popover {
-  .ant-popover-inner {
+  .mapgis-ui-popover-inner {
     overflow: hidden;
-    .ant-popover-inner-content {
+    .mapgis-ui-popover-inner-content {
       padding: 0;
-      .ant-list-item {
+      .mapgis-ui-list-item {
         padding: 8px 25px;
         &:hover {
-          background-color: @table-row-hover-bg;
           cursor: pointer;
+          background-color: $table-row-hover-bg;
         }
       }
     }

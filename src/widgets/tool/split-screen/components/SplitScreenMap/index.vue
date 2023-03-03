@@ -1,12 +1,12 @@
 <template>
   <div class="split-screen-map">
     <transition name="fade">
-      <a-empty
+      <mapgis-ui-empty
         v-if="!layerIds.length"
         description="请在数据目录中选择需要分屏的数据"
       />
-      <a-row v-else :gutter="[5, 5]">
-        <a-col
+      <mapgis-ui-row v-else :gutter="[5, 5]">
+        <mapgis-ui-col
           v-for="(id, i) in layerIds"
           :key="`screen${i}-${id}`"
           :span="mapSpan"
@@ -19,8 +19,8 @@
             :map-view-layer="mapViewLayer(id)"
             :resize="resize"
           />
-        </a-col>
-      </a-row>
+        </mapgis-ui-col>
+      </mapgis-ui-row>
     </transition>
   </div>
 </template>
@@ -32,14 +32,14 @@ import {
   Layer,
   Layer3D,
   Objects,
-  Rectangle3D
+  Rectangle3D,
 } from '@mapgis/web-app-framework'
 import MapView from '../MapView'
 
 @Component({
   components: {
-    MapView
-  }
+    MapView,
+  },
 })
 export default class SplitScreenMap extends Mixins(MapMixin) {
   @Prop() readonly resize!: string
@@ -68,12 +68,12 @@ export default class SplitScreenMap extends Mixins(MapMixin) {
 
   // 每屏的图层
   get mapViewLayer() {
-    return layerId => this.layers.find(({ id }) => layerId === id)
+    return (layerId) => this.layers.find(({ id }) => layerId === id)
   }
 
   // 是否全部是三维
   get isAll3d() {
-    return this.layers.every(layer => layer instanceof Layer3D)
+    return this.layers.every((layer) => layer instanceof Layer3D)
   }
 
   /**
@@ -107,6 +107,13 @@ export default class SplitScreenMap extends Mixins(MapMixin) {
   }
 }
 </script>
+
+<style lang="scss" scoped>
+.split-screen-map {
+  background-color: $base-bg-color;
+}
+</style>
+
 <style lang="less" scoped>
 @import './index.less';
 </style>

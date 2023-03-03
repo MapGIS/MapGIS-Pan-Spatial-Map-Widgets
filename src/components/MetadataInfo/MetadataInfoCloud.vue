@@ -1,54 +1,61 @@
 <template>
-  <a-form :label-col="{ span: 2 }" :wrapper-col="{ span: 16 }">
+  <mapgis-ui-form :label-col="{ span: 2 }" :wrapper-col="{ span: 16 }">
     <div v-for="(item, index) in metadata" :key="index">
-      <a-divider v-if="item.length > 1">分组</a-divider>
-      <a-form-item
+      <mapgis-ui-divider v-if="item.length > 1">分组</mapgis-ui-divider>
+      <mapgis-ui-form-item
         v-for="({ value, nickName, type }, key) in item"
         :key="key"
         :label="nickName"
       >
-        <a-switch v-if="`${type}` === '2'" :checked="setBool(value)" disabled />
+        <mapgis-ui-switch
+          v-if="`${type}` === '2'"
+          :checked="setBool(value)"
+          disabled
+        />
         <div v-else-if="`${type}` === '5'">
-          <a-date-picker
+          <mapgis-ui-date-picker
             disabled
             :value="moment(value, 'YYYY-MM-DD')"
-            style="width:50%"
+            style="width: 50%"
           />
-          <a-time-picker
+          <mapgis-ui-time-picker
             disabled
             :value="moment(value, 'HH:mm:ss')"
-            style="width:50%"
+            style="width: 50%"
           />
         </div>
-        <a-input v-else :value="value" disabled />
-      </a-form-item>
+        <mapgis-ui-input v-else :value="value" disabled />
+      </mapgis-ui-form-item>
     </div>
-  </a-form>
+  </mapgis-ui-form>
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Mixins } from 'vue-property-decorator'
 import {
   LayerType,
   IGSMapImageLayer,
   IGSVectorLayer,
   IGSTileLayer,
-  Layer
+  Layer,
 } from '@mapgis/web-app-framework'
 import momentFromat from 'moment'
 
-@Component({ name: 'MpMetadataInfoCloud', components: {} })
-export default class MpMetadataInfoCloud extends Vue {
-  @Prop() readonly metadata!: Array<any>
-
-  moment = momentFromat
-
-  setBool(value) {
-    if (value === 'true') {
-      return true
+export default {
+  name: 'MpMetadataInfoCloud',
+  props: ['metadata'],
+  data() {
+    return {
+      moment: momentFromat,
     }
-    return false
-  }
+  },
+  methods: {
+    setBool(value) {
+      if (value === 'true') {
+        return true
+      }
+      return false
+    },
+  },
 }
 </script>
 

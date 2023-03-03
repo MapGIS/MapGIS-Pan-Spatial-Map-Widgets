@@ -3,7 +3,7 @@ class DataFlowList {
 
   public getDataFlowById(id: string): Array<Record<string, any>> {
     const dataFlowContent = this._dataFlowList.find(
-      dataFlowContent => dataFlowContent.id === id
+      (dataFlowContent) => dataFlowContent.id === id
     )
     if (dataFlowContent) {
       return dataFlowContent.positions
@@ -13,7 +13,7 @@ class DataFlowList {
 
   public setDataFlowById(id: string, positions: Array<Record<string, any>>) {
     const dataFlowContent = this._dataFlowList.find(
-      dataFlowContent => dataFlowContent.id === id
+      (dataFlowContent) => dataFlowContent.id === id
     )
     if (dataFlowContent) {
       dataFlowContent.positions = positions

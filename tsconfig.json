@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "outDir": "dist",
+    "outDir": "dist-libs",
     "sourceMap": false,
     "target": "esnext",
     "module": "esnext",
@@ -23,12 +23,6 @@
       "components/*": ["src/components/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
-  "exclude": [
-    "node_modules",
-    "packages/*/public",
-    "packages/*/lib",
-    "packages/*/dist",
-    "packages/*/node_modules"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/**/**/*.vue"],
+  "exclude": ["node_modules"]
 }

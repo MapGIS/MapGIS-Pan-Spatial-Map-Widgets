@@ -7,27 +7,23 @@
 </template>
 
 <script lang="ts">
-import {
-  Mixins,
-  Component,
-  Watch,
-  Inject,
-  ProvideReactive,
-  Vue,
-} from 'vue-property-decorator'
 import { WidgetMixin, AppMixin } from '@mapgis/web-app-framework'
 import { Empty } from 'ant-design-vue'
 import { api, dataCatalogManagerInstance } from '../../../model'
 
-@Component({
+export default {
   name: 'MpLayerList',
-})
-export default class MpLayerList extends Mixins(WidgetMixin) {
-  widgetRouters = []
-
-  mode = 'normal'
+  mixins: [WidgetMixin, AppMixin],
+  data() {
+    return {
+      widgetRouters: [],
+      mode: 'normal',
+    }
+  },
 
   created() {
+    console.log(this.widgetInfo)
+
     this.widgetRouters = [
       {
         title: '图层树',
@@ -37,7 +33,7 @@ export default class MpLayerList extends Mixins(WidgetMixin) {
         },
       },
     ]
-  }
+  },
 
   /**
    * 视图窗口变化

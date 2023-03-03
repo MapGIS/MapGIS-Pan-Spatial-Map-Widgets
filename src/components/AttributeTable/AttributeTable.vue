@@ -4,7 +4,7 @@
       <div class="title">
         {{ selectedDescription }}
       </div>
-      <a-switch
+      <mapgis-ui-switch
         checked-children="范围过滤"
         un-checked-children="范围过滤"
         v-model="filterWithMap"
@@ -22,12 +22,14 @@
         @click="onClearSelection"
       />
       <mp-toolbar-space />
-      <a-dropdown class="download-dropdown">
-        <a-menu slot="overlay" @click="handleMenuClick">
-          <a-menu-item key="jsonData"> 导出json文件 </a-menu-item>
-          <a-menu-item key="csvData"> 导出csv文件 </a-menu-item>
-        </a-menu>
-        <a-button
+      <mapgis-ui-dropdown class="download-dropdown">
+        <mapgis-ui-menu slot="overlay" @click="handleMenuClick">
+          <mapgis-ui-menu-item key="jsonData">
+            导出json文件
+          </mapgis-ui-menu-item>
+          <mapgis-ui-menu-item key="csvData"> 导出csv文件 </mapgis-ui-menu-item>
+        </mapgis-ui-menu>
+        <mapgis-ui-button
           class="download-button"
           style="
             margin: 0 13px;
@@ -36,16 +38,16 @@
             padding: 2px 0 0;
           "
         >
-          <a-icon type="download" />
-        </a-button>
-      </a-dropdown>
+          <mapgis-ui-icon type="download" />
+        </mapgis-ui-button>
+      </mapgis-ui-dropdown>
       <mp-toolbar-command
         title="属性统计"
         icon="bar-chart"
         @click="onStatistics"
       />
       <mp-toolbar-command title="过滤器" icon="filter" @click="onFilter" />
-      <a-divider type="vertical" />
+      <mapgis-ui-divider type="vertical" />
       <mp-toolbar-command
         title="刷新"
         :icon="loading ? 'loading' : 'reload'"
@@ -61,7 +63,7 @@
         @click="onToggleScreen"
       />
     </mp-toolbar>
-    <a-table
+    <mapgis-ui-table
       :id="tableId"
       bordered
       size="small"
@@ -90,12 +92,12 @@
         })
       "
     >
-    </a-table>
+    </mapgis-ui-table>
     <div
       style="text-align: right; padding: 5px 10px 5px 0"
       v-if="tableData && tableData.length > 0"
     >
-      <a-pagination
+      <mapgis-ui-pagination
         size="small"
         :total="pagination.total"
         :show-total="showPaginationTotal"
@@ -107,7 +109,7 @@
         @showSizeChange="onPaginationShowSizeChange"
         @change="onPaginationChange"
       >
-      </a-pagination>
+      </mapgis-ui-pagination>
     </div>
     <mp-marker-plotting
       v-if="is2DMapMode && !isIGSScence"
@@ -129,6 +131,8 @@
       :fit-bound="fitBound"
       :selection-bound="selectionBound"
       :highlight-style="highlightStyle"
+      :popup-anchor="popupAnchor"
+      :popup-toggle-type="popupToggleType"
       @map-bound-change="onGetGeometry"
     >
       <template slot="popup" slot-scope="{ properties }">
@@ -146,7 +150,8 @@
         <mp-window
           :id="statisticsId"
           title="属性统计"
-          :width="720"
+          :width="500"
+          :height="330"
           :bottom="10"
           :verticalOffset="10"
           :visible.sync="showAttrStatistics"
@@ -188,13 +193,12 @@
 </template>
 
 <script lang="ts">
-import { Component, Mixins, Prop, Watch } from 'vue-property-decorator'
 import {
   baseConfigInstance,
   markerIconInstance,
   events,
   DataFlowList,
-  ActiveResultSet,
+  ActiveResultSet
 } from '../../model'
 import {
   DomUtil,
@@ -206,7 +210,7 @@ import {
   Rectangle3D,
   Feature,
   Objects,
-  Exhibition,
+  Exhibition
 } from '@mapgis/web-app-framework'
 import * as Zondy from '@mapgis/webclient-es6-service'
 import MpAttributeTableColumnSetting from './AttributeTableColumnSetting.vue'
@@ -214,6 +218,7 @@ import axios from 'axios'
 /* 文件导出 */
 import FileSaver from 'file-saver'
 import AttributeUtil from './mixin/AttributeUtil'
+import components from '..'
 
 const { GFeature, FeatureQuery, ArcGISFeatureQuery } = Feature
 
@@ -222,84 +227,99 @@ const { IAttributeTableOption, IAttributeTableExhibition } = Exhibition
 @Component({
   name: 'MpAttributeTable',
   components: {
-    MpAttributeTableColumnSetting,
-  },
+    MpAttributeTableColumnSetting
+  }
 })
-export default class MpAttributeTable extends Mixins(AttributeUtil) {
-  // 属性表选项
-  @Prop({ type: Object }) exhibition!: IAttributeTableExhibition
-
-  // 属性表选项
-  @Prop({ type: Object }) option!: IAttributeTableOption
-
-  private get selectedRowKeys() {
+export default{
+  name:'MpAttributeTable',
+  components:{
+    MpAttributeTableColumnSetting
+  },
+  mixins:[AttributeUtil],
+  provide(){
+    return{
+      popupShowType:this.popupShowType
+    }
+  },
+  computed:{
+popupShowType() {
+    return baseConfigInstance.config.popupShowType
+  },
+  selectedRowKeys() {
     return this.selection.map(
       (item) => (item as GFeature).properties[this.rowKey]
     )
-  }
-
-  private get dataStoreIp() {
+  },
+  dataStoreIp() {
     return baseConfigInstance.config.DataStoreIp
-  }
-
-  private get dataStorePort() {
+  },dataStorePort() {
     return baseConfigInstance.config.DataStorePort
-  }
-
-  private get popupAnchor() {
+  },
+popupAnchor() {
     return baseConfigInstance.config.colorConfig.label.image.popupAnchor
-  }
-
-  private get popupToggleType() {
+  },
+popupToggleType() {
     return baseConfigInstance.config.colorConfig.label.image.popupToggleType
-  }
-
-  private get selectedDescription() {
+  },
+  selectedDescription() {
     const length = this.selectedRowKeys.length
 
     return `${length} 已选择`
-  }
-
-  private get optionVal() {
+  },
+  optionVal() {
     return this.option || this.exhibition.option
-  }
-
-  private get visibleColumns() {
+  },
+  visibleColumns() {
     return this.tableColumns.filter((col) => col.visible)
-  }
-
-  private get highlightStyle() {
+  },
+  highlightStyle() {
     return baseConfigInstance.config.colorConfig
-  }
-
-  private get markerPlottingComponent() {
+  },
+  markerPlottingComponent() {
     return this.is2DMapMode
       ? this.$refs.refMarkerPlotting
       : this.$refs.ref3dMarkerPlotting
-  }
-
-  private get dataFlowList() {
+  },
+  dataFlowList() {
     return DataFlowList
-  }
-
-  private get getDataFLowList() {
+  },
+  getDataFLowList() {
     const { serverType } = this.optionVal
     if (serverType === LayerType.DataFlow) {
       const features = this.dataFlowList.getDataFlowById(this.optionVal.id)
       return features || []
     }
     return []
+  },
+  isIGSScence() {
+    const { serverType } = this.optionVal
+    return serverType === LayerType.IGSScene
   }
-
-  @Watch('getDataFLowList', { deep: true })
-  @Watch('optionVal', { deep: true, immediate: true })
-  optionChange() {
-    this.clearSelection()
+  },
+  props:{
+    exhibition:{
+      type:IAttributeTableExhibition
+    },
+    option:{
+      type:IAttributeTableOption
+    }
+  },
+  watch:{
+    getDataFLowList:{
+      deep:true
+    },
+    optionVal:{
+      deep:true,
+      immediate:true,
+      handler(){
+this.clearSelection()
     this.removeMarkers()
     this.tableData = []
-    this.tableColumns = []
+    // this.tableColumns = []
     this.query()
-  }
+      }
+    }
+  },
 
   created() {
     DomUtil.addFullScreenListener(this.fullScreenListener)
@@ -308,28 +328,25 @@ export default class MpAttributeTable extends Mixins(AttributeUtil) {
     //   this.vueCesium,
     //   this.viewer
     // )
-  }
+  },
 
   beforeDestroy() {
     DomUtil.removeFullScreenListener(this.fullScreenListener)
-  }
-
-  onResize() {
+  },
+  methods:{
+onResize() {
     this.calcTableScrollY()
-  }
-
-  async onActive() {
+  },
+async onActive() {
     await this.addMarkers()
     await this.hightlightSelectionMarkers()
-  }
-
-  onDeActive() {
+  },
+onDeActive() {
     this.showFilter = false
     this.showAttrStatistics = false
     this.removeMarkers()
-  }
-
-  onClose() {
+  },
+onClose() {
     // 下面无法隐藏窗口
     // this.showFilter = false
     // this.showAttrStatistics = false
@@ -338,9 +355,8 @@ export default class MpAttributeTable extends Mixins(AttributeUtil) {
     document.getElementById(this.statisticsId).style.display = 'none'
 
     this.removeMarkers()
-  }
-
-  private async onSelectChange(selectedRowKeys, selectedRows) {
+  },
+  async onSelectChange(selectedRowKeys, selectedRows) {
     this.selection = selectedRows
     if (this.selectedRowKeys.length == 0) {
       ActiveResultSet.activeResultSet = {}
@@ -348,28 +364,24 @@ export default class MpAttributeTable extends Mixins(AttributeUtil) {
       ActiveResultSet.activeResultSet = {
         type: 'FeatureCollection',
         features: selectedRows,
-        id: this.optionVal.id,
+        id: this.optionVal.id
       }
     }
     await this.hightlightSelectionMarkers()
-  }
-
-  private onPaginationChange(page, pageSize) {
+  },
+  onPaginationChange(page, pageSize) {
     this.pagination.current = page
     this.query()
-  }
-
-  private onPaginationShowSizeChange(current, size) {
+  },
+  onPaginationShowSizeChange(current, size) {
     this.pagination.pageSize = size
     this.pagination.current = 1
     this.query()
-  }
-
-  // 单击行
-  private onRowClick(row: unknown) {}
-
-  // 双击行
-  private onRowDblclick(row: unknown) {
+  },
+ // 单击行
+  onRowClick(row: unknown) {},
+// 双击行
+onRowDblclick(row: unknown) {
     const feature = row as GFeature
     let bound = feature.properties.specialLayerBound
     if (bound === undefined) {
@@ -379,7 +391,7 @@ export default class MpAttributeTable extends Mixins(AttributeUtil) {
     const height = bound.ymax - bound.ymin
     const center = {
       x: (bound.xmin + bound.xmax) / 2,
-      y: (bound.ymin + bound.ymax) / 2,
+      y: (bound.ymin + bound.ymax) / 2
     }
     /**
      * 当缩放的范围为点时，跳转过去，会导致标注点消失，
@@ -391,22 +403,19 @@ export default class MpAttributeTable extends Mixins(AttributeUtil) {
       xmin: center.x - (width || 0.1),
       ymin: center.y - (height || 0.1),
       xmax: center.x + (width || 0.1),
-      ymax: center.y + (height || 0.1),
+      ymax: center.y + (height || 0.1)
     }
     this.fitBound = { ...(bound as Record<string, number>) }
-  }
-
-  private onRefresh() {
+  },
+onRefresh() {
     this.query()
-  }
-
-  /* 属性表导出选择器 */
-  private async handleMenuClick(type) {
+  },
+/* 属性表导出选择器 */
+async handleMenuClick(type) {
     await this.jsonFile(type.key)
-  }
-
-  /* 结果集属性列表导出为json数据 */
-  private async jsonFile(type) {
+  },
+/* 结果集属性列表导出为json数据 */
+async jsonFile(type) {
     const val = '1'
     const where = ''
     const datetime = Date.now()
@@ -432,55 +441,47 @@ export default class MpAttributeTable extends Mixins(AttributeUtil) {
       const blob = new Blob([JSON.stringify(jsonData)])
       await FileSaver.saveAs(blob, `attrData_${datetime}.json`)
     }
-  }
-
-  /* json数据转换成csv文件导出 */
-  private async exportCSV(data: any) {
+  },
+/* json数据转换成csv文件导出 */
+async exportCSV(data: any) {
     const parser = new this.Json2csvParser()
     const csvData = parser.parse(data)
     const blob = new Blob([`\uFEFF${csvData}`], {
-      type: 'text/plain;charset=utf-8;',
+      type: 'text/plain;charset=utf-8;'
     })
     const datetime = Date.now()
     await FileSaver.saveAs(blob, `attrData_${datetime}.csv`)
-  }
-
-  private onToggleScreen() {
+  },
+onToggleScreen() {
     if (this.fullScreen) {
       this.outFullScreen()
     } else {
       this.inFullScreen()
     }
-  }
-
-  private onZoomTo() {
+  },
+onZoomTo() {
     if (this.selection.length == 0) return
 
     this.markerPlottingComponent &&
       this.markerPlottingComponent.zoomTo(this.selectionBound)
-  }
-
-  private onClearSelection() {
+  },
+  onClearSelection() {
     this.clearSelection()
     ActiveResultSet.activeResultSet = {}
-  }
-
-  private onStatistics() {
+  },
+  onStatistics() {
     this.showAttrStatistics = true
     this.updateStatisticAndFilterParamas()
-  }
-
-  private onFilter() {
+  },
+  onFilter() {
     this.showFilter = true
     this.updateStatisticAndFilterParamas()
-  }
-
-  private async onUpdateWhere(val) {
+  },
+  async onUpdateWhere(val) {
     await this.query(val)
     this.showFilter = false
-  }
-
-  async onGetGeometry(val: Record<string, any>) {
+  },
+   async onGetGeometry(val: Record<string, any>) {
     const { xmin, ymin, xmax, ymax, height = 0 } = val
     this.geometry = new Zondy.Common.Rectangle(xmin, ymin, xmax, ymax)
 
@@ -490,19 +491,17 @@ export default class MpAttributeTable extends Mixins(AttributeUtil) {
       zmin: -100000,
       xmax,
       ymax,
-      zmax: 100000,
+      zmax: 100000
     }
     // 分页初始化到第一页
     this.pagination.current = 1
     // 记录当前选中的行（避免双击定位同时根据范围过滤时导致信息刷新）
     await this.query()
-  }
-
-  private showPaginationTotal(total, range) {
+  },
+  showPaginationTotal(total, range) {
     return `显示${range[0]}-${range[1]}条，共有 ${total}条`
-  }
-
-  private async query(where?: string) {
+  },
+  async query(where?: string) {
     this.loading = true
     this.sceneController = Objects.SceneController.getInstance(
       this.Cesium,
@@ -517,22 +516,21 @@ export default class MpAttributeTable extends Mixins(AttributeUtil) {
       )
     } catch (error) {
       const e = error as Error
+      this.tableColumns = []
       console.error('属性表请求失败：', e)
       this.$message.warning('请求失败！')
     } finally {
       this.loading = false
       this.calcTableScrollY()
     }
-  }
-
+  },
   // 清除选择集
-  private async clearSelection() {
+ async clearSelection() {
     this.selection = []
     await this.hightlightSelectionMarkers()
-  }
-
+  },
   // 高亮选择集对应的标注图标
-  private async hightlightSelectionMarkers() {
+   async hightlightSelectionMarkers() {
     const selectIcon = await markerIconInstance.selectIcon()
     const unSelectIcon = await markerIconInstance.unSelectIcon()
     this.markers.forEach((marker) => {
@@ -560,25 +558,19 @@ export default class MpAttributeTable extends Mixins(AttributeUtil) {
           xmin: bound.xmin < prev.xmin ? bound.xmin : prev.xmin,
           ymin: bound.ymin < prev.ymin ? bound.ymin : prev.ymin,
           xmax: bound.xmax > prev.xmax ? bound.xmax : prev.xmax,
-          ymax: bound.ymax > prev.ymax ? bound.ymax : prev.ymax,
+          ymax: bound.ymax > prev.ymax ? bound.ymax : prev.ymax
         }
       },
       {
         xmin: Number.MAX_VALUE,
         ymin: Number.MAX_VALUE,
         xmax: Number.MIN_VALUE,
-        ymax: Number.MIN_VALUE,
+        ymax: Number.MIN_VALUE
       }
     )
-  }
-
-  private get isIGSScence() {
-    const { serverType } = this.optionVal
-    return serverType === LayerType.IGSScene
-  }
-
+  },
   // 添加标注
-  private async addMarkers() {
+   async addMarkers() {
     const { serverType } = this.optionVal
 
     const unSelectIcon = await markerIconInstance.unSelectIcon()
@@ -602,7 +594,7 @@ export default class MpAttributeTable extends Mixins(AttributeUtil) {
           fid: feature.properties[this.rowKey],
           img: unSelectIcon,
           properties: this.setPropertiesAlias(feature.properties),
-          feature: feature,
+          feature: feature
         }
         tempMarkers.push(marker)
       }
@@ -617,9 +609,8 @@ export default class MpAttributeTable extends Mixins(AttributeUtil) {
       }
     }
     this.markers = [...tempMarkers]
-  }
-
-  /**
+  },
+   /**
    * 将弹窗的key设置成别名
    * 这里images字段不能用别名，弹窗组件需要通过images字段添加图片
    */
@@ -637,8 +628,7 @@ export default class MpAttributeTable extends Mixins(AttributeUtil) {
       }
     }
     return obj
-  }
-
+  },
   getModelHeight(tempMarkers: Array<unknown>) {
     return new Promise((resolve, reject) => {
       const positions = tempMarkers.map((item) => {
@@ -661,23 +651,20 @@ export default class MpAttributeTable extends Mixins(AttributeUtil) {
       )
       sampleElevationTool.start()
     })
-  }
-
+  },
   // 移除标注
-  private removeMarkers() {
+   removeMarkers() {
     this.markers = []
-  }
-
+  },
   // 计算表格内容高度
-  private calcTableScrollY() {
+   calcTableScrollY() {
     const tableElement = document.getElementById(this.tableId)
     const boundingClientRect = tableElement.getBoundingClientRect()
 
     // 30 is table header height,35 is bleow pagination height
     this.scrollY = document.body.clientHeight - boundingClientRect.top - 30 - 35
-  }
-
-  private updateStatisticAndFilterParamas() {
+  },
+  updateStatisticAndFilterParamas() {
     const { serverType, gdbp, serverUrl } = this.optionVal
     if (
       serverType === LayerType.IGSMapImage ||
@@ -690,56 +677,70 @@ export default class MpAttributeTable extends Mixins(AttributeUtil) {
         serverName: this.optionVal.serverName,
         layerIndex: this.currentTableParams.layerIndex,
         serverType,
-        gdbp,
+        gdbp
       }
     } else if (serverType === LayerType.ArcGISMapImage) {
       this.statisticAndFilterParamas = {
         serverName: this.optionVal.serverName,
         layerIndex: this.currentTableParams.layerIndex,
         serverType,
-        serverUrl,
+        serverUrl
       }
     }
-  }
+  },
 
-  private fullScreenListener(e) {
+   fullScreenListener(e) {
     if (e.target.id === this.id) {
       this.fullScreen = !this.fullScreen
     }
-  }
+  },
 
-  private inFullScreen() {
+   inFullScreen() {
     const el = this.$refs.attributeTable
     el.classList.add('beauty-scroll')
     if (!DomUtil.inFullScreen(el)) {
       this.$message.warn('对不起，您的浏览器不支持全屏模式')
       el.classList.remove('beauty-scroll')
     }
-  }
+  },
 
-  private outFullScreen() {
+   outFullScreen() {
     DomUtil.outFullScreen()
     this.$refs.attributeTable.classList.remove('beauty-scroll')
   }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 </script>
 
 <style lang="less">
 .mp-attribute-table {
-  .ant-table-tbody > tr > td,
-  .ant-table-thead > tr > th {
+  .mapgis-ui-table-tbody > tr > td,
+  .mapgis-ui-table-thead > tr > th {
     padding: 4px 4px !important;
   }
-  // .ant-table-body {
+  // .mapgis-ui-table-body {
   //   overflow: auto !important;
   // }
-  // .ant-table-header {
+  // .mapgis-ui-table-header {
   //   overflow: hidden !important;
   //   margin-bottom: 0px !important;
   // }
-  .ant-table-fixed-left {
+  .mapgis-ui-table-fixed-left {
     overflow: unset !important;
-    .ant-table-body-inner {
+    .mapgis-ui-table-body-inner {
       overflow: hidden !important;
     }
   }
@@ -749,7 +750,7 @@ export default class MpAttributeTable extends Mixins(AttributeUtil) {
 <style lang="less" scoped>
 .mp-attribute-table {
   height: 100%;
-  background-color: @base-bg-color;
+  background-color: transparent;
   .header-bar {
     padding: 0 10px 0 17px;
     .columns {
@@ -757,5 +758,21 @@ export default class MpAttributeTable extends Mixins(AttributeUtil) {
       cursor: pointer;
     }
   }
+}
+::v-deep
+  .mapgis-ui-table-fixed-header
+  > .mapgis-ui-table-content
+  > .mapgis-ui-table-scroll
+  > .mapgis-ui-table-body {
+  background: transparent;
+}
+
+::v-deep .mapgis-ui-table-fixed-left table,
+.mapgis-ui-table-fixed-right table {
+  background: transparent;
+}
+
+::v-deep .mapgis-ui-btn {
+  background: transparent;
 }
 </style>
