@@ -1,5 +1,5 @@
 <template>
-  <a-modal
+  <mapgis-ui-modal
     class="marker-export-wrapper"
     :visible="visible"
     title="导出标注"
@@ -8,27 +8,42 @@
     @cancel="onExportCancel"
     @ok="onExportOk"
   >
+    <template slot="footer">
+      <mapgis-ui-button key="cancel" @click="onExportCancel">
+        取消
+      </mapgis-ui-button>
+      <mapgis-ui-button key="ok" type="primary" @click="onExportOk">
+        确定
+      </mapgis-ui-button>
+    </template>
     <div class="marker-export-body">
-      <a-space direction="vertical" style="flex: 1">
-        <a-row>
+      <mapgis-ui-space direction="vertical" style="flex: 1">
+        <mapgis-ui-row>
           <label>文件名称</label>
-        </a-row>
-        <a-row>
-          <a-input v-model="exportOptions.exportFileName"> </a-input>
-        </a-row>
-        <a-row>
+        </mapgis-ui-row>
+        <mapgis-ui-row>
+          <mapgis-ui-input v-model="exportOptions.exportFileName">
+          </mapgis-ui-input>
+        </mapgis-ui-row>
+        <mapgis-ui-row>
           <label>导出格式</label>
-        </a-row>
-        <a-row>
-          <a-select v-model="exportOptions.exportFileType" style="width: 100%">
-            <a-select-option v-for="item in exportFileTypes" :key="item">
+        </mapgis-ui-row>
+        <mapgis-ui-row>
+          <mapgis-ui-select
+            v-model="exportOptions.exportFileType"
+            style="width: 100%"
+          >
+            <mapgis-ui-select-option
+              v-for="item in exportFileTypes"
+              :key="item"
+            >
               {{ item }}
-            </a-select-option>
-          </a-select>
-        </a-row>
-      </a-space>
+            </mapgis-ui-select-option>
+          </mapgis-ui-select>
+        </mapgis-ui-row>
+      </mapgis-ui-space>
     </div>
-  </a-modal>
+  </mapgis-ui-modal>
 </template>
 
 <script lang="ts">

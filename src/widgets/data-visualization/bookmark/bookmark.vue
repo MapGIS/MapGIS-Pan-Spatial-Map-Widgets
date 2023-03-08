@@ -1,44 +1,44 @@
 <template>
   <div class="mp-widget-bookmark">
-    <a-tree
+    <mapgis-ui-tree
       v-if="treeData.length > 0"
       :tree-data="treeData"
       :defaultExpandAll="true"
       :showLine="true"
       :replaceFields="replaceFields"
     >
-      <a-icon slot="switcherIcon" type="down" />
+      <mapgis-ui-iconfont slot="switcherIcon" type="mapgis-down" />
       <template #custom="item">
         <div v-if="item.children && item.children.length > 0">
-          <a-tooltip>
+          <mapgis-ui-tooltip>
             <template v-if="item.description" slot="title">
               {{ item.description }}
             </template>
             <span>{{ item.name }}</span>
-          </a-tooltip>
+          </mapgis-ui-tooltip>
         </div>
-        <a-dropdown v-else :trigger="['contextmenu']">
-          <a-tooltip>
+        <mapgis-ui-dropdown v-else :trigger="['contextmenu']">
+          <mapgis-ui-tooltip>
             <template v-if="item.description" slot="title">
               {{ item.description }}
             </template>
             <div @click="onClickBookmark(item)">{{ item.name }}</div>
-          </a-tooltip>
-          <a-menu slot="overlay">
-            <a-menu-item key="1" @click="onDeleteBookmark(item)">
+          </mapgis-ui-tooltip>
+          <mapgis-ui-menu slot="overlay">
+            <mapgis-ui-menu-item key="1" @click="onDeleteBookmark(item)">
               删除该项
-            </a-menu-item>
-          </a-menu>
-        </a-dropdown>
+            </mapgis-ui-menu-item>
+          </mapgis-ui-menu>
+        </mapgis-ui-dropdown>
       </template>
-    </a-tree>
-    <a-empty v-else :image="simpleImage" />
+    </mapgis-ui-tree>
+    <mapgis-ui-empty v-else :image="simpleImage" />
   </div>
 </template>
 
 <script lang="ts">
 import { Mixins, Component } from 'vue-property-decorator'
-import { Empty } from 'ant-design-vue'
+import { MapgisUiEmpty } from '@mapgis/webclient-vue-ui'
 import { WidgetMixin, UUID } from '@mapgis/web-app-framework'
 import { eventBus, events, api } from '../../../model'
 import { TreeConfig } from './tree-config'
@@ -57,7 +57,7 @@ export default class MpBookmark extends Mixins(WidgetMixin) {
   private nodeParentLevel: number[] = []
 
   beforeCreate() {
-    this.simpleImage = Empty.PRESENTED_IMAGE_SIMPLE
+    this.simpleImage = MapgisUiEmpty.PRESENTED_IMAGE_SIMPLE
   }
 
   mounted() {
@@ -185,7 +185,7 @@ export default class MpBookmark extends Mixins(WidgetMixin) {
       maxCount: 3,
     })
     this.$message.success({
-      content: '收藏成功，通过书签功能查看',
+      content: '收藏成功，通过收藏夹或者书签功能查看',
     })
   }
 
@@ -239,7 +239,7 @@ export default class MpBookmark extends Mixins(WidgetMixin) {
   private saveBookmarks() {
     api
       .saveWidgetConfig({
-        name: 'Bookmark',
+        name: 'bookmark',
         config: JSON.stringify(this.treeData),
       })
       .catch(() => {
@@ -254,9 +254,9 @@ export default class MpBookmark extends Mixins(WidgetMixin) {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .mp-widget-bookmark {
-  /deep/ .ant-tree > li {
+  ::v-deep .mapgis-ui-tree > li {
     &:last-child {
       padding-bottom: 0;
     }
@@ -264,7 +264,8 @@ export default class MpBookmark extends Mixins(WidgetMixin) {
       padding-top: 0;
     }
   }
-  /deep/ .ant-empty-normal {
+  ::v-deep .mapgis-ui-empty-normal {
+    color: $text-color;
     margin: 8px 0;
   }
 }

@@ -1,20 +1,24 @@
 <template>
   <div class="mp-attribute-table-list">
-    <a-tabs
+    <mapgis-ui-tabs
       v-if="options.length > 0"
       v-model="activeOptionId"
       type="card"
       size="small"
       hide-add
     >
-      <a-tab-pane v-for="option in options" :key="option.id" :tab="option.name">
+      <mapgis-ui-tab-pane
+        v-for="option in options"
+        :key="option.id"
+        :tab="option.name"
+      >
         <component
           :is="attributeTableComponent"
           :ref="option.id"
           :option="option"
         />
-      </a-tab-pane>
-    </a-tabs>
+      </mapgis-ui-tab-pane>
+    </mapgis-ui-tabs>
   </div>
 </template>
 
@@ -47,11 +51,11 @@ export default class MpAttributeTableList extends Mixins(ExhibitionMixin) {
   }
 
   private get tableExhibition() {
-    return function(option) {
+    return function (option) {
       return {
         id: option.id,
         name: option.name,
-        option: option
+        option: option,
       }
     }
   }

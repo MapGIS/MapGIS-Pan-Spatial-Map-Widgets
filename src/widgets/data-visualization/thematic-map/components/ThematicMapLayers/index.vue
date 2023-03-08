@@ -18,21 +18,26 @@
 import { Mixins, Component, Watch, Inject } from 'vue-property-decorator'
 import { Feature, AppMixin } from '@mapgis/web-app-framework'
 import { getMarker, IMarker } from '../../utils'
-import { subjectTypeList, mapGetters, mapMutations } from '../../store'
+import {
+  subjectTypeList,
+  mapGetters,
+  mapMutations,
+  LayerServiceType,
+} from '../../store'
 import mapboxLayers from './components/Mapbox'
 import CesiumLayers from './components/Cesium'
 
 @Component({
   components: {
     ...mapboxLayers,
-    ...CesiumLayers
+    ...CesiumLayers,
   },
   computed: {
-    ...mapGetters(['loading', 'subjectData', 'linkageFid'])
+    ...mapGetters(['loading', 'subjectData', 'linkageFid']),
   },
   methods: {
-    ...mapMutations(['setFeaturesQuery', 'setLinkage', 'resetLinkage'])
-  }
+    ...mapMutations(['setFeaturesQuery', 'setLinkage', 'resetLinkage']),
+  },
 })
 export default class ThematicMapLayers extends Mixins(AppMixin) {
   @Inject('map') map
@@ -75,14 +80,6 @@ export default class ThematicMapLayers extends Mixins(AppMixin) {
   }
 
   /**
-   * 设置初始范围
-   */
-  initBound() {
-    this.map.setCenter([105, 36])
-    this.map.setZoom(3)
-  }
-
-  /**
    * 清除高亮
    */
   onClearHighlight() {
@@ -94,7 +91,7 @@ export default class ThematicMapLayers extends Mixins(AppMixin) {
    * @param {string} fid 要素fid
    */
   onHighlight(fid: string) {
-    getMarker(this.geojson, fid, this.propertiesOption).then(marker => {
+    getMarker(this.geojson, fid, this.propertiesOption).then((marker) => {
       this.marker = marker
     })
   }
@@ -117,8 +114,13 @@ export default class ThematicMapLayers extends Mixins(AppMixin) {
     if (nV) {
       this.setFeaturesQuery({
         isCache: false,
-        onSuccess: geojson => (this.geojson = geojson)
+        onSuccess: (geojson) => (this.geojson = geojson),
       })
+      if (nV.layerServiceType === LayerServiceType.igsScene) {
+        if (this.is2DMapMode) {
+          this.switchMapMode()
+        }
+      }
     }
   }
 
@@ -128,10 +130,6 @@ export default class ThematicMapLayers extends Mixins(AppMixin) {
   @Watch('linkageFid')
   linkageFidChanged(nV) {
     this.setHighlight(nV)
-  }
-
-  created() {
-    this.initBound()
   }
 
   beforeDestroy() {

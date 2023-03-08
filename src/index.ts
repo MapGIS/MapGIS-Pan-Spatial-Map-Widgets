@@ -19,72 +19,72 @@ export {
   ProjectorManager,
 } from './model'
 
-import {
-  MpBufferAnalysis,
-  MpDynamicSectionAnalysis,
-  MpHeightLimitedAnalysis,
-  MpModelFlatten,
-  MpNetworkAnalysis,
-  MpOverlayAnalysis,
-  MpProfileAnalysis,
-  MpRetrospect,
-  MpSceneRoaming,
-  MpShadowAnalysis,
-  MpSkylineAnalysis,
-  MpSwipe,
-  MpTerrainAnalysis,
-  MpTopologyAnalysis,
-  MpVisibilityAnalysis,
-} from './widgets/analysis'
+// import {
+//   MpBufferAnalysis,
+//   MpDynamicSectionAnalysis,
+//   MpHeightLimitedAnalysis,
+//   MpModelFlatten,
+//   MpNetworkAnalysis,
+//   MpOverlayAnalysis,
+//   MpProfileAnalysis,
+//   MpRetrospect,
+//   MpSceneRoaming,
+//   MpShadowAnalysis,
+//   MpSkylineAnalysis,
+//   MpSwipe,
+//   MpTerrainAnalysis,
+//   MpTopologyAnalysis,
+//   MpVisibilityAnalysis,
+// } from './widgets/analysis'
 
 import {
-  MpAddData,
+  // MpAddData,
   MpBasemapManager,
   MpDataCatalog,
 } from './widgets/data-manager'
 
 import {
-  MpBookmark,
+  // MpBookmark,
   MpLayerList,
   MpLayerListContainer,
-  MpLegend,
+  // MpLegend,
   MpMapModePicker,
-  MpMapStory,
-  MpParticleEffects,
-  MpProjectorManager,
-  MpRotate,
-  MpScalebar,
-  MpSceneSetting,
-  MpThematicMap,
-  MpVectorTileCarto,
-  MpViewpointManager,
-  MpZoom,
+  // MpMapStory,
+  // MpParticleEffects,
+  // MpProjectorManager,
+  // MpRotate,
+  // MpScalebar,
+  // MpSceneSetting,
+  // MpThematicMap,
+  // MpVectorTileCarto,
+  // MpViewpointManager,
+  // MpZoom,
 } from './widgets/data-visualization'
 
-import { MpMarkerManager, MpOverlayManager } from './widgets/editing'
+// import { MpMarkerManager, MpOverlayManager } from './widgets/editing'
+
+// import {
+//   MpAbindCard,
+//   MpAbout,
+//   MpFuncWarehouse,
+//   MpKibanaV,
+//   MpMapDataV,
+// } from './widgets/extended'
+
+// import { MpComprehensiveQuery, MpFeatureQuery } from './widgets/query'
+
+// import {
+//   MpBuildingGrow,
+//   MpCityGrow,
+//   MpPondingSimulation,
+// } from './widgets/simulation'
 
 import {
-  MpAbindCard,
-  MpAbout,
-  MpFuncWarehouse,
-  MpKibanaV,
-  MpMapDataV,
-} from './widgets/extended'
-
-import { MpComprehensiveQuery, MpFeatureQuery } from './widgets/query'
-
-import {
-  MpBuildingGrow,
-  MpCityGrow,
-  MpPondingSimulation,
-} from './widgets/simulation'
-
-import {
-  MpBimComponent,
+  //   MpBimComponent,
   MpMeasurement,
-  MpOutputImage,
-  MpSplitScreen,
-  MpStratifiedHousehold,
+  //   MpOutputImage,
+  //   MpSplitScreen,
+  //   MpStratifiedHousehold,
 } from './widgets/tool'
 
 // import RightPopover from './components/TreeLayer/components/RightPopover/index.vue'
@@ -92,63 +92,63 @@ import {
 const components = [
   // RightPopover,
   // analysis
-  MpBufferAnalysis,
-  MpDynamicSectionAnalysis,
-  MpHeightLimitedAnalysis,
-  MpModelFlatten,
-  MpNetworkAnalysis,
-  MpOverlayAnalysis,
-  MpProfileAnalysis,
-  MpRetrospect,
-  MpSceneRoaming,
-  MpShadowAnalysis,
-  MpSkylineAnalysis,
-  MpSwipe,
-  MpTerrainAnalysis,
-  MpTopologyAnalysis,
-  MpVisibilityAnalysis,
+  // MpBufferAnalysis,
+  // MpDynamicSectionAnalysis,
+  // MpHeightLimitedAnalysis,
+  // MpModelFlatten,
+  // MpNetworkAnalysis,
+  // MpOverlayAnalysis,
+  // MpProfileAnalysis,
+  // MpRetrospect,
+  // MpSceneRoaming,
+  // MpShadowAnalysis,
+  // MpSkylineAnalysis,
+  // MpSwipe,
+  // MpTerrainAnalysis,
+  // MpTopologyAnalysis,
+  // MpVisibilityAnalysis,
   // data-manager
-  MpAddData,
+  // MpAddData,
   MpBasemapManager,
   MpDataCatalog,
   // data-visualization
-  MpBookmark,
+  // MpBookmark,
   MpLayerList,
   MpLayerListContainer,
-  MpLegend,
+  // MpLegend,
   MpMapModePicker,
-  MpMapStory,
-  MpParticleEffects,
-  MpProjectorManager,
-  MpRotate,
-  MpScalebar,
-  MpSceneSetting,
-  MpThematicMap,
-  MpVectorTileCarto,
-  MpViewpointManager,
-  MpZoom,
+  // MpMapStory,
+  // MpParticleEffects,
+  // MpProjectorManager,
+  // MpRotate,
+  // MpScalebar,
+  // MpSceneSetting,
+  // MpThematicMap,
+  // MpVectorTileCarto,
+  // MpViewpointManager,
+  // MpZoom,
   // editing
-  MpMarkerManager,
-  MpOverlayManager,
+  // MpMarkerManager,
+  // MpOverlayManager,
   // extended
-  MpAbindCard,
-  MpAbout,
-  MpFuncWarehouse,
-  MpKibanaV,
-  MpMapDataV,
+  // MpAbindCard,
+  // MpAbout,
+  // MpFuncWarehouse,
+  // MpKibanaV,
+  // MpMapDataV,
   // query
-  MpComprehensiveQuery,
-  MpFeatureQuery,
+  // MpComprehensiveQuery,
+  // MpFeatureQuery,
   // simulation
-  MpBuildingGrow,
-  MpCityGrow,
-  MpPondingSimulation,
+  // MpBuildingGrow,
+  // MpCityGrow,
+  // MpPondingSimulation,
   // tool
-  MpBimComponent,
+  // MpBimComponent,
   MpMeasurement,
-  MpOutputImage,
-  MpSplitScreen,
-  MpStratifiedHousehold,
+  // MpOutputImage,
+  // MpSplitScreen,
+  // MpStratifiedHousehold,
 ]
 
 const install = (Vue) => {

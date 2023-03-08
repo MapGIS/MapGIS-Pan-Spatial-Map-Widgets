@@ -1,15 +1,15 @@
 <template>
-  <a-select
+  <mapgis-ui-select
     notFoundContent="请添加类型"
     placeholder="请选择类型"
     :size="size"
     :value="value && value.text"
     @select="onSelect"
   >
-    <a-select-option v-for="item in types" :key="item.text">
+    <mapgis-ui-select-option v-for="item in types" :key="item.text">
       {{ item.text }}
-    </a-select-option>
-  </a-select>
+    </mapgis-ui-select-option>
+  </mapgis-ui-select>
 </template>
 
 <script lang="ts">

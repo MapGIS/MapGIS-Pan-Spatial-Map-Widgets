@@ -15,9 +15,9 @@
         />
       </mp-toolbar-command-group>
     </mp-group-tab>
-    <a-spin :spinning="loading">
-      <a-empty v-if="!thematicMapTree.length" />
-      <a-tree
+    <mapgis-ui-spin :spinning="loading">
+      <mapgis-ui-empty v-if="!thematicMapTree.length" />
+      <mapgis-ui-tree
         v-else
         @check="onTreeCheck"
         :show-line="true"
@@ -27,27 +27,30 @@
         checkable
       >
         <span slot="custom" slot-scope="node" class="tree-node">
-          <a-dropdown :trigger="['contextmenu']">
+          <mapgis-ui-dropdown :trigger="['contextmenu']">
             <span>{{ node.title }}</span>
-            <a-menu slot="overlay" @click="onTreeNodeMenuClick($event, node)">
-              <a-menu-item
+            <mapgis-ui-menu
+              slot="overlay"
+              @click="onTreeNodeMenuClick($event, node)"
+            >
+              <mapgis-ui-menu-item
                 v-show="!node.checkable"
                 :key="thematicMapNodeHandles.CREATE"
-                >新建</a-menu-item
+                >新建</mapgis-ui-menu-item
               >
-              <a-menu-item
+              <mapgis-ui-menu-item
                 v-show="node.checkable"
                 :key="thematicMapNodeHandles.EDIT"
-                >编辑</a-menu-item
+                >编辑</mapgis-ui-menu-item
               >
-              <a-menu-item :key="thematicMapNodeHandles.REMOVE"
-                >删除</a-menu-item
+              <mapgis-ui-menu-item :key="thematicMapNodeHandles.REMOVE"
+                >删除</mapgis-ui-menu-item
               >
-            </a-menu>
-          </a-dropdown>
+            </mapgis-ui-menu>
+          </mapgis-ui-dropdown>
         </span>
-      </a-tree>
-    </a-spin>
+      </mapgis-ui-tree>
+    </mapgis-ui-spin>
     <!-- 5类专题图图层 -->
     <thematic-map-layers />
     <!-- 属性表 -->
@@ -64,15 +67,16 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component, Watch } from 'vue-property-decorator'
+import { Mixins, Component, Watch, Provide } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
+import { baseConfigInstance } from '../../../model'
 import _cloneDeep from 'lodash/cloneDeep'
 import {
   ModuleType,
   INewSubjectConfig,
   mapGetters,
   mapMutations,
-  moduleTypeList
+  moduleTypeList,
 } from './store'
 import ThematicMapAttributeTable from './components/ThematicMapAttributeTable'
 import ThematicMapStatisticGraph from './components/ThematicMapStatisticGraph'
@@ -84,13 +88,13 @@ import ThematicMapLayers from './components/ThematicMapLayers'
 enum ThematicMapNodeHandles {
   CREATE = 'CREATE',
   EDIT = 'EDIT',
-  REMOVE = 'REMOVE'
+  REMOVE = 'REMOVE',
 }
 
 @Component({
   name: 'MpThematicMap',
   computed: {
-    ...mapGetters(['subjectConfig'])
+    ...mapGetters(['subjectConfig']),
   },
   methods: {
     ...mapMutations([
@@ -99,8 +103,8 @@ enum ThematicMapNodeHandles {
       'setSubjectConfig',
       'updateSubjectConfig',
       'setSelectedSubjectList',
-      'resetVisible'
-    ])
+      'resetVisible',
+    ]),
   },
   components: {
     ThematicMapAttributeTable,
@@ -108,10 +112,15 @@ enum ThematicMapNodeHandles {
     ThematicMapTimeLine,
     ThematicMapManageTools,
     ThematicMapSubjectAdd,
-    ThematicMapLayers
-  }
+    ThematicMapLayers,
+  },
 })
 export default class MpThematicMap extends Mixins(WidgetMixin) {
+  @Provide()
+  get popupShowType() {
+    return baseConfigInstance.config.popupShowType
+  }
+
   // 放置面板打开时多次触发更新
   flag = true
 
@@ -162,7 +171,7 @@ export default class MpThematicMap extends Mixins(WidgetMixin) {
     if (type) {
       this.setVisible(type)
     } else {
-      moduleTypeList.forEach(v => v !== exclude && this.setVisible(v))
+      moduleTypeList.forEach((v) => v !== exclude && this.setVisible(v))
     }
   }
 
@@ -173,7 +182,7 @@ export default class MpThematicMap extends Mixins(WidgetMixin) {
    * 若无参数则隐藏所有默认配置的面板
    */
   setModulesHide(exclude: ModuleType) {
-    moduleTypeList.forEach(t => t !== exclude && this.resetVisible(t))
+    moduleTypeList.forEach((t) => t !== exclude && this.resetVisible(t))
   }
 
   /**
@@ -188,7 +197,7 @@ export default class MpThematicMap extends Mixins(WidgetMixin) {
    * @param tree
    */
   normalizeThematicMapTree(tree: Array<ISubjectConfigNode>) {
-    return tree.map(node => {
+    return tree.map((node) => {
       this.$set(node, 'checkable', node.nodeType === 'subject')
       this.$set(node, 'scopedSlots', { title: 'custom' })
       if (node.children && node.children.length) {
@@ -223,7 +232,7 @@ export default class MpThematicMap extends Mixins(WidgetMixin) {
    */
   onTreeNodeRemove(nodeData: ISubjectConfigNode) {
     this.setSelectedSubjectList(
-      this.checkedThematicMapNodes.filter(s => s.id !== nodeData.id)
+      this.checkedThematicMapNodes.filter((s) => s.id !== nodeData.id)
     )
     const recursion = (
       tree: Array<ISubjectConfigNode>,
@@ -247,7 +256,7 @@ export default class MpThematicMap extends Mixins(WidgetMixin) {
       .then(() => {
         this.$message.success('删除成功')
       })
-      .catch(err => {
+      .catch((err) => {
         this.$message.error('删除失败')
       })
   }
@@ -339,7 +348,7 @@ export default class MpThematicMap extends Mixins(WidgetMixin) {
         basePort: '',
         isOverlay: true,
         isLocation: true,
-        startZindex: 3000
+        startZindex: 3000,
       }
     }
     this.setBaseConfig(baseConfig)
@@ -351,18 +360,25 @@ export default class MpThematicMap extends Mixins(WidgetMixin) {
   }
 }
 </script>
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .mp-widget-thematic-map {
   height: 100%;
   overflow-y: auto;
-  .ant-empty {
+  .mapgis-ui-empty {
     margin-top: 10%;
   }
 }
 .tree-node-context-menue {
-  box-shadow: @box-shadow-base;
+  box-shadow: $box-shadow-base;
 }
-::v-deep .ant-empty {
+::v-deep .mapgis-ui-empty {
   margin-top: 20%;
+}
+
+::v-deep
+  .mapgis-ui-tree.mapgis-ui-tree-show-line
+  li
+  span.mapgis-ui-tree-switcher {
+  background: transparent;
 }
 </style>

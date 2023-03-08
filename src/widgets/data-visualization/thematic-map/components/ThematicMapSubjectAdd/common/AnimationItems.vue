@@ -1,10 +1,10 @@
 <template>
-  <a-dropdown
+  <mapgis-ui-dropdown
     class="animation-items"
     :visible="dropdownVisible"
     :trigger="['click']"
   >
-    <a-button @click="showDropdown">点击设置</a-button>
+    <mapgis-ui-button @click="showDropdown">点击设置</mapgis-ui-button>
     <mp-card
       slot="overlay"
       :box-shadow="true"
@@ -16,22 +16,28 @@
         {{ animation.type }}
       </mp-row-flex>
       <mp-row-flex :span="[6, 18]" label="拖尾大小" label-align="right">
-        <a-input-number v-model="animation.trails" :min="1" />
+        <mapgis-ui-input-number v-model="animation.trails" :min="1" />
       </mp-row-flex>
       <mp-row-flex :span="[6, 18]" label="单个时间" label-align="right">
-        <a-input-number v-model="animation.duration" :min="1" />
+        <mapgis-ui-input-number v-model="animation.duration" :min="1" />
       </mp-row-flex>
       <mp-row-flex :span="[6, 18]" label="起止时间" label-align="right">
         <div class="steps-range">
-          <a-space>
-            <a-input-number v-model="animation.stepsRange.start" :min="0" />
+          <mapgis-ui-space>
+            <mapgis-ui-input-number
+              v-model="animation.stepsRange.start"
+              :min="0"
+            />
             <span>至</span>
-            <a-input-number v-model="animation.stepsRange.end" :min="0" />
-          </a-space>
+            <mapgis-ui-input-number
+              v-model="animation.stepsRange.end"
+              :min="0"
+            />
+          </mapgis-ui-space>
         </div>
       </mp-row-flex>
     </mp-card>
-  </a-dropdown>
+  </mapgis-ui-dropdown>
 </template>
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
@@ -49,21 +55,21 @@ export default class AnimationItems extends Vue {
     duration: 4,
     stepsRange: {
       start: 0,
-      end: 100
-    }
+      end: 100,
+    },
   }
 
   tools = [
     {
       title: '确认',
       icon: 'check',
-      method: this.confirm
+      method: this.confirm,
     },
     {
       title: '取消',
       icon: 'close',
-      method: this.cancel
-    }
+      method: this.cancel,
+    },
   ]
 
   @Watch('value', { deep: true })
@@ -114,7 +120,7 @@ export default class AnimationItems extends Vue {
 <style lang="less" scoped>
 .animation-items {
   &-dropdown {
-    ::v-deep .ant-row-flex:not(:last-of-type) {
+    ::v-deep .mapgis-ui-row-flex:not(:last-of-type) {
       margin-bottom: 10px;
     }
   }

@@ -1,5 +1,5 @@
 <template>
-  <a-modal
+  <mapgis-ui-modal
     class="marker-import-wrapper"
     :visible="visible"
     title="导入文件"
@@ -8,12 +8,20 @@
     @cancel="onImportCancel"
     @ok="onImportOk"
   >
+    <template slot="footer">
+      <mapgis-ui-button key="cancel" @click="onImportCancel">
+        取消
+      </mapgis-ui-button>
+      <mapgis-ui-button key="ok" type="primary" @click="onImportOk">
+        确定
+      </mapgis-ui-button>
+    </template>
     <div class="marker-import-body">
-      <a-space direction="vertical" style="flex: 1">
-        <a-row>
+      <mapgis-ui-space direction="vertical" style="flex: 1">
+        <mapgis-ui-row>
           <label>文件路径</label>
-        </a-row>
-        <a-row>
+        </mapgis-ui-row>
+        <mapgis-ui-row>
           <div style="display: flex">
             <div class="upload-content">
               <input
@@ -29,25 +37,25 @@
               >
             </div>
             <div class="upload-tip" @click="openImportFileDesc = true">
-              <a-tooltip title="文件格式说明">
-                <a-icon type="info-circle-o" />
-              </a-tooltip>
+              <mapgis-ui-tooltip title="文件格式说明">
+                <mapgis-ui-iconfont type="mapgis-info-circle" />
+              </mapgis-ui-tooltip>
             </div>
           </div>
-        </a-row>
-        <a-row>
+        </mapgis-ui-row>
+        <mapgis-ui-row>
           <label>坐标系</label>
-        </a-row>
-        <a-row>
-          <a-select v-model="importOptions.crsName" style="width: 100%">
-            <a-select-option v-for="item in crsNames" :key="item">
+        </mapgis-ui-row>
+        <mapgis-ui-row>
+          <mapgis-ui-select v-model="importOptions.crsName" style="width: 100%">
+            <mapgis-ui-select-option v-for="item in crsNames" :key="item">
               {{ item }}
-            </a-select-option>
-          </a-select>
-        </a-row>
-      </a-space>
+            </mapgis-ui-select-option>
+          </mapgis-ui-select>
+        </mapgis-ui-row>
+      </mapgis-ui-space>
     </div>
-    <a-modal
+    <mapgis-ui-modal
       v-model="openImportFileDesc"
       title="文件结构"
       :width="500"
@@ -56,8 +64,8 @@
       @ok="openImportFileDesc = false"
     >
       <marker-import-file-desc />
-    </a-modal>
-  </a-modal>
+    </mapgis-ui-modal>
+  </mapgis-ui-modal>
 </template>
 
 <script lang="ts">
@@ -279,7 +287,7 @@ export default class MpMarkerImport extends Mixins(MarkerMixin) {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .marker-import-wrapper {
   .marker-import-body {
     display: flex;
@@ -287,7 +295,7 @@ export default class MpMarkerImport extends Mixins(MarkerMixin) {
   .upload-content {
     flex: 1;
     height: 32px;
-    border: 1px solid @primary-color;
+    border: 1px solid $primary-color;
     border-radius: 4px;
     display: flex;
     align-items: center;

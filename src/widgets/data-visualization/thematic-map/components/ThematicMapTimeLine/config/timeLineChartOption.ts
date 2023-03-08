@@ -17,16 +17,16 @@ export const chartOption = (params: IParams) => {
         left: 0,
         right: 0,
         controlStyle: {
-          showPlayBtn: false
+          showPlayBtn: false,
         },
         trigger: 'axis',
         axisPointer: {
-          type: 'shadow'
-        }
+          type: 'shadow',
+        },
       },
       tooltip: {
-        position: 'bottom'
-      }
-    }
+        position: 'bottom',
+      },
+    },
   }
 }

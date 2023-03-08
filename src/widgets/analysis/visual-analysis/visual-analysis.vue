@@ -15,7 +15,7 @@ import { Mixins, Component } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
 @Component({
-  name: 'MpVisualAnalysis'
+  name: 'MpVisualAnalysis',
 })
 export default class MpVisualAnalysis extends Mixins(WidgetMixin) {
   // 观察点的水平视角

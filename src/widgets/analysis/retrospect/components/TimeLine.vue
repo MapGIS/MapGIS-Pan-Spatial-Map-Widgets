@@ -25,7 +25,7 @@ export default class TimeLine extends Vue {
       currentIndex: this.value,
       autoPlay: this.autoPlay,
       playInterval: this.playInterval * 1000,
-      data: this.timeLineList
+      data: this.timeLineList,
     }
   }
 
@@ -44,7 +44,7 @@ export default class TimeLine extends Vue {
             itemGap: 5,
             normal: { color: '#333' },
             emphasis: { color: '#1e90ff' },
-            showPlayBtn: false
+            showPlayBtn: false,
           },
           lineStyle: { color: '#666', width: 1, type: 'dashed' },
           checkpointStyle: {
@@ -52,18 +52,18 @@ export default class TimeLine extends Vue {
             symbolSize: 14,
             borderColor: 'auto',
             borderWidth: 'auto',
-            label: { show: false, textStyle: { color: 'auto' } }
+            label: { show: false, textStyle: { color: 'auto' } },
           },
           trigger: 'axis',
           axisPointer: {
             // 坐标轴指示器，坐标轴触发有效
-            type: 'shadow' // 默认为直线，可选为：'line' | 'shadow'
-          }
+            type: 'shadow', // 默认为直线，可选为：'line' | 'shadow'
+          },
         },
         tooltip: {
-          position: 'bottom'
-        }
-      }
+          position: 'bottom',
+        },
+      },
     }
   }
 
@@ -101,7 +101,7 @@ export default class TimeLine extends Vue {
 
 <style lang="less" scoped>
 .time-line-chart {
-  width: 400px;
+  width: 288px;
   height: 48px;
   margin: 10px 0 10px;
 }

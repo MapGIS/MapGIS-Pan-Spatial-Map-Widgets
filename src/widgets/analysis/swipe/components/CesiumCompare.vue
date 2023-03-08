@@ -7,7 +7,7 @@
       :after-layers="afterLayers"
     />
     <!-- 空数据提示 -->
-    <a-empty
+    <mapgis-ui-empty
       v-show="!showCompare"
       description="卷帘分析功能至少需要选择2个图层"
     />
@@ -22,13 +22,13 @@ import SwipeSetting from './SwipeSetting'
 
 @Component({
   components: {
-    SwipeSetting
-  }
+    SwipeSetting,
+  },
 })
 export default class CesiumCompare extends Vue {
   @Inject({
     from: 'swipe',
-    default: () => ({})
+    default: () => ({}),
   })
   readonly swipe!: any
 
@@ -60,20 +60,18 @@ export default class CesiumCompare extends Vue {
   }
 }
 </script>
-<style lang="less" scoped>
+
+<style lang="scss" scoped>
 .swipe-cesium-compare {
   padding: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-</style>
-
-<style lang="less">
 .mp-map-container {
   .cesium-map-wrapper .slider {
-    border: 1px solid @primary-color;
-    background-color: @border-color;
+    border: 1px solid $primary-color;
+    background-color: $border-color;
     width: 3px;
   }
 }

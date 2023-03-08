@@ -4,6 +4,7 @@
     :columns="tableColumns"
     :data="tableData"
     :subject-config="subjectConfig"
+    :emptyVisible="emptyVisible"
   />
 </template>
 <script lang="ts">
@@ -24,24 +25,15 @@ interface ITable {
 
 @Component({
   components: {
-    EditableFieldTable
-  }
+    EditableFieldTable,
+  },
 })
 export default class AttributeTable extends Vue {
   @Prop({ default: () => ({}) }) readonly subjectConfig!: INewSubjectConfig
 
-  @Watch('subjectConfig.table', { deep: true })
-  tableDataChange({ showFields = [], showFieldsTitle } = {}) {
-    if (showFields.length === this.tableData.length) {
-      this.tableData = showFields.map((f, i) => ({
-        index: i,
-        field: f,
-        alias: showFieldsTitle[f]
-      }))
-    }
-  }
-
   tableData = []
+
+  emptyVisible = false
 
   get tableColumns() {
     return [
@@ -49,14 +41,49 @@ export default class AttributeTable extends Vue {
         type: 'Select',
         title: '属性字段',
         dataIndex: 'field',
-        width: 160
+        width: 160,
       },
       {
         type: 'Input',
         title: '属性别名',
-        dataIndex: 'alias'
-      }
+        dataIndex: 'alias',
+      },
     ]
+  }
+
+  @Watch('subjectConfig.table', { deep: true })
+  tableDataChange({ showFields = [], showFieldsTitle } = {}) {
+    if (showFields.length === this.tableData.length) {
+      this.setTableData(showFields, showFieldsTitle)
+    }
+  }
+
+  mounted() {
+    this.initTableData()
+  }
+
+  /**
+   * 回显表格数据
+   */
+  initTableData() {
+    if (!this.subjectConfig.table) return
+    const { showFields = [], showFieldsTitle } = this.subjectConfig.table
+    if (showFields.length) {
+      this.setTableData(showFields, showFieldsTitle)
+      this.emptyVisible = true
+    }
+  }
+
+  /**
+   * 调整表格数据格式
+   */
+  setTableData(showFields, showFieldsTitle) {
+    const addNum = 1000
+    this.tableData = showFields.map((f, i) => ({
+      index: addNum + i,
+      field: f,
+      alias: showFieldsTitle[f],
+    }))
   }
 
   /**
@@ -77,7 +104,7 @@ export default class AttributeTable extends Vue {
             },
             {
               showFields: [],
-              showFieldsTitle: {}
+              showFieldsTitle: {},
             }
           )
         : undefined

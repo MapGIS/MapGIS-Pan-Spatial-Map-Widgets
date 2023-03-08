@@ -34,7 +34,7 @@ import { Util } from '@mapgis/webclient-vue-ui'
 const { ColorUtil } = Util
 
 @Component({
-  name: 'MpSkylineAnalysis'
+  name: 'MpSkylineAnalysis',
 })
 export default class MpSkylineAnalysis extends Mixins(WidgetMixin) {
   // 天际线分析结果宽度

@@ -16,21 +16,24 @@
       </div>
     </div>
     <div :class="['actions', actionMenuVisible ? 'actions-visible' : '']">
-      <a-icon type="info-circle" :title="marker.description" />
-      <a-popover
+      <mapgis-ui-iconfont
+        type="mapgis-info-circle"
+        :title="marker.description"
+      />
+      <mapgis-ui-popover
         placement="bottomLeft"
         arrow-point-at-center
         v-model="actionMenuVisible"
         trigger="click"
         overlayClassName="marker-manager-popover"
       >
-        <a-list slot="content" :gutter="10">
-          <a-list-item @click="onDeleteMarker">
+        <mapgis-ui-list slot="content" :gutter="10">
+          <mapgis-ui-list-item @click="onDeleteMarker">
             删除
-          </a-list-item>
-        </a-list>
-        <a-icon type="more" />
-      </a-popover>
+          </mapgis-ui-list-item>
+        </mapgis-ui-list>
+        <mapgis-ui-iconfont type="mapgis-more" />
+      </mapgis-ui-popover>
     </div>
   </div>
 </template>
@@ -55,7 +58,7 @@ export default class MpMarkerItem extends Vue {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .marker-item {
   width: 100%;
   height: 32px;
@@ -69,7 +72,7 @@ export default class MpMarkerItem extends Vue {
     display: flex;
     align-items: center;
     height: 100%;
-    border-bottom: 1px solid @item-active-bg;
+    border-bottom: 1px solid $item-active-bg;
     .name {
       max-width: 200px;
       overflow: hidden;
@@ -83,37 +86,47 @@ export default class MpMarkerItem extends Vue {
       padding-left: 8px;
       cursor: pointer;
       &:hover {
-        color: @primary-color;
+        color: $primary-color;
       }
     }
   }
+  &.active {
+    background-color: fade($primary-color, 50%);
+  }
   &:hover {
+    background-color: fade($primary-color, 20%);
     .actions {
       display: block;
     }
-    background-color: fade(@primary-color, 20%);
   }
   .actions-visible {
     display: block;
   }
-  &.active {
-    background-color: fade(@primary-color, 50%);
+}
+.marker-manager-popover {
+  .mapgis-ui-popover-inner {
+    .mapgis-ui-popover-inner-content {
+      .mapgis-ui-list-item {
+        &:hover {
+          background-color: $table-row-hover-bg;
+        }
+      }
+    }
   }
 }
 </style>
 
-<style lang="less">
+<style lang="scss">
 .marker-manager-popover {
-  .ant-popover-inner {
+  .mapgis-ui-popover-inner {
     overflow: hidden;
-    .ant-popover-inner-content {
+    .mapgis-ui-popover-inner-content {
       padding: 0;
-      .ant-list-item {
+      .mapgis-ui-list-item {
         padding: 5px 15px 5px 12px;
         font-size: 12px;
         line-height: 22px;
         &:hover {
-          background-color: @table-row-hover-bg;
           cursor: pointer;
         }
       }

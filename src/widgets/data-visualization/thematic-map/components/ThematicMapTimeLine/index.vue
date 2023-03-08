@@ -10,23 +10,23 @@
       anchor="bottom-center"
     >
       <div class="thematic-map-time-line">
-        <a-spin :spinning="loading">
+        <mapgis-ui-spin :spinning="loading">
           <!-- 时间轴 -->
           <mp-row-flex v-show="timeList.length" :span="[2, 22]" align="top">
             <template #label>
-              <a-tooltip placement="bottom" :title="autoPlay.tooltip">
-                <a-icon
+              <mapgis-ui-tooltip placement="bottom" :title="autoPlay.tooltip">
+                <mapgis-ui-iconfont
                   class="thematic-map-time-line-btn"
                   :type="autoPlay.type"
                   @click="btnPlay"
                 />
-              </a-tooltip>
+              </mapgis-ui-tooltip>
             </template>
             <div id="thematic-map-time-line-chart" />
           </mp-row-flex>
           <!-- 空数据友好提示 -->
-          <a-empty v-show="!timeList.length" />
-        </a-spin>
+          <mapgis-ui-empty v-show="!timeList.length" />
+        </mapgis-ui-spin>
       </div>
     </mp-window>
   </mp-window-wrapper>
@@ -43,12 +43,12 @@ import { chartOption } from './config/timeLineChartOption'
       'loading',
       'isVisible',
       'selectedSubjectTime',
-      'selectedSubjectTimeList'
-    ])
+      'selectedSubjectTimeList',
+    ]),
   },
   methods: {
-    ...mapMutations(['resetVisible', 'setSelectedSubjectTime'])
-  }
+    ...mapMutations(['resetVisible', 'setSelectedSubjectTime']),
+  },
 })
 export default class ThematicMapTimeLine extends Vue {
   // 图表
@@ -78,10 +78,10 @@ export default class ThematicMapTimeLine extends Vue {
 
   // 播放文案和提示设置
   get autoPlay() {
-    let type = 'play-circle'
+    let type = 'mapgis-play-circle'
     let tooltip = '播放'
     if (this.isPlay) {
-      type = 'pause-circle'
+      type = 'mapgis-pause-circle'
       tooltip = '暂停'
     }
     return { type, tooltip }
@@ -113,7 +113,7 @@ export default class ThematicMapTimeLine extends Vue {
           chartOption({
             currentIndex: this.currentIndex,
             autoPlay: this.isPlay,
-            data: this.timeList
+            data: this.timeList,
           })
         )
         this.chart.resize()
@@ -174,6 +174,13 @@ export default class ThematicMapTimeLine extends Vue {
   }
 }
 </script>
-<style lang="less" scoped>
+<style lang="scss" scoped>
 @import './index.less';
+.thematic-map-time-line {
+  .thematic-map-time-line-btn {
+    &:hover {
+      color: $primary-color;
+    }
+  }
+}
 </style>

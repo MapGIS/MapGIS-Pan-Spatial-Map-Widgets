@@ -1,5 +1,6 @@
 <template>
   <mapgis-3d-analysis-flood
+    v-if="loaded"
     :startHeight="startHeight"
     :minHeight="minHeight"
     :maxHeight="maxHeight"
@@ -17,28 +18,55 @@ import { Component, Mixins } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
 @Component({
-  name: 'MpFlooding'
+  name: 'MpFlooding',
 })
 export default class MpFlooding extends Mixins(WidgetMixin) {
-  private startHeight = 0
+  private loaded = false
 
-  private minHeight = 0
+  private startHeight = undefined
 
-  private maxHeight = 2000
+  private minHeight = undefined
 
-  private floodColor = 'rgba(149,232,249,0.5)'
+  private maxHeight = undefined
 
-  private floodSpeed = 500
+  private floodColor = undefined
 
-  private specularIntensity = 2
+  private floodSpeed = undefined
 
-  private amplitude = 10
+  private specularIntensity = undefined
 
-  private animationSpeed = 0.01
+  private amplitude = undefined
 
-  private frequency = 500
+  private animationSpeed = undefined
+
+  private frequency = undefined
 
   private floodAnalysis = null
+
+  setConfig(config) {
+    const {
+      startHeight = 0,
+      minHeight = 0,
+      maxHeight = 2000,
+      floodColor = 'rgba(149,232,249,0.5)',
+      floodSpeed = 80,
+      specularIntensity = 2,
+      amplitude = 10,
+      animationSpeed = 0.01,
+      frequency = 500,
+    } = config
+    this.startHeight = startHeight
+    this.minHeight = minHeight
+    this.maxHeight = maxHeight
+    this.floodColor = floodColor
+    this.floodSpeed = floodSpeed
+    this.specularIntensity = specularIntensity
+    this.amplitude = amplitude
+    this.animationSpeed = animationSpeed
+    this.frequency = frequency
+
+    this.loaded = true
+  }
 
   load(floodAnalysis) {
     this.floodAnalysis = floodAnalysis

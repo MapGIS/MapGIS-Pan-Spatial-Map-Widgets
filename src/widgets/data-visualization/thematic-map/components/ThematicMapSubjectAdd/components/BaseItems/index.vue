@@ -9,11 +9,12 @@
         :replace-fields="{ key: 'id' }"
         :default-expand-all="true"
         description="输入内容可自动创建专题分类"
+        placeholder="输入内容可自动创建专题分类"
       />
     </mp-row-flex>
     <!-- 专题图名称 -->
     <mp-row-flex :label-width="84" label="专题图名称">
-      <a-input
+      <mapgis-ui-input
         @change="subjectTitleChange"
         :value="baseItemsObj.title"
         :allow-clear="true"
@@ -22,7 +23,7 @@
     </mp-row-flex>
     <!-- 专题图类型 -->
     <mp-row-flex :label-width="84" label="专题图类型">
-      <a-select
+      <mapgis-ui-select
         @change="subjectTypeChange"
         :options="subjectTypeList"
         :value="baseItemsObj.type"
@@ -40,13 +41,13 @@ import {
   subjectTypeList,
   ISubjectType,
   INewSubjectConfig,
-  ISubjectConfigNode
+  ISubjectConfigNode,
 } from '../../../../store'
 
 @Component({
   computed: {
-    ...mapGetters(['subjectConfig'])
-  }
+    ...mapGetters(['subjectConfig']),
+  },
 })
 export default class BaseItems extends Vue {
   @Prop({ default: () => ({}) }) readonly value!: INewSubjectConfig
@@ -70,7 +71,7 @@ export default class BaseItems extends Vue {
       id: `subject-${UUID.uuid()}`,
       visible: true,
       nodeType: 'subject',
-      ...nV
+      ...nV,
     })
   }
 
@@ -82,7 +83,7 @@ export default class BaseItems extends Vue {
     this.baseItemsObj = {
       ...this.baseItemsObj,
       parentId: key,
-      parentTitle: value
+      parentTitle: value,
     }
   }
 
@@ -92,7 +93,7 @@ export default class BaseItems extends Vue {
   subjectTypeChange(type: ISubjectType) {
     this.baseItemsObj = {
       ...this.baseItemsObj,
-      type
+      type,
     }
   }
 
@@ -102,7 +103,7 @@ export default class BaseItems extends Vue {
   subjectTitleChange(e) {
     this.baseItemsObj = {
       ...this.baseItemsObj,
-      title: e.target.value
+      title: e.target.value,
     }
   }
 
@@ -112,7 +113,7 @@ export default class BaseItems extends Vue {
    */
   normalizeThematicMapTree(tree: Array<ISubjectConfigNode>) {
     if (!tree.length) return []
-    return tree.map(node => {
+    return tree.map((node) => {
       this.$set(node, 'selectable', node.nodeType !== 'subject')
       if (node.nodeType === 'list') {
         this.$set(node, 'children', [])
@@ -155,7 +156,7 @@ export default class BaseItems extends Vue {
 </script>
 <style lang="less" scoped>
 .base-items {
-  .ant-row-flex {
+  .mapgis-ui-row-flex {
     margin-bottom: 12px;
   }
 }

@@ -11,7 +11,7 @@ import {
   Mixins,
   Emit,
   Prop,
-  Watch
+  Watch,
 } from 'vue-property-decorator'
 import { LayerType, WidgetMixin } from '@mapgis/web-app-framework'
 
@@ -67,12 +67,12 @@ export default class MapboxLayer extends Mixins(WidgetMixin) {
     }
     this.map.addSource(sourceId, {
       type: 'geojson',
-      data: geoJSON // 一开始的数据是空的,后面请求到了再更新
+      data: geoJSON, // 一开始的数据是空的,后面请求到了再更新
     })
     const { features } = geoJSON
     const {
       properties: { bound, center },
-      geometry: { type, coordinates }
+      geometry: { type, coordinates },
     } = features[0]
     if (type === 'Point') {
       this.map.addLayer({
@@ -82,8 +82,8 @@ export default class MapboxLayer extends Mixins(WidgetMixin) {
         paint: {
           'circle-radius': 5, // 半径
           'circle-color': color, // 颜色
-          'circle-opacity': 1 // 透明度
-        }
+          'circle-opacity': 1, // 透明度
+        },
       })
       this.map.panTo(center)
     } else if (type === 'LineString') {
@@ -95,11 +95,11 @@ export default class MapboxLayer extends Mixins(WidgetMixin) {
           // 设置填充颜色
           'line-color': color,
           'line-opacity': 1,
-          'line-width': 3
-        }
+          'line-width': 3,
+        },
       })
       this.map.fitBounds(bound, {
-        padding: { top: 100, bottom: 100, left: 200, right: 200 }
+        padding: { top: 100, bottom: 100, left: 200, right: 200 },
       })
     } else if (type === 'Polygon') {
       this.map.addLayer({
@@ -109,11 +109,11 @@ export default class MapboxLayer extends Mixins(WidgetMixin) {
         paint: {
           // 设置填充颜色
           'fill-color': color,
-          'fill-outline-color': 'white'
-        }
+          'fill-outline-color': 'white',
+        },
       })
       this.map.fitBounds(bound, {
-        padding: { top: 100, bottom: 100, left: 200, right: 200 }
+        padding: { top: 100, bottom: 100, left: 200, right: 200 },
       })
     }
   }

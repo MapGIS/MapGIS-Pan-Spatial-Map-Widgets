@@ -11,7 +11,7 @@ import {
   Mixins,
   Emit,
   Prop,
-  Watch
+  Watch,
 } from 'vue-property-decorator'
 import { LayerType, WidgetMixin, Overlay } from '@mapgis/web-app-framework'
 
@@ -70,7 +70,7 @@ export default class CesiumLayer extends Mixins(WidgetMixin) {
     const { features } = geoJSON
     const {
       properties: { bound, center },
-      geometry: { type, coordinates }
+      geometry: { type, coordinates },
     } = features[0]
     if (type === 'Point') {
       const fillColor = this.Cesium.Color.fromCssColorString(color)
@@ -89,13 +89,13 @@ export default class CesiumLayer extends Mixins(WidgetMixin) {
           center[0],
           center[1],
           this.viewer.camera.positionCartographic.height
-        )
+        ),
       })
       sourceArr.push(entity)
     } else if (type === 'LineString') {
       coordinates.forEach((item, index) => {
         let lineArr = []
-        item.forEach(lines => {
+        item.forEach((lines) => {
           lineArr = lineArr.concat(lines)
         })
         const fillColor = this.Cesium.Color.fromCssColorString(color)
@@ -117,14 +117,14 @@ export default class CesiumLayer extends Mixins(WidgetMixin) {
             bound[0][1],
             bound[1][0],
             bound[1][1]
-          )
+          ),
         })
         sourceArr.push(entity)
       })
     } else if (type === 'Polygon') {
       coordinates.forEach((item, index) => {
         let lineArr = []
-        item.forEach(lines => {
+        item.forEach((lines) => {
           lineArr = lineArr.concat(lines)
         })
         const fillColor = this.Cesium.Color.fromCssColorString(color)
@@ -141,7 +141,7 @@ export default class CesiumLayer extends Mixins(WidgetMixin) {
             bound[0][1],
             bound[1][0],
             bound[1][1]
-          )
+          ),
         })
         sourceArr.push(entity)
       })
@@ -149,13 +149,13 @@ export default class CesiumLayer extends Mixins(WidgetMixin) {
   }
 
   clearDataTargetArr() {
-    this.sourceTargetArr.forEach(entity => {
+    this.sourceTargetArr.forEach((entity) => {
       this.sceneOverlays.removeEntity(entity)
     })
   }
 
   clearDataAnalysisArr() {
-    this.sourceAnalysisArr.forEach(entity => {
+    this.sourceAnalysisArr.forEach((entity) => {
       this.sceneOverlays.removeEntity(entity)
     })
   }

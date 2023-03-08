@@ -355,14 +355,14 @@ export default class MpAddData extends Mixins(WidgetMixin) {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .mp-widget-add-data {
+  padding: 8px 16px;
   flex: 1 1 0%;
   min-height: 76px;
   display: flex;
   flex-direction: column;
   .top-tab-nav {
-    border-bottom: 1px @border-color solid;
     flex-shrink: 0;
     list-style: none;
     display: flex;
@@ -370,18 +370,19 @@ export default class MpAddData extends Mixins(WidgetMixin) {
     margin: 0;
     padding: 0;
     margin-bottom: 8px;
+    border-bottom: 1px $border-color solid;
     li {
       height: 100%;
       padding: 0 5px;
       margin-right: 21px;
       border-bottom: 2px transparent solid;
       &:hover {
-        color: @primary-color;
+        color: $primary-color;
         cursor: pointer;
       }
     }
     .active-color {
-      border-bottom-color: @primary-color;
+      border-bottom-color: $primary-color;
     }
   }
 }

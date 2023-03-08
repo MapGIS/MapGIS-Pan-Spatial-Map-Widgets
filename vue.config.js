@@ -8,23 +8,24 @@ module.exports = {
   pluginOptions: {
     'style-resources-loader': {
       preProcessor: 'less',
-      patterns: [path.resolve(__dirname, './src/theme/theme.less')]
-    }
+      patterns: [path.resolve(__dirname, './src/theme/theme.less')],
+    },
   },
   configureWebpack: {
     plugins: [
       // 限制只打一个包，不分Chunk
       new webpack.optimize.LimitChunkCountPlugin({
-        maxChunks: 1
-      })
+        maxChunks: 1,
+      }),
     ],
     externals: {
+      '@mapgis/web-app-framework': '@mapgis/web-app-framework',
       '@mapgis/webclient-vue-ui': '@mapgis/webclient-vue-ui',
       '@mapgis/webclient-vue-mapboxgl': '@mapgis/webclient-vue-mapboxgl',
       '@mapgis/webclient-vue-cesium': '@mapgis/webclient-vue-cesium',
       '@mapgis/webclient-es6-mapboxgl': '@mapgis/webclient-es6-mapboxgl',
-      '@mapgis/webclient-es6-service': '@mapgis/webclient-es6-service'
-    }
+      '@mapgis/webclient-es6-service': '@mapgis/webclient-es6-service',
+    },
   },
   chainWebpack: (config) => {
     // 生产环境下关闭css压缩的 colormin 项，因为此项优化与主题色替换功能冲突
@@ -51,12 +52,12 @@ module.exports = {
       less: {
         lessOptions: {
           modifyVars: {},
-          javascriptEnabled: true
-        }
+          javascriptEnabled: true,
+        },
       },
       scss: {
-        additionalData: '@import "./src/theme/mapgis-ui/index.scss";'
-      }
-    }
-  }
+        additionalData: '@import "./src/theme/mapgis-ui/index.scss";',
+      },
+    },
+  },
 }

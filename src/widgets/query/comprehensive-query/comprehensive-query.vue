@@ -16,30 +16,34 @@
       @open-attribute-table="openAttributeTable"
       @remove-attribute-table="removeAttributeTable"
       @color-cluster="setColorCluster"
+      @close-popup="closePopup"
+      @select-item="selectItem"
     >
       <div class="query-section panel-container">
         <mapgis-ui-tabs v-model="locationType" size="small" type="card">
-          <mapgis-ui-tab-pane key="district" tab="行政区划定位">
+          <mapgis-ui-tab-pane
+            v-for="item in locationTypes"
+            :key="item"
+            :tab="tab(item)"
+          >
             <zone
               ref="zone"
-              v-if="district"
+              v-if="district && item === 'district'"
               :district="district"
-              :active="locationType === 'district'"
+              :active="item === 'district'"
               @change="change"
             />
-          </mapgis-ui-tab-pane>
-          <mapgis-ui-tab-pane key="coordinate" tab="坐标定位" force-render>
             <coordinate
               ref="coordinate"
-              :active="locationType === 'coordinate'"
+              v-if="item === 'coordinate'"
+              :active="item === 'coordinate'"
               @change="change"
             />
-          </mapgis-ui-tab-pane>
-          <mapgis-ui-tab-pane key="map-sheet" tab="图幅定位">
             <frame
               ref="map-sheet"
+              v-if="item === 'map-sheet'"
               @change="change"
-              :active="locationType === 'map-sheet'"
+              :active="item === 'map-sheet'"
             />
           </mapgis-ui-tab-pane>
         </mapgis-ui-tabs>
@@ -76,8 +80,9 @@ import {
   Feature,
   Exhibition,
   WidgetMixin,
+  PopupOverlay,
 } from '@mapgis/web-app-framework'
-import { api, markerIconInstance } from '../../../model'
+import { api, markerIconInstance, baseConfigInstance } from '../../../model'
 import Zone from './components/ZoneFrame/Zone.vue'
 import Coordinate from './components/Coordinate/Coordinate.vue'
 import Frame from './components/ZoneFrame/Frame.vue'
@@ -137,12 +142,27 @@ export default class MpComprehensiveQuery extends Mixins(
   private defaultMarkerIcon = ''
 
   /**
+   * 上一id，用于清除之前的高亮区域
+   */
+  private preId = ''
+
+  private entityNames = []
+
+  private currentLayer = null
+
+  /**
    * 选中图标
    */
   private selectedMarkerIcon = ''
 
   // 可选district：行政区划定位；coordinate：坐标定位；map-sheet：图幅号定位
   private locationType = 'district'
+
+  private selectShowProperty = null
+
+  private get highlightStyle() {
+    return baseConfigInstance.config.colorConfig
+  }
 
   get logoType() {
     return this.locationType || 'district'
@@ -160,6 +180,20 @@ export default class MpComprehensiveQuery extends Mixins(
    */
   private get config() {
     return this.widgetInfo.config
+  }
+
+  private get locationTypes() {
+    return this.config.placeName.locationMode
+  }
+
+  tab(item) {
+    if (item === 'district') {
+      return '行政区划定位'
+    } else if (item === 'coordinate') {
+      return '坐标定位'
+    } else if (item === 'map-sheet') {
+      return '图幅定位'
+    }
   }
 
   async mounted() {
@@ -189,6 +223,11 @@ export default class MpComprehensiveQuery extends Mixins(
     this.$refs.zone && this.$refs.zone.clear()
     this.$refs.coordinate && this.$refs.coordinate.clear()
     this.$refs['map-sheet'] && this.$refs['map-sheet'].clear()
+    this.closePopup()
+    this.analysisManager = null
+    if (this.sceneController) {
+      this.sceneController.removeCameraChangedEvent(this.changeFilterWithMap)
+    }
   }
 
   /**
@@ -268,7 +307,8 @@ export default class MpComprehensiveQuery extends Mixins(
    * 当前展示的结果回调函数（将查询结果展示至地图上）
    */
   currentResult(geojson) {
-    this.current = geojson
+    // igs查询时设置字段别名在此处处理
+    this.current = this.config.placeName ? this.setAliasKeys(geojson) : geojson
   }
 
   /**
@@ -276,6 +316,8 @@ export default class MpComprehensiveQuery extends Mixins(
    */
   clickItem(feature) {
     const center = Feature.getGeoJSONFeatureCenter(feature)
+    const bound = feature.bound
+    const { xmin, ymin, xmax, ymax } = bound
     if (this.is2DMapMode) {
       this.map.flyTo({
         center: center,
@@ -286,13 +328,8 @@ export default class MpComprehensiveQuery extends Mixins(
       })
     } else {
       const { viewer, Cesium } = this
-      const cameraHeight = Math.ceil(viewer.camera.positionCartographic.height)
       viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(
-          center[0],
-          center[1],
-          cameraHeight
-        ),
+        destination: Cesium.Cartesian3.fromDegrees(center[0], center[1]),
         duration: 1000,
         orientation: {
           heading: Cesium.Math.toRadians(0), // 0 // 绕垂直于地心的轴旋转 ,相当于头部左右转
@@ -331,6 +368,60 @@ export default class MpComprehensiveQuery extends Mixins(
    */
   removeAttributeTable(exhibitionId) {
     this.removeExhibition(exhibitionId)
+  }
+
+  /**
+   * 关闭右侧展示气泡框
+   */
+  closePopup() {
+    this.popupOverlayInstance.setContent(null)
+  }
+
+  /**
+   * 获取当前综合查询tab页key别名配置
+   */
+  selectItem(data) {
+    // 先关闭气泡框
+    this.closePopup()
+    let showProperty
+    if (data) {
+      showProperty = this.config.placeName.queryTable.find(
+        (item) => item.placeName === data
+      )
+    }
+    // 如果配置为空采用默认配置
+    this.selectShowProperty =
+      showProperty && showProperty.showField.length > 0
+        ? showProperty.showField
+        : this.config.placeName.defaultShowField
+  }
+
+  /**
+   * 设置别名key
+   */
+  setAliasKeys(data) {
+    if (data && data.features.length > 0) {
+      const dataCopy = JSON.parse(JSON.stringify(data))
+      dataCopy.features.forEach((item) => {
+        const property = {}
+        const properties = item.properties
+        Object.keys(properties).forEach((key) => {
+          const info = this.selectShowProperty.find(
+            (itemKey) => itemKey.fieldName === key
+          )
+          info
+            ? (property[info.showName] = properties[key])
+            : (property[key] = properties[key])
+        })
+        item.properties = property
+      })
+      return dataCopy
+    }
+    return data
+  }
+
+  created() {
+    this.popupOverlayInstance = PopupOverlay.getInstance()
   }
 }
 </script>

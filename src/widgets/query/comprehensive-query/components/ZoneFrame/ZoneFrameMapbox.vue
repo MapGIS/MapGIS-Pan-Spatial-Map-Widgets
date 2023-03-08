@@ -14,7 +14,7 @@ export default class ZoneFrameMapbox extends Mixins(MapMixin) {
     required: true,
     default: () => {
       return {}
-    }
+    },
   })
   readonly feature!: Feature.FeatureGeoJSON | null
 
@@ -22,7 +22,7 @@ export default class ZoneFrameMapbox extends Mixins(MapMixin) {
     type: Array,
     default: () => {
       return []
-    }
+    },
   })
   readonly center
 
@@ -30,7 +30,7 @@ export default class ZoneFrameMapbox extends Mixins(MapMixin) {
     type: Object,
     default: () => {
       return {}
-    }
+    },
   })
   readonly fitBound!: Record<string, any>
 
@@ -38,7 +38,7 @@ export default class ZoneFrameMapbox extends Mixins(MapMixin) {
     type: Object,
     default: () => {
       return {}
-    }
+    },
   })
   readonly highlightStyle!: Record<string, any>
 
@@ -71,8 +71,8 @@ export default class ZoneFrameMapbox extends Mixins(MapMixin) {
         type: 'fill',
         source: 'zone-frame',
         paint: {
-          'fill-color': this.highlightStyle.feature.reg.color
-        }
+          'fill-color': this.highlightStyle.feature.reg.color,
+        },
       })
       this.map.addLayer({
         id: 'zone-frame-outline',
@@ -80,8 +80,8 @@ export default class ZoneFrameMapbox extends Mixins(MapMixin) {
         source: 'zone-frame',
         paint: {
           'line-color': this.highlightStyle.feature.line.color,
-          'line-width': parseInt(this.highlightStyle.feature.line.size)
-        }
+          'line-width': parseInt(this.highlightStyle.feature.line.size),
+        },
       })
       this.map.addLayer({
         id: 'zone-frame-text',
@@ -90,8 +90,8 @@ export default class ZoneFrameMapbox extends Mixins(MapMixin) {
         paint: { 'text-color': this.highlightStyle.label.text.color },
         layout: {
           'text-field': '{name}',
-          'text-size': parseInt(this.highlightStyle.label.text.fontSize)
-        }
+          'text-size': parseInt(this.highlightStyle.label.text.fontSize),
+        },
       })
     }
   }
@@ -109,7 +109,7 @@ export default class ZoneFrameMapbox extends Mixins(MapMixin) {
       const { xmin, ymin, xmax, ymax } = this.fitBound
       this.map.fitBounds([
         [xmin, ymin],
-        [xmax, ymax]
+        [xmax, ymax],
       ])
     }
   }

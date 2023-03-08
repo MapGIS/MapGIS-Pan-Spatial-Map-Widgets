@@ -3,7 +3,7 @@
     :xPaneNum="xPaneNum"
     :yPaneNum="yPaneNum"
     :height="height"
-    :lineColor="lineColor"
+    :cutColor="cutColor"
     :fillColor="fillColor"
     :dataType="dataType"
     @load="load"
@@ -15,7 +15,7 @@ import { WidgetMixin } from '@mapgis/web-app-framework'
 
 @Component({
   name: 'MpCutFillAnalysis',
-  components: {}
+  components: {},
 })
 export default class MpCutFillAnalysis extends Mixins(WidgetMixin) {
   private xPaneNum = 16
@@ -24,9 +24,9 @@ export default class MpCutFillAnalysis extends Mixins(WidgetMixin) {
 
   private height = 2000
 
-  private lineColor = 'rgba(0,255,0,1)'
+  private cutColor = 'rgba(0, 0, 255, 0.5)'
 
-  private fillColor = 'rgba(0,0,255,0.3)'
+  private fillColor = 'rgba(255,165,0,0.5)'
 
   private dataType = 2.0
 

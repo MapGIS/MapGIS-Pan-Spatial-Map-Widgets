@@ -8,7 +8,7 @@ import {
   MapMixin,
   ColorUtil,
   Overlay,
-  Feature
+  Feature,
 } from '@mapgis/web-app-framework'
 
 @Component({})
@@ -18,7 +18,7 @@ export default class ZoneFramCesium extends Mixins(MapMixin) {
     required: true,
     default: () => {
       return {}
-    }
+    },
   })
   readonly feature!: Feature.FeatureGeoJSON | null
 
@@ -26,7 +26,7 @@ export default class ZoneFramCesium extends Mixins(MapMixin) {
     type: Object,
     default: () => {
       return {}
-    }
+    },
   })
   readonly highlightStyle!: Record<string, any>
 
@@ -34,7 +34,7 @@ export default class ZoneFramCesium extends Mixins(MapMixin) {
     type: Array,
     default: () => {
       return []
-    }
+    },
   })
   readonly center
 
@@ -42,7 +42,7 @@ export default class ZoneFramCesium extends Mixins(MapMixin) {
     type: Object,
     default: () => {
       return {}
-    }
+    },
   })
   readonly fitBound!: Record<string, any>
 
@@ -110,10 +110,7 @@ export default class ZoneFramCesium extends Mixins(MapMixin) {
         this.entityNames.push(name)
         this.sceneOverlays.addPolygon(
           name,
-          coords
-            .join(',')
-            .split(',')
-            .map(Number),
+          coords.join(',').split(',').map(Number),
           fillColor,
           fillOutlineColor,
           false,
@@ -148,7 +145,7 @@ export default class ZoneFramCesium extends Mixins(MapMixin) {
               // 文本垂直方向与坐标点的相对位置：LEFT、CENTER、RIGHT
               verticalOrigin: this.Cesium.VerticalOrigin.CENTER,
               // 文本水平方向与坐标点的相对位置：LEFT、CENTER、RIGHT
-              horizontalOrigin: this.Cesium.HorizontalOrigin.CENTER
+              horizontalOrigin: this.Cesium.HorizontalOrigin.CENTER,
             }
           )
           this.entityTextNames.push(text)
@@ -165,7 +162,7 @@ export default class ZoneFramCesium extends Mixins(MapMixin) {
           this.center[0],
           this.center[1],
           this.viewer.camera.positionCartographic.height
-        )
+        ),
       })
     }
   }
@@ -181,7 +178,7 @@ export default class ZoneFramCesium extends Mixins(MapMixin) {
         ymax
       )
       this.viewer.camera.flyTo({
-        destination: rectangle
+        destination: rectangle,
       })
     }
   }

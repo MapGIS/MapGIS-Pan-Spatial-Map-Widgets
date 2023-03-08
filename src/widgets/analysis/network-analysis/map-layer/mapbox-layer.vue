@@ -14,7 +14,7 @@ import {
   Mixins,
   Emit,
   Prop,
-  Watch
+  Watch,
 } from 'vue-property-decorator'
 import { LayerType, WidgetMixin } from '@mapgis/web-app-framework'
 
@@ -49,7 +49,7 @@ export default class MapboxLayer extends Mixins(WidgetMixin) {
     'circle-color': '#FF9933', // 颜色
     'circle-opacity': 1, // 透明度
     'circle-stroke-color': '#ffffff',
-    'circle-stroke-width': 1
+    'circle-stroke-width': 1,
   }
 
   // 点集图层ID
@@ -78,7 +78,7 @@ export default class MapboxLayer extends Mixins(WidgetMixin) {
     // 添加点图层
     this.map.addSource(this.pointResultSourceId, {
       type: 'geojson',
-      data: layerPoint
+      data: layerPoint,
     })
     this.map.addLayer({
       id: this.pointResultLayerId,
@@ -87,14 +87,14 @@ export default class MapboxLayer extends Mixins(WidgetMixin) {
       paint: {
         'circle-radius': 5, // 半径
         'circle-color': this.circleColor['circle-color'], // 颜色
-        'circle-opacity': this.circleColor['circle-opacity'] // 透明度
-      }
+        'circle-opacity': this.circleColor['circle-opacity'], // 透明度
+      },
     })
 
     // 添加线图层
     this.map.addSource(this.lineResultSourceId, {
       type: 'geojson',
-      data: layerLine
+      data: layerLine,
     })
     this.map.addLayer({
       id: this.lineResultLayerId,
@@ -102,8 +102,8 @@ export default class MapboxLayer extends Mixins(WidgetMixin) {
       source: this.lineResultSourceId,
       paint: {
         'line-color': this.color,
-        'line-width': 4
-      }
+        'line-width': 4,
+      },
     })
   }
 
@@ -113,7 +113,7 @@ export default class MapboxLayer extends Mixins(WidgetMixin) {
     // 添加高亮图层
     this.map.addSource(this.lineResultClickSourceId, {
       type: 'geojson',
-      data: this.highResultSource
+      data: this.highResultSource,
     })
     this.map.addLayer({
       id: this.lineResultClickLayerId,
@@ -121,8 +121,8 @@ export default class MapboxLayer extends Mixins(WidgetMixin) {
       source: this.lineResultClickSourceId,
       paint: {
         'line-color': 'blue',
-        'line-width': 4
-      }
+        'line-width': 4,
+      },
     })
   }
 
@@ -132,13 +132,13 @@ export default class MapboxLayer extends Mixins(WidgetMixin) {
     // 添加点图层
     this.map.addSource(this.pointSourceId, {
       type: 'geojson',
-      data: this.dataCoordinateArr // 一开始的数据是空的,后面请求到了再更新
+      data: this.dataCoordinateArr, // 一开始的数据是空的,后面请求到了再更新
     })
     this.map.addLayer({
       id: this.pointLayerId,
       type: 'circle',
       source: this.pointSourceId,
-      paint: this.circleColor
+      paint: this.circleColor,
     })
   }
 
@@ -148,7 +148,7 @@ export default class MapboxLayer extends Mixins(WidgetMixin) {
     // 添加障碍物图层
     this.map.addSource(this.barrierSourceId, {
       type: 'geojson',
-      data: this.dataBarrierArr // 一开始的数据是空的,后面请求到了再更新
+      data: this.dataBarrierArr, // 一开始的数据是空的,后面请求到了再更新
     })
     this.map.addLayer({
       id: this.barrierLayerId,
@@ -156,8 +156,8 @@ export default class MapboxLayer extends Mixins(WidgetMixin) {
       source: this.barrierSourceId,
       paint: {
         ...this.circleColor,
-        'circle-color': 'red'
-      }
+        'circle-color': 'red',
+      },
     })
   }
 

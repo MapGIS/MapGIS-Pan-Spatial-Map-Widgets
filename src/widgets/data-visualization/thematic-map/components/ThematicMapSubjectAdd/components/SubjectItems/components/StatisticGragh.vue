@@ -5,10 +5,11 @@
     :subject-config="subjectConfig"
     :columns="tableColumns"
     :data="tableData"
+    :emptyVisible="emptyVisible"
     title="图表配置"
   >
     <mp-row-flex slot="top" label="分组字段" :label-width="72">
-      <a-select
+      <mapgis-ui-select
         v-model="field"
         :options="fieldList"
         :auto-width="true"
@@ -18,10 +19,10 @@
     </mp-row-flex>
     <!-- <mp-row-flex slot="top" :span="[11, 11]" justify="space-between">
       <mp-row-flex slot="label" label="分组字段" :label-width="72">
-        <a-select v-model="field" :options="fieldList" placeholder="请选择" />
+        <mapgis-ui-select v-model="field" :options="fieldList" placeholder="请选择" />
       </mp-row-flex>
       <mp-row-flex label="统计方式" :label-width="72">
-        <a-select
+        <mapgis-ui-select
           v-model="way"
           :options="statisticWays"
           :disabled="true"
@@ -43,7 +44,7 @@ interface ITableDataItem {
   color: string
 }
 
-interface IGragh{
+interface IGragh {
   field: string
   fieldColors: string[]
   showFields: string[]
@@ -52,23 +53,11 @@ interface IGragh{
 
 @Component({
   components: {
-    EditableFieldTable
-  }
+    EditableFieldTable,
+  },
 })
 export default class StatisticGragh extends Vue {
   @Prop({ default: () => ({}) }) readonly subjectConfig!: INewSubjectConfig
-
-  @Watch('subjectConfig.graph', { deep: true })
-  tableDataChange({ fieldColors, showFields = [], showFieldsTitle } = {}) {
-    if (showFields.length === this.tableData.length) {
-      this.tableData = showFields.map((f, i) => ({
-        index: i,
-        field: f,
-        color: fieldColors[i],
-        alias: showFieldsTitle[f]
-      }))
-    }
-  }
 
   private field = null
 
@@ -78,27 +67,36 @@ export default class StatisticGragh extends Vue {
 
   private tableData: ITableDataItem[] = []
 
+  private emptyVisible = false
+
   get tableColumns() {
     return [
       {
         type: 'Select',
         title: '统计字段',
         dataIndex: 'field',
-        width: 130
+        width: 130,
       },
       {
         type: 'Input',
         title: '别名',
-        dataIndex: 'alias'
+        dataIndex: 'alias',
       },
       {
         type: 'ColorPicker',
         title: '颜色设置',
         dataIndex: 'color',
         align: 'center',
-        width: 100
-      }
+        width: 100,
+      },
     ]
+  }
+
+  @Watch('subjectConfig.graph', { deep: true })
+  tableDataChange({ fieldColors, showFields = [], showFieldsTitle } = {}) {
+    if (showFields.length === this.tableData.length) {
+      this.setTableData(fieldColors, showFields, showFieldsTitle)
+    }
   }
 
   // get statisticWays() {
@@ -136,6 +134,42 @@ export default class StatisticGragh extends Vue {
   //   ]
   // }
 
+  mounted() {
+    this.initTableData()
+  }
+
+  /**
+   * 回显表格数据
+   */
+  initTableData() {
+    if (!this.subjectConfig.graph) return
+
+    const {
+      fieldColors,
+      showFields = [],
+      showFieldsTitle,
+      field,
+    } = this.subjectConfig.graph
+    this.field = field
+    if (showFields.length) {
+      this.setTableData(fieldColors, showFields, showFieldsTitle)
+      this.emptyVisible = true
+    }
+  }
+
+  /**
+   * 调整表格数据格式
+   */
+  setTableData(fieldColors, showFields, showFieldsTitle) {
+    const addNum = 1000
+    this.tableData = showFields.map((f, i) => ({
+      index: addNum + i,
+      field: f,
+      color: fieldColors[i],
+      alias: showFieldsTitle[f],
+    }))
+  }
+
   /**
    * 属性配置变化
    */
@@ -143,25 +177,26 @@ export default class StatisticGragh extends Vue {
     const graph: ?IGragh =
       data.length && data.some(({ field }) => !!field)
         ? {
-          field: this.field,
-          ...data.reduce((obj,{ field, alias, color }) => {
-              const  { fieldColors, showFields, showFieldsTitle } = obj
-              if (field) {
-                if (!showFields.includes(field)) {
-                  showFields.push(field)
-                  fieldColors.push(color)
+            field: this.field,
+            ...data.reduce(
+              (obj, { field, alias, color }) => {
+                const { fieldColors, showFields, showFieldsTitle } = obj
+                if (field) {
+                  if (!showFields.includes(field)) {
+                    showFields.push(field)
+                    fieldColors.push(color)
+                  }
+                  showFieldsTitle[field] = alias
                 }
-                showFieldsTitle[field] = alias
+                return obj
+              },
+              {
+                fieldColors: [],
+                showFields: [],
+                showFieldsTitle: {},
               }
-              return obj
-            },
-            {
-              fieldColors: [],
-              showFields: [],
-              showFieldsTitle: {}
-            }
-          )
-        }
+            ),
+          }
         : undefined
     this.tableData = data
     this.$emit('change', { graph })
@@ -172,7 +207,11 @@ export default class StatisticGragh extends Vue {
    */
   onFieldsLoaded(fields) {
     this.fieldList = fields
-    this.field = this.fieldList[0]?.value
+    let value
+    if (this.fieldList && this.fieldList.length > 0) {
+      value = this.fieldList[0].value
+    }
+    this.field = value
   }
 }
 </script>

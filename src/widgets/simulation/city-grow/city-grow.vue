@@ -1,11 +1,12 @@
 <template>
   <div class="mp-widget-city-grow">
-    <a-row>
-      <label class="mp-widget-label">数据源设置</label>
-    </a-row>
+    <mapgis-ui-row>
+      <!-- <label class='mp-widget-label'>数据源设置</label> -->
+      <mapgis-ui-group-tab title="数据源设置" />
+    </mapgis-ui-row>
     <div>
-      <a-row class="mp-row-style">
-        <a-select
+      <mapgis-ui-row class="mp-row-style">
+        <mapgis-ui-select
           v-model="selectResult"
           :show-search="true"
           :not-found-content="null"
@@ -15,56 +16,50 @@
           @change="onUrlChange"
           @search="handleSearch"
           @blur="handleBlur"
-          style="width: 360px"
+          style="width: 100%"
         >
-          <a-select-option v-for="item in urlOptions" :key="item.baseUrl">
+          <mapgis-ui-select-option
+            v-for="item in urlOptions"
+            :key="item.baseUrl"
+          >
             {{ item.baseUrl }}
-          </a-select-option>
-        </a-select>
-      </a-row>
-      <a-row style="height: 40px">
-        <a-textarea
+          </mapgis-ui-select-option>
+        </mapgis-ui-select>
+      </mapgis-ui-row>
+      <mapgis-ui-row style="height: 40px">
+        <mapgis-ui-textarea
           class="url-example"
           disabled
           :value="`示例 : ${this.urlExample}`"
           auto-size
-        ></a-textarea>
-      </a-row>
-      <a-row>
-        <label class="mp-widget-label">参数设置</label>
-      </a-row>
+        ></mapgis-ui-textarea>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
+        <!-- <label class='mp-widget-label'>参数设置</label> -->
+        <mapgis-ui-group-tab title="参数设置" />
+      </mapgis-ui-row>
       <mapgis-3d-city-grow-options
         v-if="radioVal === 1"
         :cityGrowOptions="cityGrowOptions"
-        style="width: 360px"
         @commitOptions="getCityGrowOptions"
         @saveConfig="saveConfig"
         ref="cityGrowOptions"
       ></mapgis-3d-city-grow-options>
       <mp-window-wrapper :visible="startCityGrow">
-        <template v-slot:default="slotProps">
-          <mp-window
-            title="城市生长"
-            :visible.sync="startCityGrow"
-            :horizontal-offset="28"
-            :vertical-offset="30"
-            :width="playWidth"
-            :height="60"
-            :has-padding="false"
-            anchor="bottom-center"
-            v-bind="slotProps"
-          >
-            <template>
-              <mapgis-3d-city-grow
-                v-if="startCityGrow"
-                :baseUrl="url"
-                :featureStyle="featureStyle"
-                ref="cityGrow"
-                @loaded="load"
-              ></mapgis-3d-city-grow>
-            </template>
-          </mp-window>
-        </template>
+        <mp-placement
+          :position="'bottom-left'"
+          v-show="startCityGrow"
+          :offset="[52, 60]"
+          style="right: 0px"
+        >
+          <mapgis-3d-city-grow
+            v-if="startCityGrow"
+            :baseUrl="url"
+            :featureStyle="featureStyle"
+            ref="cityGrow"
+            @loaded="load"
+          ></mapgis-3d-city-grow>
+        </mp-placement>
       </mp-window-wrapper>
     </div>
   </div>
@@ -94,7 +89,7 @@ export default class MpCityGrow extends Mixins(WidgetMixin) {
 
   private startCityGrow = false
 
-  private playWidth = 715
+  private playWidth = 711
 
   // 城市生长对象
   private cityGrow = null
@@ -210,14 +205,14 @@ export default class MpCityGrow extends Mixins(WidgetMixin) {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .mp-widget-city-grow {
-  margin: 0px 5px 5px 5px;
+  // margin: 0px 5px 5px 5px;
 }
 
 .mp-row-style {
-  width: 360px;
-  margin: 8px 0;
+  // width: 360px;
+  margin-bottom: 8px;
 }
 
 .mp-widget-label {
@@ -232,14 +227,14 @@ export default class MpCityGrow extends Mixins(WidgetMixin) {
 
 .url-example {
   padding: 3px 0;
-  color: @text-color-secondary;
   word-break: break-all;
   white-space: break-spaces;
   font-size: 12px;
 
-  &.ant-input {
+  &.mapgis-ui-input {
     border: none;
-    background-color: transparent;
+    color: $text-color-secondary;
+    // background-color: transparent;
     resize: none;
     min-height: 24px;
   }

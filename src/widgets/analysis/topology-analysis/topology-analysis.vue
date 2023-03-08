@@ -1,5 +1,5 @@
 <template>
-  <a-spin :spinning="loading">
+  <mapgis-ui-spin :spinning="loading" style="padding: 8px 16px">
     <div class="mp-widget-topology-analysis">
       <mp-group-tab
         slot="label"
@@ -7,15 +7,15 @@
         :has-top-margin="false"
       >
         <div slot="handle" class="layer-select-container">
-          <a-select v-model="tDataIndex" @change="changeTarget">
-            <a-select-option
+          <mapgis-ui-select v-model="tDataIndex" @change="changeTarget">
+            <mapgis-ui-select-option
               v-for="(item, index) in layerArrOption"
               :key="index"
               :value="index"
             >
               {{ item.title }}
-            </a-select-option>
-          </a-select>
+            </mapgis-ui-select-option>
+          </mapgis-ui-select>
           <mp-toolbar :bordered="false">
             <mp-toolbar-command
               icon="search"
@@ -29,16 +29,16 @@
         layout="vertical"
         :class="[isFullScreen === true ? '' : 'fixed-table']"
       >
-        <a-form-item>
+        <mapgis-ui-form-item>
           <div class="tab-list-container">
-            <a-tabs
+            <mapgis-ui-tabs
               size="small"
               :style="{ height: '100%' }"
               tab-position="left"
               v-model="tDataTab"
               v-if="tDataArr.length > 0"
             >
-              <a-tab-pane
+              <mapgis-ui-tab-pane
                 v-for="item in tDataArr"
                 :key="item.id"
                 :tab="item.name"
@@ -49,23 +49,23 @@
                   :active="tDataTab === item.id"
                   @select-item="(val) => selectItem(val, 'Target')"
                 />
-              </a-tab-pane>
-            </a-tabs>
-            <a-empty v-else description="请点击搜索按钮查询要素" />
+              </mapgis-ui-tab-pane>
+            </mapgis-ui-tabs>
+            <mapgis-ui-empty v-else description="请点击搜索按钮查询要素" />
           </div>
-        </a-form-item>
+        </mapgis-ui-form-item>
       </mp-setting-form>
       <mp-group-tab slot="label" title="选择目标要素" :has-top-margin="false">
         <div slot="handle" class="layer-select-container">
-          <a-select v-model="aDataIndex" @change="changeAnalysis">
-            <a-select-option
+          <mapgis-ui-select v-model="aDataIndex" @change="changeAnalysis">
+            <mapgis-ui-select-option
               v-for="(item, index) in layerArrOption"
               :key="index"
               :value="index"
             >
               {{ item.title }}
-            </a-select-option>
-          </a-select>
+            </mapgis-ui-select-option>
+          </mapgis-ui-select>
           <mp-toolbar :bordered="false">
             <mp-toolbar-command
               icon="search"
@@ -79,16 +79,16 @@
         layout="vertical"
         :class="[isFullScreen === true ? '' : 'fixed-table']"
       >
-        <a-form-item>
+        <mapgis-ui-form-item>
           <div class="tab-list-container">
-            <a-tabs
+            <mapgis-ui-tabs
               size="small"
               :style="{ height: '100%' }"
               tab-position="left"
               v-model="aDataTab"
               v-if="aDataArr.length > 0"
             >
-              <a-tab-pane
+              <mapgis-ui-tab-pane
                 v-for="item in aDataArr"
                 :key="item.id"
                 :tab="item.name"
@@ -98,17 +98,19 @@
                   :active="aDataTab === item.id"
                   @select-item="(val) => selectItem(val, 'Analysis')"
                 />
-              </a-tab-pane>
-            </a-tabs>
-            <a-empty v-else description="请点击搜索按钮查询要素" />
+              </mapgis-ui-tab-pane>
+            </mapgis-ui-tabs>
+            <mapgis-ui-empty v-else description="请点击搜索按钮查询要素" />
           </div>
-        </a-form-item>
+        </mapgis-ui-form-item>
       </mp-setting-form>
       <div class="analysis-actions">
-        <a-tag color="#87d068" v-if="massage">
+        <mapgis-ui-tag color="#87d068" v-if="massage">
           {{ massage }}
-        </a-tag>
-        <a-button type="primary" @click="analysis"> 分析 </a-button>
+        </mapgis-ui-tag>
+        <mapgis-ui-button type="primary" @click="analysis">
+          分析
+        </mapgis-ui-button>
       </div>
       <template v-if="isWidgetOpen">
         <mapbox-layer
@@ -127,7 +129,7 @@
       <mp-draw-pro ref="draw" @finished="clickFunciton" />
       <mp-3d-draw-pro ref="draw3d" @finished="clickFunciton" />
     </div>
-  </a-spin>
+  </mapgis-ui-spin>
 </template>
 
 <script lang="ts">
@@ -450,23 +452,23 @@ export default class MpTopologyAnalysis extends Mixins(WidgetMixin) {
 }
 </script>
 
-<style lang="less">
+<style lang="scss">
 .mp-widget-topology-analysis {
   .fixed-table {
-    width: 360px;
+    // width: 360px;
   }
   .tab-list-container {
     border-radius: 4px;
     height: 180px;
-    border: 1px solid @border-color;
+    border: 1px solid $border-color;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    .ant-tabs {
-      .ant-tabs-left-content {
+    .mapgis-ui-tabs {
+      .mapgis-ui-tabs-left-content {
         padding-left: 8px;
       }
-      .ant-tabs-left-bar .ant-tabs-tab {
+      .mapgis-ui-tabs-left-bar .mapgis-ui-tabs-tab {
         text-align: center;
         margin: 0;
         padding: 6px 8px;
@@ -480,14 +482,14 @@ export default class MpTopologyAnalysis extends Mixins(WidgetMixin) {
   }
   .layer-select-container {
     display: flex;
-    .ant-select {
-      width: 160px;
+    .mapgis-ui-select {
+      width: 108px;
     }
-    .ant-btn {
+    .mapgis-ui-btn {
       margin-left: 10px;
     }
   }
-  .ant-select {
+  .mapgis-ui-select {
     font-size: 12px;
   }
   .analysis-actions {

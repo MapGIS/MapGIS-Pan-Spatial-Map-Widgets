@@ -1,6 +1,6 @@
 <template>
   <div class="analysis-result-table-container">
-    <a-table
+    <mapgis-ui-table
       :columns="columns"
       :data-source="data"
       size="small"
@@ -8,24 +8,24 @@
       :class="isFullScreen === true ? '' : 'fixed-table'"
       :scroll="{
         y: 160,
-        x: '100%'
+        x: '100%',
       }"
       rowKey="id"
       bordered
       :customRow="
-        record => ({
+        (record) => ({
           on: {
             // 事件
-            click: event => {
+            click: (event) => {
               rowClick(record)
-            } // 点击行
-          }
+            }, // 点击行
+          },
         })
       "
     >
       <span slot="index" slot-scope="text">{{ text + 1 }} </span>
       <span slot="name" slot-scope="text" :title="text">{{ text }} </span>
-    </a-table>
+    </mapgis-ui-table>
   </div>
 </template>
 <script lang="ts">
@@ -42,15 +42,15 @@ export default class MpCoordinateTable extends Vue {
       dataIndex: 'id',
       scopedSlots: { customRender: 'index' },
       width: '80px',
-      align: 'center'
+      align: 'center',
     },
     {
       title: '名称',
       dataIndex: 'name',
       scopedSlots: { customRender: 'name' },
       ellipsis: true,
-      align: 'center'
-    }
+      align: 'center',
+    },
   ]
 
   data = []
@@ -60,12 +60,12 @@ export default class MpCoordinateTable extends Vue {
     // 线图层数据源
     const layerLine = {
       type: 'FeatureCollection',
-      features: []
+      features: [],
     }
     // 点图层数据源
     const layerPoint = {
       type: 'FeatureCollection',
-      features: []
+      features: [],
     }
     if (!result.results) {
       this.$message.error('分析失败')
@@ -81,11 +81,11 @@ export default class MpCoordinateTable extends Vue {
       ? res[0].edgeFieldNameArray
       : res.edgeFieldNameArray
     let lines = []
-    paths.forEach(path => {
+    paths.forEach((path) => {
       lines = lines.concat(path.Edges)
     })
     let points = []
-    paths.forEach(path => {
+    paths.forEach((path) => {
       points = points.concat(path.Nodes)
     })
     // const map = this.getBaseMap();
@@ -111,8 +111,8 @@ export default class MpCoordinateTable extends Vue {
       properties: {},
       geometry: {
         type: 'MultiLineString',
-        coordinates: lineArr
-      }
+        coordinates: lineArr,
+      },
     })
     const max2 = points.length
     const pointArr = []
@@ -129,12 +129,12 @@ export default class MpCoordinateTable extends Vue {
       properties: {},
       geometry: {
         type: 'MultiPoint',
-        coordinates: pointArr
-      }
+        coordinates: pointArr,
+      },
     })
     this.$emit('draw-result', {
       layerPoint,
-      layerLine
+      layerLine,
     })
     this.initTableAndPage(lines, edgeFieldNameArray)
   }
@@ -155,7 +155,7 @@ export default class MpCoordinateTable extends Vue {
         dataArray.push({
           id: i,
           name: data[i].FieldValus[index] || '--',
-          dots: data[i].Dots
+          dots: data[i].Dots,
         })
       }
     }
@@ -181,10 +181,10 @@ export default class MpCoordinateTable extends Vue {
           properties: { id: row.id },
           geometry: {
             type: 'LineString',
-            coordinates: array
-          }
-        }
-      ]
+            coordinates: array,
+          },
+        },
+      ],
     }
     this.$emit('fly-to-high', center)
     this.$emit('draw-high-result', highResultSource)

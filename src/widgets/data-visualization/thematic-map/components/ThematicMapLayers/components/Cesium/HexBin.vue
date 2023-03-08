@@ -20,11 +20,11 @@ export default class CesiumHexBin extends Mixins(BaseMixin) {
     return {
       cesium: {
         postRender: true,
-        postRenderFrame: 0
+        postRenderFrame: 0,
       },
       context: '2d',
       draw: 'honeycomb',
-      ...(this.subjectData?.themeStyle || {})
+      ...(this.subjectData?.themeStyle || {}),
     }
   }
 }

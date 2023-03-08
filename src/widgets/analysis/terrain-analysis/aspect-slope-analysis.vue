@@ -1,17 +1,14 @@
 <template>
-  <mapgis-3d-aspect-slope
-    id='aspect-slope-analysis'
-    @loaded="load" />
+  <mapgis-3d-aspect-slope id="aspect-slope-analysis" @loaded="load" />
 </template>
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
 @Component({
-  name: 'MpAspectSlope'
+  name: 'MpAspectSlope',
 })
 export default class MpAspectSlope extends Mixins(WidgetMixin) {
-
   load(aspectSlope) {
     this.aspectSlope = aspectSlope
   }
@@ -37,7 +34,7 @@ export default class MpAspectSlope extends Mixins(WidgetMixin) {
   }
 }
 </script>
-<style lang='less'>
+<style lang="less">
 #aspect-slope-analysis {
   width: 300px;
   max-width: 100%;

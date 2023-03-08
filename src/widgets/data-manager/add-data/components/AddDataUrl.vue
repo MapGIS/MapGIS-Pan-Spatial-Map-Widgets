@@ -1,68 +1,68 @@
 <template>
   <div class="add-data-url-wrapper beauty-scroll">
-    <a-space direction="vertical" style="flex: 1">
-      <a-row>
+    <mapgis-ui-space direction="vertical" style="flex: 1">
+      <mapgis-ui-row>
         <label>分类</label>
-      </a-row>
-      <a-row>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
         <add-data-category-select
           :categories="categories"
           :value="categoryName"
           @select="onCategorySelect"
           class="full-width"
         />
-      </a-row>
-      <a-row>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
         <label>类型</label>
-      </a-row>
-      <a-row>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
         <add-data-type-select
           :types="urlDataTypes"
           :value="urlDataType"
           @select="onDataTypeSelect"
           class="full-width"
         />
-      </a-row>
-      <a-row>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
         <label>地址</label>
-      </a-row>
-      <a-row>
-        <a-textarea v-model="url" auto-size> </a-textarea>
-      </a-row>
-      <a-row>
-        <a-textarea
+      </mapgis-ui-row>
+      <mapgis-ui-row>
+        <mapgis-ui-textarea v-model="url" auto-size> </mapgis-ui-textarea>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
+        <mapgis-ui-textarea
           class="url-example"
           disabled
           :value="`示例 : ${this.urlDataType.example}`"
           auto-size
-        ></a-textarea>
-      </a-row>
-      <a-row>
+        ></mapgis-ui-textarea>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
         <label>名称</label>
-      </a-row>
-      <a-row>
-        <a-input v-model="name"> </a-input>
-      </a-row>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
+        <mapgis-ui-input v-model="name"> </mapgis-ui-input>
+      </mapgis-ui-row>
       <template v-if="hasToken">
-        <a-row>
+        <mapgis-ui-row>
           <label>令牌</label>
-        </a-row>
-        <a-row>
-          <a-input v-model="token"> </a-input>
-        </a-row>
+        </mapgis-ui-row>
+        <mapgis-ui-row>
+          <mapgis-ui-input v-model="token"> </mapgis-ui-input>
+        </mapgis-ui-row>
       </template>
-      <a-row>
-        <a-button
+      <mapgis-ui-row>
+        <mapgis-ui-button
           type="primary"
           @click="onAdd"
           class="full-width"
-          style="margin-top: 10px;"
+          style="margin-top: 10px"
           :disabled="url.length == 0 || name.length == 0"
         >
           添加
-        </a-button>
-      </a-row>
-    </a-space>
+        </mapgis-ui-button>
+      </mapgis-ui-row>
+    </mapgis-ui-space>
   </div>
 </template>
 
@@ -76,8 +76,8 @@ import AddDataTypeSelect from './AddDataTypeSelect.vue'
   name: 'AddDataUrl',
   components: {
     AddDataCategorySelect,
-    AddDataTypeSelect
-  }
+    AddDataTypeSelect,
+  },
 })
 export default class AddDataUrl extends Vue {
   @Prop({ type: Array }) urlDataTypes
@@ -117,7 +117,7 @@ export default class AddDataUrl extends Vue {
     // 应该要对地址进行解析，判断是否有效
     const data = {
       name: this.categoryName,
-      data: { type: this.urlDataType.value, url: this.url, name: this.name }
+      data: { type: this.urlDataType.value, url: this.url, name: this.name },
     }
     if (this.hasToken) {
       this.$set(data.data, 'token', this.token)
@@ -127,7 +127,7 @@ export default class AddDataUrl extends Vue {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .add-data-url-wrapper {
   overflow: auto;
   display: flex;
@@ -136,11 +136,11 @@ export default class AddDataUrl extends Vue {
   }
   .url-example {
     padding: 3px 0;
-    color: @text-color-secondary;
+    color: $text-color-secondary;
     word-break: break-all;
     white-space: break-spaces;
     font-size: 12px;
-    &.ant-input {
+    &.mapgis-ui-input {
       border: none;
       background-color: transparent;
       resize: none;

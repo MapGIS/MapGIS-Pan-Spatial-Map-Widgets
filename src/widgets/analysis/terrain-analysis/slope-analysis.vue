@@ -1,15 +1,16 @@
 <template>
   <mapgis-3d-analysis-slope
-    id='slope-analysis'
+    id="slope-analysis"
     :rampColors="rampColors"
-    @load="load" />
+    @load="load"
+  />
 </template>
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
 @Component({
-  name: 'MpSlopeAnalysis'
+  name: 'MpSlopeAnalysis',
 })
 export default class MpSlopeAnalysis extends Mixins(WidgetMixin) {
   private rampColors = [
@@ -18,7 +19,7 @@ export default class MpSlopeAnalysis extends Mixins(WidgetMixin) {
     { min: 30, max: 45, color: 'rgba(156, 39, 176, 0.5)' },
     { min: 45, max: 60, color: 'rgba(255, 235, 59, 0.5)' },
     { min: 60, max: 75, color: 'rgba(96, 125, 139, 0.5)' },
-    { min: 75, max: 90, color: 'rgba(76, 175, 80, 0.5)' }
+    { min: 75, max: 90, color: 'rgba(76, 175, 80, 0.5)' },
   ]
 
   private slopeAnalysis = null
@@ -48,7 +49,7 @@ export default class MpSlopeAnalysis extends Mixins(WidgetMixin) {
   }
 }
 </script>
-<style lang='less'>
+<style lang="less">
 #slope-analysis {
   width: 300px;
   max-width: 100%;

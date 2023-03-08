@@ -8,20 +8,29 @@
         position="center-right"
         :offset="[12, 0]"
       >
-        <a-row v-for="item in iconList" :key="item.icon">
-          <a-col>
-            <a-tooltip placement="left" :title="item.title">
-              <a-icon :type="item.icon" @click.stop="iconChange(item.type)" />
-            </a-tooltip>
-          </a-col>
-        </a-row>
+        <mapgis-ui-row v-for="item in iconList" :key="item.icon">
+          <mapgis-ui-col>
+            <mapgis-ui-tooltip placement="left" :title="item.title">
+              <!-- {{item.icon}} -->
+              <mapgis-ui-iconfont
+                :type="item.icon"
+                @click.stop="iconChange(item.type)"
+              />
+            </mapgis-ui-tooltip>
+          </mapgis-ui-col>
+        </mapgis-ui-row>
       </mp-placement>
     </mp-window-wrapper>
   </transition>
 </template>
 <script lang="ts">
 import { Vue, Component, Watch } from 'vue-property-decorator'
-import { mapGetters, mapMutations, ModuleType } from '../../store'
+import {
+  LayerServiceType,
+  mapGetters,
+  mapMutations,
+  ModuleType,
+} from '../../store'
 
 interface IIcon {
   icon: string
@@ -31,11 +40,11 @@ interface IIcon {
 
 @Component({
   computed: {
-    ...mapGetters(['isVisible', 'subjectData', 'selectedSubjectTimeList'])
+    ...mapGetters(['isVisible', 'subjectData', 'selectedSubjectTimeList']),
   },
   methods: {
-    ...mapMutations(['setVisible'])
-  }
+    ...mapMutations(['setVisible']),
+  },
 })
 export default class ThematicMapManageTools extends Vue {
   // 按钮列表
@@ -55,17 +64,20 @@ export default class ThematicMapManageTools extends Vue {
     const list: Array<IIcon> = []
     if (this.subjectData?.table) {
       const tableConfig = {
-        icon: 'table',
+        icon: 'mapgis-table',
         title: '属性表',
-        type: ModuleType.TABLE
+        type: ModuleType.TABLE,
       }
       list.push(tableConfig)
     }
-    if (this.subjectData?.graph) {
+    if (
+      this.subjectData?.graph &&
+      this.subjectData?.layerServiceType !== LayerServiceType.geojson
+    ) {
       const graphConfig = {
-        icon: 'bar-chart',
+        icon: 'mapgis-barchart',
         title: '统计表',
-        type: ModuleType.GRAPH
+        type: ModuleType.GRAPH,
       }
       list.push(graphConfig)
     }
@@ -74,9 +86,9 @@ export default class ThematicMapManageTools extends Vue {
       this.selectedSubjectTimeList.length > 1
     ) {
       const timelineConfig = {
-        icon: 'clock-circle',
+        icon: 'mapgis-time-circle',
         title: '时间轴',
-        type: ModuleType.TIMELINE
+        type: ModuleType.TIMELINE,
       }
       list.push(timelineConfig)
     }
@@ -92,6 +104,21 @@ export default class ThematicMapManageTools extends Vue {
   }
 }
 </script>
-<style lang="less" scoped>
-@import './index.less';
+
+<style lang="scss" scoped>
+@import './index.scss';
+.thematic-map-manage-tools {
+  background-color: $body-background;
+  border-radius: $border-radius-base;
+  border: 1px solid $border-color-base;
+  box-shadow: $box-shadow-base;
+  .mapgis-ui-row {
+    .anticon {
+      color: $primary-color;
+    }
+    &:not(:last-of-type) .mapgis-ui-col {
+      border-bottom: 1px solid $border-color-base;
+    }
+  }
+}
 </style>

@@ -353,6 +353,7 @@ export default {
     },
     saveConfig() {
       const config = this.getSaveConfig(this.basemaps)
+      console.log(config, 'config')
       api
         .saveWidgetConfig({
           name: 'basemap-manager',
@@ -384,7 +385,7 @@ export default {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .mp-widget-basemap-manager {
   display: flex;
   justify-content: center;

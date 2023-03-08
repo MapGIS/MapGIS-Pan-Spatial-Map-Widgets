@@ -10,9 +10,13 @@
         @click="onPreviewPicture"
       />
     </div>
-    <a-modal :visible="previewVisible" :footer="null" @cancel="onPreviewCancel">
+    <mapgis-ui-modal
+      :visible="previewVisible"
+      :footer="null"
+      @cancel="onPreviewCancel"
+    >
       <img style="width: 100%" :src="`${baseUrl}${marker.picture}`" />
-    </a-modal>
+    </mapgis-ui-modal>
 
     <mp-toolbar class="marker-toolbar">
       <mp-toolbar-command-group>
@@ -83,7 +87,7 @@ export default class MarkerShowWindow extends Mixins(AppMixin) {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .marker-show-wrapper {
   max-width: 240px;
   min-width: 200px;
@@ -93,7 +97,7 @@ export default class MarkerShowWindow extends Mixins(AppMixin) {
   .title {
     line-height: 33px;
     font-size: 14px;
-    color: @title-color;
+    color: $title-color;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -106,7 +110,7 @@ export default class MarkerShowWindow extends Mixins(AppMixin) {
       min-height: 20px;
       line-height: 20px;
       font-size: 12px;
-      color: @text-color;
+      color: $text-color;
       word-break: break-all;
     }
     .picture {

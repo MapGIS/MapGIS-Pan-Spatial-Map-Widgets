@@ -1,11 +1,11 @@
 <template>
   <div class="editable-field-table">
-    <a-empty v-if="!visible" :image-style="emptyImageStyle">
+    <mapgis-ui-empty v-if="!visible" :image-style="emptyImageStyle">
       <span slot="description" @click="showTable" class="description">
         点击开始配置
       </span>
-    </a-empty>
-    <mp-editable-table
+    </mapgis-ui-empty>
+    <mapgis-ui-editable-table
       v-else
       :columns="tableColumns"
       :data.sync="tableData"
@@ -15,7 +15,7 @@
       <template #top>
         <slot name="top" />
       </template>
-    </mp-editable-table>
+    </mapgis-ui-editable-table>
   </div>
 </template>
 <script lang="ts">
@@ -42,6 +42,9 @@ export default class EditableFieldTable extends Vue {
   @Prop({ type: Object, default: () => ({}) })
   readonly subjectConfig!: INewSubjectConfig
 
+  @Prop({ type: Boolean, default: false })
+  readonly emptyVisible!: boolean
+
   visible = false
 
   fieldList = []
@@ -50,14 +53,14 @@ export default class EditableFieldTable extends Vue {
     return {
       title: '取消配置',
       icon: 'close',
-      method: this.onClose
+      method: this.onClose,
     }
   }
 
   get tools() {
     return (add, batchDel) => {
       const _tools = [add, this.closeTool]
-      if (this.tableData.length) {
+      if (this.tableData && this.tableData.length) {
         _tools.splice(1, 0, batchDel)
       }
       return _tools
@@ -66,24 +69,24 @@ export default class EditableFieldTable extends Vue {
 
   get emptyImageStyle() {
     return {
-      height: '50px'
+      height: '50px',
     }
   }
 
   get tableColumns() {
     return [
-      ...this.columns.map(v => {
+      ...this.columns.map((v) => {
         const options = v.dataIndex === 'field' ? this.fieldList : undefined
         return {
           ...v,
           props: {
-            options
+            options,
           },
           scopedSlots: {
-            customRender: v.dataIndex
-          }
+            customRender: v.dataIndex,
+          },
         }
-      })
+      }),
     ]
   }
 
@@ -108,11 +111,11 @@ export default class EditableFieldTable extends Vue {
    * 显示配置面板
    */
   showTable() {
-    const { ip, port } = this.subjectConfig
-    if (!ip || !port) {
-      this.$message.warning('未配置服务地址')
-      return
-    }
+    // const { ip, port, src } = this.subjectConfig
+    // if (!(ip && port) && !src) {
+    //   this.$message.warning('未配置服务地址')
+    //   return
+    // }
     this.visible = true
   }
 
@@ -120,10 +123,10 @@ export default class EditableFieldTable extends Vue {
    * 设置属性列表
    */
   setFields() {
-    FieldInstance.getFields(this.subjectConfig).then(fields => {
+    FieldInstance.getFields(this.subjectConfig).then((fields) => {
       this.fieldList = fields.map(({ value }) => ({
         label: value,
-        value
+        value,
       }))
       this.$emit('fields-loaded', this.fieldList)
     })
@@ -143,15 +146,21 @@ export default class EditableFieldTable extends Vue {
       this.setFields()
     }
   }
+
+  @Watch('emptyVisible', { immediate: true })
+  emptyVisibleChanged(nV) {
+    this.visible = nV
+  }
 }
 </script>
-<style lang="less" scoped>
+
+<style lang="scss" scoped>
 .editable-field-table {
   padding: 8px;
   .description {
-    color: @primary-color;
+    color: $primary-color;
     cursor: pointer;
-    font-size: @font-size-sm;
+    font-size: $font-size-sm;
     &:hover {
       text-decoration: underline;
     }

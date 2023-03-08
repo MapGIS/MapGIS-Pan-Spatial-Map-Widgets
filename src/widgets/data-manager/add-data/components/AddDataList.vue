@@ -13,15 +13,15 @@
         </mp-toolbar-command>
       </mp-toolbar-command-group>
       <mp-toolbar-space></mp-toolbar-space>
-      <a-divider type="vertical" />
+      <mapgis-ui-divider type="vertical" />
       <mp-toolbar-command-group>
         <mp-toolbar-command title="保存" icon="save" @click="onSaveData">
         </mp-toolbar-command>
       </mp-toolbar-command-group>
     </mp-toolbar>
-    <a-space direction="vertical" class="full-width">
-      <a-row>
-        <a-table
+    <mapgis-ui-space direction="vertical" class="full-width">
+      <mapgis-ui-row>
+        <mapgis-ui-table
           class="data-table"
           :columns="columns"
           :data-source="categoryDataList"
@@ -29,7 +29,7 @@
           :row-selection="{
             columnWidth: 20,
             selectedRowKeys: selectedRowKeys,
-            onChange: onSelectChange
+            onChange: onSelectChange,
           }"
           :rowKey="
             (record, index) => {
@@ -46,23 +46,23 @@
               selectedKeys,
               confirm,
               clearFilters,
-              column
+              column,
             }"
             style="padding: 8px"
           >
-            <a-input
-              v-ant-ref="c => (searchInput = c)"
+            <mapgis-ui-input
+              v-mapgis-ui-ref="(c) => (searchInput = c)"
               :placeholder="`请输入${column.title}`"
               :value="selectedKeys[0]"
-              style="width: 188px; margin-bottom: 8px; display: block;"
+              style="width: 188px; margin-bottom: 8px; display: block"
               @change="
-                e => setSelectedKeys(e.target.value ? [e.target.value] : [])
+                (e) => setSelectedKeys(e.target.value ? [e.target.value] : [])
               "
               @pressEnter="
                 () => onSearch(selectedKeys, confirm, column.dataIndex)
               "
             />
-            <a-button
+            <mapgis-ui-button
               type="primary"
               icon="search"
               size="small"
@@ -70,26 +70,29 @@
               @click="() => onSearch(selectedKeys, confirm, column.dataIndex)"
             >
               搜索
-            </a-button>
-            <a-button
+            </mapgis-ui-button>
+            <mapgis-ui-button
               size="small"
               style="width: 90px"
               @click="() => onSearchReset(clearFilters)"
             >
               重置
-            </a-button>
+            </mapgis-ui-button>
           </div>
-          <a-icon
+          <mapgis-ui-iconfont
             slot="filterIcon"
             slot-scope="filtered"
-            type="search"
+            type="mapgis-search"
             :style="{ color: filtered ? '#108ee9' : undefined }"
           />
           <template
             slot="customRenderName"
             slot-scope="text, record, index, column"
           >
-            <span v-if="searchText && searchedColumn === column.dataIndex">
+            <span
+              v-if="searchText && searchedColumn === column.dataIndex"
+              :title="text"
+            >
               <template
                 v-for="(fragment, i) in text
                   .toString()
@@ -107,20 +110,20 @@
               </template>
             </span>
             <template v-else>
-              {{ text }}
+              <span :title="text">{{ text }}</span>
             </template>
           </template>
           <template slot="expandedRowRender" slot-scope="record">
             <div class="data-content">
-              <a-textarea
+              <mapgis-ui-textarea
                 class="data-url"
                 disabled
                 :value="record.url"
                 auto-size
-              ></a-textarea>
+              ></mapgis-ui-textarea>
               <mp-toolbar class="data-content-toolbar">
                 <mp-toolbar-command-group>
-                  <a-popconfirm
+                  <mapgis-ui-popconfirm
                     title="确认删除?"
                     @confirm="() => onDeleteData(record)"
                   >
@@ -128,17 +131,20 @@
                       title="删除"
                       icon="delete"
                     ></mp-toolbar-command>
-                  </a-popconfirm>
+                  </mapgis-ui-popconfirm>
                 </mp-toolbar-command-group>
               </mp-toolbar>
             </div>
           </template>
           <template slot="customRenderType" slot-scope="text">
-            <div>{{ typeDescription(text) }}</div>
+            <span :title="typeDescription(text)">{{
+              typeDescription(text)
+            }}</span>
           </template>
-        </a-table>
-      </a-row>
-    </a-space>
+          <!-- <mapgis-ui-empty class="mapgis-ui-empty-normal" :image="simpleImage" /> -->
+        </mapgis-ui-table>
+      </mapgis-ui-row>
+    </mapgis-ui-space>
     <add-data-category
       :categories="categories"
       :visible="addCategoryVisible"
@@ -152,13 +158,14 @@
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import AddDataCategorySelect from './AddDataCategorySelect.vue'
 import AddDataCategory from './AddDataCategory.vue'
+import { MapgisUiEmpty } from '@mapgis/webclient-vue-ui'
 
 @Component({
   name: 'AddDataList',
   components: {
     AddDataCategorySelect,
-    AddDataCategory
-  }
+    AddDataCategory,
+  },
 })
 export default class AddDataList extends Vue {
   @Prop({ type: Array }) dataList
@@ -178,7 +185,7 @@ export default class AddDataList extends Vue {
     total: this.categoryDataList.length,
     showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
     pageSizeOptions: ['5', '10', '15', '20'],
-    pageSize: 10
+    pageSize: 10,
   }
 
   private searchText = ''
@@ -201,39 +208,38 @@ export default class AddDataList extends Vue {
         title: '名称',
         dataIndex: 'name',
         sorter: (a, b) => a.name < b.name,
+        ellipsis: true,
         scopedSlots: {
           filterDropdown: 'filterDropdown',
           filterIcon: 'filterIcon',
-          customRender: 'customRenderName'
+          customRender: 'customRenderName',
         },
         onFilter: (value, record) =>
-          record.name
-            .toString()
-            .toLowerCase()
-            .includes(value.toLowerCase()),
-        onFilterDropdownVisibleChange: visible => {
+          record.name.toString().toLowerCase().includes(value.toLowerCase()),
+        onFilterDropdownVisibleChange: (visible) => {
           if (visible) {
             setTimeout(() => {
               this.searchInput.focus()
             }, 0)
           }
-        }
+        },
       },
       {
         title: '类型',
         dataIndex: 'type',
         sorter: (a, b) =>
           this.typeDescription(a.type) < this.typeDescription(b.type),
+        ellipsis: true,
         scopedSlots: { customRender: 'customRenderType' },
         filters: this.dataTypes,
-        onFilter: (value, record) => record.type.indexOf(value) === 0
-      }
+        onFilter: (value, record) => record.type.indexOf(value) === 0,
+      },
     ]
   }
 
   get typeDescription() {
-    return function(typeVal) {
-      const type = this.dataTypes.find(item => {
+    return function (typeVal) {
+      const type = this.dataTypes.find((item) => {
         return item.value === typeVal
       })
       return type ? type.text : ''
@@ -300,14 +306,14 @@ export default class AddDataList extends Vue {
     for (let i = 0; i < this.categoryDataList.length; i++) {
       const dataItem = this.categoryDataList[i]
       if (
-        newChecked.some(item => item === dataItem.id) &&
+        newChecked.some((item) => item === dataItem.id) &&
         dataItem.visible === false
       ) {
         dataItem.visible = true
         this.addLayer(dataItem)
       }
       if (
-        newUnChecked.some(item => item === dataItem.id) &&
+        newUnChecked.some((item) => item === dataItem.id) &&
         dataItem.visible === true
       ) {
         dataItem.visible = false
@@ -328,14 +334,14 @@ export default class AddDataList extends Vue {
   }
 
   onDeleteData(dataItem) {
-    const selected = this.selectedRowKeys.find(key => key === dataItem.id)
+    const selected = this.selectedRowKeys.find((key) => key === dataItem.id)
     if (selected) {
       // 需要从文档中移除
       this.removeLayer(dataItem)
     }
 
     const index = this.categoryDataList.findIndex(
-      item => item.id == dataItem.id
+      (item) => item.id == dataItem.id
     )
 
     if (index >= 0) {
@@ -343,8 +349,12 @@ export default class AddDataList extends Vue {
     }
   }
 
+  beforeCreate() {
+    this.simpleImage = MapgisUiEmpty.PRESENTED_IMAGE_SIMPLE
+  }
+
   private queryData() {
-    const category = this.dataList.find(category => {
+    const category = this.dataList.find((category) => {
       return category.name === this.categoryName
     })
 
@@ -362,7 +372,7 @@ export default class AddDataList extends Vue {
   }
 
   private unSelectData(id) {
-    const index = this.selectedRowKeys.findIndex(item => item === id)
+    const index = this.selectedRowKeys.findIndex((item) => item === id)
 
     this.selectedRowKeys.splice(index, 1)
     this.onSelectChange(this.selectedRowKeys)
@@ -378,9 +388,8 @@ export default class AddDataList extends Vue {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .mp-widget-add-data {
-  overflow: auto;
   .add-data-toolbar {
     margin-bottom: 10px;
     .add-data-category-select {
@@ -391,17 +400,18 @@ export default class AddDataList extends Vue {
   .full-width {
     width: 100%;
   }
+  overflow: auto;
   .data-table {
     .data-content {
       display: flex;
       flex-direction: column;
       .data-url {
+        color: $text-color-secondary;
         padding: 3px 0;
-        color: @text-color-secondary;
         word-break: break-all;
         white-space: break-spaces;
         font-size: 12px;
-        &.ant-input {
+        &.mapgis-ui-input {
           border: none;
           background-color: transparent;
           resize: none;
@@ -411,15 +421,24 @@ export default class AddDataList extends Vue {
         flex-direction: row-reverse;
       }
     }
-    /deep/.ant-table-expand-icon-th,
-    /deep/.ant-table-row-expand-icon-cell {
+
+    ::v-deep .mapgis-ui-table-expand-icon-th,
+    ::v-deep .mapgis-ui-table-row-expand-icon-cell {
       width: 20px;
       min-width: 20px;
     }
-    /deep/.ant-table-pagination.ant-pagination {
+    ::v-deep .mapgis-ui-table-pagination.mapgis-ui-pagination {
       margin: 8px 0 0 0;
-      .ant-pagination-options-size-changer.ant-select {
+      ::v-deep .mapgis-ui-pagination-item-active {
+        background: none !important;
+      }
+      .mapgis-ui-pagination-options-size-changer.mapgis-ui-select {
         margin-right: 0;
+      }
+    }
+    ::v-deep .mapgis-ui-empty {
+      .mapgis-ui-empty-image {
+        height: 100% !important;
       }
     }
   }

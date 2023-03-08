@@ -3,6 +3,7 @@
     <mapgis-3d-graphic-layer
       :models="models"
       :dataSource="dataSource"
+      :uploadUrl="uploadUrl"
       @save="save"
       ref="graphicLayer"
     />
@@ -18,7 +19,6 @@ import { eventBus, events, api } from '../../../model'
   name: 'MpOverlayManager',
 })
 export default class MpOverlayAnalysis extends Mixins(WidgetMixin) {
-  @Provide()
   get uploadUrl() {
     return `${this.baseUrl}/api/local-storage/pictures`
   }
@@ -75,7 +75,8 @@ export default class MpOverlayAnalysis extends Mixins(WidgetMixin) {
   }
 
   onClose() {
-    this.$refs.graphicLayer.$_hideAllGraphic()
+    // this.$refs.graphicLayer.$_hideAllGraphic()
+    this.$refs.graphicLayer.$_stopDrawAll()
   }
 
   async save(e) {

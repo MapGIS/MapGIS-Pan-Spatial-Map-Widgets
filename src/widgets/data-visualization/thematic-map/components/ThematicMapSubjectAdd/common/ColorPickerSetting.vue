@@ -1,17 +1,17 @@
 <template>
-  <a-dropdown :visible="dropdownVisible" :trigger="['click']">
+  <mapgis-ui-dropdown :visible="dropdownVisible" :trigger="['click']">
     <span
       class="color-view"
       :style="{ background }"
       @click.stop="showDropdown"
     />
     <mp-card slot="overlay" :box-shadow="true" title="颜色设置" :tools="tools">
-      <a-table
+      <mapgis-ui-table
         bordered
         :row-selection="{
           columnWidth: 32,
           selectedRowKeys,
-          onChange: selectChange
+          onChange: selectChange,
         }"
         :pagination="false"
         :columns="tableColumns"
@@ -25,21 +25,21 @@
           />
         </template>
         <template slot="percent" slot-scope="text, record">
-          <a-input-number
+          <mapgis-ui-input-number
             v-model="record.percent"
             :min="0"
             :max="100"
             :precision="0"
-            :formatter="value => `${value}%`"
-            :parser="value => value.replace('%', '')"
+            :formatter="(value) => `${value}%`"
+            :parser="(value) => value.replace('%', '')"
           />
         </template>
         <template slot="operation" slot-scope="text, record, index">
-          <a-icon type="delete" @click="removeRow(index)" />
+          <mapgis-ui-iconfont type="mapgis-delete" @click="removeRow(index)" />
         </template>
-      </a-table>
+      </mapgis-ui-table>
     </mp-card>
-  </a-dropdown>
+  </mapgis-ui-dropdown>
 </template>
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
@@ -66,18 +66,18 @@ export default class ColorPickerSetting extends Vue {
       title: '颜色',
       dataIndex: 'color',
       align: 'center',
-      scopedSlots: { customRender: 'color' }
+      scopedSlots: { customRender: 'color' },
     },
     {
       title: '占比',
       dataIndex: 'percent',
-      scopedSlots: { customRender: 'percent' }
+      scopedSlots: { customRender: 'percent' },
     },
     {
       title: '操作',
       align: 'center',
-      scopedSlots: { customRender: 'operation' }
-    }
+      scopedSlots: { customRender: 'operation' },
+    },
   ]
 
   tableData: ITableDataItem[] = []
@@ -86,23 +86,23 @@ export default class ColorPickerSetting extends Vue {
     {
       title: '新增',
       icon: 'plus',
-      method: this.add
+      method: this.add,
     },
     {
       title: '批量删除',
       icon: 'delete',
-      method: this.batchRemove
+      method: this.batchRemove,
     },
     {
       title: '确认',
       icon: 'check',
-      method: this.confirm
+      method: this.confirm,
     },
     {
       title: '关闭',
       icon: 'close',
-      method: this.close
-    }
+      method: this.close,
+    },
   ]
 
   @Watch('value', { immediate: true, deep: true })
@@ -125,13 +125,13 @@ export default class ColorPickerSetting extends Vue {
    * 初始化列表数据
    */
   initTableData() {
-    if (!this.value || Object.keys(this.value).some(n => isNaN(Number(n)))) {
+    if (!this.value || Object.keys(this.value).some((n) => isNaN(Number(n)))) {
       return
     }
     this.tableData = Object.entries(this.value).map(([percent, color]) => ({
       color,
       key: UUID.uuid(),
-      percent: percent * 100
+      percent: percent * 100,
     }))
   }
 
@@ -171,7 +171,7 @@ export default class ColorPickerSetting extends Vue {
     const node = {
       key: UUID.uuid(),
       color: this.defaultColor,
-      percent: 0
+      percent: 0,
     }
     this.tableData.push(node)
   }
@@ -183,7 +183,7 @@ export default class ColorPickerSetting extends Vue {
     if (!this.selectedRowKeys.length) {
       this.$message.warning('请勾选数据')
     } else {
-      this.selectedRowKeys.forEach(k =>
+      this.selectedRowKeys.forEach((k) =>
         this.removeRow(this.tableData.findIndex(({ key }) => key === k))
       )
       this.selectedRowKeys = []
@@ -216,23 +216,22 @@ export default class ColorPickerSetting extends Vue {
   }
 }
 </script>
-<style lang="less" scoped>
+
+<style lang="scss" scoped>
 .color-view {
+  border-radius: $border-radius-base;
   width: 88px;
   height: 32px;
   line-height: 32px;
   display: inline-block;
   vertical-align: middle;
-  border-radius: @border-radius-base;
   border: 1px solid transparent;
   cursor: pointer;
 }
-
 .color-picker-confirm {
   width: 100px;
 }
-
-::v-deep .ant-table {
+::v-deep .mapgis-ui-table {
   th {
     padding: 4px 8px;
   }
@@ -242,15 +241,15 @@ export default class ColorPickerSetting extends Vue {
   .anticon {
     cursor: pointer;
     &:hover {
-      color: @primary-color;
+      color: $primary-color;
     }
   }
-  .ant-input-number {
+  .mapgis-ui-input-number {
     border: none;
     border-radius: 0;
     &-focused {
       box-shadow: none;
-      border-color: @border-color-base;
+      border-color: $border-color-base;
     }
   }
 }

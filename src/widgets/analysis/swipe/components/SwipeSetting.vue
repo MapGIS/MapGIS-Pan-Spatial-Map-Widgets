@@ -1,33 +1,35 @@
 <template>
   <mp-setting-form class="swipe-setting" layout="vertical" size="small">
-    <a-form-item :label="`${directionLayerTitle.aboveTitle}图层`">
-      <a-select :value="aboveLayer.id" @change="onAboveChange">
-        <a-select-option
+    <mapgis-ui-form-item :label="`${directionLayerTitle.aboveTitle}图层`">
+      <mapgis-ui-select :value="aboveLayer.id" @change="onAboveChange">
+        <mapgis-ui-select-option
           v-for="p in aboveLayers"
           :key="p.id"
           :value="p.id"
           :title="p.title"
-          >{{ p.title }}</a-select-option
+          >{{ p.title }}</mapgis-ui-select-option
         >
-      </a-select>
-    </a-form-item>
-    <a-form-item :label="`${directionLayerTitle.belowTitle}图层`">
-      <a-select :value="belowLayer.id" @change="onBelowChange">
-        <a-select-option
+      </mapgis-ui-select>
+    </mapgis-ui-form-item>
+    <mapgis-ui-form-item :label="`${directionLayerTitle.belowTitle}图层`">
+      <mapgis-ui-select :value="belowLayer.id" @change="onBelowChange">
+        <mapgis-ui-select-option
           v-for="p in belowLayers"
           :key="p.id"
           :value="p.id"
           :title="p.title"
-          >{{ p.title }}</a-select-option
+          >{{ p.title }}</mapgis-ui-select-option
         >
-      </a-select>
-    </a-form-item>
-    <a-form-item label="类型">
-      <a-radio-group :value="direction" @change="onDirectionChange">
-        <a-radio value="vertical"> 垂直 </a-radio>
-        <a-radio value="horizontal" v-show="swipe.is2DMapMode"> 水平 </a-radio>
-      </a-radio-group>
-    </a-form-item>
+      </mapgis-ui-select>
+    </mapgis-ui-form-item>
+    <mapgis-ui-form-item label="类型">
+      <mapgis-ui-radio-group :value="direction" @change="onDirectionChange">
+        <mapgis-ui-radio value="vertical"> 垂直 </mapgis-ui-radio>
+        <mapgis-ui-radio value="horizontal" v-show="swipe.is2DMapMode">
+          水平
+        </mapgis-ui-radio>
+      </mapgis-ui-radio-group>
+    </mapgis-ui-form-item>
   </mp-setting-form>
 </template>
 
@@ -38,7 +40,7 @@ import { Vue, Watch, Component, Inject } from 'vue-property-decorator'
 export default class SwipeSetting extends Vue {
   @Inject({
     from: 'swipe',
-    default: () => ({})
+    default: () => ({}),
   })
   readonly swipe!: any
 
@@ -60,7 +62,7 @@ export default class SwipeSetting extends Vue {
     }
     return {
       aboveTitle,
-      belowTitle
+      belowTitle,
     }
   }
 
@@ -110,5 +112,8 @@ export default class SwipeSetting extends Vue {
 .swipe-setting {
   width: 100%;
   height: 100%;
+  .mapgis-ui-form-item {
+    margin-bottom: 0;
+  }
 }
 </style>

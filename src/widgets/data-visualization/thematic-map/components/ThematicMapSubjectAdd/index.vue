@@ -20,8 +20,10 @@
         </div>
         <!-- 取消\保存按钮 -->
         <div class="subject-add-save-btn">
-          <a-button @click="onCancel">取消</a-button>
-          <a-button type="primary" @click="onSave">保存</a-button>
+          <mapgis-ui-button @click="onCancel">取消</mapgis-ui-button>
+          <mapgis-ui-button type="primary" @click="onSave"
+            >保存</mapgis-ui-button
+          >
         </div>
       </div>
     </mp-window>
@@ -37,7 +39,7 @@ import {
   ModuleType,
   ISubjectType,
   INewSubjectConfig,
-  ISubjectConfigNode
+  ISubjectConfigNode,
 } from '../../store'
 import BaseItems from './components/BaseItems'
 import SubjectItems from './components/SubjectItems'
@@ -46,14 +48,14 @@ import dep from './store/dep'
 @Component({
   components: {
     BaseItems,
-    SubjectItems
+    SubjectItems,
   },
   computed: {
-    ...mapGetters(['isVisible', 'subjectConfig'])
+    ...mapGetters(['isVisible', 'subjectConfig']),
   },
   methods: {
-    ...mapMutations(['resetVisible', 'updateSubjectConfig'])
-  }
+    ...mapMutations(['resetVisible', 'updateSubjectConfig']),
+  },
 })
 export default class ThematicMapSubjectAdd extends Vue {
   @Prop({ default: () => ({}) }) readonly node!: INewSubjectConfig
@@ -96,7 +98,7 @@ export default class ThematicMapSubjectAdd extends Vue {
    * 添加节点
    */
   addNodeToTreeNode(tree: Array<ISubjectConfigNode>, node: INewSubjectConfig) {
-    return tree.map(item => {
+    return tree.map((item) => {
       if (item.id === node.parentId) {
         if (item.children && item.children.length) {
           const index = item.children.findIndex(({ id }) => id === node.id)
@@ -125,7 +127,7 @@ export default class ThematicMapSubjectAdd extends Vue {
       title: node.parentTitle,
       nodeType: 'panel',
       visible: true,
-      children: [{ ...node, parentId }]
+      children: [{ ...node, parentId }],
     }
     return [...tree, rootNode]
   }
@@ -148,7 +150,7 @@ export default class ThematicMapSubjectAdd extends Vue {
         this.$message.success('保存成功')
         this.onCancel()
       })
-      .catch(err => {
+      .catch((err) => {
         this.$message.error('保存失败')
       })
   }
@@ -183,21 +185,31 @@ export default class ThematicMapSubjectAdd extends Vue {
           configs = configs.map((c, i) => ({
             ...c,
             themeStyle: {
-              styleGroups: subjectStyleComps[i].getFormResult().themeStyle[
-                subjectStyleComps[i].id
-              ] // 获取样式配置结果
-            }
+              styleGroups:
+                subjectStyleComps[i].getFormResult().themeStyle[
+                  subjectStyleComps[i].id
+                ], // 获取样式配置结果
+            },
           }))
         }
       }
       this.createSubjectConfigNode({
         ...this.subjectNodeBase,
-        config: configs
+        config: configs,
       })
     }
   }
 }
 </script>
+
+<style lang="scss" scoped>
+.thematic-map-subject-add {
+  .subject-add-save-btn {
+    border-top: 1px solid $border-color-split;
+  }
+}
+</style>
+
 <style lang="less">
 @import './index.less';
 </style>

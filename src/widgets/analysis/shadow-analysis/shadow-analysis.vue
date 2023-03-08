@@ -14,7 +14,7 @@ import { Mixins, Component } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
 @Component({
-  name: 'MpShadowAnalysis'
+  name: 'MpShadowAnalysis',
 })
 export default class MpShadowAnalysis extends Mixins(WidgetMixin) {
   // 阴影颜色

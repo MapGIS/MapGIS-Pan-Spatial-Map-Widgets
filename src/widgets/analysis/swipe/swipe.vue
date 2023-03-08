@@ -17,8 +17,8 @@ type Direction = 'vertical' | 'horizontal'
   name: 'MpSwipe',
   components: {
     MapboxCompare,
-    CesiumCompare
-  }
+    CesiumCompare,
+  },
 })
 export default class MpSwipe extends Mixins(WidgetMixin, AppMixin) {
   @Provide()
@@ -98,7 +98,7 @@ export default class MpSwipe extends Mixins(WidgetMixin, AppMixin) {
     const _layers = this.document.defaultMap
       .clone()
       .getFlatLayers()
-      .filter(v => !!v.isVisible)
+      .filter((v) => !!v.isVisible)
     if (_layers && _layers.length > 1) {
       success(_layers)
       this.onForceRefreshCesiumCompare()
@@ -182,6 +182,20 @@ export default class MpSwipe extends Mixins(WidgetMixin, AppMixin) {
 }
 </script>
 
-<style lang="less" scoped>
-@import './swipe.less';
+<style lang="scss" scoped>
+.mp-widget-swipe {
+  // 有穿透
+  .mapboxgl-compare {
+    border: 1px solid $primary-color;
+    background-color: $border-color;
+    .compare-swiper-vertical,
+    .compare-swiper-horizontal {
+      background-color: $primary-color;
+    }
+  }
+}
+</style>
+
+<style lang="scss" scoped>
+@import './swipe.scss';
 </style>

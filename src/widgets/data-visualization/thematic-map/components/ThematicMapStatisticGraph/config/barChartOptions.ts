@@ -14,12 +14,12 @@ export const barChartOptions = ({ color, title, x, y }) => {
         type: 'shadow',
         shadowStyle: {
           opacity: 0.2,
-          color: _color
-        }
+          color: _color,
+        },
       },
       textStyle: {
-        fontSize: 10
-      }
+        fontSize: 10,
+      },
     },
     dataZoom: {
       show: true,
@@ -30,13 +30,13 @@ export const barChartOptions = ({ color, title, x, y }) => {
       start: 0,
       end: 70,
       showDetail: false,
-      zoomLock: true
+      zoomLock: true,
     },
     grid: {
       top: 20,
       left: gridX,
       bottom: 40,
-      right: 0
+      right: 0,
     },
     title: {
       text: title,
@@ -44,8 +44,8 @@ export const barChartOptions = ({ color, title, x, y }) => {
       padding: 0,
       textStyle: {
         fontSize: 14,
-        fontFamily: '微软雅黑'
-      }
+        fontFamily: '微软雅黑',
+      },
     },
     xAxis: {
       data: x,
@@ -54,26 +54,26 @@ export const barChartOptions = ({ color, title, x, y }) => {
         rotate: 60,
         interval: 0,
         fontSize: 10,
-        fontFamily: '微软雅黑'
-      }
+        fontFamily: '微软雅黑',
+      },
     },
     yAxis: {
       type: 'value',
       axisLabel: {
-        fontFamily: '微软雅黑'
+        fontFamily: '微软雅黑',
       },
       axisTick: {
-        show: true
+        show: true,
       },
       axisLine: {
-        show: true
+        show: true,
       },
       splitLine: {
         lineStyle: {
           color: splitColor,
-          type: 'dotted'
-        }
-      }
+          type: 'dotted',
+        },
+      },
     },
     series: [
       {
@@ -81,9 +81,9 @@ export const barChartOptions = ({ color, title, x, y }) => {
         data: y,
         barWidth: 10,
         itemStyle: {
-          color: _color
-        }
-      }
-    ]
+          color: _color,
+        },
+      },
+    ],
   }
 }

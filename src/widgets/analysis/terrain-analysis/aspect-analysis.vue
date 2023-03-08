@@ -1,15 +1,16 @@
 <template>
   <mapgis-3d-analysis-aspect
-    id='aspect-analysis'
+    id="aspect-analysis"
     :rampColors="rampColors"
-    @load="load" />
+    @load="load"
+  />
 </template>
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
 @Component({
-  name: 'MpAspectAnalysis'
+  name: 'MpAspectAnalysis',
 })
 export default class MpAspectAnalysis extends Mixins(WidgetMixin) {
   private rampColors = [
@@ -18,7 +19,7 @@ export default class MpAspectAnalysis extends Mixins(WidgetMixin) {
     { min: 120, max: 180, color: 'rgba(156, 39, 176, 0.5)' },
     { min: 180, max: 240, color: 'rgba(255, 235, 59, 0.5)' },
     { min: 240, max: 300, color: 'rgba(96, 125, 139, 0.5)' },
-    { min: 300, max: 360, color: 'rgba(76, 175, 80, 0.5)' }
+    { min: 300, max: 360, color: 'rgba(76, 175, 80, 0.5)' },
   ]
 
   private aspectAnalysis = null
@@ -48,7 +49,7 @@ export default class MpAspectAnalysis extends Mixins(WidgetMixin) {
   }
 }
 </script>
-<style lang='less'>
+<style lang="less">
 #aspect-analysis {
   width: 300px;
   max-width: 100%;

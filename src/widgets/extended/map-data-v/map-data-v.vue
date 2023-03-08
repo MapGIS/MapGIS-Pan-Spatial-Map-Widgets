@@ -7,7 +7,7 @@
       width="100%"
       height="100%"
     ></iframe>
-    <div class="empty-box" v-else><a-empty /></div>
+    <div class="empty-box" v-else><mapgis-ui-empty /></div>
   </div>
 </template>
 

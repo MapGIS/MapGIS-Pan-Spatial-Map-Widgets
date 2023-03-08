@@ -1,74 +1,90 @@
 <template>
   <div class="mp-widget-network-analysis">
     <div id="network-analysis-el">
-      <a-spin :spinning="showLoading">
-        <mp-setting-form :wrapper-width="180">
-          <a-form-item label="选择数据">
-            <a-select v-model="layerSelectIndex" @change="setNetWorkLayer">
-              <a-select-option
+      <mapgis-ui-spin :spinning="showLoading">
+        <mp-setting-form :label-col="{ span: 5 }" :wrapper-col="{ span: 12 }">
+          <!-- <mp-setting-form :wrapper-width="180"> -->
+          <mapgis-ui-form-item label="选择数据" class="select-data">
+            <mapgis-ui-select
+              class="select-box"
+              v-model="layerSelectIndex"
+              @change="setNetWorkLayer"
+            >
+              <mapgis-ui-select-option
                 v-for="(item, index) in layerArrOption"
                 :key="index"
                 :value="index"
               >
                 {{ item.title }}
-              </a-select-option>
-            </a-select>
-          </a-form-item>
-          <a-form-item label="选择图层">
-            <a-select v-model="networkLayerIndex" @change="resetLayer">
-              <a-select-option
+              </mapgis-ui-select-option>
+            </mapgis-ui-select>
+          </mapgis-ui-form-item>
+          <mapgis-ui-form-item label="选择图层" class="select-data">
+            <mapgis-ui-select v-model="networkLayerIndex" @change="resetLayer">
+              <mapgis-ui-select-option
                 v-for="(item, index) in networkLayerOption"
                 :key="index"
                 :value="index"
               >
                 {{ item.title }}
-              </a-select-option>
-            </a-select>
-          </a-form-item>
-          <a-form-item label="选择方式">
-            <a-select v-model="wayIndex" @change="resetLayer">
-              <a-select-option
+              </mapgis-ui-select-option>
+            </mapgis-ui-select>
+          </mapgis-ui-form-item>
+          <mapgis-ui-form-item label="选择方式" class="select-data">
+            <mapgis-ui-select v-model="wayIndex" @change="resetLayer">
+              <mapgis-ui-select-option
                 v-for="(item, index) in wayOptions"
                 :key="index"
                 :value="index"
               >
                 {{ item.name }}
-              </a-select-option>
-            </a-select>
-          </a-form-item>
-          <a-form-item v-if="showButton" label="选择类型">
-            <a-radio-group v-model="groupRadio" :options="optionsRadio">
-            </a-radio-group>
-          </a-form-item>
+              </mapgis-ui-select-option>
+            </mapgis-ui-select>
+          </mapgis-ui-form-item>
+          <mapgis-ui-form-item v-if="showButton" label="选择类型">
+            <mapgis-ui-radio-group v-model="groupRadio" :options="optionsRadio">
+            </mapgis-ui-radio-group>
+          </mapgis-ui-form-item>
         </mp-setting-form>
         <div v-if="showButton" class="control-button-container">
-          <a-button class="control-button" @click="createMarker(null, 'dots')">
+          <mapgis-ui-button
+            class="control-button"
+            @click="createMarker(null, 'dots')"
+          >
             绘制目标
-          </a-button>
-          <a-button
+          </mapgis-ui-button>
+          <mapgis-ui-button
             class="control-button"
             @click="createMarker(null, 'barrier')"
           >
             绘制障碍
-          </a-button>
+          </mapgis-ui-button>
         </div>
 
         <div v-if="!showButton" class="control-button-container">
-          <a-button class="control-button" @click="createMarker('1', 'dots')">
+          <mapgis-ui-button
+            class="control-button"
+            @click="createMarker('1', 'dots')"
+          >
             点上网标
-          </a-button>
-          <a-button class="control-button" @click="createMarker('2', 'dots')">
+          </mapgis-ui-button>
+          <mapgis-ui-button
+            class="control-button"
+            @click="createMarker('2', 'dots')"
+          >
             线上网标
-          </a-button>
+          </mapgis-ui-button>
         </div>
         <div class="control-button-container">
-          <a-button class="control-button" @click="clearClick">
+          <mapgis-ui-button class="control-button" @click="clearClick">
             结束绘制
-          </a-button>
-          <a-button class="control-button" @click="resetLayer"> 清空 </a-button>
+          </mapgis-ui-button>
+          <mapgis-ui-button class="control-button" @click="resetLayer">
+            清空
+          </mapgis-ui-button>
         </div>
-        <a-tabs type="card" v-model="tab" size="small">
-          <a-tab-pane key="coordinateArr" tab="坐标点集">
+        <mapgis-ui-tabs type="card" v-model="tab" size="small">
+          <mapgis-ui-tab-pane key="coordinateArr" tab="坐标点集">
             <mp-coordinate-table
               :data="dataCoordinateArr.features"
               :columns="columnsCoordinateArr"
@@ -77,8 +93,8 @@
               @rowClick="rowClick"
               :showButton="!showButton"
             ></mp-coordinate-table>
-          </a-tab-pane>
-          <a-tab-pane v-if="showButton" key="hinderArr" tab="障碍点集">
+          </mapgis-ui-tab-pane>
+          <mapgis-ui-tab-pane v-if="showButton" key="hinderArr" tab="障碍点集">
             <mp-hinder-table
               :data="dataBarrierArr.features"
               :columns="columnsCoordinateArr"
@@ -86,8 +102,8 @@
               @deleteRow="deleteRow"
               @rowClick="rowClick"
             ></mp-hinder-table>
-          </a-tab-pane>
-          <a-tab-pane key="analysisRes" tab="分析结果">
+          </mapgis-ui-tab-pane>
+          <mapgis-ui-tab-pane key="analysisRes" tab="分析结果">
             <mp-anakysis-result-table
               :isFullScreen="isFullScreen"
               ref="MpNetworkAnalysis"
@@ -95,21 +111,21 @@
               @draw-result="drawResult"
               @fly-to-high="flyToHigh"
             />
-          </a-tab-pane>
-        </a-tabs>
+          </mapgis-ui-tab-pane>
+        </mapgis-ui-tabs>
         <div class="analysis-actions">
-          <!-- <a-button @click="showSetting" :disable="showLoading"
-              >设置参数</a-button
+          <!-- <mapgis-ui-button @click="showSetting" :disable="showLoading"
+              >设置参数</mapgis-ui-button
             > -->
-          <a-button
+          <mapgis-ui-button
             type="primary"
             @click="startAnalysis"
             :disable="showLoading"
           >
             分析
-          </a-button>
+          </mapgis-ui-button>
         </div>
-      </a-spin>
+      </mapgis-ui-spin>
     </div>
     <template v-if="isWidgetOpen">
       <mapbox-layer
@@ -135,9 +151,14 @@
     </template>
     <mp-draw-pro ref="draw" @finished="clickFunciton" />
     <mp-3d-draw-pro ref="draw3d" @finished="clickFunciton" />
-    <a-modal v-model="settingDialog" title="设置参数" centered :footer="null">
+    <mapgis-ui-modal
+      v-model="settingDialog"
+      title="设置参数"
+      centered
+      :footer="null"
+    >
       <setting v-model="settingForm" />
-    </a-modal>
+    </mapgis-ui-modal>
   </div>
 </template>
 
@@ -746,10 +767,30 @@ export default class MpNetworkAnalysis extends Mixins(WidgetMixin) {
 }
 </script>
 
+<style lang="less" scoped>
+.select-data {
+  display: flex;
+  /deep/.mapgis-ui-form-item-control {
+    width: 100%;
+  }
+}
+/deep/.mapgis-ui-form-item {
+  margin-bottom: 5px;
+  display: flex;
+  .mapgis-ui-col {
+    align-items: center;
+  }
+}
+.mapgis-ui-radio-group-default {
+  display: flex;
+}
+</style>
+
 <style lang="less">
 .mp-widget-network-analysis {
   display: flex;
   flex-direction: column;
+  padding: 8px 16px;
   #network-analysis-el {
     width: 300px;
     max-width: 100%;

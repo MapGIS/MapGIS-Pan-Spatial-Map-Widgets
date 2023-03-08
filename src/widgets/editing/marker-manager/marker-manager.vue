@@ -17,31 +17,31 @@
           :icon="item.icon"
           @click="item.click"
         />
-        <a-divider type="vertical" />
+        <mapgis-ui-divider type="vertical" />
         <mp-toolbar-command
           icon="save"
           title="保存"
           @click="onSaveMarkers"
         ></mp-toolbar-command>
-        <a-popover
+        <mapgis-ui-popover
           placement="bottomLeft"
           arrow-point-at-center
           trigger="hover"
           v-model="managerMenuVisible"
           overlayClassName="marker-manager-popover"
         >
-          <a-list slot="content" :gutter="10">
-            <a-list-item
+          <mapgis-ui-list slot="content" :gutter="10">
+            <mapgis-ui-list-item
               v-for="item in markerManagerModes"
               :key="item.title"
               @click="item.click"
             >
               {{ item.title }}
-            </a-list-item>
-          </a-list>
+            </mapgis-ui-list-item>
+          </mapgis-ui-list>
 
           <mp-toolbar-command icon="more" title=""></mp-toolbar-command>
-        </a-popover>
+        </mapgis-ui-popover>
       </mp-toolbar-command-group>
     </mp-toolbar>
     <div class="marker-container">
@@ -72,7 +72,7 @@
           @delete-marker="onDeleteMarker"
         ></mp-marker-item>
       </div>
-      <a-empty v-else :image="simpleImage" />
+      <mapgis-ui-empty v-else :image="simpleImage" />
     </div>
     <mp-marker-plotting
       v-if="is2DMapMode"
@@ -81,6 +81,7 @@
       :highlight-style="highlightStyle"
       :popup-anchor="popupAnchor"
       :popup-toggle-type="popupToggleType"
+      :selected-markers="selectedMarkers"
     >
       <template slot="popup" slot-scope="{ marker }">
         <marker-show-window :marker="marker"></marker-show-window>
@@ -91,6 +92,10 @@
       :markers="shownMarkers"
       :center="currentMarkerCenter"
       :highlight-style="highlightStyle"
+      :popup-anchor="popupAnchor"
+      :popup-toggle-type="popupToggleType"
+      :selected-markers="selectedMarkers"
+      :widget-info="widgetInfo"
       @popupload="popupLoad"
     >
       <template slot="popup" slot-scope="{ marker }">
@@ -141,7 +146,7 @@ import MarkerInput from './components/MarkerInput/MarkerInput.vue'
 import MarkerImport from './components/MarkerImport/MarkerImport.vue'
 import MarkerExport from './components/MarkerExport/MarkerExport.vue'
 import MpMarkerItem from './components/MarkerItem/MarkerItem.vue'
-import { Empty } from 'ant-design-vue'
+import { MapgisUiEmpty } from '@mapgis/webclient-vue-ui'
 
 @Component({
   name: 'MpMarkerManager',
@@ -156,7 +161,7 @@ import { Empty } from 'ant-design-vue'
 })
 export default class MpMarkerManager extends Mixins(WidgetMixin) {
   private icons = {
-    Point: 'environment',
+    Point: 'map',
     LineString:
       '<svg class="icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="128" height="128"><defs><style/></defs><path d="M883.2 238.933c-53.333 0-98.133 44.8-98.133 98.134 0 19.2 6.4 36.266 14.933 51.2L680.533 507.733c-14.933-10.666-32-14.933-51.2-14.933-27.733 0-53.333 12.8-70.4 29.867l-87.466-51.2v-8.534c0-53.333-44.8-98.133-98.134-98.133s-96 44.8-96 98.133c0 14.934 4.267 27.734 8.534 40.534L192 608c-14.933-8.533-29.867-12.8-46.933-12.8-53.334 0-98.134 44.8-98.134 98.133s44.8 96 98.134 96 98.133-44.8 98.133-98.133c0-21.333-6.4-40.533-19.2-57.6l87.467-96c17.066 14.933 38.4 23.467 61.866 23.467 36.267 0 66.134-19.2 83.2-49.067l78.934 46.933c-4.267 10.667-6.4 19.2-6.4 29.867 0 53.333 44.8 98.133 98.133 98.133s98.133-44.8 98.133-98.133c0-19.2-6.4-36.267-14.933-51.2l119.467-119.467c14.933 10.667 32 14.934 51.2 14.934 53.333 0 98.133-44.8 98.133-98.134s-42.667-96-96-96z"/></svg>',
     Polygon:
@@ -191,7 +196,7 @@ export default class MpMarkerManager extends Mixins(WidgetMixin) {
     },
     {
       title: '导入',
-      icon: 'import',
+      icon: 'download',
       click: this.onImportMarkers,
     },
   ]
@@ -240,6 +245,9 @@ export default class MpMarkerManager extends Mixins(WidgetMixin) {
     Math.random() * 10
   )}-marker-list`
 
+  // 判断微件是否执行了失活onDeActive函数
+  private doDeActive = false
+
   private get markerTotal() {
     return `${this.markers.length}个标注`
   }
@@ -250,6 +258,13 @@ export default class MpMarkerManager extends Mixins(WidgetMixin) {
 
   private get shownMarkers() {
     return this.stateClosed ? [] : this.markers
+  }
+
+  private get selectedMarkers() {
+    return !this.stateClosed &&
+      this.widgetInfo.config.markerShowType === 'default'
+      ? this.markers
+      : []
   }
 
   private get exportConfig() {
@@ -276,7 +291,7 @@ export default class MpMarkerManager extends Mixins(WidgetMixin) {
   }
 
   beforeCreate() {
-    this.simpleImage = Empty.PRESENTED_IMAGE_SIMPLE
+    this.simpleImage = MapgisUiEmpty.PRESENTED_IMAGE_SIMPLE
   }
 
   async mounted() {
@@ -345,15 +360,26 @@ export default class MpMarkerManager extends Mixins(WidgetMixin) {
     this.stateClosed = false
   }
 
+  // 微件激活时
+  onActive() {
+    this.doDeActive = false
+    this.map.getCanvas().style.cursor = this.widgetInfo.config.cursorType
+  }
+
   // 微件关闭时
   onClose() {
     this.stateClosed = true
     this.onClearMark()
+    if (!this.doDeActive) {
+      this.map.getCanvas().style.cursor = 'grab'
+    }
   }
 
   // 微件失活时
   onDeActive() {
     this.closeMark()
+    this.doDeActive = true
+    this.map.getCanvas().style.cursor = 'grab'
   }
 
   // 点击不同类型标注图标回调事件
@@ -427,7 +453,6 @@ export default class MpMarkerManager extends Mixins(WidgetMixin) {
   private onGotoMarker(marker) {
     // 点击标注跳转
     this.currentMarkerCenter = marker.coordinates
-
     this.currentMarkerId = marker.markerId
   }
 
@@ -526,19 +551,28 @@ export default class MpMarkerManager extends Mixins(WidgetMixin) {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .mp-widget-marker-manager,
 .marker-container {
   flex: 1 1 0%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  color: $text-color;
   .marker-list {
     flex: 1 1 0%;
     overflow: auto;
   }
-  /deep/ .ant-empty-normal {
+  ::v-deep .mapgis-ui-empty-normal {
     margin: 8px 0;
   }
+}
+.mapgis-ui-list-item {
+  &:hover {
+    background: $list-item-hover-bg;
+  }
+}
+.mapgis-ui-divider {
+  background-color: $border-color-base;
 }
 </style>

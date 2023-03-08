@@ -1,19 +1,19 @@
 <template>
   <div class="mp-widget-retrospect">
-    <a-spin :spinning="loading">
+    <mapgis-ui-spin :spinning="loading">
       <mp-setting-form
         layout="vertical"
         v-show="timeLineList.length"
         :no-last-margin-bottom="true"
       >
-        <a-form-item>
+        <mapgis-ui-form-item>
           <mp-group-tab
             slot="label"
             title="专题选择"
             :has-top-margin="false"
             :has-bottom-margin="false"
           ></mp-group-tab>
-          <a-tree-select
+          <mapgis-ui-tree-select
             class="retrospect-tree-select"
             :value="subject"
             @change="onSubjectChange"
@@ -21,7 +21,7 @@
             :replaceFields="replaceFields"
             :tree-data="treeData"
           />
-          <a-row v-show="timeLineList.length">
+          <mapgis-ui-row v-show="timeLineList.length">
             <div class="retrospect-time-line">
               <time-line
                 id="retrospect-time-line"
@@ -32,58 +32,65 @@
                 :autoPlay="isPlay"
               />
             </div>
-          </a-row>
-          <a-row
+          </mapgis-ui-row>
+          <mapgis-ui-row
             type="flex"
             align="middle"
             justify="space-between"
             class="retrospect-row"
             v-show="timeLineList.length"
           >
-            <a-col :span="24 / btns.length" v-for="btn in btns" :key="btn.name">
-              <a-tooltip placement="bottom" :title="btn.tooltip">
-                <a-icon
+            <mapgis-ui-col
+              :span="24 / btns.length"
+              v-for="btn in btns"
+              :key="btn.name"
+            >
+              <mapgis-ui-tooltip placement="bottom" :title="btn.tooltip">
+                <!-- 该位置显示图标 -->
+                <mapgis-ui-iconfont
                   class="retrospect-btn"
-                  :type="btn.name"
+                  :type="'mapgis-' + btn.name"
                   @click="btn.func"
                 />
-              </a-tooltip>
-            </a-col>
-          </a-row>
-        </a-form-item>
-        <a-form-item v-show="showInterval">
+              </mapgis-ui-tooltip>
+            </mapgis-ui-col>
+          </mapgis-ui-row>
+        </mapgis-ui-form-item>
+        <mapgis-ui-form-item v-show="showInterval">
           <mp-group-tab
             slot="label"
             title="时间间隔"
             :has-top-margin="false"
             :has-bottom-margin="false"
           ></mp-group-tab>
-          <a-row
+          <mapgis-ui-row
             type="flex"
             align="middle"
             justify="start"
             class="retrospect-row"
           >
-            <a-col :span="22">
-              <a-input-number
+            <mapgis-ui-col :span="22">
+              <mapgis-ui-input-number
                 class="retrospect-input-number"
                 v-model="interval"
                 :min="1"
               />
-            </a-col>
-            <a-col :span="2" class="retrospect-input-number-unit"> 秒 </a-col>
-          </a-row>
-        </a-form-item>
+            </mapgis-ui-col>
+            <mapgis-ui-col :span="2" class="retrospect-input-number-unit">
+              秒
+            </mapgis-ui-col>
+          </mapgis-ui-row>
+        </mapgis-ui-form-item>
       </mp-setting-form>
       <!-- 空数据友好提示 -->
-      <a-empty v-show="!timeLineList.length" :image="simpleImage" />
-    </a-spin>
+      <mapgis-ui-empty v-show="!timeLineList.length" :image="simpleImage" />
+    </mapgis-ui-spin>
   </div>
 </template>
 
 <script lang="ts">
 import { Mixins, Component, Watch } from 'vue-property-decorator'
-import { Empty } from 'ant-design-vue'
+import { MapgisUiEmpty } from '@mapgis/webclient-vue-ui'
 import { WidgetMixin, WidgetState } from '@mapgis/web-app-framework'
 import { dataCatalogManagerInstance } from '../../../model'
 import _cloneDeep from 'lodash/cloneDeep'
@@ -188,7 +195,7 @@ export default class MpRetrospect extends Mixins(WidgetMixin) {
       { name: 'backward', func: this.prev, tooltip: '上一年' },
       { name: playName, func: this.btnPlay, tooltip: playTooltip },
       { name: 'forward', func: this.next, tooltip: '下一年' },
-      { name: 'clock-circle', func: this.setInterval, tooltip: '播放间隔' },
+      { name: 'time-circle', func: this.setInterval, tooltip: '播放间隔' },
     ]
   }
 
@@ -203,7 +210,7 @@ export default class MpRetrospect extends Mixins(WidgetMixin) {
   }
 
   beforeCreate() {
-    this.simpleImage = Empty.PRESENTED_IMAGE_SIMPLE
+    this.simpleImage = MapgisUiEmpty.PRESENTED_IMAGE_SIMPLE
   }
 
   /**
@@ -428,8 +435,9 @@ export default class MpRetrospect extends Mixins(WidgetMixin) {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .mp-widget-retrospect {
+  padding: 8px 16px;
   .retrospect-row {
     margin-bottom: 8px;
     &:last-child {
@@ -452,11 +460,11 @@ export default class MpRetrospect extends Mixins(WidgetMixin) {
     font-size: 16px;
     cursor: pointer;
     &:hover {
-      color: @primary-color;
+      color: $primary-color;
     }
   }
-  /deep/.ant-divider-horizontal,
-  /deep/ .ant-empty-normal {
+  ::v-deep .mapgis-ui-divider-horizontal,
+  ::v-deep .mapgis-ui-empty-normal {
     margin: 8px 0;
   }
 }

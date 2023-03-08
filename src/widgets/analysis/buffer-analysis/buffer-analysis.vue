@@ -1,48 +1,5 @@
 <template>
   <div class="mp-widget-buffer-analysis">
-    <div id="widgets-ui" v-if="isWidgetOpen">
-      <mapgis-ui-group-tab title="选择数据" id="title-space" />
-      <mapgis-ui-form-model
-        v-bind="{ labelCol: { span: 6 }, wrapperCol: { span: 17 } }"
-        :layout="layout"
-        :labelAlign="'left'"
-      >
-        <mapgis-ui-form-model-item label="选择图层" :colon="false">
-          <mapgis-ui-row>
-            <mapgis-ui-col>
-              <mapgis-ui-select
-                v-model="tDataIndex"
-                @change="tchangeTarget($event)"
-                v-if="!selectLevel"
-              >
-                <mapgis-ui-select-option
-                  v-for="(item, index) in layerArrOption"
-                  :key="index"
-                  :value="index"
-                  >{{ item.title }}</mapgis-ui-select-option
-                >
-              </mapgis-ui-select>
-              <mapgis-ui-select
-                v-model="tDataIndex"
-                @change="tchangeTarget"
-                v-if="selectLevel"
-                disabled
-              >
-                <mapgis-ui-select-option
-                  v-for="(item, index) in layerArrOption"
-                  :key="index"
-                  :value="index"
-                  >{{ item.title }}</mapgis-ui-select-option
-                >
-              </mapgis-ui-select>
-            </mapgis-ui-col>
-          </mapgis-ui-row>
-          <mapgis-ui-checkbox :checked="selectLevel" @change="changeSelectLevel"
-            >只对选择数据进行操作</mapgis-ui-checkbox
-          >
-        </mapgis-ui-form-model-item>
-      </mapgis-ui-form-model>
-    </div>
     <!-- 使用缓冲区分析组件 -->
     <mapgis-3d-analysis-buffer
       :layout="layout"
@@ -54,7 +11,54 @@
       @listenFeature="showFeature(arguments)"
       @listenBufferAdd="showAdd"
       @load="load"
-    ></mapgis-3d-analysis-buffer>
+    >
+      <div id="widgets-ui" slot="selectLayer" v-if="isWidgetOpen">
+        <mapgis-ui-group-tab
+          title="选择图层"
+          id="title-space"
+          :hasBottomMargin="false"
+        />
+        <mapgis-ui-form-model :layout="layout" :labelAlign="'left'">
+          <mapgis-ui-form-model-item :colon="false">
+            <mapgis-ui-row>
+              <mapgis-ui-col>
+                <mapgis-ui-select
+                  v-model="tDataIndex"
+                  @change="tchangeTarget($event)"
+                  v-if="!selectLevel"
+                >
+                  <mapgis-ui-select-option
+                    v-for="(item, index) in layerArrOption"
+                    :key="index"
+                    :value="index"
+                    >{{ item.title }}</mapgis-ui-select-option
+                  >
+                </mapgis-ui-select>
+                <mapgis-ui-select
+                  v-model="tDataIndex"
+                  @change="tchangeTarget"
+                  v-if="selectLevel"
+                  disabled
+                >
+                  <mapgis-ui-select-option
+                    v-for="(item, index) in layerArrOption"
+                    :key="index"
+                    :value="index"
+                    >{{ item.title }}</mapgis-ui-select-option
+                  >
+                </mapgis-ui-select>
+              </mapgis-ui-col>
+            </mapgis-ui-row>
+            <mapgis-ui-checkbox
+              style="line-height: 32px"
+              :checked="selectLevel"
+              @change="changeSelectLevel"
+              >只对选择数据进行操作</mapgis-ui-checkbox
+            >
+          </mapgis-ui-form-model-item>
+        </mapgis-ui-form-model>
+      </div>
+    </mapgis-3d-analysis-buffer>
   </div>
 </template>
 
@@ -62,7 +66,8 @@
 import { Mixins, Component, Watch } from 'vue-property-decorator'
 import { LayerType, WidgetMixin } from '@mapgis/web-app-framework'
 import { Style } from '@mapgis/webclient-es6-service'
-import { eventBus, events, ActiveResultSet } from '../../../model'
+import { eventBus, events } from '../../../model'
+import { ActiveResultSet } from '../../../model/active-result-set'
 
 const { FillStyle } = Style
 
@@ -70,7 +75,7 @@ const { FillStyle } = Style
   name: 'MpBufferAnalysis',
 })
 export default class MpBufferAnalysis extends Mixins(WidgetMixin) {
-  private layout = 'horizontal'
+  private layout = 'vertical'
 
   private baseBufferUrl = 'http://localhost:6163/'
 
@@ -192,8 +197,16 @@ export default class MpBufferAnalysis extends Mixins(WidgetMixin) {
   /**
    * 若缓冲区分析生成新图层，将结果显示在地图容器中，并用图层列表管理
    */
-  addNewLayer() {
+  addNewLayer(bufferStyle, renderType) {
     const resultLayer: Array<string> = this.getResultLayer()
+    const highlightStyle = {
+      polygon: new FillStyle({
+        width: 8,
+        color: '#ffff00',
+        opacity: 0.8,
+        outlineColor: '#ff0000',
+      }),
+    }
     const data = {
       name: 'IGS图层',
       description: '综合分析_结果图层',
@@ -201,6 +214,9 @@ export default class MpBufferAnalysis extends Mixins(WidgetMixin) {
         type: 'IGSVector',
         url: resultLayer[0],
         name: resultLayer[1],
+        renderType: renderType,
+        featureStyle: bufferStyle,
+        highlightStyle: highlightStyle,
       },
     }
     eventBus.$emit(events.ADD_DATA_EVENT, data)
@@ -251,11 +267,11 @@ export default class MpBufferAnalysis extends Mixins(WidgetMixin) {
     this.srcType = 'Layer'
   }
 
-  showLayer(data) {
+  showLayer(data, bufferStyle, renderType) {
     this.finishLayer = true
     this.destLayer = data
     if (this.add == true) {
-      this.addNewLayer()
+      this.addNewLayer(bufferStyle, renderType)
     }
   }
 
@@ -273,16 +289,19 @@ export default class MpBufferAnalysis extends Mixins(WidgetMixin) {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
+.mapgis-ui-form-item {
+  margin-bottom: 0px;
+}
 .mp-widget-buffer-analysis {
-  height: 480px;
-  overflow-y: auto;
-  padding: 10px 10px 10px 15px;
-  margin-left: 5px;
+  // height: 480px;
+  // overflow-y: auto;
+  // padding: 0 8px 0 16px;
+  // margin-left: 5px;
 }
 #widgets-ui {
-  height: 130px;
+  // height: 130px;
   z-index: 100000;
-  margin-bottom: -15px;
+  // margin-bottom: -15px;
 }
 </style>

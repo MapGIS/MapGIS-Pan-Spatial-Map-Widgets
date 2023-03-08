@@ -2,7 +2,7 @@
   <div class="swipe-mapbox-compare">
     <!-- 空数据提示 -->
     <div class="swipe-mapbox-empty" v-if="!showCompare">
-      <a-empty description="卷帘分析功能至少需要选择2个图层" />
+      <mapgis-ui-empty description="卷帘分析功能至少需要选择2个图层" />
     </div>
     <!-- 卷帘组件 -->
     <mapgis-compare v-else :orientation="direction">
@@ -18,7 +18,7 @@
       />
     </mapgis-compare>
     <!-- 图层设置 -->
-    <a-drawer
+    <mapgis-ui-drawer
       title="设置"
       placement="right"
       :closable="false"
@@ -32,10 +32,12 @@
       @close="onSettingPanelClose"
     >
       <div class="drawer-handle" slot="handle" @click="onToggleSettingPanel">
-        <a-icon :type="settingPanelVisible ? 'right' : 'left'" />
+        <mapgis-ui-iconfont
+          :type="settingPanelVisible ? 'mapgis-right' : 'mapgis-left'"
+        />
       </div>
       <swipe-setting />
-    </a-drawer>
+    </mapgis-ui-drawer>
   </div>
 </template>
 <script lang="ts">
@@ -45,13 +47,13 @@ import SwipeSetting from './SwipeSetting'
 
 @Component({
   components: {
-    SwipeSetting
-  }
+    SwipeSetting,
+  },
 })
 export default class MapboxCompare extends Vue {
   @Inject({
     from: 'swipe',
-    default: () => ({})
+    default: () => ({}),
   })
   readonly swipe!: any
 
@@ -87,14 +89,14 @@ export default class MapboxCompare extends Vue {
   // 弹框wrap样式
   get drawerWrapStyle() {
     return {
-      position: 'absolute'
+      position: 'absolute',
     }
   }
 
   // 弹框头部样式
   get drawerHeaderStyle() {
     return {
-      display: 'none'
+      display: 'none',
     }
   }
 
@@ -102,7 +104,7 @@ export default class MapboxCompare extends Vue {
   get drawerBodyStyle() {
     return {
       display: 'flex',
-      padding: '12px'
+      padding: '12px',
     }
   }
 
@@ -111,7 +113,7 @@ export default class MapboxCompare extends Vue {
    */
   get drawerMaskStyle() {
     return {
-      backgroundColor: 'transparent'
+      backgroundColor: 'transparent',
     }
   }
 
@@ -157,37 +159,43 @@ export default class MapboxCompare extends Vue {
     }
   }
 
-  private handleLoad() {}
-}
-</script>
-<style lang="less" scoped>
-/deep/ .ant-drawer-right.ant-drawer-open {
-  .ant-drawer-content-wrapper {
-    box-shadow: none;
-    border-left: 1px solid @primary-color;
+  private handleLoad(payLoad) {
+    const { map } = payLoad
+    const fullExtent = this.aboveLayer.fullExtent || this.belowLayer.fullExtent
+    const { xmin, ymin, xmax, ymax } = fullExtent
+    setTimeout(function () {
+      map.fitBounds([
+        [xmin, ymin],
+        [xmax, ymax],
+      ])
+    }, 300)
   }
 }
+</script>
 
+<style lang="scss" scoped>
+::v-deep .mapgis-ui-drawer-right.mapgis-ui-drawer-open {
+  .mapgis-ui-drawer-content-wrapper {
+    box-shadow: none;
+    border-left: 1px solid $primary-color;
+  }
+}
 .swipe-mapbox-compare {
   width: 100%;
   height: 100%;
   position: relative;
-  /deep/ .mapgis-compare-bar {
+  ::v-deep .mapgis-compare-bar {
     width: 100%;
     height: 100%;
     min-width: 77vw;
     min-height: 77vh;
   }
 }
-
-.swipe-mapbox-empty {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .drawer-handle {
+  background-color: $base-bg-color;
+  border: 1px solid $primary-color;
+  border-right-color: transparent;
+  cursor: pointer;
   position: absolute;
   height: 64px;
   top: calc(50% - 32px);
@@ -196,15 +204,17 @@ export default class MapboxCompare extends Vue {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  background-color: @base-bg-color;
   border-radius: 4px 0 0 4px;
-  border: 1px solid @primary-color;
-  border-right-color: transparent;
-  cursor: pointer;
 
   &:hover {
     color: white;
-    background: @primary-color;
+    background: $primary-color;
   }
+}
+.swipe-mapbox-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

@@ -1,0 +1,15 @@
+.thematic-map-manage-tools {
+  width: 32px;
+  line-height: 1;
+  ::v-deep .mapgis-ui-row {
+    .mapgis-ui-col {
+      padding: 10px 0;
+      text-align: center;
+    }
+    .anticon {
+      font-size: 18px;
+      cursor: pointer;
+      vertical-align: middle;
+    }
+  }
+}

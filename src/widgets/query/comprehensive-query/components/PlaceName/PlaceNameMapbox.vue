@@ -13,9 +13,9 @@
     <mapgis-mapv-layer
       v-else-if="
         geojson &&
-          geojson.features &&
-          geojson.features.length > 0 &&
-          colorCluster
+        geojson.features &&
+        geojson.features.length > 0 &&
+        colorCluster
       "
       :geojson="geojson"
       :options="options"
@@ -28,6 +28,7 @@
 import { Mixins, Component, Prop, Watch } from 'vue-property-decorator'
 import { Style } from '@mapgis/webclient-es6-service'
 import { MapMixin } from '@mapgis/web-app-framework'
+import { baseConfigInstance } from '../../../../../model'
 
 const { MarkerStyle, LineStyle, PointStyle, FillStyle } = Style
 
@@ -35,57 +36,59 @@ const { MarkerStyle, LineStyle, PointStyle, FillStyle } = Style
 export default class PlaceNameMapbox extends Mixins(MapMixin) {
   @Prop({
     type: String,
-    default: ''
+    default: '',
   })
   selectedMarkerIcon!: string
 
   @Prop({
     type: String,
-    default: ''
+    default: '',
   })
   defaultMarkerIcon!: string
 
   @Prop({
     type: Boolean,
-    default: false
+    default: false,
   })
   cluster!: boolean
 
   @Prop({
     type: String,
-    default: ''
+    default: '',
   })
   colorCluster?: string
 
   @Prop({
     type: Object,
-    default: () => ({})
+    default: () => ({}),
   })
   geojson!: Record<string, unknown>
 
   @Prop({
     type: Array,
-    default: () => []
+    default: () => [],
   })
   hoverMarker?: Array<string>
 
   get layerStyle() {
     return new MarkerStyle({
-      symbol: this.defaultMarkerIcon
+      symbol: this.defaultMarkerIcon,
     })
   }
 
   get highlightStyle() {
-    return {
+    const highlightStyle = {
       enableHoverMarker: false,
       enableHoverFeature: false,
       marker: new MarkerStyle({
-        symbol: this.selectedMarkerIcon
+        symbol: this.selectedMarkerIcon,
       }),
       point: new PointStyle(),
       line: new LineStyle(),
-      polygon: new FillStyle()
+      polygon: new FillStyle(),
     }
+    this.changeColor(highlightStyle)
+    return highlightStyle
   }
 
   get options() {
@@ -103,13 +106,32 @@ export default class PlaceNameMapbox extends Mixins(MapMixin) {
       label: {
         // 聚合文本样式
         show: true, // 是否显示
-        fillStyle: 'white'
+        fillStyle: 'white',
       },
       gradient: { 0: 'blue', 0.5: 'yellow', 1.0: 'rgb(255,0,0)' }, // 聚合图标渐变色
       cesium: { postRender: true, postRenderFrame: 0 },
       draw: 'cluster',
-      context: '2d'
+      context: '2d',
     }
+  }
+
+  private changeColor(highlightStyle) {
+    // 手动修改高亮样式与系统设置一致
+    const { color: regColor } =
+      baseConfigInstance.config.colorConfig.feature.reg
+    const { color: lineColor } =
+      baseConfigInstance.config.colorConfig.feature.line
+    const { size: lineWidth } =
+      baseConfigInstance.config.colorConfig.feature.line
+    const { color: pntColor } =
+      baseConfigInstance.config.colorConfig.feature.pnt
+    const { size: pntSize } = baseConfigInstance.config.colorConfig.feature.pnt
+    highlightStyle.line.color = lineColor
+    highlightStyle.line.width = +lineWidth // 转number
+    highlightStyle.point.color = pntColor
+    highlightStyle.point.radius = +pntSize // 转number
+    highlightStyle.polygon.color = regColor
+    highlightStyle.polygon.outlineColor = lineColor
   }
 }
 </script>

@@ -24,6 +24,7 @@ import MpAspectSlope from './aspect-slope-analysis.vue'
 import MpFlooding from './flooding.vue'
 import MpCutFillAnalysis from './cut-fill-analysis.vue'
 import MpContourAnalysis from './contour-analysis.vue'
+import { api } from '../../../model'
 
 @Component({
   name: 'MpTerrainAnalysis',
@@ -31,8 +32,8 @@ import MpContourAnalysis from './contour-analysis.vue'
     MpAspectSlope,
     MpFlooding,
     MpCutFillAnalysis,
-    MpContourAnalysis
-  }
+    MpContourAnalysis,
+  },
 })
 export default class MpTerrainAnalysis extends Mixins(WidgetMixin) {
   private tab = 'aspectSlope'
@@ -43,23 +44,23 @@ export default class MpTerrainAnalysis extends Mixins(WidgetMixin) {
     {
       title: '坡向坡度',
       key: 'aspectSlope',
-      image: 'aspect.png'
+      image: 'aspect.png',
     },
     {
       title: '等值线',
       key: 'contour',
-      image: 'contour.png'
+      image: 'contour.png',
     },
     {
       title: '淹没',
       key: 'flooding',
-      image: 'flooding.png'
+      image: 'flooding.png',
     },
     {
       title: '填挖方',
       key: 'cut-fill',
-      image: 'cut-fill.png'
-    }
+      image: 'cut-fill.png',
+    },
   ]
 
   // 获取当前面板对应的组件
@@ -68,7 +69,7 @@ export default class MpTerrainAnalysis extends Mixins(WidgetMixin) {
   }
 
   get typeImage() {
-    return function(image) {
+    return function (image) {
       return `${this.appAssetsUrl}${this.widgetInfo.uri}/images/${image}`
     }
   }
@@ -94,6 +95,9 @@ export default class MpTerrainAnalysis extends Mixins(WidgetMixin) {
       preAnalysisComponent.onDeActive()
       this.preTab = this.tab
     }
+    if (this.tab === 'flooding') {
+      this.setFloodConfig()
+    }
     if (this.currentAnalysisComponent) {
       this.currentAnalysisComponent.onActive()
     }
@@ -102,6 +106,13 @@ export default class MpTerrainAnalysis extends Mixins(WidgetMixin) {
   // 微件打开时
   onOpen() {
     this.currentAnalysisComponent.onActive()
+  }
+
+  async setFloodConfig() {
+    let config = await api.getWidgetConfig('terrain-analysis')
+    config = config || {}
+    const { floodAnalysis } = config
+    this.$refs.floodingAnalysis.setConfig(floodAnalysis)
   }
 
   // 微件激活时
@@ -121,12 +132,31 @@ export default class MpTerrainAnalysis extends Mixins(WidgetMixin) {
 }
 </script>
 
-<style lang="less">
+<style lang="scss" scoped>
+.mp-widget-terrain-analysis {
+  .terrain-analysis-types {
+    .analysis-type {
+      .analysis-type-img {
+        &.active-type,
+        &:hover {
+          box-shadow: 0 0 0 2px $primary-color;
+        }
+      }
+      .analysis-type-text {
+        color: $text-color;
+      }
+    }
+  }
+}
+</style>
+
+<style lang="scss">
 .mp-widget-terrain-analysis {
   .terrain-analysis-types {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
+    margin: 4px 0;
     .analysis-type {
       .analysis-type-img {
         height: 48px;
@@ -134,17 +164,12 @@ export default class MpTerrainAnalysis extends Mixins(WidgetMixin) {
         border-radius: 4px;
         padding: 6px;
         cursor: pointer;
-        &.active-type,
-        &:hover {
-          box-shadow: 0 0 0 2px @primary-color;
-        }
       }
       .analysis-type-text {
         width: 100%;
         margin-top: 4px;
         font-size: 12px;
         line-height: 18px;
-        color: @text-color;
         text-align: center;
       }
     }

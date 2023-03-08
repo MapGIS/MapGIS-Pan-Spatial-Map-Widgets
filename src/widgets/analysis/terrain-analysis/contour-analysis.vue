@@ -1,6 +1,6 @@
 <template>
   <mapgis-3d-analysis-contour
-    id='contour-analysis'
+    id="contour-analysis"
     :contourSpacing="contourSpacing"
     :contourWidth="contourWidth"
     :contourColor="contourColor"
@@ -12,7 +12,7 @@ import { Component, Mixins } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
 @Component({
-  name: 'MpContourAnalysis'
+  name: 'MpContourAnalysis',
 })
 export default class MpContourAnalysis extends Mixins(WidgetMixin) {
   private contourSpacing = 150
@@ -48,7 +48,7 @@ export default class MpContourAnalysis extends Mixins(WidgetMixin) {
   }
 }
 </script>
-<style lang='less'>
+<style lang="less">
 #contour-analysis {
   width: 300px;
   max-width: 100%;

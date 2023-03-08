@@ -10,4 +10,10 @@ import { WidgetMixin } from '@mapgis/web-app-framework'
 export default class MpScalebar extends Mixins(WidgetMixin) {}
 </script>
 
-<style lang="less" scoped></style>
+<style lang="scss">
+.distance-legend {
+  .distance-legend-label {
+    color: $text-color;
+  }
+}
+</style>

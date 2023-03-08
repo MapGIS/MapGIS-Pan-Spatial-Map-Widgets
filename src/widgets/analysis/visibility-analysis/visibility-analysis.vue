@@ -1,21 +1,19 @@
 <template>
   <mapgis-3d-sightline
-    :exHeight='exHeight'
-    :visibleColor='visibleColor'
-    :unVisibleColor='unVisibleColor'
-    @load='load'>
+    :exHeight="exHeight"
+    :visibleColor="visibleColor"
+    :unVisibleColor="unVisibleColor"
+    @load="load"
+  >
   </mapgis-3d-sightline>
 </template>
 
-<script lang='ts'>
+<script lang="ts">
 import { Mixins, Component } from 'vue-property-decorator'
-import {
-  WidgetMixin
-} from '@mapgis/web-app-framework'
+import { WidgetMixin } from '@mapgis/web-app-framework'
 
 @Component({ name: 'MpVisibilityAnalysis' })
 export default class MpVisibilityAnalysis extends Mixins(WidgetMixin) {
-
   // 附加高度(米)
   private exHeight = 1.85
 
@@ -38,5 +36,4 @@ export default class MpVisibilityAnalysis extends Mixins(WidgetMixin) {
 }
 </script>
 
-<style lang='less' scoped>
-</style>
+<style lang="less" scoped></style>

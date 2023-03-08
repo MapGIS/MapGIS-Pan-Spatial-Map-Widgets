@@ -1,68 +1,69 @@
 <template>
   <div class="add-data-file-wrapper beauty-scroll">
-    <a-space direction="vertical" style="flex: 1">
-      <a-row>
+    <mapgis-ui-space direction="vertical" style="flex: 1">
+      <mapgis-ui-row>
         <label>分类</label>
-      </a-row>
-      <a-row>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
         <add-data-category-select
           :categories="categories"
           :value="categoryName"
           @select="onCategorySelect"
           class="full-width"
         />
-      </a-row>
-      <a-row>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
         <label>类型</label>
-      </a-row>
-      <a-row>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
         <add-data-type-select
           :types="fileDataTypes"
           :value="fileDataType"
           @select="onDataTypeSelect"
           class="full-width"
         />
-      </a-row>
-      <a-row>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
         <label>地址</label>
-      </a-row>
-      <a-row>
-        <a-textarea v-model="file" auto-size :disabled="isDisabled">
-        </a-textarea>
-      </a-row>
-      <a-row>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
+        <mapgis-ui-textarea v-model="file" auto-size :disabled="isDisabled">
+        </mapgis-ui-textarea>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
         <label>名称</label>
-      </a-row>
-      <a-row>
-        <a-input v-model="name"> </a-input>
-      </a-row>
-      <a-row>
-        <a-upload-dragger
+      </mapgis-ui-row>
+      <mapgis-ui-row>
+        <mapgis-ui-input v-model="name"> </mapgis-ui-input>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
+        <mapgis-ui-upload-dragger
           name="file"
-          :action="
-            `http://${config.igsIp}:${config.igsPort}/igs/rest/resource/upload`
-          "
+          :action="`http://${config.igsIp}:${config.igsPort}/igs/rest/resource/upload`"
           :accept="accept"
           @change="handleChange"
         >
           <div class="upload-content">
-            <a-icon type="upload" :style="{ fontSize: '36px' }" />
+            <mapgis-ui-iconfont
+              type="mapgis-upload"
+              :style="{ fontSize: '36px' }"
+            />
             <p>{{ label }}</p>
           </div>
-        </a-upload-dragger>
-      </a-row>
-      <a-row>
-        <a-button
+        </mapgis-ui-upload-dragger>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
+        <mapgis-ui-button
           type="primary"
           @click="onAdd"
           class="full-width"
-          style="margin-top: 10px;"
+          style="margin-top: 10px"
           :disabled="file.length == 0 || name.length == 0"
         >
           添加
-        </a-button>
-      </a-row>
-    </a-space>
+        </mapgis-ui-button>
+      </mapgis-ui-row>
+    </mapgis-ui-space>
   </div>
 </template>
 
@@ -76,8 +77,8 @@ import AddDataTypeSelect from './AddDataTypeSelect.vue'
   name: 'AddDataFile',
   components: {
     AddDataCategorySelect,
-    AddDataTypeSelect
-  }
+    AddDataTypeSelect,
+  },
 })
 export default class AddDataFile extends Mixins(WidgetMixin) {
   @Prop({ type: Array }) categories
@@ -153,7 +154,7 @@ export default class AddDataFile extends Mixins(WidgetMixin) {
     }
     const data = {
       name: this.categoryName,
-      data: { type: 'IGSVector', url: this.file, name: this.name }
+      data: { type: 'IGSVector', url: this.file, name: this.name },
     }
     this.$emit('added', data)
   }
@@ -165,7 +166,7 @@ export default class AddDataFile extends Mixins(WidgetMixin) {
       console.log(info)
       if (info.file.name.endsWith('.zip')) {
         // 上传的是zip压缩包(即shp类型文件)
-        const shpItem = info.file.response.data.find(item =>
+        const shpItem = info.file.response.data.find((item) =>
           item.url.endsWith('shp')
         )
         path = shpItem.path
@@ -181,7 +182,7 @@ export default class AddDataFile extends Mixins(WidgetMixin) {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .add-data-file-wrapper {
   display: flex;
   overflow: auto;

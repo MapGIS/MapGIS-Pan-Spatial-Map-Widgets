@@ -1,15 +1,6 @@
 <template>
   <mapgis-3d-scene-roaming
-    :speed="speed"
-    :exHeight="exHeight"
-    :heading="heading"
-    :pitch="pitch"
-    :range="range"
-    :animationType="animationType"
-    :interpolationAlgorithm="interpolationAlgorithm"
-    :isLoop="isLoop"
-    :showPath="showPath"
-    :showInfo="showInfo"
+    :setting="setting"
     :models="models"
     :paths="paths"
     @load="load"
@@ -26,38 +17,32 @@ import { api } from '../../../model'
   name: 'MpSceneRoaming',
 })
 export default class MpSceneRoaming extends Mixins(WidgetMixin) {
-  private speed = 10
-
-  private exHeight = 1
-
-  private heading = 90
-
-  private pitch = 0
-
-  private range = 0
-
-  private animationType = 1
-
-  private interpolationAlgorithm = 'LagrangePolynomialApproximation'
-
-  private isLoop = true
-
-  private showPath = true
-
-  private showInfo = true
+  private setting = {
+    speed: 10,
+    exHeight: 1,
+    heading: 90,
+    pitch: 0,
+    range: 1,
+    animationType: 1,
+    interpolationAlgorithm: 'LagrangePolynomialApproximation',
+    isLoop: true,
+    showPath: true,
+    showInfo: true,
+    modelUrl: '',
+  }
 
   private models = [
     {
       label: '人',
-      value: './CesiumModels/Cesium_Man.glb',
+      value: `${process.env.VUE_APP_PUBLIC_PATH}CesiumModels/Cesium_Man.glb`,
     },
     {
       label: '卡车',
-      value: './CesiumModels/CesiumMilkTruck.glb',
+      value: `${process.env.VUE_APP_PUBLIC_PATH}CesiumModels/CesiumMilkTruck.glb`,
     },
     {
       label: '飞机',
-      value: './CesiumModels/Cesium_Air.gltf',
+      value: `${process.env.VUE_APP_PUBLIC_PATH}CesiumModels/Cesium_Air.gltf`,
     },
     {
       label: '无',

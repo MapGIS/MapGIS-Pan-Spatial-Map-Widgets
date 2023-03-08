@@ -21,7 +21,7 @@
       </mp-toolbar-command-group>
       <mp-toolbar-space />
       <mp-toolbar-command-group>
-        <a-divider type="vertical" />
+        <mapgis-ui-divider type="vertical" />
         <mp-toolbar-command
           title="设置"
           icon="setting"
@@ -32,15 +32,15 @@
     </mp-toolbar>
     <div v-show="showSettingPanel">
       <mp-setting-form layout="vertical" style="padding-top: 8px">
-        <a-form-item label="缓冲半径(km)">
-          <a-slider
+        <mapgis-ui-form-item label="缓冲半径(km)">
+          <mapgis-ui-slider
             v-model="sliderIndex"
             :marks="marks"
             :min="0"
             :max="limitsArray.length - 1"
             :tipFormatter="() => `${limits}km`"
           />
-        </a-form-item>
+        </mapgis-ui-form-item>
       </mp-setting-form>
     </div>
   </div>
@@ -82,7 +82,7 @@ import {
 const { IAttributeTableListExhibition, AttributeTableListExhibition } =
   Exhibition
 
-const { FeatureQuery } = Feature
+const { FeatureQuery, ArcGISFeatureQuery } = Feature
 
 enum QueryType {
   Point = 'Point',
@@ -108,6 +108,11 @@ export default class MpFeatureQuery extends Mixins(
   private sliderIndex = 0
 
   private queryType = ''
+
+  private tempActiveExhibitionId = ''
+
+  // 判断微件是否执行了失活onDeActive函数
+  private doDeActive = false
 
   private defaultQueryTypes2d = [
     QueryType.Point,
@@ -183,14 +188,25 @@ export default class MpFeatureQuery extends Mixins(
     )
   }
 
+  // 微件激活时
+  onActive() {
+    this.map.getCanvas().style.cursor = this.widgetInfo.config.cursorType
+    this.doDeActive = false
+  }
+
   // 微件关闭时
   onClose() {
     this.onClearDraw()
+    if (!this.doDeActive) {
+      this.map.getCanvas().style.cursor = 'grab'
+    }
   }
 
   // 微件失活时
   onDeActive() {
     this.onClearDraw()
+    this.doDeActive = true
+    this.map.getCanvas().style.cursor = 'grab'
   }
 
   // 打开绘制，点击图标激活对应类型的绘制功能
@@ -263,7 +279,7 @@ export default class MpFeatureQuery extends Mixins(
     })
   }
 
-  private queryFeaturesByIGSScene(layer, geometry) {
+  private async queryFeaturesByIGSScene(layer, geometry) {
     if (!layer.isVisible) {
       return
     }
@@ -275,12 +291,14 @@ export default class MpFeatureQuery extends Mixins(
       description: '',
       options: [],
     }
+    let activeOptionId = ''
     const {
       activeScene: { sublayers },
     } = layer
     const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(layer.id)
     if (layerConfig && layerConfig.bindData) {
-      sublayers.forEach((item) => {
+      for (let index = 0; index < sublayers.length; index++) {
+        const item = sublayers[index]
         if (!item.visible) {
           return
         }
@@ -293,11 +311,48 @@ export default class MpFeatureQuery extends Mixins(
           gdbp: layerConfig.bindData.gdbps,
           geometry: geometry,
         })
-      })
-
-      this.addExhibition(new AttributeTableListExhibition(exhibition))
-      this.openExhibitionPanel()
+        const { TotalCount } = await this.queryCount(
+          exhibition.options[index],
+          true
+        )
+        if (TotalCount > 0) {
+          activeOptionId = item.id
+        }
+      }
+      this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
     }
+  }
+
+  /**
+   * 设置activeExhibitionId和activeOptionId
+   * @param exhibition 展示面板对象
+   * @param activeOptionId 展示面板中激活的图层Id
+   * @param totalCount 查询数据总数
+   */
+  private setActiveExhibitionIdAndOptionId(
+    exhibition: IAttributeTableListExhibition,
+    activeOptionId?: string,
+    totalCount?: number
+  ) {
+    const attributeTableListExhibition = new AttributeTableListExhibition(
+      exhibition
+    )
+    if (activeOptionId && activeOptionId !== '') {
+      attributeTableListExhibition.activeOptionId = activeOptionId
+    }
+    this.addExhibition(attributeTableListExhibition)
+    /**
+     * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
+     * 修改人：龚跃健
+     * 修改时间：2023/1/31
+     */
+    if ((activeOptionId && activeOptionId !== '') || totalCount) {
+      this.tempActiveExhibitionId = exhibition.id
+    }
+    if (this.tempActiveExhibitionId !== '') {
+      this.activeExhibitionId = this.tempActiveExhibitionId
+    }
+    this.openExhibitionPanel()
   }
 
   getIpPort({ isDataStoreQuery, ip, port }) {
@@ -328,18 +383,21 @@ export default class MpFeatureQuery extends Mixins(
     }
 
     const sublayers = layer.allSublayers
+
+    let activeOptionId = ''
+
     for (let index = 0; index < sublayers.length; index++) {
       const sublayer = sublayers[index]
       if (!sublayer.visible && sublayer.sublayers.length > 0) {
         return
       }
-      const { isDataStoreQuery, DNSName } = await FeatureQuery.isDataStoreQuery(
-        {
-          ip: ip || baseConfigInstance.config.ip,
-          port: Number(port || baseConfigInstance.config.port),
-          gdbp: sublayer.url,
-        }
-      )
+      /**
+       * 修改说明：IGS地图文档和图层服务全部都走IGS的接口，不再判断是否为pg数据
+       * 修改人：龚跃健
+       * 日期：2022-5-10
+       */
+      const isDataStoreQuery = false
+      const DNSName = undefined
       const ipPortObj = this.getIpPort({
         isDataStoreQuery,
         ip: ip || baseConfigInstance.config.ip,
@@ -350,8 +408,6 @@ export default class MpFeatureQuery extends Mixins(
         name: sublayer.title,
         DNSName,
         isDataStoreQuery,
-        // ip: ip || baseConfigInstance.config.ip,
-        // port: Number(port || baseConfigInstance.config.port),
         ...ipPortObj,
         serverType: layer.type,
         gdbp: sublayer.url,
@@ -360,10 +416,17 @@ export default class MpFeatureQuery extends Mixins(
         serverUrl: layer.url,
         geometry: geometry,
       })
+      /**
+       * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
+       * 修改人：龚跃健
+       * 修改时间：2023/1/31
+       */
+      const { TotalCount } = await this.queryCount(exhibition.options[index])
+      if (TotalCount > 0) {
+        activeOptionId = sublayer.id
+      }
     }
-
-    this.addExhibition(new AttributeTableListExhibition(exhibition))
-    this.openExhibitionPanel()
+    this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
   }
 
   private async quertFeatruesByVector(layer: IGSVectorLayer, geometry) {
@@ -371,12 +434,8 @@ export default class MpFeatureQuery extends Mixins(
       return
     }
     const { ip, port, docName } = layer._parseUrl(layer.url)
-
-    const { isDataStoreQuery, DNSName } = await FeatureQuery.isDataStoreQuery({
-      ip: ip || baseConfigInstance.config.ip,
-      port: Number(port || baseConfigInstance.config.port),
-      gdbp: layer.gdbps,
-    })
+    const isDataStoreQuery = false
+    const DNSName = undefined
     const ipPortObj = this.getIpPort({
       isDataStoreQuery,
       ip: ip || baseConfigInstance.config.ip,
@@ -389,8 +448,6 @@ export default class MpFeatureQuery extends Mixins(
       options: [
         {
           id: layer.id,
-          // ip: ip || baseConfigInstance.config.ip,
-          // port: Number(port || baseConfigInstance.config.port),
           DNSName,
           isDataStoreQuery,
           ...ipPortObj,
@@ -400,12 +457,49 @@ export default class MpFeatureQuery extends Mixins(
         },
       ],
     }
-
-    this.addExhibition(new AttributeTableListExhibition(exhibition))
-    this.openExhibitionPanel()
+    /**
+     * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
+     * 修改人：龚跃健
+     * 修改时间：2023/1/31
+     */
+    const { TotalCount } = await this.queryCount(exhibition.options[0])
+    this.setActiveExhibitionIdAndOptionId(exhibition, null, TotalCount)
   }
 
-  private queryFeaturesByArcgis(layer, geometry) {
+  // IGSMapImage、IGSVector图层获取总页数
+  private async queryCount(optionVal, isScence = false) {
+    const {
+      ip,
+      port,
+      isDataStoreQuery,
+      serverName,
+      layerIndex,
+      gdbp,
+      geometry,
+    } = optionVal
+    const featureSet = await FeatureQuery.query(
+      {
+        ip,
+        port: port.toString(),
+        f: 'json',
+        IncludeAttribute: false,
+        IncludeGeometry: false,
+        IncludeWebGraphic: false,
+        isDataStoreQuery,
+        geometry,
+        where: null,
+        gdbp,
+        docName: serverName,
+        layerIdxs: layerIndex,
+        rtnLabel: false,
+      },
+      false,
+      isScence
+    )
+    return featureSet
+  }
+
+  private async queryFeaturesByArcgis(layer, geometry) {
     if (!layer.isVisible) {
       return
     }
@@ -416,9 +510,11 @@ export default class MpFeatureQuery extends Mixins(
       description: '',
       options: [],
     }
+    let activeOptionId = ''
 
     const sublayers = layer.allSublayers
-    sublayers.forEach((sublayer) => {
+    for (let index = 0; index < sublayers.length; index++) {
+      const sublayer = sublayers[index]
       if (!sublayer.visible) {
         return
       }
@@ -430,10 +526,24 @@ export default class MpFeatureQuery extends Mixins(
         serverUrl: layer.url,
         geometry: geometry,
       })
-    })
+      /**
+       * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
+       * 修改人：龚跃健
+       * 修改时间：2023/1/31
+       */
+      const { count } = await ArcGISFeatureQuery.getTotal({
+        f: 'pjson',
+        where: null,
+        geometry,
+        serverUrl: layer.url,
+        layerIndex: sublayer.id,
+      })
 
-    this.addExhibition(new AttributeTableListExhibition(exhibition))
-    this.openExhibitionPanel()
+      if (count > 0) {
+        activeOptionId = sublayer.id
+      }
+    }
+    this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
   }
 
   private toQueryGeometry(
@@ -459,7 +569,15 @@ export default class MpFeatureQuery extends Mixins(
             geometry = new Point3D(x, y, shape.z)
           }
         } else {
-          geometry = new Zondy.Common.Point2D(shape.x, shape.y, { nearDis })
+          let pointNearDis = nearDis
+          if (!pointNearDis) {
+            // 如果nearDis为0，需要重置nearDis为0.0000001之类的，小数位数与坐标位数保持一致。igs接口这个参数不能直接设置为0
+            const xStr = shape.x.toString().split('.')[1]
+            pointNearDis = 0.0001 || Number(`0.${xStr}`) / Number(xStr)
+          }
+          geometry = new Zondy.Common.Point2D(shape.x, shape.y, {
+            nearDis: pointNearDis,
+          })
         }
         break
       case QueryType.LineString:
@@ -477,11 +595,21 @@ export default class MpFeatureQuery extends Mixins(
             geometry = new Rectangle3D(xmin, ymin, zmin, xmax, ymax, zmax)
           }
         } else {
+          let lineNearDis = nearDis
           const pointArray = shape.map((item: Record<string, number>) => {
-            return new Zondy.Common.Point2D(item.x, item.y, { nearDis })
+            if (!lineNearDis) {
+              // 如果nearDis为0，需要重置nearDis为0.0000001之类的，小数位数与坐标位数保持一致。igs接口这个参数不能直接设置为0
+              const xStr = item.x.toString().split('.')[1]
+              lineNearDis = Number(`0.${xStr}`) / Number(xStr)
+            }
+            return new Zondy.Common.Point2D(item.x, item.y, {
+              nearDis: lineNearDis,
+            })
           })
 
-          geometry = new Zondy.Common.PolyLine(pointArray, { nearDis })
+          geometry = new Zondy.Common.PolyLine(pointArray, {
+            nearDis: lineNearDis,
+          })
         }
         break
       case QueryType.Polygon:
@@ -499,8 +627,16 @@ export default class MpFeatureQuery extends Mixins(
             geometry = new Rectangle3D(xmin, ymin, zmin, xmax, ymax, zmax)
           }
         } else {
+          let polyNearDis = nearDis
           const pointArray = shape.map((item: Record<string, number>) => {
-            return new Zondy.Common.Point2D(item.x, item.y, { nearDis })
+            if (!polyNearDis) {
+              // 如果nearDis为0，需要重置nearDis为0.0000001之类的，小数位数与坐标位数保持一致。igs接口这个参数不能直接设置为0
+              const xStr = item.x.toString().split('.')[1]
+              polyNearDis = Number(`0.${xStr}`) / Number(xStr)
+            }
+            return new Zondy.Common.Point2D(item.x, item.y, {
+              nearDis: polyNearDis,
+            })
           })
 
           geometry = new Zondy.Common.Polygon(pointArray)

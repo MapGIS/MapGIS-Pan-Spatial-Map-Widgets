@@ -1,6 +1,6 @@
 <template>
   <div class="hinder-table-container">
-    <a-table
+    <mapgis-ui-table
       :columns="columns"
       :data-source="data"
       size="small"
@@ -8,18 +8,18 @@
       :pagination="false"
       :scroll="{
         y: 160,
-        x: '100%'
+        x: '100%',
       }"
       rowKey="id"
       bordered
       :customRow="
-        record => ({
+        (record) => ({
           on: {
             // 事件
-            click: event => {
+            click: (event) => {
               rowClick(record)
-            } // 点击行
-          }
+            }, // 点击行
+          },
         })
       "
     >
@@ -29,11 +29,11 @@
       <span slot="x" slot-scope="text" :title="text">{{ text }} </span>
       <span slot="y" slot-scope="text" :title="text">{{ text }} </span>
       <span slot="action" slot-scope="text, record, index">
-        <a-button type="link" @click.stop="deleteRow(index, 'barrier')">
+        <mapgis-ui-button type="link" @click.stop="deleteRow(index, 'barrier')">
           删除
-        </a-button>
+        </mapgis-ui-button>
       </span>
-    </a-table>
+    </mapgis-ui-table>
   </div>
 </template>
 <script lang="ts">

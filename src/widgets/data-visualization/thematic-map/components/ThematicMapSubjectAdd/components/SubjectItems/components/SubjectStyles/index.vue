@@ -1,5 +1,5 @@
 <template>
-  <component :is="subjectType" v-model="subject" />
+  <component :is="subjectType" v-model="subject" @change="onChange" />
 </template>
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
@@ -18,8 +18,8 @@ import HexBin from './HexBin.vue' // 蜂窝图
     HexBin,
     Label,
     StatisticLabel,
-    SubSectionMap
-  }
+    SubSectionMap,
+  },
 })
 export default class SubjectStyles extends Vue {
   @Prop() readonly subjectType!: string
@@ -32,6 +32,11 @@ export default class SubjectStyles extends Vue {
 
   set subject(nV) {
     this.$emit('change', nV)
+  }
+
+  onChange(data) {
+    console.warn('尝试发送', data)
+    this.$emit('change', data)
   }
 }
 </script>

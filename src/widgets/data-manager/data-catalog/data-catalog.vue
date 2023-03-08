@@ -235,12 +235,12 @@
         :visible.sync="showNoSpatial"
       >
         <template>
-          <NonSpatial
+          <non-spatial
             :nonSpatialUrl="nonSpatialUrl"
             :url="nonSpatialFileListUrl"
             :type="nonSpatialType"
             :treeConfig="widgetConfig"
-          ></NonSpatial>
+          ></non-spatial>
         </template>
       </mp-window>
     </mp-window-wrapper>
@@ -380,6 +380,8 @@ export default {
   },
   async mounted() {
     this.uploadUrl = `${this.baseUrl}/api/local-storage/pictures`
+    console.log(this.dataCatalogManager, 'this.dataCatalogManager')
+    console.log(this.widgetInfo.config, 'this.widgetInfo.config')
 
     this.dataCatalogManager.init(this.widgetInfo.config)
     this.dataCatalogTreeData =
@@ -972,6 +974,7 @@ export default {
 
     // 监听服务叠加事件
     imposeService(params) {
+      console.log(params, 'params')
       this.imposeNode = {}
       const { Cesium, map, viewer, vueCesium } = this
       let node = {}

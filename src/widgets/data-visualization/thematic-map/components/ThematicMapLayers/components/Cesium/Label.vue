@@ -21,7 +21,7 @@ export default class CesiumLabel extends Mixins(BaseMixin) {
       cesium: { postRender: true, postRenderFrame: 0 },
       draw: 'cluster',
       context: '2d',
-      ...(this.subjectData?.themeStyle || {})
+      ...(this.subjectData?.themeStyle || {}),
     }
   }
 }

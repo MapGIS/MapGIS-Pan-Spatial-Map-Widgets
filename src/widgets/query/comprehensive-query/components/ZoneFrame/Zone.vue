@@ -1,9 +1,13 @@
 <template>
   <div class="zone-container">
     <mp-toolbar class="search-head-container" :bordered="false">
-      <a-input v-model="keyword" placeholder="请输入行政区关键字" allow-clear>
-        <a-icon slot="prefix" type="search" />
-      </a-input>
+      <mapgis-ui-input
+        v-model="keyword"
+        placeholder="请输入行政区关键字"
+        allow-clear
+      >
+        <mapgis-ui-iconfont slot="prefix" type="mapgis-search" />
+      </mapgis-ui-input>
       <mp-toolbar-space />
       <mp-toolbar-command-group :remove-first-command-left-margin="false">
         <mp-toolbar-command
@@ -15,7 +19,7 @@
         />
       </mp-toolbar-command-group>
     </mp-toolbar>
-    <a-spin :spinning="spinning">
+    <mapgis-ui-spin :spinning="spinning">
       <div>
         <div separator=">" class="current-name">
           <div
@@ -39,25 +43,25 @@
           </li>
         </div>
       </div>
-    </a-spin>
+    </mapgis-ui-spin>
     <div v-show="showSettingPanel" class="setting-panel">
       <mp-group-tab title="设置"></mp-group-tab>
       <mp-setting-form layout="vertical">
-        <a-form-item label="填充颜色">
+        <mapgis-ui-form-item label="填充颜色">
           <mp-color-picker
             :color.sync="fillColor"
             :disable-alpha="false"
           ></mp-color-picker>
-        </a-form-item>
-        <a-form-item label="轮廓线颜色">
+        </mapgis-ui-form-item>
+        <mapgis-ui-form-item label="轮廓线颜色">
           <mp-color-picker
             :color.sync="lineColor"
             :disable-alpha="false"
           ></mp-color-picker>
-        </a-form-item>
-        <a-form-item label="轮廓线宽度">
-          <a-input type="number" v-model="lineWidth" />
-        </a-form-item>
+        </mapgis-ui-form-item>
+        <mapgis-ui-form-item label="轮廓线宽度">
+          <mapgis-ui-input type="number" v-model="lineWidth" />
+        </mapgis-ui-form-item>
       </mp-setting-form>
     </div>
     <template v-if="active">
@@ -326,19 +330,20 @@ export default class Zone extends Mixins(AppMixin, MapMixin) {
   }
 
   private filterCode(level, code) {
+    const codeStr = code.toString()
     switch (level) {
       case '1':
         return ''
       case '2':
-        return code.substring(0, 2)
+        return codeStr.substring(0, 2)
       case '3':
-        return code.substring(0, 4)
+        return codeStr.substring(0, 4)
       case '4':
-        return code.substring(0, 6)
+        return codeStr.substring(0, 6)
       case '5':
-        return code.substring(0, 9)
+        return codeStr.substring(0, 9)
       case '6':
-        return code.substring(0, 12)
+        return codeStr.substring(0, 12)
       default:
         return ''
     }
@@ -389,7 +394,37 @@ export default class Zone extends Mixins(AppMixin, MapMixin) {
 }
 </script>
 
-<style lang="less">
+<style lang="scss" scoped>
+.zone-container {
+  .current-name {
+    .breadcrumb {
+      .text {
+        color: $primary-color;
+        cursor: pointer;
+      }
+      &:last-child {
+        .text {
+          color: $primary-color;
+          font-weight: bold;
+        }
+      }
+    }
+  }
+  .select-name {
+    color: $text-color;
+    li {
+      &:hover {
+        color: $primary-color;
+      }
+    }
+  }
+  .active {
+    color: $primary-color !important;
+  }
+}
+</style>
+
+<style lang="scss">
 .zone-container {
   display: flex;
   flex-direction: column;
@@ -404,18 +439,8 @@ export default class Zone extends Mixins(AppMixin, MapMixin) {
     .breadcrumb {
       display: flex;
       align-items: center;
-      .text {
-        color: @primary-color;
-        cursor: pointer;
-      }
       .separator {
         padding: 0 4px;
-      }
-      &:last-child {
-        .text {
-          color: @primary-color;
-          font-weight: bold;
-        }
       }
     }
   }
@@ -424,24 +449,17 @@ export default class Zone extends Mixins(AppMixin, MapMixin) {
     padding-top: 4px;
     display: flex;
     flex-wrap: wrap;
-    color: @text-color;
     overflow-y: auto;
     line-height: 20px;
     li {
       display: inline-block;
       margin-right: 9px;
       cursor: pointer;
-      &:hover {
-        color: @primary-color;
-      }
     }
   }
   .setting-panel {
     display: flex;
     flex-direction: column;
-  }
-  .active {
-    color: @primary-color !important;
   }
 }
 </style>

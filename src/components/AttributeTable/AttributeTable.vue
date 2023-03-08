@@ -193,12 +193,13 @@
 </template>
 
 <script lang="ts">
+import { Component, Mixins, Prop, Watch, Provide } from 'vue-property-decorator'
 import {
   baseConfigInstance,
   markerIconInstance,
   events,
   DataFlowList,
-  ActiveResultSet
+  ActiveResultSet,
 } from '../../model'
 import {
   DomUtil,
@@ -210,7 +211,7 @@ import {
   Rectangle3D,
   Feature,
   Objects,
-  Exhibition
+  Exhibition,
 } from '@mapgis/web-app-framework'
 import * as Zondy from '@mapgis/webclient-es6-service'
 import MpAttributeTableColumnSetting from './AttributeTableColumnSetting.vue'
@@ -218,7 +219,6 @@ import axios from 'axios'
 /* 文件导出 */
 import FileSaver from 'file-saver'
 import AttributeUtil from './mixin/AttributeUtil'
-import components from '..'
 
 const { GFeature, FeatureQuery, ArcGISFeatureQuery } = Feature
 
@@ -227,99 +227,89 @@ const { IAttributeTableOption, IAttributeTableExhibition } = Exhibition
 @Component({
   name: 'MpAttributeTable',
   components: {
-    MpAttributeTableColumnSetting
-  }
+    MpAttributeTableColumnSetting,
+  },
 })
-export default{
-  name:'MpAttributeTable',
-  components:{
-    MpAttributeTableColumnSetting
-  },
-  mixins:[AttributeUtil],
-  provide(){
-    return{
-      popupShowType:this.popupShowType
-    }
-  },
-  computed:{
-popupShowType() {
+export default class MpAttributeTable extends Mixins(AttributeUtil) {
+  @Provide()
+  get popupShowType() {
     return baseConfigInstance.config.popupShowType
-  },
-  selectedRowKeys() {
+  }
+
+  // 属性表选项
+  @Prop({ type: Object }) exhibition!: IAttributeTableExhibition
+
+  // 属性表选项
+  @Prop({ type: Object }) option!: IAttributeTableOption
+
+  private get selectedRowKeys() {
     return this.selection.map(
       (item) => (item as GFeature).properties[this.rowKey]
     )
-  },
-  dataStoreIp() {
+  }
+
+  private get dataStoreIp() {
     return baseConfigInstance.config.DataStoreIp
-  },dataStorePort() {
+  }
+
+  private get dataStorePort() {
     return baseConfigInstance.config.DataStorePort
-  },
-popupAnchor() {
+  }
+
+  private get popupAnchor() {
     return baseConfigInstance.config.colorConfig.label.image.popupAnchor
-  },
-popupToggleType() {
+  }
+
+  private get popupToggleType() {
     return baseConfigInstance.config.colorConfig.label.image.popupToggleType
-  },
-  selectedDescription() {
+  }
+
+  private get selectedDescription() {
     const length = this.selectedRowKeys.length
 
     return `${length} 已选择`
-  },
-  optionVal() {
+  }
+
+  private get optionVal() {
     return this.option || this.exhibition.option
-  },
-  visibleColumns() {
+  }
+
+  private get visibleColumns() {
     return this.tableColumns.filter((col) => col.visible)
-  },
-  highlightStyle() {
+  }
+
+  private get highlightStyle() {
     return baseConfigInstance.config.colorConfig
-  },
-  markerPlottingComponent() {
+  }
+
+  private get markerPlottingComponent() {
     return this.is2DMapMode
       ? this.$refs.refMarkerPlotting
       : this.$refs.ref3dMarkerPlotting
-  },
-  dataFlowList() {
+  }
+
+  private get dataFlowList() {
     return DataFlowList
-  },
-  getDataFLowList() {
+  }
+
+  private get getDataFLowList() {
     const { serverType } = this.optionVal
     if (serverType === LayerType.DataFlow) {
       const features = this.dataFlowList.getDataFlowById(this.optionVal.id)
       return features || []
     }
     return []
-  },
-  isIGSScence() {
-    const { serverType } = this.optionVal
-    return serverType === LayerType.IGSScene
   }
-  },
-  props:{
-    exhibition:{
-      type:IAttributeTableExhibition
-    },
-    option:{
-      type:IAttributeTableOption
-    }
-  },
-  watch:{
-    getDataFLowList:{
-      deep:true
-    },
-    optionVal:{
-      deep:true,
-      immediate:true,
-      handler(){
-this.clearSelection()
+
+  @Watch('getDataFLowList', { deep: true })
+  @Watch('optionVal', { deep: true, immediate: true })
+  optionChange() {
+    this.clearSelection()
     this.removeMarkers()
     this.tableData = []
     // this.tableColumns = []
     this.query()
-      }
-    }
-  },
+  }
 
   created() {
     DomUtil.addFullScreenListener(this.fullScreenListener)
@@ -328,25 +318,28 @@ this.clearSelection()
     //   this.vueCesium,
     //   this.viewer
     // )
-  },
+  }
 
   beforeDestroy() {
     DomUtil.removeFullScreenListener(this.fullScreenListener)
-  },
-  methods:{
-onResize() {
+  }
+
+  onResize() {
     this.calcTableScrollY()
-  },
-async onActive() {
+  }
+
+  async onActive() {
     await this.addMarkers()
     await this.hightlightSelectionMarkers()
-  },
-onDeActive() {
+  }
+
+  onDeActive() {
     this.showFilter = false
     this.showAttrStatistics = false
     this.removeMarkers()
-  },
-onClose() {
+  }
+
+  onClose() {
     // 下面无法隐藏窗口
     // this.showFilter = false
     // this.showAttrStatistics = false
@@ -355,8 +348,9 @@ onClose() {
     document.getElementById(this.statisticsId).style.display = 'none'
 
     this.removeMarkers()
-  },
-  async onSelectChange(selectedRowKeys, selectedRows) {
+  }
+
+  private async onSelectChange(selectedRowKeys, selectedRows) {
     this.selection = selectedRows
     if (this.selectedRowKeys.length == 0) {
       ActiveResultSet.activeResultSet = {}
@@ -364,24 +358,28 @@ onClose() {
       ActiveResultSet.activeResultSet = {
         type: 'FeatureCollection',
         features: selectedRows,
-        id: this.optionVal.id
+        id: this.optionVal.id,
       }
     }
     await this.hightlightSelectionMarkers()
-  },
-  onPaginationChange(page, pageSize) {
+  }
+
+  private onPaginationChange(page, pageSize) {
     this.pagination.current = page
     this.query()
-  },
-  onPaginationShowSizeChange(current, size) {
+  }
+
+  private onPaginationShowSizeChange(current, size) {
     this.pagination.pageSize = size
     this.pagination.current = 1
     this.query()
-  },
- // 单击行
-  onRowClick(row: unknown) {},
-// 双击行
-onRowDblclick(row: unknown) {
+  }
+
+  // 单击行
+  private onRowClick(row: unknown) {}
+
+  // 双击行
+  private onRowDblclick(row: unknown) {
     const feature = row as GFeature
     let bound = feature.properties.specialLayerBound
     if (bound === undefined) {
@@ -391,7 +389,7 @@ onRowDblclick(row: unknown) {
     const height = bound.ymax - bound.ymin
     const center = {
       x: (bound.xmin + bound.xmax) / 2,
-      y: (bound.ymin + bound.ymax) / 2
+      y: (bound.ymin + bound.ymax) / 2,
     }
     /**
      * 当缩放的范围为点时，跳转过去，会导致标注点消失，
@@ -403,19 +401,22 @@ onRowDblclick(row: unknown) {
       xmin: center.x - (width || 0.1),
       ymin: center.y - (height || 0.1),
       xmax: center.x + (width || 0.1),
-      ymax: center.y + (height || 0.1)
+      ymax: center.y + (height || 0.1),
     }
     this.fitBound = { ...(bound as Record<string, number>) }
-  },
-onRefresh() {
+  }
+
+  private onRefresh() {
     this.query()
-  },
-/* 属性表导出选择器 */
-async handleMenuClick(type) {
+  }
+
+  /* 属性表导出选择器 */
+  private async handleMenuClick(type) {
     await this.jsonFile(type.key)
-  },
-/* 结果集属性列表导出为json数据 */
-async jsonFile(type) {
+  }
+
+  /* 结果集属性列表导出为json数据 */
+  private async jsonFile(type) {
     const val = '1'
     const where = ''
     const datetime = Date.now()
@@ -441,47 +442,55 @@ async jsonFile(type) {
       const blob = new Blob([JSON.stringify(jsonData)])
       await FileSaver.saveAs(blob, `attrData_${datetime}.json`)
     }
-  },
-/* json数据转换成csv文件导出 */
-async exportCSV(data: any) {
+  }
+
+  /* json数据转换成csv文件导出 */
+  private async exportCSV(data: any) {
     const parser = new this.Json2csvParser()
     const csvData = parser.parse(data)
     const blob = new Blob([`\uFEFF${csvData}`], {
-      type: 'text/plain;charset=utf-8;'
+      type: 'text/plain;charset=utf-8;',
     })
     const datetime = Date.now()
     await FileSaver.saveAs(blob, `attrData_${datetime}.csv`)
-  },
-onToggleScreen() {
+  }
+
+  private onToggleScreen() {
     if (this.fullScreen) {
       this.outFullScreen()
     } else {
       this.inFullScreen()
     }
-  },
-onZoomTo() {
+  }
+
+  private onZoomTo() {
     if (this.selection.length == 0) return
 
     this.markerPlottingComponent &&
       this.markerPlottingComponent.zoomTo(this.selectionBound)
-  },
-  onClearSelection() {
+  }
+
+  private onClearSelection() {
     this.clearSelection()
     ActiveResultSet.activeResultSet = {}
-  },
-  onStatistics() {
+  }
+
+  private onStatistics() {
     this.showAttrStatistics = true
     this.updateStatisticAndFilterParamas()
-  },
-  onFilter() {
+  }
+
+  private onFilter() {
     this.showFilter = true
     this.updateStatisticAndFilterParamas()
-  },
-  async onUpdateWhere(val) {
+  }
+
+  private async onUpdateWhere(val) {
     await this.query(val)
     this.showFilter = false
-  },
-   async onGetGeometry(val: Record<string, any>) {
+  }
+
+  async onGetGeometry(val: Record<string, any>) {
     const { xmin, ymin, xmax, ymax, height = 0 } = val
     this.geometry = new Zondy.Common.Rectangle(xmin, ymin, xmax, ymax)
 
@@ -491,17 +500,19 @@ onZoomTo() {
       zmin: -100000,
       xmax,
       ymax,
-      zmax: 100000
+      zmax: 100000,
     }
     // 分页初始化到第一页
     this.pagination.current = 1
     // 记录当前选中的行（避免双击定位同时根据范围过滤时导致信息刷新）
     await this.query()
-  },
-  showPaginationTotal(total, range) {
+  }
+
+  private showPaginationTotal(total, range) {
     return `显示${range[0]}-${range[1]}条，共有 ${total}条`
-  },
-  async query(where?: string) {
+  }
+
+  private async query(where?: string) {
     this.loading = true
     this.sceneController = Objects.SceneController.getInstance(
       this.Cesium,
@@ -523,14 +534,16 @@ onZoomTo() {
       this.loading = false
       this.calcTableScrollY()
     }
-  },
+  }
+
   // 清除选择集
- async clearSelection() {
+  private async clearSelection() {
     this.selection = []
     await this.hightlightSelectionMarkers()
-  },
+  }
+
   // 高亮选择集对应的标注图标
-   async hightlightSelectionMarkers() {
+  private async hightlightSelectionMarkers() {
     const selectIcon = await markerIconInstance.selectIcon()
     const unSelectIcon = await markerIconInstance.unSelectIcon()
     this.markers.forEach((marker) => {
@@ -558,19 +571,25 @@ onZoomTo() {
           xmin: bound.xmin < prev.xmin ? bound.xmin : prev.xmin,
           ymin: bound.ymin < prev.ymin ? bound.ymin : prev.ymin,
           xmax: bound.xmax > prev.xmax ? bound.xmax : prev.xmax,
-          ymax: bound.ymax > prev.ymax ? bound.ymax : prev.ymax
+          ymax: bound.ymax > prev.ymax ? bound.ymax : prev.ymax,
         }
       },
       {
         xmin: Number.MAX_VALUE,
         ymin: Number.MAX_VALUE,
         xmax: Number.MIN_VALUE,
-        ymax: Number.MIN_VALUE
+        ymax: Number.MIN_VALUE,
       }
     )
-  },
+  }
+
+  private get isIGSScence() {
+    const { serverType } = this.optionVal
+    return serverType === LayerType.IGSScene
+  }
+
   // 添加标注
-   async addMarkers() {
+  private async addMarkers() {
     const { serverType } = this.optionVal
 
     const unSelectIcon = await markerIconInstance.unSelectIcon()
@@ -594,7 +613,7 @@ onZoomTo() {
           fid: feature.properties[this.rowKey],
           img: unSelectIcon,
           properties: this.setPropertiesAlias(feature.properties),
-          feature: feature
+          feature: feature,
         }
         tempMarkers.push(marker)
       }
@@ -609,8 +628,9 @@ onZoomTo() {
       }
     }
     this.markers = [...tempMarkers]
-  },
-   /**
+  }
+
+  /**
    * 将弹窗的key设置成别名
    * 这里images字段不能用别名，弹窗组件需要通过images字段添加图片
    */
@@ -628,7 +648,8 @@ onZoomTo() {
       }
     }
     return obj
-  },
+  }
+
   getModelHeight(tempMarkers: Array<unknown>) {
     return new Promise((resolve, reject) => {
       const positions = tempMarkers.map((item) => {
@@ -651,20 +672,23 @@ onZoomTo() {
       )
       sampleElevationTool.start()
     })
-  },
+  }
+
   // 移除标注
-   removeMarkers() {
+  private removeMarkers() {
     this.markers = []
-  },
+  }
+
   // 计算表格内容高度
-   calcTableScrollY() {
+  private calcTableScrollY() {
     const tableElement = document.getElementById(this.tableId)
     const boundingClientRect = tableElement.getBoundingClientRect()
 
     // 30 is table header height,35 is bleow pagination height
     this.scrollY = document.body.clientHeight - boundingClientRect.top - 30 - 35
-  },
-  updateStatisticAndFilterParamas() {
+  }
+
+  private updateStatisticAndFilterParamas() {
     const { serverType, gdbp, serverUrl } = this.optionVal
     if (
       serverType === LayerType.IGSMapImage ||
@@ -677,51 +701,37 @@ onZoomTo() {
         serverName: this.optionVal.serverName,
         layerIndex: this.currentTableParams.layerIndex,
         serverType,
-        gdbp
+        gdbp,
       }
     } else if (serverType === LayerType.ArcGISMapImage) {
       this.statisticAndFilterParamas = {
         serverName: this.optionVal.serverName,
         layerIndex: this.currentTableParams.layerIndex,
         serverType,
-        serverUrl
+        serverUrl,
       }
     }
-  },
+  }
 
-   fullScreenListener(e) {
+  private fullScreenListener(e) {
     if (e.target.id === this.id) {
       this.fullScreen = !this.fullScreen
     }
-  },
+  }
 
-   inFullScreen() {
+  private inFullScreen() {
     const el = this.$refs.attributeTable
     el.classList.add('beauty-scroll')
     if (!DomUtil.inFullScreen(el)) {
       this.$message.warn('对不起，您的浏览器不支持全屏模式')
       el.classList.remove('beauty-scroll')
     }
-  },
+  }
 
-   outFullScreen() {
+  private outFullScreen() {
     DomUtil.outFullScreen()
     this.$refs.attributeTable.classList.remove('beauty-scroll')
   }
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 </script>
 

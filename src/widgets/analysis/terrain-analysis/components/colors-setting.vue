@@ -1,6 +1,6 @@
 <template>
   <div class="mp-colors-setting">
-    <a-table
+    <mapgis-ui-table
       bordered
       size="small"
       :pagination="false"
@@ -15,7 +15,7 @@
         ></MpColorPicker>
       </template>
       <template slot="max" slot-scope="text, record, index">
-        <a-input
+        <mapgis-ui-input
           v-model="record.max"
           size="small"
           :min="record.min"
@@ -26,18 +26,22 @@
         />
       </template>
       <template slot="operation" slot-scope="text, record, index">
-        <a-tooltip placement="top" title="删除">
-          <a-icon
-            type="delete"
+        <mapgis-ui-tooltip placement="top" title="删除">
+          <mapgis-ui-iconfont
+            type="mapgis-delete"
             class="pointer icon"
             @click="remove(index)"
-          ></a-icon>
-        </a-tooltip>
-        <a-tooltip placement="top" title="向下插入一行">
-          <a-icon type="plus" class="pointer icon" @click="add(index)"></a-icon>
-        </a-tooltip>
+          ></mapgis-ui-iconfont>
+        </mapgis-ui-tooltip>
+        <mapgis-ui-tooltip placement="top" title="向下插入一行">
+          <mapgis-ui-iconfont
+            type="mapgis-plus"
+            class="pointer icon"
+            @click="add(index)"
+          ></mapgis-ui-iconfont>
+        </mapgis-ui-tooltip>
       </template>
-    </a-table>
+    </mapgis-ui-table>
   </div>
 </template>
 
@@ -58,7 +62,7 @@ export default class MpColorsSetting extends Vue {
 
   @Prop({
     type: String,
-    default: '角度范围'
+    default: '角度范围',
   })
   readonly rangeField?: string
 
@@ -71,18 +75,18 @@ export default class MpColorsSetting extends Vue {
       title: '颜色',
       dataIndex: 'color',
       align: 'center',
-      scopedSlots: { customRender: 'color' }
+      scopedSlots: { customRender: 'color' },
     },
     {
       title: this.rangeField,
       dataIndex: 'max',
-      scopedSlots: { customRender: 'max' }
+      scopedSlots: { customRender: 'max' },
     },
     {
       title: '操作',
       align: 'center',
-      scopedSlots: { customRender: 'operation' }
-    }
+      scopedSlots: { customRender: 'operation' },
+    },
   ]
 
   tableData: ITableDataItem[] = []
@@ -101,7 +105,7 @@ export default class MpColorsSetting extends Vue {
     this.emitValue = this.tableData.map(({ min, max, color }) => ({
       min,
       max,
-      color
+      color,
     }))
     this.$emit('input', this.emitValue)
   }
@@ -139,7 +143,7 @@ export default class MpColorsSetting extends Vue {
       key: UUID.uuid(),
       min,
       max,
-      color
+      color,
     }))
   }
 
@@ -171,31 +175,31 @@ export default class MpColorsSetting extends Vue {
       key: UUID.uuid(),
       color: this.defaultColor,
       min: num,
-      max
+      max,
     }
     this.tableData.splice(index + 1, 0, node)
   }
 }
 </script>
-<style lang="less" scoped>
+
+<style lang="scss" scoped>
 .mp-colors-setting {
-  /deep/ .color-picker .color-container {
+  ::v-deep .color-picker .color-container {
     padding: 5px 2px;
     height: 25px;
     border: 0px solid #d9d9d9;
     border-radius: 0px;
   }
-  /deep/ .ant-table {
+  ::v-deep .mapgis-ui-table {
     font-size: 12px;
     width: 260px;
   }
 
-  /deep/ .ant-input-affix-wrapper .ant-input-prefix {
+  ::v-deep .mapgis-ui-input-affix-wrapper .mapgis-ui-input-prefix {
     font-size: 12px;
     left: 3px;
   }
-
-  /deep/ .ant-input {
+  ::v-deep .mapgis-ui-input {
     font-size: 12px;
     border: none;
     border-radius: 0;
@@ -205,26 +209,26 @@ export default class MpColorsSetting extends Vue {
     &-focused,
     &:hover,
     &:focus {
-      border-color: @border-color-base;
+      border-color: $border-color-base;
     }
   }
 
-  /deep/ .ant-tooltip {
+  ::v-deep .mapgis-ui-tooltip {
     font-size: 12px;
   }
 
-  /deep/ th {
+  ::v-deep th {
     padding: 6px 8px !important;
   }
 
-  /deep/ td {
+  ::v-deep td {
     padding: 0 !important;
   }
 
   .icon {
     margin: 0 8px;
     &:hover {
-      color: @primary-color;
+      color: $primary-color;
     }
   }
 }

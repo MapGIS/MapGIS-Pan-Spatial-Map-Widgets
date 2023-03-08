@@ -1,24 +1,28 @@
 <template>
   <div class="frame-container">
     <mp-setting-form layout="vertical">
-      <a-form-item label="比例尺">
-        <a-select :options="scaleArray" v-model="scale" />
-      </a-form-item>
-      <a-form-item label="图幅号">
-        <a-input-search
+      <mapgis-ui-form-item label="比例尺">
+        <mapgis-ui-select :options="scaleArray" v-model="scale" />
+      </mapgis-ui-form-item>
+      <mapgis-ui-form-item label="图幅号">
+        <mapgis-ui-input-search
           placeholder="请输入关键字"
           allowClear
           v-model="keyword"
           enter-button
           @search="onSearch"
         />
-      </a-form-item>
+      </mapgis-ui-form-item>
     </mp-setting-form>
-    <a-space direction="vertical" style="flex: 1">
-      <a-spin :spinning="loading">
-        <a-list :data-source="list" size="small" :pagination="pagination">
+    <mapgis-ui-space direction="vertical" style="flex: 1">
+      <mapgis-ui-spin :spinning="loading">
+        <mapgis-ui-list
+          :data-source="list"
+          size="small"
+          :pagination="pagination"
+        >
           <div slot="header">选择图幅</div>
-          <a-list-item
+          <mapgis-ui-list-item
             slot="renderItem"
             slot-scope="item"
             @click="select(item)"
@@ -36,10 +40,10 @@
             <span v-else>
               {{ item }}
             </span>
-          </a-list-item>
-        </a-list>
-      </a-spin>
-    </a-space>
+          </mapgis-ui-list-item>
+        </mapgis-ui-list>
+      </mapgis-ui-spin>
+    </mapgis-ui-space>
     <template v-if="active">
       <zone-frame-mapbox
         v-if="is2DMapMode"
@@ -254,41 +258,50 @@ export default class Frame extends Mixins(AppMixin) {
 }
 </script>
 
-<style lang="less">
+<style lang="scss" scoped>
+.frame-container {
+  .mapgis-ui-space {
+    .select-item {
+      background-color: fade($primary-color, 20%);
+    }
+    .mapgis-ui-list-item {
+      &:hover {
+        background-color: $hover-bg-color;
+      }
+      .filter-words {
+        color: $primary-color;
+      }
+    }
+  }
+}
+</style>
+
+<style lang="scss">
 .frame-container {
   display: flex;
   padding: 10px 3px 0 3px;
   flex-direction: column;
-  .ant-space {
-    .ant-space-item {
-      .ant-list {
+  .mapgis-ui-space {
+    .mapgis-ui-space-item {
+      .mapgis-ui-list {
         font-size: 12px;
-        .ant-list-header {
+        .mapgis-ui-list-header {
           padding: 0 0 8px 0;
         }
-        .ant-spin-container {
+        .mapgis-ui-spin-container {
           max-height: 200px;
           overflow-y: auto;
-          .select-item {
-            background-color: fade(@primary-color, 20%);
-          }
-          .ant-list-item {
+          .mapgis-ui-list-item {
             justify-content: flex-start;
             padding: 5px 0 5px 5px;
-            &:hover {
-              background-color: @hover-bg-color;
-            }
-            .filter-words {
-              color: @primary-color;
-            }
           }
         }
-        .ant-empty-normal {
+        .mapgis-ui-empty-normal {
           margin: 8px 0;
         }
-        .ant-pagination {
+        .mapgis-ui-pagination {
           font-size: 12px;
-          .ant-list-pagination {
+          .mapgis-ui-list-pagination {
             margin-top: 8px;
           }
         }

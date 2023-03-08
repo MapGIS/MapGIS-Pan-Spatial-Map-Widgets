@@ -1,121 +1,125 @@
 <template>
   <div class="coordinate-container">
     <mp-setting-form layout="vertical">
-      <a-form-item label="坐标系">
-        <a-select v-model="crs">
-          <a-select-option v-for="item in crsOptions" :key="item" :value="item">
+      <mapgis-ui-form-item label="坐标系">
+        <mapgis-ui-select v-model="crs">
+          <mapgis-ui-select-option
+            v-for="item in crsOptions"
+            :key="item"
+            :value="item"
+          >
             {{ item }}
-          </a-select-option>
-        </a-select>
-      </a-form-item>
-      <a-form-item label="单位">
-        <a-select :options="typeOptions" v-model="type" />
-      </a-form-item>
-      <a-form-item>
+          </mapgis-ui-select-option>
+        </mapgis-ui-select>
+      </mapgis-ui-form-item>
+      <mapgis-ui-form-item label="单位">
+        <mapgis-ui-select :options="typeOptions" v-model="type" />
+      </mapgis-ui-form-item>
+      <mapgis-ui-form-item>
         <div slot="label">
-          <a-row type="flex" :gutter="[10, 0]" align="middle">
-            <a-col flex="auto"><label>X坐标</label></a-col>
-            <a-col style="display: flex; align-items: center">
-              <a-switch size="small" v-model="pickable" />
+          <mapgis-ui-row type="flex" :gutter="[10, 0]" align="middle">
+            <mapgis-ui-col flex="auto"><label>X坐标</label></mapgis-ui-col>
+            <mapgis-ui-col style="display: flex; align-items: center">
+              <mapgis-ui-switch size="small" v-model="pickable" />
               <span style="padding-left: 8px">鼠标拾取</span>
-            </a-col>
-          </a-row>
+            </mapgis-ui-col>
+          </mapgis-ui-row>
         </div>
-        <a-input
+        <mapgis-ui-input
           v-if="type === 'd'"
           type="number"
           v-model="coordDecimal[0]"
           @change="onDecimalCoordChanged"
         />
-        <a-row v-else type="flex" :gutter="[10, 0]" align="middle">
-          <a-col :span="6">
-            <a-input
+        <mapgis-ui-row v-else type="flex" :gutter="[10, 0]" align="middle">
+          <mapgis-ui-col :span="6">
+            <mapgis-ui-input
               type="number"
               v-model="coordDMS[0][0]"
               @change="onDMSCoordChanged"
             />
-          </a-col>
-          <a-col :span="2">度</a-col>
-          <a-col :span="6">
-            <a-input
+          </mapgis-ui-col>
+          <mapgis-ui-col :span="2">度</mapgis-ui-col>
+          <mapgis-ui-col :span="6">
+            <mapgis-ui-input
               type="number"
               v-model="coordDMS[0][1]"
               @change="onDMSCoordChanged"
             />
-          </a-col>
-          <a-col :span="2">分</a-col>
-          <a-col :span="6">
-            <a-input
+          </mapgis-ui-col>
+          <mapgis-ui-col :span="2">分</mapgis-ui-col>
+          <mapgis-ui-col :span="6">
+            <mapgis-ui-input
               type="number"
               v-model="coordDMS[0][2]"
               @change="onDMSCoordChanged"
             />
-          </a-col>
-          <a-col :span="2">秒</a-col>
-        </a-row>
-      </a-form-item>
-      <a-form-item label="Y坐标">
-        <a-input
+          </mapgis-ui-col>
+          <mapgis-ui-col :span="2">秒</mapgis-ui-col>
+        </mapgis-ui-row>
+      </mapgis-ui-form-item>
+      <mapgis-ui-form-item label="Y坐标">
+        <mapgis-ui-input
           v-if="type === 'd'"
           type="number"
           v-model="coordDecimal[1]"
           @change="onDecimalCoordChanged"
         />
-        <a-row v-else type="flex" :gutter="[10, 0]" align="middle">
-          <a-col :span="6">
-            <a-input
+        <mapgis-ui-row v-else type="flex" :gutter="[10, 0]" align="middle">
+          <mapgis-ui-col :span="6">
+            <mapgis-ui-input
               type="number"
               v-model="coordDMS[1][0]"
               @change="onDMSCoordChanged"
             />
-          </a-col>
-          <a-col :span="2">度</a-col>
-          <a-col :span="6">
-            <a-input
+          </mapgis-ui-col>
+          <mapgis-ui-col :span="2">度</mapgis-ui-col>
+          <mapgis-ui-col :span="6">
+            <mapgis-ui-input
               type="number"
               v-model="coordDMS[1][1]"
               @change="onDMSCoordChanged"
             />
-          </a-col>
-          <a-col :span="2">分</a-col>
-          <a-col :span="6">
-            <a-input
+          </mapgis-ui-col>
+          <mapgis-ui-col :span="2">分</mapgis-ui-col>
+          <mapgis-ui-col :span="6">
+            <mapgis-ui-input
               type="number"
               v-model="coordDMS[1][2]"
               @change="onDMSCoordChanged"
             />
-          </a-col>
-          <a-col :span="2">秒</a-col>
-        </a-row>
-      </a-form-item>
-      <a-form-item>
+          </mapgis-ui-col>
+          <mapgis-ui-col :span="2">秒</mapgis-ui-col>
+        </mapgis-ui-row>
+      </mapgis-ui-form-item>
+      <mapgis-ui-form-item>
         <div slot="label">
-          <a-row type="flex" :gutter="[10, 0]" align="middle">
-            <a-col flex="auto"><label>比例尺</label></a-col>
-            <a-col style="display: flex; align-items: center">
-              <a-switch size="small" v-model="frameable" />
+          <mapgis-ui-row type="flex" :gutter="[10, 0]" align="middle">
+            <mapgis-ui-col flex="auto"><label>比例尺</label></mapgis-ui-col>
+            <mapgis-ui-col style="display: flex; align-items: center">
+              <mapgis-ui-switch size="small" v-model="frameable" />
               <span style="padding-left: 8px">计算图幅</span>
-            </a-col>
-          </a-row>
+            </mapgis-ui-col>
+          </mapgis-ui-row>
         </div>
-        <a-select :options="scaleArray" v-model="scale" />
-      </a-form-item>
+        <mapgis-ui-select :options="scaleArray" v-model="scale" />
+      </mapgis-ui-form-item>
     </mp-setting-form>
-    <a-space direction="vertical" style="flex: 1">
-      <a-row>
+    <mapgis-ui-space direction="vertical" style="flex: 1">
+      <mapgis-ui-row>
         <label v-show="frameNo" class="frame-text">图幅号：{{ frameNo }}</label>
-      </a-row>
-      <a-row>
-        <a-button
+      </mapgis-ui-row>
+      <mapgis-ui-row>
+        <mapgis-ui-button
           type="primary"
           @click="onLocate"
           style="width: 100%; margin-top: 10px"
           :disabled="coordDecimal[0].length == 0 || coordDecimal[1].length == 0"
         >
           坐标定位
-        </a-button>
-      </a-row>
-    </a-space>
+        </mapgis-ui-button>
+      </mapgis-ui-row>
+    </mapgis-ui-space>
     <template v-if="active">
       <coordinate-mapbox
         v-if="is2DMapMode"
@@ -417,13 +421,18 @@ export default class MpCoordinate extends Mixins(AppMixin) {
 }
 </script>
 
-<style lang="less">
+<style lang="scss" scoped>
+.coordinate-container {
+  .frame-text {
+    color: $primary-color;
+  }
+}
+</style>
+
+<style lang="scss">
 .coordinate-container {
   display: flex;
   padding: 10px 3px 0 3px;
   flex-direction: column;
-  .frame-text {
-    color: @primary-color;
-  }
 }
 </style>

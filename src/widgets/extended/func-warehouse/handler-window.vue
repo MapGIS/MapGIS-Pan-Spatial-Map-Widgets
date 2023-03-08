@@ -22,23 +22,23 @@
       >
       </mapgis-ui-clouddisk-model-fields>
       <!-- <mp-setting-form :no-last-margin-bottom="true" :wrapper-width="300">
-        <a-form-item
+        <mapgis-ui-form-item
           v-for="(item, index) in funcParamCopy.Parameters"
           :key="index"
           :label="item.Name"
         >
-          <a-input :disabled="item.Direction == 1" v-model="item.DefaultValue">
-          </a-input>
-        </a-form-item>
-        <a-form-item>
-          <a-button
+          <mapgis-ui-input :disabled="item.Direction == 1" v-model="item.DefaultValue">
+          </mapgis-ui-input>
+        </mapgis-ui-form-item>
+        <mapgis-ui-form-item>
+          <mapgis-ui-button
             type="primary"
             :loading="showLoading"
             @click="doExecuteWorkflow"
           >
             执行
-          </a-button>
-        </a-form-item>
+          </mapgis-ui-button>
+        </mapgis-ui-form-item>
       </mp-setting-form> -->
     </template>
   </div>
@@ -247,7 +247,6 @@ export default class MpHandlerWindow extends Mixins(WidgetMixin) {
    * 处理功能执行结果
    */
   dealWithExecuteRes(result) {
-    console.log(result)
     if (result.results && result.results.length > 0) {
       const res = result.results[0]
       if (res.DataType === 1) {

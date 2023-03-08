@@ -16,12 +16,12 @@ export default class StatisticLabel extends Mixins(SubjectStylesMixin) {
         props: {
           size: 'small',
           field: this.field,
-          dataSource: this.dataSource
+          dataSource: this.dataSource,
         },
         customProps: {
-          showBorder: false
-        }
-      }
+          showBorder: false,
+        },
+      },
     ]
   }
 

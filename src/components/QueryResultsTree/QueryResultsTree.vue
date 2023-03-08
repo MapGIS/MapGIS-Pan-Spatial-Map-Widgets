@@ -183,11 +183,11 @@ export default {
         const { ip, port, docName } = this.layer._parseUrl(this.layer.url)
         _ip = ip
         _port = port
-        this.layer.docName = docName
+        this.layer.docName = docName //eslint-disable-line
       }
 
-      this.layer.ip = _ip
-      this.layer.port = _port
+      this.layer.ip = _ip //eslint-disable-line
+      this.layer.port = _port //eslint-disable-line
 
       return this.layer
     },

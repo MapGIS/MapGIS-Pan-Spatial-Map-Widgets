@@ -37,10 +37,10 @@ export default class MapboxStatisticLabel extends Mixins(BaseMixin) {
                 end: labelStyle.radius.max,
                 style: {
                   radius: labelStyle.radius.radiu,
-                  color: labelStyle.radius.sectionColor
-                }
-              }
-            ]
+                  color: labelStyle.radius.sectionColor,
+                },
+              },
+            ],
           }
         : themeStyle || {}
     }

@@ -112,13 +112,13 @@
                 name="vector-tile-sublayer-popover"
                 :layer="item"
               ></slot>
-              <mapgis-ui-list :gutter="10">
+              <!-- <mapgis-ui-list :gutter="10">
                 <template v-for="item in ['aaa', 'nnn', 'ccc']">
                   <mapgis-ui-list-item :key="item">
                     {{ item }}
                   </mapgis-ui-list-item>
                 </template>
-              </mapgis-ui-list>
+              </mapgis-ui-list> -->
             </template>
             <mapgis-ui-iconfont
               type="mapgis-more"
@@ -213,7 +213,7 @@ export default {
     MpMetadataInfo,
     MpCustomQuery,
     MpUnifyModify, //eslint-disable-line
-    // RightPopover,
+    RightPopover,
   },
   mixins: [MapMixin, AppMixin, ExhibitionControllerMixin, layerTypeUtil],
   inject: ['vueCesium'],

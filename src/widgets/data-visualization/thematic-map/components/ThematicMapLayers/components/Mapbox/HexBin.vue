@@ -17,7 +17,7 @@ export default class MapboxHexBin extends Mixins(BaseMixin) {
     return {
       draw: 'honeycomb',
       context: '2d',
-      ...(this.subjectData?.themeStyle || {})
+      ...(this.subjectData?.themeStyle || {}),
     }
   }
 }

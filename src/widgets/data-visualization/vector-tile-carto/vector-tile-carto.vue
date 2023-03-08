@@ -15,7 +15,7 @@
       <div v-if="settingLayerId !== ''">
         <mapgis-ui-group-tab
           :title="settingLayerId"
-          style="margin-bottom:5px"
+          style="margin-bottom: 5px"
         />
         <mapgis-mvt-editor
           :layerid="settingLayerId"
@@ -32,7 +32,7 @@ import { Mixins, Component, Watch } from 'vue-property-decorator'
 import { LayerType, WidgetMixin, Document } from '@mapgis/web-app-framework'
 
 @Component({
-  name: 'MpVectorTileCarto'
+  name: 'MpVectorTileCarto',
 })
 export default class MpVectorTileCarto extends Mixins(WidgetMixin) {
   private showStyleSetting = false
@@ -57,7 +57,7 @@ export default class MpVectorTileCarto extends Mixins(WidgetMixin) {
     this.document.defaultMap
       .clone()
       .getFlatLayers()
-      .forEach(layer => {
+      .forEach((layer) => {
         if (layer.type === LayerType.VectorTile) {
           this.vectorTileDocument.defaultMap.add(layer)
         }
@@ -71,7 +71,7 @@ export default class MpVectorTileCarto extends Mixins(WidgetMixin) {
     // console.log(layerIds)
     const doc = this.document.clone()
     const layers: Array<unknown> = doc.defaultMap.layers()
-    layerIds.forEach(item => {
+    layerIds.forEach((item) => {
       if (item.split('-').length > 1) {
         const parentIndex: string = item.split('-')[0]
         const childrenArr: Array<string> = item.split('-')
@@ -91,7 +91,7 @@ export default class MpVectorTileCarto extends Mixins(WidgetMixin) {
               layer.layout.visibility = visible ? 'none' : 'visible'
             } else {
               layer.layout = {
-                visibility: visible ? 'none' : 'visible'
+                visibility: visible ? 'none' : 'visible',
               }
             }
           } else {
@@ -122,6 +122,7 @@ export default class MpVectorTileCarto extends Mixins(WidgetMixin) {
 </script>
 <style lang="less" scoped>
 .mp-widget-vector-tile-carto {
+  padding: 8px 16px;
   ::v-deep .mapgis-ui-radio-group {
     font-size: 12px;
   }

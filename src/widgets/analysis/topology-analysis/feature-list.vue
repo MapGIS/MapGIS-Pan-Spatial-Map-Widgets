@@ -1,22 +1,22 @@
 <template>
-  <a-spin :spinning="loading">
+  <mapgis-ui-spin :spinning="loading">
     <div class="feature-list-container">
-      <a-list item-layout="horizontal" :data-source="list" size="small">
-        <a-list-item
+      <mapgis-ui-list item-layout="horizontal" :data-source="list" size="small">
+        <mapgis-ui-list-item
           slot="renderItem"
           slot-scope="item"
-          style="padding-left:15px"
+          style="padding-left: 15px"
         >
-          <a-radio
+          <mapgis-ui-radio
             @click="selectFeature(item)"
             :checked="selectItem && selectItem.FID === item.FID"
           >
             {{ item.FID }}
-          </a-radio>
-        </a-list-item>
-      </a-list>
+          </mapgis-ui-radio>
+        </mapgis-ui-list-item>
+      </mapgis-ui-list>
       <div v-if="list.length > 0" class="feature-list-pagination-container">
-        <a-pagination
+        <mapgis-ui-pagination
           size="small"
           showLessItems
           :total="totalCount"
@@ -25,7 +25,7 @@
         />
       </div>
     </div>
-  </a-spin>
+  </mapgis-ui-spin>
 </template>
 
 <script lang="ts">
@@ -86,7 +86,7 @@ export default class FeatureList extends Vue {
         serverName,
         serverUrl,
         geometry,
-        gdbp
+        gdbp,
       } = this.params
       if (serverType === LayerType.IGSMapImage) {
         const options = {
@@ -98,9 +98,10 @@ export default class FeatureList extends Vue {
           pageCount: 10,
           docName: serverName,
           layerIdxs: layerIndex,
-          coordPrecision: 8
+          coordPrecision: 8,
         }
         const res = await Feature.FeatureQuery.query(options, true)
+        console.log(res)
         this.dealWithResult(res)
       } else if (serverType === LayerType.IGSVector) {
         const options = {
@@ -111,7 +112,7 @@ export default class FeatureList extends Vue {
           page: this.page - 1,
           pageCount: 10,
           gdbp,
-          coordPrecision: 8
+          coordPrecision: 8,
         }
         const res = await Feature.FeatureQuery.query(options, true)
         this.dealWithResult(res)
@@ -157,14 +158,14 @@ export default class FeatureList extends Vue {
                 properties: {
                   center: lngLat,
                   fGeom: val.fGeom,
-                  ftype: val.ftype
+                  ftype: val.ftype,
                 },
                 geometry: {
                   type: 'Point',
-                  coordinates: lngLat
-                }
-              }
-            ]
+                  coordinates: lngLat,
+                },
+              },
+            ],
           }
           break
         case 2:
@@ -180,17 +181,17 @@ export default class FeatureList extends Vue {
                 properties: {
                   bound: [
                     [val.bound.xmin, val.bound.ymin],
-                    [val.bound.xmax, val.bound.ymax]
+                    [val.bound.xmax, val.bound.ymax],
                   ],
                   fGeom: val.fGeom,
-                  ftype: val.ftype
+                  ftype: val.ftype,
                 },
                 geometry: {
                   type: 'LineString',
-                  coordinates: dotsArr
-                }
-              }
-            ]
+                  coordinates: dotsArr,
+                },
+              },
+            ],
           }
           break
         case 3:
@@ -206,17 +207,17 @@ export default class FeatureList extends Vue {
                 properties: {
                   bound: [
                     [val.bound.xmin, val.bound.ymin],
-                    [val.bound.xmax, val.bound.ymax]
+                    [val.bound.xmax, val.bound.ymax],
                   ],
                   fGeom: val.fGeom,
-                  ftype: val.ftype
+                  ftype: val.ftype,
                 },
                 geometry: {
                   type: 'Polygon',
-                  coordinates: [dotsArr]
-                }
-              }
-            ]
+                  coordinates: [dotsArr],
+                },
+              },
+            ],
           }
           break
         default:
@@ -230,13 +231,13 @@ export default class FeatureList extends Vue {
 }
 </script>
 
-<style lang="less">
+<style lang="scss">
 .feature-list-container {
   width: 230px;
   height: 180px;
   display: flex;
   flex-direction: column;
-  .ant-list {
+  .mapgis-ui-list {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -245,7 +246,7 @@ export default class FeatureList extends Vue {
   .feature-list-pagination-container {
     padding: 5px 10px;
     text-align: right;
-    border-top: 1px solid @border-color;
+    border-top: 1px solid $border-color;
   }
 }
 </style>

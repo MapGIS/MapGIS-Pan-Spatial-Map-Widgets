@@ -15,9 +15,7 @@
           {{ node.title }}
         </mapgis-ui-radio>
       </mapgis-ui-radio-group>
-      <div v-else>
-        暂无数据！
-      </div>
+      <div v-else>暂无数据！</div>
     </mapgis-ui-row>
     <mapgis-3d-analysis-profile
       :profileType="profileType"
@@ -60,14 +58,14 @@ import {
   LayerType,
   IGSSceneSublayerType,
   LoadStatus,
-  Objects
+  Objects,
 } from '@mapgis/web-app-framework'
 import { Util } from '@mapgis/webclient-vue-ui'
 
 const { ColorUtil } = Util
 
 @Component({
-  name: 'MpProfileAnalysis'
+  name: 'MpProfileAnalysis',
 })
 export default class MpProfileAnalysis extends Mixins(WidgetMixin) {
   private polygonHeight = 100 // 剖面高度
@@ -92,7 +90,7 @@ export default class MpProfileAnalysis extends Mixins(WidgetMixin) {
   radioStyle = {
     display: 'block',
     height: '30px',
-    lineHeight: '30px'
+    lineHeight: '30px',
   }
 
   // 模型和地形集合
