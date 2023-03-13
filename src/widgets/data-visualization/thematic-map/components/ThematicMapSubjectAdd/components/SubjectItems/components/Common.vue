@@ -86,7 +86,6 @@
   </div>
 </template>
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator'
 import { Layer, LayerType, Catalog } from '@mapgis/web-app-framework'
 import { dataCatalogManagerInstance } from '../../../../../../../../model'
 import url from 'url'
@@ -110,417 +109,429 @@ interface IField {
   value: string
 }
 
-@Component
-export default class Common extends Vue {
-  @Prop({ default: () => ({}) }) readonly subjectConfig!: INewSubjectConfig
-
-  // 属性列表
-  fields: Array<IField> = []
-
-  // 目录树
-  catalogTreeData: Layer[] = []
-
-  // 对应当前layerServiceType的treeData
-  currentTreeData: Layer[] = []
-
-  private layerServiceTypeEnum = LayerServiceType
-
-  private uploadUrl = `${this.baseUrl}/api/local-storage`
-
-  // 示例
-  examples = [
-    {
-      label: '示例1',
-      serverType: this.layerServiceTypeEnum.igsImage,
-      content:
-        'http://<server>:<port>/igs/rest/mrms/docs/{docName}?layerName={layerName}&layerIndex={layerIndex}',
+export default {
+  name: 'Common',
+  props: {
+    subjectConfig: {
+      type: Object,
+      default: () => ({}),
     },
-    {
-      label: ' 示例2',
-      serverType: this.layerServiceTypeEnum.igsVector,
-      content: 'http://<server>:<port>/igs/rest/mrms/layers?gdbp={gdbp}',
-    },
-    {
-      label: ' 示例3',
-      serverType: this.layerServiceTypeEnum.geojson,
-      content: 'http://localhost:8080/static/json/省级行政区x.json',
-    },
-    {
-      label: ' 示例4',
-      serverType: this.layerServiceTypeEnum.igsScene,
-      content: 'http://192.168.82.89:8089/igs/rest/services/白模/SceneServer',
-    },
-  ]
-
-  get exampleContent() {
-    return (
-      this.examples.find((item) => item.serverType === this.layerServiceType)
-        ?.content || ''
-    )
-  }
-
-  get showUpload() {
-    return this.layerServiceType === this.layerServiceTypeEnum.geojson
-  }
-
-  getData(file) {
+  },
+  data() {
     return {
-      name: 'file',
-    }
-  }
+      // 属性列表
+      fields: [],
 
-  layerServiceTypes: Array[] = [
-    { label: 'MapGIS 地图服务', value: this.layerServiceTypeEnum.igsImage },
-    {
-      label: 'MapGIS 图层地图服务',
-      value: this.layerServiceTypeEnum.igsVector,
+      // 目录树
+      catalogTreeData: [],
+
+      // 对应当前layerServiceType的treeData
+      currentTreeData: [],
+
+      layerServiceTypeEnum: LayerServiceType,
+
+      uploadUrl: `${this.baseUrl}/api/local-storage`,
+
+      // 示例
+      examples: [
+        {
+          label: '示例1',
+          serverType: this.layerServiceTypeEnum.igsImage,
+          content:
+            'http://<server>:<port>/igs/rest/mrms/docs/{docName}?layerName={layerName}&layerIndex={layerIndex}',
+        },
+        {
+          label: ' 示例2',
+          serverType: this.layerServiceTypeEnum.igsVector,
+          content: 'http://<server>:<port>/igs/rest/mrms/layers?gdbp={gdbp}',
+        },
+        {
+          label: ' 示例3',
+          serverType: this.layerServiceTypeEnum.geojson,
+          content: 'http://localhost:8080/static/json/省级行政区x.json',
+        },
+        {
+          label: ' 示例4',
+          serverType: this.layerServiceTypeEnum.igsScene,
+          content:
+            'http://192.168.82.89:8089/igs/rest/services/白模/SceneServer',
+        },
+      ],
+      layerServiceTypes: [
+        { label: 'MapGIS 地图服务', value: this.layerServiceTypeEnum.igsImage },
+        {
+          label: 'MapGIS 图层地图服务',
+          value: this.layerServiceTypeEnum.igsVector,
+        },
+        { label: 'GEOJSON 服务', value: this.layerServiceTypeEnum.geojson },
+        { label: 'M3D 服务', value: this.layerServiceTypeEnum.igsScene },
+      ],
+    }
+  },
+  computed: {
+    exampleContent() {
+      return (
+        this.examples.find((item) => item.serverType === this.layerServiceType)
+          ?.content || ''
+      )
     },
-    { label: 'GEOJSON 服务', value: this.layerServiceTypeEnum.geojson },
-    { label: 'M3D 服务', value: this.layerServiceTypeEnum.igsScene },
-  ]
 
-  get layerServiceType() {
-    return (
-      this.subjectConfig.layerServiceType || this.layerServiceTypes[0]?.value
-    )
-  }
-
-  set layerServiceType(nV) {
-    this.$emit('change', {
-      ...this.subjectConfig,
-      layerServiceType: nV,
-    })
-  }
-
-  // 服务地址
-  get selfUri() {
-    const { gdbp, docName, layerServiceType, src, ...others } =
-      this.subjectConfig
-    const serverType =
-      (layerServiceType !== this.layerServiceTypeEnum.geojson
-        ? layerServiceType
-        : LayerType.GeoJson) ||
-      (docName ? LayerType.IGSIMAGE : gdbp ? LayerType.IGSVECTOR : null)
-    const serverURL = src || ''
-    return this.getServerUri({
-      ...others,
-      gdbp,
-      docName,
-      serverType,
-      serverURL,
-    })
-  }
-
-  set selfUri(value) {
-    this.$emit('change', this.getServerParams(value))
-  }
-
-  // 统计属性
-  get field() {
-    return this.subjectConfig.field || this.fields[0]?.value
-  }
-
-  set field(nV) {
-    this.$emit('change', {
-      ...this.subjectConfig,
-      field: nV,
-    })
-  }
-
-  /**
-   * 是否gdbp
-   */
-  isGdbp(serverType) {
-    return LayerType.IGSVector === serverType
-  }
-
-  /**
-   * 是否doc
-   */
-  isDoc(serverType) {
-    return LayerType.IGSMapImage === serverType
-  }
-
-  /**
-   * 是否GeoJson
-   */
-  isGeoJson(serverType) {
-    return LayerType.GeoJson === serverType
-  }
-
-  /**
-   * 是否IGSScene
-   */
-  isIGSScene(serverType) {
-    return LayerType.IGSScene === serverType
-  }
-
-  /**
-   * IGSMapImage地图文档(5)
-   * IGSVector矢量(6)
-   * GeoJson(28)
-   * IGSScene(22)
-   */
-  isSupportedData(serverType: LayerType) {
-    return (
-      serverType &&
-      (this.isGdbp(serverType) ||
-        this.isDoc(serverType) ||
-        this.isGeoJson(serverType) ||
-        this.isIGSScene(serverType))
-    )
-  }
-
-  /**
-   * server全地址
-   */
-  getServerUri(node: Layer) {
-    const {
-      ip,
-      port,
-      gdbp,
-      gdbps,
-      serverType,
-      layerIndex,
-      layerName,
-      docName,
-      serverURL,
-    } = node
-    let serverUri = `http://${ip}:${port}/igs/rest/mrms/`
-    switch (serverType) {
-      case LayerType.IGSMapImage:
-        serverUri = `http://${ip}:${port}/igs/rest/mrms/docs/${docName}?layerName=${layerName}&layerIndex=${layerIndex}`
-        break
-      case LayerType.IGSVector:
-        serverUri = `http://${ip}:${port}/igs/rest/mrms/layers?gdbp=${
-          gdbp || gdbps
-        }`
-        break
-      case LayerType.GeoJson:
-        serverUri = serverURL
-        break
-      case LayerType.IGSScene:
-        serverUri = serverURL
-        break
-      default:
-        serverUri = ''
-        break
-    }
-    return serverUri
-  }
-
-  /**
-   * 根据uri获取服务参数
-   */
-  getServerParams(uri) {
-    const { layerServiceType } = this
-    let params: Record<string, any>
-    if (uri) {
-      const {
-        hostname: ip,
-        port,
-        pathname,
-        query: { gdbp, layerName, layerIndex },
-      } = url.parse(uri, true)
-      const docName = _last(pathname.split('/'))
-
-      if (layerServiceType === LayerServiceType.igsVector) {
-        params = {
-          ip,
-          port,
+    showUpload() {
+      return this.layerServiceType === this.layerServiceTypeEnum.geojson
+    },
+    layerServiceType: {
+      get() {
+        return (
+          this.subjectConfig.layerServiceType ||
+          this.layerServiceTypes[0]?.value
+        )
+      },
+      set(nV) {
+        this.$emit('change', {
+          ...this.subjectConfig,
+          layerServiceType: nV,
+        })
+      },
+    },
+    // 服务地址
+    selfUri: {
+      get() {
+        const { gdbp, docName, layerServiceType, src, ...others } =
+          this.subjectConfig
+        const serverType =
+          (layerServiceType !== this.layerServiceTypeEnum.geojson
+            ? layerServiceType
+            : LayerType.GeoJson) ||
+          (docName ? LayerType.IGSIMAGE : gdbp ? LayerType.IGSVECTOR : null)
+        const serverURL = src || ''
+        return this.getServerUri({
+          ...others,
           gdbp,
-          layerServiceType,
-        }
-      } else if (layerServiceType === LayerServiceType.igsImage) {
-        params = {
-          ip,
-          port,
           docName,
-          layerName,
-          layerIndex,
-          layerServiceType,
-        }
-      } else if (
-        layerServiceType === LayerServiceType.geojson ||
-        layerServiceType === LayerServiceType.igsScene
-      ) {
-        params = {
-          src: uri,
-          layerServiceType,
-        }
+          serverType,
+          serverURL,
+        })
+      },
+      set(value) {
+        this.$emit('change', this.getServerParams(value))
+      },
+    },
+
+    // 统计属性
+    field: {
+      get() {
+        return this.subjectConfig.field || this.fields[0]?.value
+      },
+      set(nV) {
+        this.$emit('change', {
+          ...this.subjectConfig,
+          field: nV,
+        })
+      },
+    },
+  },
+  methods: {
+    getData(file) {
+      return {
+        name: 'file',
       }
-    }
+    },
+    /**
+     * 是否gdbp
+     */
+    isGdbp(serverType) {
+      return LayerType.IGSVector === serverType
+    },
 
-    return params
-  }
+    /**
+     * 是否doc
+     */
+    isDoc(serverType) {
+      return LayerType.IGSMapImage === serverType
+    },
 
-  /**
-   * 处理目录树， 筛选出IGSVector和IGSMapImage数据
-   */
-  handleCatalog(tree: Layer[], layerServiceType?) {
-    for (let i = 0; i < tree.length; i++) {
-      const node = tree[i]
-      const isLeaf =
-        this.isGdbp(node.serverType) ||
-        this.isGeoJson(node.serverType) ||
-        this.isIGSScene(node.serverType)
-      this.$set(node, 'isLeaf', isLeaf)
-      this.$set(node, 'selectable', isLeaf)
-      this.$set(node, 'serverUri', this.getServerUri(node))
-      if (node.children && node.children.length > 0) {
-        this.handleCatalog(node.children, layerServiceType)
-      }
-      if (node.children && node.children.length === 0) {
-        node.children = null
-      }
-      switch (layerServiceType) {
-        case LayerServiceType.igsImage:
-          if (!this.isDoc(node.serverType) && !node.children) {
-            tree.splice(i, 1)
-            i--
-          }
-          break
-        case LayerServiceType.igsVector:
-          if (!this.isGdbp(node.serverType) && !node.children) {
-            tree.splice(i, 1)
-            i--
-          }
-          break
-        case LayerServiceType.geojson:
-          if (!this.isGeoJson(node.serverType) && !node.children) {
-            tree.splice(i, 1)
-            i--
-          }
-          break
-        case LayerServiceType.igsScene:
-          if (!this.isIGSScene(node.serverType) && !node.children) {
-            tree.splice(i, 1)
-            i--
-          }
-          break
-        default:
-          if (!this.isSupportedData(node.serverType) && !node.children) {
-            tree.splice(i, 1)
-            i--
-          }
-          break
-      }
-    }
-    return tree
-  }
+    /**
+     * 是否GeoJson
+     */
+    isGeoJson(serverType) {
+      return LayerType.GeoJson === serverType
+    },
 
-  changeLayerServiceType() {
-    this.currentTreeData = this.handleCatalog(
-      _cloneDeep(this.catalogTreeData),
-      this.layerServiceType
-    )
-  }
+    /**
+     * 是否IGSScene
+     */
+    isIGSScene(serverType) {
+      return LayerType.IGSScene === serverType
+    },
 
-  /**
-   * 获取目录树数据
-   */
-  getCatalogTreeData() {
-    this.loading = true
-    dataCatalogManagerInstance
-      .getDataCatalogTreeData()
-      .then((result) => {
-        this.catalogTreeData = this.handleCatalog(_cloneDeep(result))
-        this.changeLayerServiceType()
-        this.loading = false
-      })
-      .catch(() => {
-        this.loading = false
-      })
-  }
+    /**
+     * IGSMapImage地图文档(5)
+     * IGSVector矢量(6)
+     * GeoJson(28)
+     * IGSScene(22)
+     */
+    isSupportedData(serverType: LayerType) {
+      return (
+        serverType &&
+        (this.isGdbp(serverType) ||
+          this.isDoc(serverType) ||
+          this.isGeoJson(serverType) ||
+          this.isIGSScene(serverType))
+      )
+    },
 
-  /**
-   * 异步加载目录树节点数据的回调
-   */
-  async catalogTreeLoadData(treeNode: any) {
-    const {
-      dataRef,
-      dataRef: { ip, port, serverName, serverType, children },
-    } = treeNode
-    if (!children && serverType === LayerType.IGSMapImage) {
-      const { DocumentCatalog } = Catalog
-      const docInfo = await DocumentCatalog.getDocInfo({
+    /**
+     * server全地址
+     */
+    getServerUri(node: Layer) {
+      const {
         ip,
         port,
-        serverName,
-      })
-      if (docInfo && docInfo.MapInfos.length) {
-        const { CatalogLayer } = docInfo.MapInfos[0]
-        const layerIndex =
-          DocumentCatalog.getLayerIndexesByNamesOrCodes(CatalogLayer)
-        const layers = DocumentCatalog.getLayersByIndexes(
-          layerIndex.join(','),
-          CatalogLayer
-        )
-        treeNode.dataRef.children = layers.map(({ LayerName, LayerIndex }) => ({
-          name: LayerName,
-          guid: LayerIndex,
-          isLeaf: true,
-          selectable: true,
-          serverUri: this.getServerUri({
+        gdbp,
+        gdbps,
+        serverType,
+        layerIndex,
+        layerName,
+        docName,
+        serverURL,
+      } = node
+      let serverUri = `http://${ip}:${port}/igs/rest/mrms/`
+      switch (serverType) {
+        case LayerType.IGSMapImage:
+          serverUri = `http://${ip}:${port}/igs/rest/mrms/docs/${docName}?layerName=${layerName}&layerIndex=${layerIndex}`
+          break
+        case LayerType.IGSVector:
+          serverUri = `http://${ip}:${port}/igs/rest/mrms/layers?gdbp=${
+            gdbp || gdbps
+          }`
+          break
+        case LayerType.GeoJson:
+          serverUri = serverURL
+          break
+        case LayerType.IGSScene:
+          serverUri = serverURL
+          break
+        default:
+          serverUri = ''
+          break
+      }
+      return serverUri
+    },
+
+    /**
+     * 根据uri获取服务参数
+     */
+    getServerParams(uri) {
+      const { layerServiceType } = this
+      let params: Record<string, any>
+      if (uri) {
+        const {
+          hostname: ip,
+          port,
+          pathname,
+          query: { gdbp, layerName, layerIndex },
+        } = url.parse(uri, true)
+        const docName = _last(pathname.split('/'))
+
+        if (layerServiceType === LayerServiceType.igsVector) {
+          params = {
             ip,
             port,
-            serverType,
-            docName: serverName,
-            layerName: LayerName,
-            layerIndex: LayerIndex,
-          }),
-        }))
-        this.catalogTreeData = [...this.catalogTreeData]
+            gdbp,
+            layerServiceType,
+          }
+        } else if (layerServiceType === LayerServiceType.igsImage) {
+          params = {
+            ip,
+            port,
+            docName,
+            layerName,
+            layerIndex,
+            layerServiceType,
+          }
+        } else if (
+          layerServiceType === LayerServiceType.geojson ||
+          layerServiceType === LayerServiceType.igsScene
+        ) {
+          params = {
+            src: uri,
+            layerServiceType,
+          }
+        }
       }
-    }
-  }
 
-  /**
-   * 设置查询的属性列表
-   */
-  setFields(serverParams) {
-    if (serverParams) {
-      const { ip, port, gdbp, docName, layerIndex, layerServiceType } =
-        serverParams
+      return params
+    },
 
-      FieldInstance.fetchFields(serverParams).then((fields) => {
-        this.fields = fields.map(({ alias, value }) => ({
-          label: alias,
-          value,
-        }))
-        this.field = this.fields[0]?.value
-      })
-    }
-  }
+    /**
+     * 处理目录树， 筛选出IGSVector和IGSMapImage数据
+     */
+    handleCatalog(tree: Layer[], layerServiceType?) {
+      for (let i = 0; i < tree.length; i++) {
+        const node = tree[i]
+        const isLeaf =
+          this.isGdbp(node.serverType) ||
+          this.isGeoJson(node.serverType) ||
+          this.isIGSScene(node.serverType)
+        this.$set(node, 'isLeaf', isLeaf)
+        this.$set(node, 'selectable', isLeaf)
+        this.$set(node, 'serverUri', this.getServerUri(node))
+        if (node.children && node.children.length > 0) {
+          this.handleCatalog(node.children, layerServiceType)
+        }
+        if (node.children && node.children.length === 0) {
+          node.children = null
+        }
+        switch (layerServiceType) {
+          case LayerServiceType.igsImage:
+            if (!this.isDoc(node.serverType) && !node.children) {
+              tree.splice(i, 1)
+              i--
+            }
+            break
+          case LayerServiceType.igsVector:
+            if (!this.isGdbp(node.serverType) && !node.children) {
+              tree.splice(i, 1)
+              i--
+            }
+            break
+          case LayerServiceType.geojson:
+            if (!this.isGeoJson(node.serverType) && !node.children) {
+              tree.splice(i, 1)
+              i--
+            }
+            break
+          case LayerServiceType.igsScene:
+            if (!this.isIGSScene(node.serverType) && !node.children) {
+              tree.splice(i, 1)
+              i--
+            }
+            break
+          default:
+            if (!this.isSupportedData(node.serverType) && !node.children) {
+              tree.splice(i, 1)
+              i--
+            }
+            break
+        }
+      }
+      return tree
+    },
 
-  /**
-   * 服务地址变化
-   */
-  selfUriChange(value: string) {
-    if (!/^(https|http)?:\/\//.test(value)) {
-      this.$message.warn('请输入正确的数据服务地址')
-      return
-    }
-    this.selfUri = value
-    this.setFields(this.getServerParams(value))
-  }
+    changeLayerServiceType() {
+      this.currentTreeData = this.handleCatalog(
+        _cloneDeep(this.catalogTreeData),
+        this.layerServiceType
+      )
+    },
+
+    /**
+     * 获取目录树数据
+     */
+    getCatalogTreeData() {
+      this.loading = true
+      dataCatalogManagerInstance
+        .getDataCatalogTreeData()
+        .then((result) => {
+          this.catalogTreeData = this.handleCatalog(_cloneDeep(result))
+          this.changeLayerServiceType()
+          this.loading = false
+        })
+        .catch(() => {
+          this.loading = false
+        })
+    },
+
+    /**
+     * 异步加载目录树节点数据的回调
+     */
+    async catalogTreeLoadData(treeNode: any) {
+      const {
+        dataRef,
+        dataRef: { ip, port, serverName, serverType, children },
+      } = treeNode
+      if (!children && serverType === LayerType.IGSMapImage) {
+        const { DocumentCatalog } = Catalog
+        const docInfo = await DocumentCatalog.getDocInfo({
+          ip,
+          port,
+          serverName,
+        })
+        if (docInfo && docInfo.MapInfos.length) {
+          const { CatalogLayer } = docInfo.MapInfos[0]
+          const layerIndex =
+            DocumentCatalog.getLayerIndexesByNamesOrCodes(CatalogLayer)
+          const layers = DocumentCatalog.getLayersByIndexes(
+            layerIndex.join(','),
+            CatalogLayer
+          )
+          treeNode.dataRef.children = layers.map(
+            ({ LayerName, LayerIndex }) => ({
+              name: LayerName,
+              guid: LayerIndex,
+              isLeaf: true,
+              selectable: true,
+              serverUri: this.getServerUri({
+                ip,
+                port,
+                serverType,
+                docName: serverName,
+                layerName: LayerName,
+                layerIndex: LayerIndex,
+              }),
+            })
+          )
+          this.catalogTreeData = [...this.catalogTreeData]
+        }
+      }
+    },
+
+    /**
+     * 设置查询的属性列表
+     */
+    setFields(serverParams) {
+      if (serverParams) {
+        const { ip, port, gdbp, docName, layerIndex, layerServiceType } =
+          serverParams
+
+        FieldInstance.fetchFields(serverParams).then((fields) => {
+          this.fields = fields.map(({ alias, value }) => ({
+            label: alias,
+            value,
+          }))
+          this.field = this.fields[0]?.value
+        })
+      }
+    },
+
+    /**
+     * 服务地址变化
+     */
+    selfUriChange(value: string) {
+      if (!/^(https|http)?:\/\//.test(value)) {
+        this.$message.warn('请输入正确的数据服务地址')
+        return
+      }
+      this.selfUri = value
+      this.setFields(this.getServerParams(value))
+    },
+    // 上传文件状态改变时的回调
+    onChangeFile(info) {
+      if (info.file.status === 'uploading' || info.file.status === 'error') {
+        return
+      }
+      if (info.file.status === 'done') {
+        const url = info.file.response.url
+        if (url) {
+          this.selfUriChange(`${this.baseUrl}${url}`)
+        }
+      }
+    },
+  },
 
   created() {
     this.getCatalogTreeData()
-  }
-
-  // 上传文件状态改变时的回调
-  private onChangeFile(info) {
-    if (info.file.status === 'uploading' || info.file.status === 'error') {
-      return
-    }
-    if (info.file.status === 'done') {
-      const url = info.file.response.url
-      if (url) {
-        this.selfUriChange(`${this.baseUrl}${url}`)
-      }
-    }
-  }
+  },
 }
 </script>
 

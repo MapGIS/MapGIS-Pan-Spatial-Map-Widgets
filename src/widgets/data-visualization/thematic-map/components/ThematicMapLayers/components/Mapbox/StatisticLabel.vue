@@ -14,44 +14,46 @@
   />
 </template>
 <script lang="ts">
-import { Component, Mixins } from 'vue-property-decorator'
 import BaseMixin from '../../mixins/base'
 
-@Component
-export default class MapboxStatisticLabel extends Mixins(BaseMixin) {
+export default {
   // get themeOptions() {
   //   return this.subjectData?.themeStyle || {}
   // }
-
-  get themeOptions() {
-    if (!this.subjectData) {
-      return {}
-    } else {
-      const { labelStyle, themeStyle } = this.subjectData
-      // 兼容旧配置
-      return labelStyle && labelStyle.radius
-        ? {
-            styleGroups: [
-              {
-                start: labelStyle.radius.min,
-                end: labelStyle.radius.max,
-                style: {
-                  radius: labelStyle.radius.radiu,
-                  color: labelStyle.radius.sectionColor,
+  name: 'MapboxStatisticLabel',
+  mixins: [BaseMixin],
+  computed: {
+    themeOptions() {
+      if (!this.subjectData) {
+        return {}
+      } else {
+        const { labelStyle, themeStyle } = this.subjectData
+        // 兼容旧配置
+        return labelStyle && labelStyle.radius
+          ? {
+              styleGroups: [
+                {
+                  start: labelStyle.radius.min,
+                  end: labelStyle.radius.max,
+                  style: {
+                    radius: labelStyle.radius.radiu,
+                    color: labelStyle.radius.sectionColor,
+                  },
                 },
-              },
-            ],
-          }
-        : themeStyle || {}
-    }
-  }
-
-  removeLayer() {
-    const staticLabelLayer = this.$refs.customStaticLabelThemeLayer
-    if (staticLabelLayer) {
-      staticLabelLayer.resetLayer(this.id)
-    }
-  }
+              ],
+            }
+          : themeStyle || {}
+      }
+    },
+  },
+  methods: {
+    removeLayer() {
+      const staticLabelLayer = this.$refs.customStaticLabelThemeLayer
+      if (staticLabelLayer) {
+        staticLabelLayer.resetLayer(this.id)
+      }
+    },
+  },
 }
 </script>
 <style>

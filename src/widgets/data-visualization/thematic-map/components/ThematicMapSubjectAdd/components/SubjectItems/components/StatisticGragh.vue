@@ -33,7 +33,6 @@
   </editable-field-table>
 </template>
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { INewSubjectConfig } from '../../../../../store'
 import EditableFieldTable from '../../../common/EditableFieldTable.vue'
 
@@ -51,53 +50,143 @@ interface IGragh {
   showFieldsTitle: Record<string, string>
 }
 
-@Component({
+export default {
+  name: 'StatisticGragh',
   components: {
     EditableFieldTable,
   },
-})
-export default class StatisticGragh extends Vue {
-  @Prop({ default: () => ({}) }) readonly subjectConfig!: INewSubjectConfig
+  props: {
+    subjectConfig: {
+      type: Object,
+      default: () => ({}),
+    },
+  },
+  data() {
+    return {
+      field: null,
 
-  private field = null
+      fieldList: [],
 
-  // private way = '3'
+      tableData: [],
 
-  private fieldList = []
-
-  private tableData: ITableDataItem[] = []
-
-  private emptyVisible = false
-
-  get tableColumns() {
-    return [
-      {
-        type: 'Select',
-        title: '统计字段',
-        dataIndex: 'field',
-        width: 130,
-      },
-      {
-        type: 'Input',
-        title: '别名',
-        dataIndex: 'alias',
-      },
-      {
-        type: 'ColorPicker',
-        title: '颜色设置',
-        dataIndex: 'color',
-        align: 'center',
-        width: 100,
-      },
-    ]
-  }
-
-  @Watch('subjectConfig.graph', { deep: true })
-  tableDataChange({ fieldColors, showFields = [], showFieldsTitle } = {}) {
-    if (showFields.length === this.tableData.length) {
-      this.setTableData(fieldColors, showFields, showFieldsTitle)
+      emptyVisible: false,
     }
-  }
+  },
+  // private way = '3'
+  computed: {
+    tableColumns() {
+      return [
+        {
+          type: 'Select',
+          title: '统计字段',
+          dataIndex: 'field',
+          width: 130,
+        },
+        {
+          type: 'Input',
+          title: '别名',
+          dataIndex: 'alias',
+        },
+        {
+          type: 'ColorPicker',
+          title: '颜色设置',
+          dataIndex: 'color',
+          align: 'center',
+          width: 100,
+        },
+      ]
+    },
+  },
+  watch: {
+    'subjectConfig.graph': {
+      deep: true,
+      handler({ fieldColors, showFields = [], showFieldsTitle } = {}) {
+        if (showFields.length === this.tableData.length) {
+          this.setTableData(fieldColors, showFields, showFieldsTitle)
+        }
+      },
+    },
+  },
+  mounted() {
+    this.initTableData()
+  },
+  methods: {
+    /**
+     * 回显表格数据
+     */
+    initTableData() {
+      if (!this.subjectConfig.graph) return
+
+      const {
+        fieldColors,
+        showFields = [],
+        showFieldsTitle,
+        field,
+      } = this.subjectConfig.graph
+      this.field = field
+      if (showFields.length) {
+        this.setTableData(fieldColors, showFields, showFieldsTitle)
+        this.emptyVisible = true
+      }
+    },
+
+    /**
+     * 调整表格数据格式
+     */
+    setTableData(fieldColors, showFields, showFieldsTitle) {
+      const addNum = 1000
+      this.tableData = showFields.map((f, i) => ({
+        index: addNum + i,
+        field: f,
+        color: fieldColors[i],
+        alias: showFieldsTitle[f],
+      }))
+    },
+
+    /**
+     * 属性配置变化
+     */
+    onChange(data: ITableDataItem[] = []) {
+      const graph: ?IGragh =
+        data.length && data.some(({ field }) => !!field)
+          ? {
+              field: this.field,
+              ...data.reduce(
+                (obj, { field, alias, color }) => {
+                  const { fieldColors, showFields, showFieldsTitle } = obj
+                  if (field) {
+                    if (!showFields.includes(field)) {
+                      showFields.push(field)
+                      fieldColors.push(color)
+                    }
+                    showFieldsTitle[field] = alias
+                  }
+                  return obj
+                },
+                {
+                  fieldColors: [],
+                  showFields: [],
+                  showFieldsTitle: {},
+                }
+              ),
+            }
+          : undefined
+      this.tableData = data
+      this.$emit('change', { graph })
+    },
+
+    /**
+     * 属性列表加载完成
+     */
+    onFieldsLoaded(fields) {
+      this.fieldList = fields
+      let value
+      if (this.fieldList && this.fieldList.length > 0) {
+        value = this.fieldList[0].value
+      }
+      this.field = value
+    },
+  },
 
   // get statisticWays() {
   //   return [
@@ -133,86 +222,6 @@ export default class StatisticGragh extends Vue {
   //   }
   //   ]
   // }
-
-  mounted() {
-    this.initTableData()
-  }
-
-  /**
-   * 回显表格数据
-   */
-  initTableData() {
-    if (!this.subjectConfig.graph) return
-
-    const {
-      fieldColors,
-      showFields = [],
-      showFieldsTitle,
-      field,
-    } = this.subjectConfig.graph
-    this.field = field
-    if (showFields.length) {
-      this.setTableData(fieldColors, showFields, showFieldsTitle)
-      this.emptyVisible = true
-    }
-  }
-
-  /**
-   * 调整表格数据格式
-   */
-  setTableData(fieldColors, showFields, showFieldsTitle) {
-    const addNum = 1000
-    this.tableData = showFields.map((f, i) => ({
-      index: addNum + i,
-      field: f,
-      color: fieldColors[i],
-      alias: showFieldsTitle[f],
-    }))
-  }
-
-  /**
-   * 属性配置变化
-   */
-  onChange(data: ITableDataItem[] = []) {
-    const graph: ?IGragh =
-      data.length && data.some(({ field }) => !!field)
-        ? {
-            field: this.field,
-            ...data.reduce(
-              (obj, { field, alias, color }) => {
-                const { fieldColors, showFields, showFieldsTitle } = obj
-                if (field) {
-                  if (!showFields.includes(field)) {
-                    showFields.push(field)
-                    fieldColors.push(color)
-                  }
-                  showFieldsTitle[field] = alias
-                }
-                return obj
-              },
-              {
-                fieldColors: [],
-                showFields: [],
-                showFieldsTitle: {},
-              }
-            ),
-          }
-        : undefined
-    this.tableData = data
-    this.$emit('change', { graph })
-  }
-
-  /**
-   * 属性列表加载完成
-   */
-  onFieldsLoaded(fields) {
-    this.fieldList = fields
-    let value
-    if (this.fieldList && this.fieldList.length > 0) {
-      value = this.fieldList[0].value
-    }
-    this.field = value
-  }
 }
 </script>
 <style lang="less" scoped>

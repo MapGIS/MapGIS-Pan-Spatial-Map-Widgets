@@ -75,7 +75,6 @@
   </div>
 </template>
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { ISubjectType, INewSubjectConfig } from '../../../../store'
 import Common from './components/Common.vue'
 import SubjectStyles from './components/SubjectStyles'
@@ -83,7 +82,8 @@ import AttributeTable from './components/AttributeTable.vue'
 import StatisticGragh from './components/StatisticGragh.vue'
 import Popup from './components/Popup.vue'
 
-@Component({
+export default {
+  name: 'SubjectItems',
   components: {
     Common,
     SubjectStyles,
@@ -91,26 +91,48 @@ import Popup from './components/Popup.vue'
     StatisticGragh,
     Popup,
   },
-})
-export default class SubjectItems extends Vue {
-  @Prop() readonly subjectType!: ISubjectType
+  props: {
+    subjectType: {
+      type: Object,
+    },
+    value: {
+      type: Array,
+      default: () => [],
+    },
+  },
+  data() {
+    return {
+      activePanel: '0',
 
-  @Prop({ default: () => [] }) readonly value!: Array<INewSubjectConfig>
+      showCheckbox: false,
 
-  activePanel = '0'
-
-  showCheckbox = false
-
-  checkedPanels = []
-
-  get configTabList() {
-    if (
-      this.subjectType === 'DataShowSubject' ||
-      this.subjectType === 'HeatMap' ||
-      this.subjectType === 'StatisticLabel' ||
-      this.subjectType === 'Label' ||
-      this.subjectType === 'HexBin'
-    ) {
+      checkedPanels: [],
+    }
+  },
+  computed: {
+    configTabList() {
+      if (
+        this.subjectType === 'DataShowSubject' ||
+        this.subjectType === 'HeatMap' ||
+        this.subjectType === 'StatisticLabel' ||
+        this.subjectType === 'Label' ||
+        this.subjectType === 'HexBin'
+      ) {
+        return [
+          {
+            key: 'SubjectStyles',
+            tab: '样式配置',
+          },
+          {
+            key: 'AttributeTable',
+            tab: '表格配置',
+          },
+          {
+            key: 'StatisticGragh',
+            tab: '统计图配置',
+          },
+        ]
+      }
       return [
         {
           key: 'SubjectStyles',
@@ -124,128 +146,115 @@ export default class SubjectItems extends Vue {
           key: 'StatisticGragh',
           tab: '统计图配置',
         },
+        {
+          key: 'Popup',
+          tab: '弹框配置',
+        },
       ]
-    }
-    return [
-      {
-        key: 'SubjectStyles',
-        tab: '样式配置',
+    },
+
+    panelHeaderSpan() {
+      return this.showCheckbox ? [23, 1] : [24, 0]
+    },
+    configList: {
+      get() {
+        return this.value
       },
-      {
-        key: 'AttributeTable',
-        tab: '表格配置',
+      set(config) {
+        this.$emit('input', config)
       },
-      {
-        key: 'StatisticGragh',
-        tab: '统计图配置',
-      },
-      {
-        key: 'Popup',
-        tab: '弹框配置',
-      },
-    ]
-  }
+    },
+  },
+  methods: {
+    /**
+     * 更新属性
+     */
+    setProperties(source, target) {
+      for (const key in source) {
+        this.$set(target, key, source[key])
+      }
+    },
 
-  get panelHeaderSpan() {
-    return this.showCheckbox ? [23, 1] : [24, 0]
-  }
+    /**
+     * 面板change
+     */
+    panelChange(key: string) {
+      this.activePanel = key
+    },
 
-  get configList() {
-    return this.value
-  }
+    /**
+     * 专题配置change
+     */
+    configChange(newConfig: Record<string, any>, config: INewSubjectConfig) {
+      this.setProperties(newConfig, config)
+      console.log('配置数据', { ...config })
+    },
 
-  set configList(config: Array<INewSubjectConfig>) {
-    this.$emit('input', config)
-  }
+    /**
+     * 专题图年度输入失焦
+     */
+    timeBlur(time: string) {
+      if (this.configList.filter((c) => time && c.time === time).length > 1) {
+        this.$message.warning(
+          `存在相同的年度"${time}"， 若继续保存，将会保存最新配置的年度`
+        )
+      }
+    },
 
-  /**
-   * 更新属性
-   */
-  setProperties(source, target) {
-    for (const key in source) {
-      this.$set(target, key, source[key])
-    }
-  }
+    /**
+     * 新增年度
+     */
+    add() {
+      debugger
+      const node = {
+        time: '',
+        _checked: false,
+      }
+      this.configList = this.configList.concat(node)
+      this.showCheckbox = false
+    },
 
-  /**
-   * 面板change
-   */
-  panelChange(key: string) {
-    this.activePanel = key
-  }
+    /**
+     * 编辑
+     */
+    edit() {
+      this.showCheckbox = !this.showCheckbox
+    },
 
-  /**
-   * 专题配置change
-   */
-  configChange(newConfig: Record<string, any>, config: INewSubjectConfig) {
-    this.setProperties(newConfig, config)
-    console.log('配置数据', { ...config })
-  }
+    /**
+     * 移除年度
+     */
+    remove() {
+      if (!this.checkedPanels.length) {
+        this.$message.warning('请选择需要删除的年度')
+        return
+      }
+      this.checkedPanels.forEach((index) => this.configList.splice(index, 1))
+    },
 
-  /**
-   * 专题图年度输入失焦
-   */
-  timeBlur(time: string) {
-    if (this.configList.filter((c) => time && c.time === time).length > 1) {
-      this.$message.warning(
-        `存在相同的年度"${time}"， 若继续保存，将会保存最新配置的年度`
-      )
-    }
-  }
+    /**
+     * 选中年度
+     */
+    checked(e: Event, config: Record<string, unknown>, index: number) {
+      e.stopPropagation()
+      const { checked } = e.target
+      this.$set(config, '_checked', checked)
+      if (checked) {
+        this.checkedPanels.push(index)
+      } else {
+        this.checkedPanels.splice(index, 1)
+      }
+    },
 
-  /**
-   * 新增年度
-   */
-  add() {
-    debugger
-    const node = {
-      time: '',
-      _checked: false,
-    }
-    this.configList = this.configList.concat(node)
-    this.showCheckbox = false
-  }
-
-  /**
-   * 编辑
-   */
-  edit() {
-    this.showCheckbox = !this.showCheckbox
-  }
-
-  /**
-   * 移除年度
-   */
-  remove() {
-    if (!this.checkedPanels.length) {
-      this.$message.warning('请选择需要删除的年度')
-      return
-    }
-    this.checkedPanels.forEach((index) => this.configList.splice(index, 1))
-  }
-
-  /**
-   * 选中年度
-   */
-  checked(e: Event, config: Record<string, unknown>, index: number) {
-    e.stopPropagation()
-    const { checked } = e.target
-    this.$set(config, '_checked', checked)
-    if (checked) {
-      this.checkedPanels.push(index)
-    } else {
-      this.checkedPanels.splice(index, 1)
-    }
-  }
-
-  /**
-   * 取消选中年度
-   */
-  cancel() {
-    this.showCheckbox = false
-    this.checkedPanels = []
-    this.configList.forEach((v) => this.$set(v, '_checked', false))
-  }
+    /**
+     * 取消选中年度
+     */
+    cancel() {
+      this.showCheckbox = false
+      this.checkedPanels = []
+      this.configList.forEach((v) => this.$set(v, '_checked', false))
+    },
+  },
 }
 </script>
 <style lang="less">

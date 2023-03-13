@@ -3,7 +3,10 @@ import { ModuleType, State } from '../types'
 
 const getters = {
   // 获取某个功能模块的开关状态
-  isVisible: ({ modules }: State) => (t: ModuleType) => modules.includes(t),
+  isVisible:
+    ({ modules }: State) =>
+    (t: ModuleType) =>
+      modules.includes(t),
   // 加载
   loading: (state: State) => state.loading,
   // 获取要素查询当前页数据
@@ -21,9 +24,12 @@ const getters = {
   // 基础配置
   baseConfig: (state: State) => state.baseConfig,
   // 专题配置
-  subjectConfig: (state: State) => state.subjectConfig,
+  subjectConfig: (state: State) => {
+    debugger
+    return state.subjectConfig
+  },
   // 图属联动项
-  linkageFid: (state: State) => state.linkageFid
+  linkageFid: (state: State) => state.linkageFid,
 }
 
 export default Vue.observable(getters)

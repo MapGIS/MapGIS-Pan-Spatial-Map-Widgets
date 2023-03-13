@@ -23,81 +23,96 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component, Prop, Watch } from 'vue-property-decorator'
 import { ExhibitionMixin, Exhibition } from '@mapgis/web-app-framework'
 
 const { IAttributeTableListExhibition } = Exhibition
 
-@Component({ name: 'MpAttributeTableList' })
-export default class MpAttributeTableList extends Mixins(ExhibitionMixin) {
-  // 属性表选项
-  @Prop({ type: Object, required: true })
-  exhibition!: IAttributeTableListExhibition
-
-  private get activeOptionId() {
-    return this.exhibition.activeOptionId
-  }
-
-  private set activeOptionId(id: string) {
-    this.exhibition.activeOptionId = id
-  }
-
-  private get attributeTableComponent() {
-    return 'MpAttributeTable'
-  }
-
-  private get options() {
-    return this.exhibition.options
-  }
-
-  private get tableExhibition() {
-    return function (option) {
-      return {
-        id: option.id,
-        name: option.name,
-        option: option,
+export default {
+  name: 'MpAttributeTableList',
+  mixins: [ExhibitionMixin],
+  props: {
+    // 属性表选项
+    exhibition: {
+      type: IAttributeTableListExhibition,
+      required: true,
+    },
+  },
+  computed: {
+    activeOptionId: {
+      get() {
+        return this.exhibition.activeOptionId
+      },
+      set(id: string) {
+        this.exhibition.activeOptionId = id
+      },
+    },
+    attributeTableComponent() {
+      return 'MpAttributeTable'
+    },
+    options() {
+      return this.exhibition.options
+    },
+    tableExhibition() {
+      return function (option) {
+        return {
+          id: option.id,
+          name: option.name,
+          option: option,
+        }
       }
-    }
-  }
-
-  @Watch('activeOptionId')
-  activeOptionIdChange(newVal, oldVal) {
-    // 延迟10毫秒执行
-    setTimeout(() => {
-      if (this.$refs[oldVal] && this.$refs[oldVal][0]) {
-        this.$refs[oldVal][0].deActivateExhibition()
+    },
+  },
+  watch: {
+    activeOptionId: {
+      handler(newVal, oldVal) {
+        // 延迟10毫秒执行
+        setTimeout(() => {
+          if (this.$refs[oldVal] && this.$refs[oldVal][0]) {
+            this.$refs[oldVal][0].deActivateExhibition()
+          }
+          if (this.$refs[newVal] && this.$refs[newVal][0]) {
+            this.$refs[newVal][0].activateExhibition()
+            this.$refs[newVal][0].resizeExhibition()
+          }
+        }, 10)
+      },
+    },
+  },
+  methods: {
+    onResize() {
+      if (this.$refs[this.activeOptionId]) {
+        this.$refs[this.activeOptionId][0].resizeExhibition()
       }
-      if (this.$refs[newVal] && this.$refs[newVal][0]) {
-        this.$refs[newVal][0].activateExhibition()
-        this.$refs[newVal][0].resizeExhibition()
+    },
+
+    onActive() {
+      if (
+        this.$refs[this.activeOptionId] &&
+        this.$refs[this.activeOptionId][0]
+      ) {
+        this.$refs[this.activeOptionId][0].activateExhibition()
+        this.$refs[this.activeOptionId][0].resizeExhibition()
       }
-    }, 10)
-  }
+    },
 
-  onResize() {
-    if (this.$refs[this.activeOptionId]) {
-      this.$refs[this.activeOptionId][0].resizeExhibition()
-    }
-  }
+    onDeActive() {
+      if (
+        this.$refs[this.activeOptionId] &&
+        this.$refs[this.activeOptionId][0]
+      ) {
+        this.$refs[this.activeOptionId][0].deActivateExhibition()
+      }
+    },
 
-  onActive() {
-    if (this.$refs[this.activeOptionId] && this.$refs[this.activeOptionId][0]) {
-      this.$refs[this.activeOptionId][0].activateExhibition()
-      this.$refs[this.activeOptionId][0].resizeExhibition()
-    }
-  }
-
-  onDeActive() {
-    if (this.$refs[this.activeOptionId] && this.$refs[this.activeOptionId][0]) {
-      this.$refs[this.activeOptionId][0].deActivateExhibition()
-    }
-  }
-
-  onClose() {
-    if (this.$refs[this.activeOptionId] && this.$refs[this.activeOptionId][0]) {
-      this.$refs[this.activeOptionId][0].closeExhibition()
-    }
-  }
+    onClose() {
+      if (
+        this.$refs[this.activeOptionId] &&
+        this.$refs[this.activeOptionId][0]
+      ) {
+        this.$refs[this.activeOptionId][0].closeExhibition()
+      }
+    },
+  },
 }
 </script>
 

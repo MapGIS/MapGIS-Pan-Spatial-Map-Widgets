@@ -22,9 +22,9 @@ export default class SubjectStylesMixin extends Vue {
     fieldInstance
       .getFieldGeoJson({
         fields: nV,
-        ...this.value
+        ...this.value,
       })
-      .then(geojson => (this.dataSource = geojson))
+      .then((geojson) => (this.dataSource = geojson))
   }
 
   /**
@@ -34,13 +34,14 @@ export default class SubjectStylesMixin extends Vue {
   getFormResult(key = 'themeStyle') {
     if (this.customFormRef) {
       return {
-        [key]: this.customFormRef.$_getForm()
+        [key]: this.customFormRef.$_getForm(),
       }
     }
     return {}
   }
 
   mounted() {
+    debugger
     dep.addSub(this)
   }
 

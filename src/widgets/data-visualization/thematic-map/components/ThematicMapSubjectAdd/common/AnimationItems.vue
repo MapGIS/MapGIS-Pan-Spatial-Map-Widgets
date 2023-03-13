@@ -40,81 +40,89 @@
   </mapgis-ui-dropdown>
 </template>
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import _cloneDeep from 'lodash/cloneDeep'
 
-@Component
-export default class AnimationItems extends Vue {
-  @Prop({ type: Object }) readonly value!: Record<string, any>
+export default {
+  name: 'AnimationItems',
+  props: {
+    value: Object,
+  },
+  data() {
+    return {
+      dropdownVisible: false,
 
-  dropdownVisible = false
+      animation: {
+        type: 'time',
+        trails: 10,
+        duration: 4,
+        stepsRange: {
+          start: 0,
+          end: 100,
+        },
+      },
 
-  animation = {
-    type: 'time',
-    trails: 10,
-    duration: 4,
-    stepsRange: {
-      start: 0,
-      end: 100,
-    },
-  }
-
-  tools = [
-    {
-      title: '确认',
-      icon: 'check',
-      method: this.confirm,
-    },
-    {
-      title: '取消',
-      icon: 'close',
-      method: this.cancel,
-    },
-  ]
-
-  @Watch('value', { deep: true })
-  valueChanged(nV) {
-    if (nV) {
-      this.animation = _cloneDeep(nV)
+      tools: [
+        {
+          title: '确认',
+          icon: 'check',
+          method: this.confirm,
+        },
+        {
+          title: '取消',
+          icon: 'close',
+          method: this.cancel,
+        },
+      ],
     }
-  }
+  },
+  watch: {
+    value: {
+      deep: true,
+      handler(nV) {
+        if (nV) {
+          this.animation = _cloneDeep(nV)
+        }
+      },
+    },
+  },
+  methods: {
+    /**
+     * 触发更新
+     */
+    emitValue(value) {
+      this.$emit('input', value)
+    },
 
-  /**
-   * 触发更新
-   */
-  emitValue(value) {
-    this.$emit('input', value)
-  }
+    /**
+     * 展示配置
+     */
+    showDropdown() {
+      this.dropdownVisible = true
+    },
 
-  /**
-   * 展示配置
-   */
-  showDropdown() {
-    this.dropdownVisible = true
-  }
+    /**
+     * 隐藏配置
+     */
+    hideDropdown() {
+      this.dropdownVisible = false
+    },
 
-  /**
-   * 隐藏配置
-   */
-  hideDropdown() {
-    this.dropdownVisible = false
-  }
+    /**
+     * 取消配置
+     */
+    cancel() {
+      this.hideDropdown()
+      this.emitValue(this.valu)
+    },
 
-  /**
-   * 取消配置
-   */
-  cancel() {
-    this.hideDropdown()
-    this.emitValue(this.valu)
-  }
-
-  /**
-   * 确认
-   */
-  confirm() {
-    this.hideDropdown()
-    this.emitValue(this.animation)
-  }
+    /**
+     * 确认
+     */
+    confirm() {
+      this.hideDropdown()
+      this.emitValue(this.animation)
+    },
+  },
 }
 </script>
 <style lang="less" scoped>

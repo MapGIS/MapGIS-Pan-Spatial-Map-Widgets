@@ -19,7 +19,6 @@
   </div>
 </template>
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { INewSubjectConfig } from '../../../store'
 import FieldInstance from '../store/fields'
 
@@ -29,128 +28,144 @@ interface IColumn extends ColumnProps {
   props?: Record<string, any>
 }
 
-@Component
-export default class EditableFieldTable extends Vue {
-  @Prop({ default: '配置列表' }) readonly title!: string
-
-  @Prop({ type: Array, default: () => [] }) readonly columns!: Array<IColumn>
-
-  @Prop({ type: Array, default: () => [] }) readonly data!: Array<
-    Record<string, any>
-  >
-
-  @Prop({ type: Object, default: () => ({}) })
-  readonly subjectConfig!: INewSubjectConfig
-
-  @Prop({ type: Boolean, default: false })
-  readonly emptyVisible!: boolean
-
-  visible = false
-
-  fieldList = []
-
-  get closeTool() {
+export default {
+  name: 'EditableFieldTable',
+  props: {
+    title: {
+      default: '配置列表',
+    },
+    columns: {
+      type: Array,
+      default: () => [],
+    },
+    data: {
+      type: Array,
+      default: () => [],
+    },
+    subjectConfig: {
+      type: Object,
+      default: () => ({}),
+    },
+    emptyVisible: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  data() {
     return {
-      title: '取消配置',
-      icon: 'close',
-      method: this.onClose,
-    }
-  }
+      visible: false,
 
-  get tools() {
-    return (add, batchDel) => {
-      const _tools = [add, this.closeTool]
-      if (this.tableData && this.tableData.length) {
-        _tools.splice(1, 0, batchDel)
+      fieldList: [],
+    }
+  },
+  computed: {
+    closeTool() {
+      return {
+        title: '取消配置',
+        icon: 'close',
+        method: this.onClose,
       }
-      return _tools
-    }
-  }
-
-  get emptyImageStyle() {
-    return {
-      height: '50px',
-    }
-  }
-
-  get tableColumns() {
-    return [
-      ...this.columns.map((v) => {
-        const options = v.dataIndex === 'field' ? this.fieldList : undefined
-        return {
-          ...v,
-          props: {
-            options,
-          },
-          scopedSlots: {
-            customRender: v.dataIndex,
-          },
+    },
+    tools() {
+      return (add, batchDel) => {
+        const _tools = [add, this.closeTool]
+        if (this.tableData && this.tableData.length) {
+          _tools.splice(1, 0, batchDel)
         }
-      }),
-    ]
-  }
+        return _tools
+      }
+    },
 
-  get tableData() {
-    return this.data
-  }
+    emptyImageStyle() {
+      return {
+        height: '50px',
+      }
+    },
 
-  set tableData(data: Array<Record<string, any>>) {
-    this.$emit('change', data)
-  }
+    tableColumns() {
+      return [
+        ...this.columns.map((v) => {
+          const options = v.dataIndex === 'field' ? this.fieldList : undefined
+          return {
+            ...v,
+            props: {
+              options,
+            },
+            scopedSlots: {
+              customRender: v.dataIndex,
+            },
+          }
+        }),
+      ]
+    },
+    tableData: {
+      get() {
+        return this.data
+      },
+      set(data) {
+        this.$emit('change', data)
+      },
+    },
+  },
+  methods: {
+    /**
+     * 隐藏配置面板
+     */
+    hideTable() {
+      if (this.visible) {
+        this.visible = false
+      }
+    },
 
-  /**
-   * 隐藏配置面板
-   */
-  hideTable() {
-    if (this.visible) {
-      this.visible = false
-    }
-  }
+    /**
+     * 显示配置面板
+     */
+    showTable() {
+      // const { ip, port, src } = this.subjectConfig
+      // if (!(ip && port) && !src) {
+      //   this.$message.warning('未配置服务地址')
+      //   return
+      // }
+      this.visible = true
+    },
 
-  /**
-   * 显示配置面板
-   */
-  showTable() {
-    // const { ip, port, src } = this.subjectConfig
-    // if (!(ip && port) && !src) {
-    //   this.$message.warning('未配置服务地址')
-    //   return
-    // }
-    this.visible = true
-  }
+    /**
+     * 设置属性列表
+     */
+    setFields() {
+      FieldInstance.getFields(this.subjectConfig).then((fields) => {
+        this.fieldList = fields.map(({ value }) => ({
+          label: value,
+          value,
+        }))
+        this.$emit('fields-loaded', this.fieldList)
+      })
+    },
 
-  /**
-   * 设置属性列表
-   */
-  setFields() {
-    FieldInstance.getFields(this.subjectConfig).then((fields) => {
-      this.fieldList = fields.map(({ value }) => ({
-        label: value,
-        value,
-      }))
-      this.$emit('fields-loaded', this.fieldList)
-    })
-  }
-
-  /**
-   * 取消
-   */
-  onClose() {
-    this.tableData = undefined
-    this.hideTable()
-  }
-
-  @Watch('subjectConfig.field', { immediate: true })
-  fieldChanged(nV) {
-    if (nV) {
-      this.setFields()
-    }
-  }
-
-  @Watch('emptyVisible', { immediate: true })
-  emptyVisibleChanged(nV) {
-    this.visible = nV
-  }
+    /**
+     * 取消
+     */
+    onClose() {
+      this.tableData = undefined
+      this.hideTable()
+    },
+  },
+  watch: {
+    'subjectConfig.field': {
+      immediate: true,
+      handler(nV) {
+        if (nV) {
+          this.setFields()
+        }
+      },
+    },
+    emptyVisible: {
+      immediate: true,
+      handler(nV) {
+        this.visible = nV
+      },
+    },
+  },
 }
 </script>
 

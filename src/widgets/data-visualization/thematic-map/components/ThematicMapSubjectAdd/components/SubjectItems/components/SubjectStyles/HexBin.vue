@@ -32,51 +32,59 @@
   </div>
 </template>
 <script lang="ts">
-import { Vue, Prop, Component } from 'vue-property-decorator'
 import ColorPickerSetting from '../../../../common/ColorPickerSetting.vue'
 
-@Component({
+export default {
+  name: 'HexBin',
   components: {
     ColorPickerSetting,
   },
-})
-export default class HexBin extends Vue {
-  @Prop({ type: Object }) readonly value!: Record<string, any>
-
-  private defaultThemeStyle = {
-    max: 100,
-    size: 50,
-    fillStyle: 'rgba(55, 50, 250, 0.8)',
-    shadowColor: 'rgba(255, 250, 50, 1)',
-    shadowBlur: 20,
-    globalAlpha: 0.5,
-    label: {
-      show: true,
-      fillStyle: 'white',
+  props: {
+    value: {
+      type: Object,
     },
-    gradient: {
-      0.25: 'rgb(0,0,255)',
-      0.55: 'rgb(0,255,0)',
-      0.85: '#bdbd0d',
-      1.0: 'rgb(255,0,0)',
+  },
+  data() {
+    return {
+      defaultThemeStyle: {
+        max: 100,
+        size: 50,
+        fillStyle: 'rgba(55, 50, 250, 0.8)',
+        shadowColor: 'rgba(255, 250, 50, 1)',
+        shadowBlur: 20,
+        globalAlpha: 0.5,
+        label: {
+          show: true,
+          fillStyle: 'white',
+        },
+        gradient: {
+          0.25: 'rgb(0,0,255)',
+          0.55: 'rgb(0,255,0)',
+          0.85: '#bdbd0d',
+          1.0: 'rgb(255,0,0)',
+        },
+      },
+    }
+  },
+  computed: {
+    themeStyle: {
+      get() {
+        return this.value?.themeStyle || this.defaultThemeStyle
+      },
+      set(nV) {
+        this.emitChange(nV)
+      },
     },
-  }
-
-  get themeStyle() {
-    return this.value?.themeStyle || this.defaultThemeStyle
-  }
-
-  set themeStyle(nV) {
-    this.emitChange(nV)
-  }
-
-  emitChange(themeStyle) {
-    this.$emit('input', { themeStyle })
-  }
+  },
+  methods: {
+    emitChange(themeStyle) {
+      this.$emit('input', { themeStyle })
+    },
+  },
 
   created() {
     this.emitChange(this.defaultThemeStyle)
-  }
+  },
 }
 </script>
 <style lang="less" scoped>

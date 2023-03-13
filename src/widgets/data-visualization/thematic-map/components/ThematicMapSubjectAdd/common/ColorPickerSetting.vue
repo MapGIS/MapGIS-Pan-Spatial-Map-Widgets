@@ -42,7 +42,6 @@
   </mapgis-ui-dropdown>
 </template>
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { UUID } from '@mapgis/web-app-framework'
 
 interface ITableDataItem {
@@ -50,170 +49,181 @@ interface ITableDataItem {
   percent: number
 }
 
-@Component
-export default class ColorPickerSetting extends Vue {
+export default {
+  name: 'ColorPickerSetting',
+  props: ['value'],
   // {0.25: rgb(0,0,255), 0.55: rgb(0,0,255)}
-  @Prop() readonly value!: Record<string, string>
+  data() {
+    return {
+      defaultColor: 'rgb(64,169,255)',
 
-  defaultColor = 'rgb(64,169,255)'
+      dropdownVisible: false,
 
-  dropdownVisible = false
+      selectedRowKeys: [],
 
-  selectedRowKeys = []
+      tableColumns: [
+        {
+          title: '颜色',
+          dataIndex: 'color',
+          align: 'center',
+          scopedSlots: { customRender: 'color' },
+        },
+        {
+          title: '占比',
+          dataIndex: 'percent',
+          scopedSlots: { customRender: 'percent' },
+        },
+        {
+          title: '操作',
+          align: 'center',
+          scopedSlots: { customRender: 'operation' },
+        },
+      ],
 
-  tableColumns = [
-    {
-      title: '颜色',
-      dataIndex: 'color',
-      align: 'center',
-      scopedSlots: { customRender: 'color' },
-    },
-    {
-      title: '占比',
-      dataIndex: 'percent',
-      scopedSlots: { customRender: 'percent' },
-    },
-    {
-      title: '操作',
-      align: 'center',
-      scopedSlots: { customRender: 'operation' },
-    },
-  ]
+      tableData: [],
 
-  tableData: ITableDataItem[] = []
-
-  tools = [
-    {
-      title: '新增',
-      icon: 'plus',
-      method: this.add,
-    },
-    {
-      title: '批量删除',
-      icon: 'delete',
-      method: this.batchRemove,
-    },
-    {
-      title: '确认',
-      icon: 'check',
-      method: this.confirm,
-    },
-    {
-      title: '关闭',
-      icon: 'close',
-      method: this.close,
-    },
-  ]
-
-  @Watch('value', { immediate: true, deep: true })
-  valueChange() {
-    this.initTableData()
-  }
-
-  get background() {
-    if (this.value) {
-      const gradientColors = Object.entries(this.value)
-        .sort((a, b) => a[0] - b[0])
-        .map(([percent, color]) => `${color} ${percent * 100}%`)
-        .join(',')
-      return `linear-gradient(to right,${gradientColors})`
+      tools: [
+        {
+          title: '新增',
+          icon: 'plus',
+          method: this.add,
+        },
+        {
+          title: '批量删除',
+          icon: 'delete',
+          method: this.batchRemove,
+        },
+        {
+          title: '确认',
+          icon: 'check',
+          method: this.confirm,
+        },
+        {
+          title: '关闭',
+          icon: 'close',
+          method: this.close,
+        },
+      ],
     }
-    return this.defaultColor
-  }
-
-  /**
-   * 初始化列表数据
-   */
-  initTableData() {
-    if (!this.value || Object.keys(this.value).some((n) => isNaN(Number(n)))) {
-      return
-    }
-    this.tableData = Object.entries(this.value).map(([percent, color]) => ({
-      color,
-      key: UUID.uuid(),
-      percent: percent * 100,
-    }))
-  }
-
-  /**
-   * 打开选择器
-   */
-  showDropdown() {
-    this.dropdownVisible = true
-    this.initTableData()
-  }
-
-  /**
-   * 关闭选择器
-   */
-  hideDropdown() {
-    this.dropdownVisible = false
-  }
-
-  /**
-   * 选择
-   */
-  selectChange(selectedRowKeys) {
-    this.selectedRowKeys = selectedRowKeys
-  }
-
-  /**
-   * 删除
-   */
-  removeRow(index: number) {
-    this.tableData.splice(index, 1)
-  }
-
-  /**
-   * 添加
-   */
-  add() {
-    const node = {
-      key: UUID.uuid(),
-      color: this.defaultColor,
-      percent: 0,
-    }
-    this.tableData.push(node)
-  }
-
-  /**
-   * 批量删除
-   */
-  batchRemove() {
-    if (!this.selectedRowKeys.length) {
-      this.$message.warning('请勾选数据')
-    } else {
-      this.selectedRowKeys.forEach((k) =>
-        this.removeRow(this.tableData.findIndex(({ key }) => key === k))
-      )
-      this.selectedRowKeys = []
-    }
-  }
-
-  /**
-   * 确认
-   */
-  confirm() {
-    const colorObj = this.tableData.reduce<Record<string, string>>(
-      (obj, { color, percent }) => {
-        const _percent = `${percent / 100}`
-        const key = percent % 100 === 0 ? `${_percent}.0` : _percent
-        obj[key] = color
-        return obj
+  },
+  watch: {
+    value: {
+      immediate: true,
+      deep: true,
+      handler() {
+        this.initTableData()
       },
-      {}
-    )
-    this.$emit('input', colorObj)
-    this.close()
-  }
+    },
+  },
+  computed: {
+    background() {
+      if (this.value) {
+        const gradientColors = Object.entries(this.value)
+          .sort((a, b) => a[0] - b[0])
+          .map(([percent, color]) => `${color} ${percent * 100}%`)
+          .join(',')
+        return `linear-gradient(to right,${gradientColors})`
+      }
+      return this.defaultColor
+    },
+  },
+  methods: {
+    /**
+     * 初始化列表数据
+     */
+    initTableData() {
+      if (
+        !this.value ||
+        Object.keys(this.value).some((n) => isNaN(Number(n)))
+      ) {
+        return
+      }
+      this.tableData = Object.entries(this.value).map(([percent, color]) => ({
+        color,
+        key: UUID.uuid(),
+        percent: percent * 100,
+      }))
+    },
 
-  /**
-   * 关闭
-   */
-  close() {
-    this.hideDropdown()
-    this.selectChange([])
-  }
+    /**
+     * 打开选择器
+     */
+    showDropdown() {
+      this.dropdownVisible = true
+      this.initTableData()
+    },
+    /**
+     * 关闭选择器
+     */
+    hideDropdown() {
+      this.dropdownVisible = false
+    },
+
+    /**
+     * 选择
+     */
+    selectChange(selectedRowKeys) {
+      this.selectedRowKeys = selectedRowKeys
+    },
+
+    /**
+     * 删除
+     */
+    removeRow(index: number) {
+      this.tableData.splice(index, 1)
+    },
+
+    /**
+     * 添加
+     */
+    add() {
+      const node = {
+        key: UUID.uuid(),
+        color: this.defaultColor,
+        percent: 0,
+      }
+      this.tableData.push(node)
+    },
+
+    /**
+     * 批量删除
+     */
+    batchRemove() {
+      if (!this.selectedRowKeys.length) {
+        this.$message.warning('请勾选数据')
+      } else {
+        this.selectedRowKeys.forEach((k) =>
+          this.removeRow(this.tableData.findIndex(({ key }) => key === k))
+        )
+        this.selectedRowKeys = []
+      }
+    },
+
+    /**
+     * 确认
+     */
+    confirm() {
+      const colorObj = this.tableData.reduce<Record<string, string>>(
+        (obj, { color, percent }) => {
+          const _percent = `${percent / 100}`
+          const key = percent % 100 === 0 ? `${_percent}.0` : _percent
+          obj[key] = color
+          return obj
+        },
+        {}
+      )
+      this.$emit('input', colorObj)
+      this.close()
+    },
+
+    /**
+     * 关闭
+     */
+    close() {
+      this.hideDropdown()
+      this.selectChange([])
+    },
+  },
 }
 </script>
 

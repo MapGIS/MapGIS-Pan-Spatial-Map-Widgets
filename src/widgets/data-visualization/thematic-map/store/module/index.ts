@@ -38,7 +38,7 @@ class Store {
 const store: Store = new Store({
   state: stateMap,
   getters: gettersMap,
-  mutations: mutationsMap
+  mutations: mutationsMap,
 })
 
 export const mapGetters = (arr: Array<keyof Getters>) => {
@@ -66,3 +66,4 @@ export const mapMutations = (arr: Array<keyof Mutations>) => {
 }
 
 export default store
+window.aaaa = mapGetters

@@ -23,13 +23,6 @@
           v-show="tab === 'opacity'"
           :layers="document.defaultMap.layers()"
         />
-        <mapgis-ui-list :gutter="10">
-          <template v-for="item in ['aaa', 'nnn', 'ccc']">
-            <mapgis-ui-list-item :key="item">
-              {{ item }}
-            </mapgis-ui-list-item>
-          </template>
-        </mapgis-ui-list>
       </div>
       <!-- 主要是空白时候的图片可能不显示的情况 -->
       <mapgis-ui-empty v-show="!showWidget" :image="simpleImage" />

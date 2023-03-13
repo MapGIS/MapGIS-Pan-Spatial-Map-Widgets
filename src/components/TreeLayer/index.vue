@@ -107,18 +107,11 @@
                 @model-edit="modelEdit"
                 @query="queryFeature"
               />
-              <slot
+              <!-- <slot
                 v-else
                 name="vector-tile-sublayer-popover"
                 :layer="item"
-              ></slot>
-              <!-- <mapgis-ui-list :gutter="10">
-                <template v-for="item in ['aaa', 'nnn', 'ccc']">
-                  <mapgis-ui-list-item :key="item">
-                    {{ item }}
-                  </mapgis-ui-list-item>
-                </template>
-              </mapgis-ui-list> -->
+              ></slot> -->
             </template>
             <mapgis-ui-iconfont
               type="mapgis-more"

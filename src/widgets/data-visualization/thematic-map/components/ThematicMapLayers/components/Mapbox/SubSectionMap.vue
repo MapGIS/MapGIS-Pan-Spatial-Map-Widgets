@@ -25,85 +25,89 @@
   </div>
 </template>
 <script lang="ts">
-import { Mixins, Component, Inject, Watch } from 'vue-property-decorator'
 import BaseMixin from '../../mixins/base'
 import { getMarker, IMarker } from '../../../../utils'
 import _debounce from 'lodash/debounce'
 import { baseConfigInstance } from '../../../../../../../model'
 
-@Component
-export default class MapboxSubSectionMap extends Mixins(BaseMixin) {
-  @Inject('map') map
+export default {
+  name: 'MapboxSubSectionMap',
+  mixins: [BaseMixin],
+  inject: ['map'],
+  watch: {
+    /**
+     * 监听：图属联动变化
+     */
+    'marker.fid'() {
+      this.selfMarker = this.marker
+    },
+  },
+  data() {
+    return {
+      // 标注
+      selfMarker: {},
 
-  /**
-   * 监听：图属联动变化
-   */
-  @Watch('marker.fid')
-  fidChanged() {
-    this.selfMarker = this.marker
-  }
-
-  // 标注
-  private selfMarker: IMarker | Record<string, unknown> = {}
-
-  private tipsOptions = {
-    enableHighlight: true,
-    type: 'point',
-  }
-
-  get themeOptions() {
-    if (!this.subjectData) {
-      return {}
-    } else {
-      const { color, themeStyle } = this.subjectData
-      // 兼容旧配置
-      return color && color.length
-        ? {
-            styleGroups: color.map(({ min, max, sectionColor }) => ({
-              start: min,
-              end: max,
-              style: {
-                color: sectionColor,
-              },
-            })),
-          }
-        : themeStyle || {}
+      tipsOptions: {
+        enableHighlight: true,
+        type: 'point',
+      },
     }
-  }
+  },
+  computed: {
+    themeOptions() {
+      if (!this.subjectData) {
+        return {}
+      } else {
+        const { color, themeStyle } = this.subjectData
+        // 兼容旧配置
+        return color && color.length
+          ? {
+              styleGroups: color.map(({ min, max, sectionColor }) => ({
+                start: min,
+                end: max,
+                style: {
+                  color: sectionColor,
+                },
+              })),
+            }
+          : themeStyle || {}
+      }
+    },
+    popupAnchor() {
+      return baseConfigInstance.config.colorConfig.label.image.popupAnchor
+    },
 
-  private get popupAnchor() {
-    return baseConfigInstance.config.colorConfig.label.image.popupAnchor
-  }
+    popupToggleType() {
+      return baseConfigInstance.config.colorConfig.label.image.popupToggleType
+    },
+  },
+  methods: {
+    getRangeLayer(layer) {
+      // console.log(layer)
+      const { map } = this
+      map.on(
+        'mousemove',
+        _debounce((e) => {
+          const f = map.queryRenderedFeatures(e.point, {
+            layers: [layer.id],
+          })
+          if (!f || f.length < 1) return
+          const fid = f[0].id
+          getMarker(this.geojson, fid, this.propertiesOption).then(
+            (marker) => (this.selfMarker = marker || {})
+          )
+        }, 200)
+      )
+    },
 
-  private get popupToggleType() {
-    return baseConfigInstance.config.colorConfig.label.image.popupToggleType
-  }
-
-  getRangeLayer(layer) {
-    // console.log(layer)
-    const { map } = this
-    map.on(
-      'mousemove',
-      _debounce((e) => {
-        const f = map.queryRenderedFeatures(e.point, {
-          layers: [layer.id],
-        })
-        if (!f || f.length < 1) return
-        const fid = f[0].id
-        getMarker(this.geojson, fid, this.propertiesOption).then(
-          (marker) => (this.selfMarker = marker || {})
-        )
-      }, 200)
-    )
-  }
-
-  removeLayer() {
-    const rangeLayer = this.$refs.customRangeThemeLayer
-    if (rangeLayer) {
-      rangeLayer.resetLayer(this.id)
-    }
-    this.map.off('mousemove')
-  }
+    removeLayer() {
+      const rangeLayer = this.$refs.customRangeThemeLayer
+      if (rangeLayer) {
+        rangeLayer.resetLayer(this.id)
+      }
+      this.map.off('mousemove')
+    },
+  },
 }
 </script>
 <style>

@@ -100,7 +100,6 @@
   </transition>
 </template>
 <script lang="ts">
-import { Vue, Component, Watch } from 'vue-property-decorator'
 // import * as echarts from 'echarts'
 import {
   ModuleType,
@@ -138,7 +137,8 @@ interface IChartOption {
   y?: any[]
 }
 
-@Component({
+export default {
+  name: 'ThematicMapStatisticGraph',
   computed: {
     ...mapGetters([
       'loading',
@@ -147,12 +147,232 @@ interface IChartOption {
       'subjectData',
       'linkageFid',
     ]),
+
+    layerServiceType() {
+      return this.subjectData?.layerServiceType
+    },
+    // 是否支持图属高亮
+    hasHighlight() {
+      return hasHighlightSubjectList.includes(this.subjectData?.subjectType)
+    },
+
+    // 图表配置
+    graph() {
+      return this.subjectData?.graph
+    },
+
+    statisticsType() {
+      return this.graph.type || 'sum'
+    },
+    visible: {
+      get() {
+        return (
+          this.graph &&
+          this.isVisible(ModuleType.GRAPH) &&
+          (this.layerServiceType === LayerServiceType.igsImage ||
+            this.layerServiceType === LayerServiceType.igsVector)
+        )
+      },
+      set(nV) {
+        if (!nV) {
+          this.resetVisible(ModuleType.GRAPH)
+        }
+      },
+    },
+    statisticParamas() {
+      console.log(baseConfigInstance.config)
+      const { ip: baseConfigIp, port: baseConfigPort } =
+        baseConfigInstance.config
+      if (!this.subjectData) {
+        return null
+      }
+      const { ip, port, docName, layerName, layerIndex, gdbp } =
+        this.subjectData
+      const paramIp = ip && ip !== '' ? ip : baseConfigIp
+      const paramPort = port && port !== '' ? port : baseConfigPort
+      const serverType =
+        gdbp && gdbp.length > 0 ? LayerType.IGSVector : LayerType.IGSMapImage
+      return {
+        ip: paramIp,
+        port: paramPort,
+        serverName: docName,
+        layerIndex,
+        serverType,
+        gdbp,
+      }
+    },
   },
   methods: {
     ...mapMutations(['setLinkage', 'resetVisible', 'resetLinkage']),
+    /**
+     * 窗口变化
+     * @param {string} mode <max | normal> 模式=
+     */
+    onWindowSize(mode?: keyof windowMode) {
+      this.$nextTick(() => {
+        if (this.chart) {
+          this.chart.resize({
+            width:
+              mode === windowMode.MAX
+                ? this.$refs.statisticGraph.clientWidth
+                : this.chartWidth,
+          })
+        }
+      })
+    },
+    /**
+     * 取消高亮图表图形
+     * @param {number} dataIndex 索引
+     */
+    onClearHighlight(dataIndex) {
+      if (!this.chart) {
+        return
+      }
+      this.chart.dispatchAction({
+        type: 'downplay',
+        dataIndex,
+      })
+      this.chart.dispatchAction({
+        type: 'hideTip',
+        dataIndex,
+      })
+    },
+
+    /**
+     * 高亮图表图形
+     * @param {number} dataIndex 索引
+     */
+    onHighlight(dataIndex) {
+      if (!this.chart) {
+        return
+      }
+      this.chart.dispatchAction({
+        type: 'showTip',
+        seriesIndex: 0,
+        dataIndex,
+      })
+      this.chart.dispatchAction({
+        type: 'highlight',
+        dataIndex,
+      })
+    },
+
+    /**
+     * 设置高亮
+     * @param {string} fid 要素fid
+     */
+    setHighlight(fid: string) {
+      if (!this.pageGeojson) return
+      const { features } = this.pageGeojson
+      let name
+      for (let i = 0; i < features.length; i++) {
+        const feature = features[i]
+        if (feature.properties.fid === fid) {
+          const groupFieldValue = this.groupField.value
+          name = feature.properties[groupFieldValue]
+          break
+        }
+      }
+      const keys = Object.keys(this.echartsData[0])
+      const dataIndex = keys.indexOf(name)
+      // const dataIndex = this.echartsData.findIndex(
+      //   ({ properties }) => properties.fid === fid
+      // )
+      this.onClearHighlight(dataIndex)
+      this.onHighlight(dataIndex)
+    },
+
+    /**
+     * 图表事件绑定
+     */
+    setChartEventBind() {
+      if (!this.chart) {
+        return
+      }
+      this.chart.on('mouseout', this.resetLinkage)
+      this.chart.on('mouseover', (e) => {
+        if (!this.pageGeojson) return
+        const fids = []
+        const { features } = this.pageGeojson
+        const { name } = e
+        for (let i = 0; i < features.length; i++) {
+          const feature = features[i]
+          const groupFieldValue = this.groupField.value
+          if (feature.properties[groupFieldValue] === name) {
+            fids.push(feature.properties.fid)
+          }
+        }
+        // TODO 这里暂时不支持多要素联动
+        this.setLinkage(fids[0])
+      })
+    },
+    getResult(result) {
+      if (result) {
+        this.echartsData = result.data
+      }
+    },
+
+    getStatisticsFieldColor(data) {
+      this.statisticsFieldColor = [...data]
+    },
+
+    getGroupField(data) {
+      this.groupField = { ...data }
+    },
+
+    getStatisticsField(data) {
+      this.statisticsField = [...data]
+    },
+
+    getEchart(echartObj) {
+      this.chart = echartObj
+      this.setChartEventBind()
+    },
   },
-})
-export default class ThematicMapStatisticGraph extends Vue {
+  data() {
+    return {
+      // 图表
+      chart: null,
+
+      // 图表宽度
+      chartWidth: 360,
+      chartHeight: 250,
+      echartsData: [],
+
+      statisticsFieldColor: [],
+
+      groupField: {},
+
+      statisticsField: [],
+    }
+  },
+  watch: {
+    /**
+     * 监听: 高亮配置
+     */
+    hasHighlight(has) {
+      has && this.setChartEventBind()
+    },
+    /**
+     * 监听: 联动项变化
+     */
+    linkageFid(nV) {
+      if (!this.visible) {
+        return
+      }
+      this.setHighlight(nV)
+    },
+  },
+  mounted() {
+    // const chartDom: HTMLDivElement = document.getElementById(
+    //   'thematic-map-graph-chart'
+    // )
+    // this.chart = echarts.init(chartDom)
+  },
+
+  beforeDestroy() {
+    this.resetLinkage()
+  },
   // 当前活动的图标
   // private activeChart: keyof ChartType = ChartType.BAR
 
@@ -161,14 +381,6 @@ export default class ThematicMapStatisticGraph extends Vue {
 
   // 指标列表
   // private targetList = []
-
-  // 图表
-  private chart: HTMLCanvasElement | null = null
-
-  // 图表宽度
-  private chartWidth = 360
-
-  private chartHeight = 250
 
   // 图表配置
   // private chartOption: IChartOption = {
@@ -197,69 +409,11 @@ export default class ThematicMapStatisticGraph extends Vue {
   //   },
   // ]
 
-  private echartsData = []
-
-  private statisticsFieldColor = []
-
-  private groupField = {}
-
-  private statisticsField = []
-
-  get layerServiceType() {
-    return this.subjectData?.layerServiceType
-  }
-
-  get visible() {
-    return (
-      this.graph &&
-      this.isVisible(ModuleType.GRAPH) &&
-      (this.layerServiceType === LayerServiceType.igsImage ||
-        this.layerServiceType === LayerServiceType.igsVector)
-    )
-  }
-
-  set visible(nV) {
-    if (!nV) {
-      this.resetVisible(ModuleType.GRAPH)
-    }
-  }
-
-  // 是否支持图属高亮
-  get hasHighlight() {
-    return hasHighlightSubjectList.includes(this.subjectData?.subjectType)
-  }
-
-  // 图表配置
-  get graph() {
-    return this.subjectData?.graph
-  }
-
-  get statisticsType() {
-    return this.graph.type || 'sum'
-  }
-
   // 图表是否有数据,是否展示友好提示
   // get showChart() {
   //   const { x, y } = this.chartOption
   //   return x.length && y.length
   // }
-
-  /**
-   * 窗口变化
-   * @param {string} mode <max | normal> 模式=
-   */
-  onWindowSize(mode?: keyof windowMode) {
-    this.$nextTick(() => {
-      if (this.chart) {
-        this.chart.resize({
-          width:
-            mode === windowMode.MAX
-              ? this.$refs.statisticGraph.clientWidth
-              : this.chartWidth,
-        })
-      }
-    })
-  }
 
   /**
    * 将query的结果设置图表配置里
@@ -347,101 +501,6 @@ export default class ThematicMapStatisticGraph extends Vue {
   // }
 
   /**
-   * 取消高亮图表图形
-   * @param {number} dataIndex 索引
-   */
-  onClearHighlight(dataIndex) {
-    if (!this.chart) {
-      return
-    }
-    this.chart.dispatchAction({
-      type: 'downplay',
-      dataIndex,
-    })
-    this.chart.dispatchAction({
-      type: 'hideTip',
-      dataIndex,
-    })
-  }
-
-  /**
-   * 高亮图表图形
-   * @param {number} dataIndex 索引
-   */
-  onHighlight(dataIndex) {
-    if (!this.chart) {
-      return
-    }
-    this.chart.dispatchAction({
-      type: 'showTip',
-      seriesIndex: 0,
-      dataIndex,
-    })
-    this.chart.dispatchAction({
-      type: 'highlight',
-      dataIndex,
-    })
-  }
-
-  /**
-   * 设置高亮
-   * @param {string} fid 要素fid
-   */
-  setHighlight(fid: string) {
-    if (!this.pageGeojson) return
-    const { features } = this.pageGeojson
-    let name
-    for (let i = 0; i < features.length; i++) {
-      const feature = features[i]
-      if (feature.properties.fid === fid) {
-        const groupFieldValue = this.groupField.value
-        name = feature.properties[groupFieldValue]
-        break
-      }
-    }
-    const keys = Object.keys(this.echartsData[0])
-    const dataIndex = keys.indexOf(name)
-    // const dataIndex = this.echartsData.findIndex(
-    //   ({ properties }) => properties.fid === fid
-    // )
-    this.onClearHighlight(dataIndex)
-    this.onHighlight(dataIndex)
-  }
-
-  /**
-   * 图表事件绑定
-   */
-  setChartEventBind() {
-    if (!this.chart) {
-      return
-    }
-    this.chart.on('mouseout', this.resetLinkage)
-    this.chart.on('mouseover', (e) => {
-      if (!this.pageGeojson) return
-      const fids = []
-      const { features } = this.pageGeojson
-      const { name } = e
-      for (let i = 0; i < features.length; i++) {
-        const feature = features[i]
-        const groupFieldValue = this.groupField.value
-        if (feature.properties[groupFieldValue] === name) {
-          fids.push(feature.properties.fid)
-        }
-      }
-      // TODO 这里暂时不支持多要素联动
-      this.setLinkage(fids[0])
-    })
-  }
-
-  /**
-   * 监听: 高亮配置
-   */
-  @Watch('hasHighlight')
-  hasHighlightChanged(has) {
-    has && this.setChartEventBind()
-  }
-
-  /**
    * 监听: 分页数据变化
    */
   // @Watch('pageGeojson', { deep: true })
@@ -450,75 +509,9 @@ export default class ThematicMapStatisticGraph extends Vue {
   //   this.getChartOptions()
   // }
 
-  /**
-   * 监听: 联动项变化
-   */
-  @Watch('linkageFid')
-  linkageFidChanged(nV) {
-    if (!this.visible) {
-      return
-    }
-    this.setHighlight(nV)
-  }
-
   // private statisticsId = `${new Date().getTime()}-${Math.floor(
   //   Math.random() * 10
   // )}-statistics`
-
-  get statisticParamas() {
-    console.log(baseConfigInstance.config)
-    const { ip: baseConfigIp, port: baseConfigPort } = baseConfigInstance.config
-    if (!this.subjectData) {
-      return null
-    }
-    const { ip, port, docName, layerName, layerIndex, gdbp } = this.subjectData
-    const paramIp = ip && ip !== '' ? ip : baseConfigIp
-    const paramPort = port && port !== '' ? port : baseConfigPort
-    const serverType =
-      gdbp && gdbp.length > 0 ? LayerType.IGSVector : LayerType.IGSMapImage
-    return {
-      ip: paramIp,
-      port: paramPort,
-      serverName: docName,
-      layerIndex,
-      serverType,
-      gdbp,
-    }
-  }
-
-  mounted() {
-    // const chartDom: HTMLDivElement = document.getElementById(
-    //   'thematic-map-graph-chart'
-    // )
-    // this.chart = echarts.init(chartDom)
-  }
-
-  beforeDestroy() {
-    this.resetLinkage()
-  }
-
-  getResult(result) {
-    if (result) {
-      this.echartsData = result.data
-    }
-  }
-
-  getStatisticsFieldColor(data) {
-    this.statisticsFieldColor = [...data]
-  }
-
-  getGroupField(data) {
-    this.groupField = { ...data }
-  }
-
-  getStatisticsField(data) {
-    this.statisticsField = [...data]
-  }
-
-  getEchart(echartObj) {
-    this.chart = echartObj
-    this.setChartEventBind()
-  }
 }
 </script>
 <style lang="less" scoped>

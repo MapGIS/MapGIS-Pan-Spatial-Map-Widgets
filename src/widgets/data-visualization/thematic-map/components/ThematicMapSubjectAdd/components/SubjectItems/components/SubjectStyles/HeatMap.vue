@@ -36,7 +36,6 @@
   </div>
 </template>
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import ColorPickerSetting from '../../../../common/ColorPickerSetting.vue'
 // import AnimationItems from '../../../../common/AnimationItems.vue'
 
@@ -45,63 +44,71 @@ enum HeatMapType {
   CESIUM = 'CESIUM',
 }
 
-@Component({
+export default {
+  name: 'HeatMap',
   components: {
     // AnimationItems,
     ColorPickerSetting,
   },
-})
-export default class HeatMap extends Vue {
-  @Prop({ type: Object }) readonly value!: Record<string, any>
-
-  private type = HeatMapType.CESIUM
-
-  @Watch('type')
-  typeChanged(t) {
-    this.themeStyle = this.getThemeStyle(t)
-  }
-
-  get isCesium() {
-    return this.type === HeatMapType.CESIUM
-  }
-
-  get themeStyle() {
-    return this.value?.themeStyle || this.getThemeStyle()
-  }
-
-  set themeStyle(nV) {
-    this.emitChange(nV)
-  }
-
-  getThemeStyle(type: keyof HeatMapType = HeatMapType.CESIUM) {
+  props: {
+    value: {
+      type: Object,
+    },
+  },
+  data() {
     return {
-      type,
-      gradient: {
-        '0.25': 'rgb(0,0,255)',
-        '0.55': 'rgb(0,255,0)',
-        '0.85': 'rgb(241,241,15)',
-        '1.0': 'rgb(255,0,0)',
-      },
-      ...(type === HeatMapType.CESIUM
-        ? {
-            blur: 0.85,
-            radius: 20,
-            useClustering: true,
-          }
-        : {
-            size: 20,
-            max: 100,
-          }),
+      type: HeatMapType.CESIUM,
     }
-  }
+  },
+  watch: {
+    type(t) {
+      this.themeStyle = this.getThemeStyle(t)
+    },
+  },
+  computed: {
+    isCesium() {
+      return this.type === HeatMapType.CESIUM
+    },
+    themeStyle: {
+      get() {
+        return this.value?.themeStyle || this.getThemeStyle()
+      },
+      set(nV) {
+        this.emitChange(nV)
+      },
+    },
+  },
+  methods: {
+    getThemeStyle(type: keyof HeatMapType = HeatMapType.CESIUM) {
+      return {
+        type,
+        gradient: {
+          '0.25': 'rgb(0,0,255)',
+          '0.55': 'rgb(0,255,0)',
+          '0.85': 'rgb(241,241,15)',
+          '1.0': 'rgb(255,0,0)',
+        },
+        ...(type === HeatMapType.CESIUM
+          ? {
+              blur: 0.85,
+              radius: 20,
+              useClustering: true,
+            }
+          : {
+              size: 20,
+              max: 100,
+            }),
+      }
+    },
 
-  emitChange(themeStyle) {
-    this.$emit('input', { themeStyle })
-  }
+    emitChange(themeStyle) {
+      this.$emit('input', { themeStyle })
+    },
+  },
 
   created() {
     this.emitChange(this.getThemeStyle())
-  }
+  },
 }
 </script>
 <style lang="less" scoped>

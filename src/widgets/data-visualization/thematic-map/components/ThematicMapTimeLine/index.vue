@@ -32,12 +32,12 @@
   </mp-window-wrapper>
 </template>
 <script lang="ts">
-import { Vue, Component, Watch } from 'vue-property-decorator'
 import * as echarts from 'echarts'
 import { ModuleType, mapGetters, mapMutations } from '../../store'
 import { chartOption } from './config/timeLineChartOption'
 
-@Component({
+export default {
+  name: 'ThematicMapTimeLine',
   computed: {
     ...mapGetters([
       'loading',
@@ -45,119 +45,118 @@ import { chartOption } from './config/timeLineChartOption'
       'selectedSubjectTime',
       'selectedSubjectTimeList',
     ]),
+    // 时间轴的列表数据
+    timeList() {
+      return this.selectedSubjectTimeList || []
+    },
+
+    // 显示开关
+    visible: {
+      get() {
+        return this.isVisible(ModuleType.TIMELINE) && this.timeList.length > 1
+      },
+      set(nV) {
+        if (!nV) {
+          this.resetVisible(ModuleType.TIMELINE)
+        }
+      },
+    },
+
+    // 播放文案和提示设置
+    autoPlay() {
+      let type = 'mapgis-play-circle'
+      let tooltip = '播放'
+      if (this.isPlay) {
+        type = 'mapgis-pause-circle'
+        tooltip = '暂停'
+      }
+      return { type, tooltip }
+    },
   },
   methods: {
     ...mapMutations(['resetVisible', 'setSelectedSubjectTime']),
-  },
-})
-export default class ThematicMapTimeLine extends Vue {
-  // 图表
-  private chart: any = null
+    /**
+     * 播放或暂停
+     */
+    btnPlay() {
+      this.isPlay = this.timeList.length > 1 ? !this.isPlay : false
+      this.onUpdateChart()
+    },
 
-  // 播放开关
-  private isPlay = false
+    /**
+     * 重置
+     */
+    reset() {
+      this.currentIndex = 0
+      this.isPlay = false
+    },
 
-  // 当前播放的数据索引
-  private currentIndex = 0
+    /**
+     * 更新图表
+     */
+    onUpdateChart() {
+      this.$nextTick(() => {
+        if (this.chart) {
+          this.chart.setOption(
+            chartOption({
+              currentIndex: this.currentIndex,
+              autoPlay: this.isPlay,
+              data: this.timeList,
+            })
+          )
+          this.chart.resize()
+        }
+      })
+    },
 
-  // 时间轴的列表数据
-  get timeList() {
-    return this.selectedSubjectTimeList || []
-  }
+    /**
+     * 时间轴变化
+     * @param {object} param
+     */
+    onTimelinechanged({ currentIndex }) {
+      this.currentIndex = currentIndex
+      this.setSelectedSubjectTime(this.timeList[currentIndex])
+    },
 
-  // 显示开关
-  get visible() {
-    return this.isVisible(ModuleType.TIMELINE) && this.timeList.length > 1
-  }
-
-  set visible(nV) {
-    if (!nV) {
-      this.resetVisible(ModuleType.TIMELINE)
-    }
-  }
-
-  // 播放文案和提示设置
-  get autoPlay() {
-    let type = 'mapgis-play-circle'
-    let tooltip = '播放'
-    if (this.isPlay) {
-      type = 'mapgis-pause-circle'
-      tooltip = '暂停'
-    }
-    return { type, tooltip }
-  }
-
-  /**
-   * 播放或暂停
-   */
-  btnPlay() {
-    this.isPlay = this.timeList.length > 1 ? !this.isPlay : false
-    this.onUpdateChart()
-  }
-
-  /**
-   * 重置
-   */
-  reset() {
-    this.currentIndex = 0
-    this.isPlay = false
-  }
-
-  /**
-   * 更新图表
-   */
-  onUpdateChart() {
-    this.$nextTick(() => {
-      if (this.chart) {
-        this.chart.setOption(
-          chartOption({
-            currentIndex: this.currentIndex,
-            autoPlay: this.isPlay,
-            data: this.timeList,
-          })
-        )
-        this.chart.resize()
+    /**
+     * selecteTime变化
+     */
+    onSelecteTimeChange(value) {
+      const index = value ? this.timeList.indexOf(value) : 0
+      if (this.currentIndex !== index) {
+        this.currentIndex = index
+        this.onUpdateChart()
       }
-    })
-  }
+    },
+  },
+  data() {
+    return {
+      // 图表
+      chart: null,
 
-  /**
-   * 时间轴变化
-   * @param {object} param
-   */
-  onTimelinechanged({ currentIndex }) {
-    this.currentIndex = currentIndex
-    this.setSelectedSubjectTime(this.timeList[currentIndex])
-  }
+      // 播放开关
+      isPlay: false,
 
-  /**
-   * selecteTime变化
-   */
-  onSelecteTimeChange(value) {
-    const index = value ? this.timeList.indexOf(value) : 0
-    if (this.currentIndex !== index) {
-      this.currentIndex = index
-      this.onUpdateChart()
+      // 当前播放的数据索引
+      currentIndex: 0,
     }
-  }
-
-  /**
-   * 监听: 显示和隐藏开挂
-   */
-  @Watch('visible')
-  visibleChanged(nV) {
-    if (nV) {
-      this.onUpdateChart()
-    }
-  }
-
-  /**
-   * 监听:属性表时间选项的变化,同步更新时间轴当前选中的项
-   */
-  @Watch('selectedSubjectTime')
-  watchTimeList(nV) {
-    this.onSelecteTimeChange(nV)
-  }
+  },
+  watch: {
+    /**
+     * 监听: 显示和隐藏开挂
+     */
+    visible(nV) {
+      if (nV) {
+        this.onUpdateChart()
+      }
+    },
+    /**
+     * 监听:属性表时间选项的变化,同步更新时间轴当前选中的项
+     */
+    selectedSubjectTime(nV) {
+      this.onSelecteTimeChange(nV)
+    },
+  },
 
   mounted() {
     this.chart = echarts.init(
@@ -165,13 +164,13 @@ export default class ThematicMapTimeLine extends Vue {
     )
     this.chart.on('timelinechanged', this.onTimelinechanged)
     this.onSelecteTimeChange(this.selectedSubjectTime)
-  }
+  },
 
   beforeDestroy() {
     if (this.chart) {
       this.chart.off('timelinechanged')
     }
-  }
+  },
 }
 </script>
 <style lang="scss" scoped>

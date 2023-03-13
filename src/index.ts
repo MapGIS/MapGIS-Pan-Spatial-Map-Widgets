@@ -19,6 +19,12 @@ export {
   ProjectorManager,
 } from './model'
 
+import {
+  MpAttributeTable,
+  MpAttributeTableList,
+  MpTreeLayer,
+} from './components'
+
 // import {
 //   MpBufferAnalysis,
 //   MpDynamicSectionAnalysis,
@@ -47,7 +53,7 @@ import {
   // MpBookmark,
   MpLayerList,
   MpLayerListContainer,
-  // MpLegend,
+  MpLegend,
   MpMapModePicker,
   // MpMapStory,
   // MpParticleEffects,
@@ -55,7 +61,7 @@ import {
   // MpRotate,
   // MpScalebar,
   // MpSceneSetting,
-  // MpThematicMap,
+  MpThematicMap,
   // MpVectorTileCarto,
   // MpViewpointManager,
   // MpZoom,
@@ -87,10 +93,10 @@ import {
   //   MpStratifiedHousehold,
 } from './widgets/tool'
 
-// import RightPopover from './components/TreeLayer/components/RightPopover/index.vue'
-
 const components = [
-  // RightPopover,
+  MpAttributeTable,
+  MpAttributeTableList,
+  MpTreeLayer,
   // analysis
   // MpBufferAnalysis,
   // MpDynamicSectionAnalysis,
@@ -115,7 +121,7 @@ const components = [
   // MpBookmark,
   MpLayerList,
   MpLayerListContainer,
-  // MpLegend,
+  MpLegend,
   MpMapModePicker,
   // MpMapStory,
   // MpParticleEffects,
@@ -123,7 +129,7 @@ const components = [
   // MpRotate,
   // MpScalebar,
   // MpSceneSetting,
-  // MpThematicMap,
+  MpThematicMap,
   // MpVectorTileCarto,
   // MpViewpointManager,
   // MpZoom,
@@ -152,15 +158,15 @@ const components = [
 ]
 
 const install = (Vue) => {
+  Vue.use(VueMapbox)
+  Vue.use(VueCesium)
+  Vue.use(MapgisUi)
   components.forEach((component) => {
     Vue.component(
       (component.options && component.options.name) || component.name,
       component
     )
   })
-  Vue.use(VueMapbox)
-  Vue.use(VueCesium)
-  Vue.use(MapgisUi)
 }
 
 export default {
