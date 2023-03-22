@@ -76,10 +76,7 @@ import {
   MpStratifiedHousehold,
 } from './widgets/tool'
 
-import { KuoZhanWeiJian } from './widgets/kuo-zhan-wei-jian-mu-lu'
-
 const components = [
-  KuoZhanWeiJian,
   MpAttributeTable,
   MpAttributeTableList,
   MpTreeLayer,
