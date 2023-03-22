@@ -14,8 +14,11 @@
   />
 </template>
 <script lang="ts">
-import { LayerType, LoadStatus } from '@mapgis/web-app-framework'
-import { DataCatalogManager } from '../../../../../../../model'
+import {
+  LayerType,
+  LoadStatus,
+  DataCatalogManager,
+} from '@mapgis/web-app-framework'
 import BaseMixin from '../../mixins/base'
 import zondyGeojson from '../../mock/zondyGeojson.json'
 

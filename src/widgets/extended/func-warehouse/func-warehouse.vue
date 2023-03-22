@@ -86,8 +86,11 @@
 <script lang="ts">
 import { Mixins, Component } from 'vue-property-decorator'
 import { MapgisUiEmpty } from '@mapgis/webclient-vue-ui'
-import { WidgetMixin, Analysis } from '@mapgis/web-app-framework'
-import { baseConfigInstance } from '../../../model'
+import {
+  WidgetMixin,
+  Analysis,
+  baseConfigInstance,
+} from '@mapgis/web-app-framework'
 import MpHandlerWindow from './handler-window.vue'
 
 // {

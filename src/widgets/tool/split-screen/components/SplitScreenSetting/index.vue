@@ -59,7 +59,6 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Watch, Prop } from 'vue-property-decorator'
 import { DomUtil, Layer } from '@mapgis/web-app-framework'
 
 enum ScreenLabel {
@@ -70,79 +69,96 @@ enum ScreenLabel {
   '五',
   '六',
 }
-@Component({})
-export default class SplitScreenSetting extends Vue {
-  @Prop({ default: 12 }) readonly mapSpan!: number
 
-  @Prop() readonly screenNum!: number
+export default {
+  name: 'SplitScreenSetting',
+  props: {
+    mapSpan: {
+      type: Number,
+      default: 12,
+    },
+    screenNum: Number,
+    layerIds: {
+      type: Array,
+      default: () => [],
+    },
+    layers: {
+      type: Array,
+      default: () => [],
+    },
+  },
+  data() {
+    return {
+      visible: true,
 
-  @Prop({ default: () => [] }) readonly layerIds!: string[]
+      screenLabel: ScreenLabel,
 
-  @Prop({ default: () => [] }) readonly layers!: Layer[]
+      screenCount: null,
 
-  private visible = true
-
-  private screenLabel = ScreenLabel
-
-  private screenCount: number | null = null
-
-  private fullScreen = false
-
-  // 设置面板的收缩开关icon
-  get handleIcon() {
-    return this.visible ? 'right' : 'left'
-  }
-
-  /**
-   * 监听: 分屏数量变化
-   */
-  @Watch('screenNum', { immediate: true })
-  screenNumChanged(nV: number) {
-    this.screenCount = nV || null
-  }
+      fullScreen: false,
+    }
+  },
+  computed: {
+    // 设置面板的收缩开关icon
+    handleIcon() {
+      return this.visible ? 'right' : 'left'
+    },
+  },
+  watch: {
+    /**
+     * 监听: 分屏数量变化
+     */
+    screenNum: {
+      immediate: true,
+      handler(nV) {
+        this.screenCount = nV || null
+      },
+    },
+  },
 
   created() {
     DomUtil.addFullScreenListener(this.fullScreenListener)
-  }
+  },
 
   beforeDestroy() {
     DomUtil.removeFullScreenListener(this.fullScreenListener)
-  }
+  },
+  methods: {
+    /**
+     * 屏数变化
+     * @param screenCount
+     */
+    onScreenCountChange(screenCount: number) {
+      this.screenCount = screenCount
+      this.$emit('on-screen-count-change', screenCount)
+    },
 
-  /**
-   * 屏数变化
-   * @param screenCount
-   */
-  onScreenCountChange(screenCount: number) {
-    this.screenCount = screenCount
-    this.$emit('on-screen-count-change', screenCount)
-  }
+    /**
+     * 图层选择变化
+     * @param layerId
+     * @param index
+     */
+    onLayerChange(layerId: string, index: number) {
+      this.$emit('on-layer-change', layerId, index)
+    },
 
-  /**
-   * 图层选择变化
-   * @param layerId
-   * @param index
-   */
-  onLayerChange(layerId: string, index: number) {
-    this.$emit('on-layer-change', layerId, index)
-  }
+    /**
+     * 全屏
+     */
+    onToggleScreen() {
+      if (this.fullScreen) {
+        this.$emit('out-full-screen')
+      } else {
+        this.$emit('in-full-screen')
+      }
+    },
 
-  /**
-   * 全屏
-   */
-  onToggleScreen() {
-    if (this.fullScreen) {
-      this.$emit('out-full-screen')
-    } else {
-      this.$emit('in-full-screen')
-    }
-  }
-
-  private fullScreenListener(e) {
-    if (e.target.id === this.id) {
-      this.fullScreen = !this.fullScreen
-    }
-  }
+    fullScreenListener(e) {
+      if (e.target.id === this.id) {
+        this.fullScreen = !this.fullScreen
+      }
+    },
+  },
 }
 </script>
 

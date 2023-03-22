@@ -87,8 +87,12 @@
 
 <script lang="ts">
 import { Component, Prop, Emit, Mixins } from 'vue-property-decorator'
-import { markerIconInstance, baseConfigInstance } from '../../../../../model'
-import { UUID, Objects } from '@mapgis/web-app-framework'
+import {
+  UUID,
+  Objects,
+  markerIconInstance,
+  baseConfigInstance,
+} from '@mapgis/web-app-framework'
 import moment from 'moment'
 import MarkerMixin from '../../mixins/marker-add'
 

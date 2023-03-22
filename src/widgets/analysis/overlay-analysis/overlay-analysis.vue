@@ -74,9 +74,13 @@
 
 <script lang="ts">
 import { Mixins, Component, Watch } from 'vue-property-decorator'
-import { LayerType, WidgetMixin } from '@mapgis/web-app-framework'
-import { eventBus, events } from '../../../model'
-import { ActiveResultSet } from '../../../model/active-result-set'
+import {
+  LayerType,
+  WidgetMixin,
+  ActiveResultSet,
+  eventBus,
+  events,
+} from '@mapgis/web-app-framework'
 
 @Component({
   name: 'MpOverlayAnalysis',

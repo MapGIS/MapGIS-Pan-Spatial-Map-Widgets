@@ -152,12 +152,14 @@ import {
   Prop,
   Emit,
 } from 'vue-property-decorator'
-import { AppMixin, Objects, Feature } from '@mapgis/web-app-framework'
 import {
+  AppMixin,
+  Objects,
+  Feature,
   api,
   baseConfigInstance,
   ProjectionTransformationUtil,
-} from '../../../../../model'
+} from '@mapgis/web-app-framework'
 import CoordinateMapbox from './CoordinateMapbox.vue'
 import CoordinateCesium from './CoordinateCesium.vue'
 

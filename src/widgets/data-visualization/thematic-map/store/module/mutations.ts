@@ -1,6 +1,10 @@
 import Vue from 'vue'
-import { UUID, Feature } from '@mapgis/web-app-framework'
-import { api, baseConfigInstance } from '../../../../../model'
+import {
+  UUID,
+  Feature,
+  api,
+  baseConfigInstance,
+} from '@mapgis/web-app-framework'
 import _cloneDeep from 'lodash/cloneDeep'
 import _last from 'lodash/last'
 import {
@@ -86,6 +90,7 @@ const mutations = {
    * 专题图各子功能弹框的开关
    */
   setVisible({ state }, type: ModuleType) {
+    debugger
     if (!state.modules.includes(type)) {
       state.modules = [...state.modules, type]
     }

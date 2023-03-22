@@ -91,8 +91,11 @@
 <script lang="ts">
 import { Mixins, Component, Watch } from 'vue-property-decorator'
 import { MapgisUiEmpty } from '@mapgis/webclient-vue-ui'
-import { WidgetMixin, WidgetState } from '@mapgis/web-app-framework'
-import { dataCatalogManagerInstance } from '../../../model'
+import {
+  WidgetMixin,
+  WidgetState,
+  dataCatalogManagerInstance,
+} from '@mapgis/web-app-framework'
 import _cloneDeep from 'lodash/cloneDeep'
 import TimeLine from './components/TimeLine.vue'
 

@@ -257,14 +257,12 @@ import {
   Metadata,
   Layer3D,
   FitBound,
-} from '@mapgis/web-app-framework'
-import {
   dataCatalogManagerInstance,
   DataCatalogManager,
+  api,
   eventBus,
   events,
-  api,
-} from '../../../model'
+} from '@mapgis/web-app-framework'
 
 import MpMetadataInfo from '../../../components/MetadataInfo/MetadataInfo.vue'
 import NonSpatial from './non-spatial.vue'

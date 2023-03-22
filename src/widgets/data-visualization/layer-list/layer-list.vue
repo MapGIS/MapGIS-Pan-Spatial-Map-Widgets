@@ -7,9 +7,13 @@
 </template>
 
 <script lang="ts">
-import { WidgetMixin, AppMixin } from '@mapgis/web-app-framework'
+import {
+  WidgetMixin,
+  AppMixin,
+  api,
+  dataCatalogManagerInstance,
+} from '@mapgis/web-app-framework'
 import { Empty } from 'ant-design-vue'
-import { api, dataCatalogManagerInstance } from '../../../model'
 
 export default {
   name: 'MpLayerList',

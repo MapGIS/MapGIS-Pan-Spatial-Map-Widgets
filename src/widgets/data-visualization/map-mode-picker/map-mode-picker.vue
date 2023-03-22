@@ -1,6 +1,6 @@
 <template>
   <div class="mp-widget-map-mode-picker">
-    <a-tooltip
+    <mapgis-ui-tooltip
       title="二三维切换"
       placement="right"
       :overlay-style="{ zIndex: 1000 }"
@@ -8,7 +8,7 @@
       <div class="button" @click="beforeSwitchMapMode">
         <mp-icon :icon="icon" />
       </div>
-    </a-tooltip>
+    </mapgis-ui-tooltip>
   </div>
 </template>
 
@@ -17,9 +17,8 @@ import WebAppFrameworkUI, {
   WidgetMixin,
   Layer3D,
   Objects,
+  baseConfigInstance,
 } from '@mapgis/web-app-framework'
-
-import { baseConfigInstance } from '../../../model'
 
 export default {
   name: 'MpMapModePicker',

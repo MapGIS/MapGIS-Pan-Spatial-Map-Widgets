@@ -27,8 +27,7 @@
 <script lang="ts">
 import { Mixins, Component, Prop, Watch } from 'vue-property-decorator'
 import { Style } from '@mapgis/webclient-es6-service'
-import { MapMixin } from '@mapgis/web-app-framework'
-import { baseConfigInstance } from '../../../../../model'
+import { MapMixin, baseConfigInstance } from '@mapgis/web-app-framework'
 
 const { MarkerStyle, LineStyle, PointStyle, FillStyle } = Style
 

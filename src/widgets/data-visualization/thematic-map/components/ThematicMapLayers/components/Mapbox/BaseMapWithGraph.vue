@@ -11,10 +11,9 @@
 <script lang="ts">
 import { GraphThemeLayer } from '@mapgis/webclient-es6-mapboxgl'
 import { getMarker, IMarker } from '../../../../utils'
-import { Feature } from '@mapgis/web-app-framework'
+import { Feature, baseConfigInstance } from '@mapgis/web-app-framework'
 import _debounce from 'lodash/debounce'
 import BaseMixin from '../../mixins/base'
-import { baseConfigInstance } from '../../../../../../../model'
 
 export default {
   name: 'MapboxBaseMapWithGraph',

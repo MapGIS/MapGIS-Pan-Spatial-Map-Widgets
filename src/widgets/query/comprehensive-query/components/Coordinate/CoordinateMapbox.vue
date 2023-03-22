@@ -17,8 +17,12 @@ import {
   Prop,
   Emit,
 } from 'vue-property-decorator'
-import { MapMixin, AppMixin, Feature } from '@mapgis/web-app-framework'
-import { baseConfigInstance } from '../../../../../model'
+import {
+  MapMixin,
+  AppMixin,
+  Feature,
+  baseConfigInstance,
+} from '@mapgis/web-app-framework'
 
 @Component
 export default class CoordinateMapbox extends Mixins(MapMixin, AppMixin) {

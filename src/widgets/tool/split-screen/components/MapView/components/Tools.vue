@@ -17,7 +17,6 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator'
 import { OperationType } from '../store/map-view-state'
 
 interface ITool {
@@ -26,54 +25,61 @@ interface ITool {
   type: keyof OperationType
 }
 
-@Component
-export default class Tools extends Vue {
-  @Prop() readonly title!: string
-
-  @Prop() readonly excludes!: keyof OperationType | Array<keyof OperationType>
-
-  @Prop() readonly tools!: ITool[]
-
-  defaultTools: ITool[] = [
-    {
-      label: '查询',
-      icon: 'search',
-      type: OperationType.QUERY,
+export default {
+  name: 'Tools',
+  props: {
+    title: String,
+    excludes: {
+      type: Object | Array,
     },
-    {
-      label: '放大',
-      icon: 'zoom-in',
-      type: OperationType.ZOOMIN,
-    },
-    {
-      label: '缩小',
-      icon: 'zoom-out',
-      type: OperationType.ZOOMOUT,
-    },
+    tools: Array,
+  },
+  data() {
+    return {
+      defaultTools: [
+        {
+          label: '查询',
+          icon: 'search',
+          type: OperationType.QUERY,
+        },
+        {
+          label: '放大',
+          icon: 'zoom-in',
+          type: OperationType.ZOOMIN,
+        },
+        {
+          label: '缩小',
+          icon: 'zoom-out',
+          type: OperationType.ZOOMOUT,
+        },
 
-    {
-      label: '复位',
-      icon: 'redo',
-      type: OperationType.RESTORE,
+        {
+          label: '复位',
+          icon: 'redo',
+          type: OperationType.RESTORE,
+        },
+        {
+          label: '清除',
+          icon: 'delete',
+          type: OperationType.CLEAR,
+        },
+      ],
+    }
+  },
+  computed: {
+    resTools() {
+      const _tools =
+        this.tools && this.tools.length ? this.tools : this.defaultTools
+      return _tools.filter(
+        ({ type }) => !this.excludes || !this.excludes.includes(type)
+      )
     },
-    {
-      label: '清除',
-      icon: 'delete',
-      type: OperationType.CLEAR,
+  },
+  methods: {
+    onIconClick({ type }: ITool) {
+      this.$emit('on-click', type)
     },
-  ]
-
-  get resTools() {
-    const _tools =
-      this.tools && this.tools.length ? this.tools : this.defaultTools
-    return _tools.filter(
-      ({ type }) => !this.excludes || !this.excludes.includes(type)
-    )
-  }
-
-  onIconClick({ type }: ITool) {
-    this.$emit('on-click', type)
-  }
+  },
 }
 </script>
 

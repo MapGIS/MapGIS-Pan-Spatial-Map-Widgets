@@ -49,12 +49,6 @@
 <script lang="ts">
 import { Component, Vue, Mixins, Watch, Inject } from 'vue-property-decorator'
 import {
-  baseConfigInstance,
-  dataCatalogManagerInstance,
-  ActiveResultSet,
-  DataStoreCatalog,
-} from '../../../model'
-import {
   WidgetMixin,
   ExhibitionControllerMixin,
   LayerType,
@@ -67,6 +61,10 @@ import {
   Objects,
   Exhibition,
   Feature,
+  baseConfigInstance,
+  dataCatalogManagerInstance,
+  ActiveResultSet,
+  DataStoreCatalog,
 } from '@mapgis/web-app-framework'
 import * as Zondy from '@mapgis/webclient-es6-service'
 import {

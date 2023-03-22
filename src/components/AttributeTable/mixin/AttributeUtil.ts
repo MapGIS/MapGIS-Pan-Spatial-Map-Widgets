@@ -10,8 +10,8 @@ import {
   Feature,
   Objects,
   Exhibition,
+  ProjectorManager,
 } from '@mapgis/web-app-framework'
-import { ProjectorManager } from '../../../model'
 import moment from 'moment'
 
 const { GFeature, FeatureQuery, ArcGISFeatureQuery } = Feature

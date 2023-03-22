@@ -13,8 +13,7 @@
 
 <script lang="ts">
 import { Mixins, Component } from 'vue-property-decorator'
-import { WidgetMixin, Objects } from '@mapgis/web-app-framework'
-import { api } from '../../../model'
+import { WidgetMixin, Objects, api } from '@mapgis/web-app-framework'
 
 declare function require(string): string
 

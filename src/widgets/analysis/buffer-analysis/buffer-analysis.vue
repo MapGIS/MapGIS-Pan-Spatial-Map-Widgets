@@ -64,10 +64,14 @@
 
 <script lang="ts">
 import { Mixins, Component, Watch } from 'vue-property-decorator'
-import { LayerType, WidgetMixin } from '@mapgis/web-app-framework'
+import {
+  LayerType,
+  WidgetMixin,
+  eventBus,
+  events,
+  ActiveResultSet,
+} from '@mapgis/web-app-framework'
 import { Style } from '@mapgis/webclient-es6-service'
-import { eventBus, events } from '../../../model'
-import { ActiveResultSet } from '../../../model/active-result-set'
 
 const { FillStyle } = Style
 

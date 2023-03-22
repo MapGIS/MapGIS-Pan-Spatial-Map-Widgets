@@ -132,13 +132,14 @@
 
 <script lang="ts">
 import { Mixins, Component, Watch } from 'vue-property-decorator'
-import { WidgetMixin, UUID } from '@mapgis/web-app-framework'
 import {
+  WidgetMixin,
+  UUID,
   api,
   baseConfigInstance,
   markerIconInstance,
   eventBus,
-} from '../../../model'
+} from '@mapgis/web-app-framework'
 
 import MarkerAdd from './components/MarkerAdd/MarkerAdd'
 import MarkerShowWindow from './components/MarkerWindow/MarkerShowWindow.vue'

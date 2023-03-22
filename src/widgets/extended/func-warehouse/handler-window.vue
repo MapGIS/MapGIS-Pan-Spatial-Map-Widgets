@@ -52,13 +52,11 @@ import {
   UUID,
   LayerType,
   LoadStatus,
-} from '@mapgis/web-app-framework'
-import {
   baseConfigInstance,
   DataCatalogManager,
   eventBus,
   events,
-} from '../../../model'
+} from '@mapgis/web-app-framework'
 
 // {
 //  "DataType": 1, // 参数类型，1为string，0为Int、2为Float、3为Bool、4为Date、5为DateTime、6为Unknow

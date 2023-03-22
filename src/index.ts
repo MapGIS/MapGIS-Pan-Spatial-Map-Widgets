@@ -2,23 +2,6 @@ import MapgisUi from '@mapgis/webclient-vue-ui'
 import VueMapbox from '@mapgis/webclient-vue-mapboxgl'
 import VueCesium from '@mapgis/webclient-vue-cesium'
 
-export {
-  api,
-  getRequest,
-  ProjectionTransformationUtil,
-  events,
-  eventBus,
-  baseConfigInstance,
-  loadConfigs,
-  markerIconInstance,
-  dataCatalogManagerInstance,
-  DataCatalogManager,
-  DataFlowList,
-  ActiveResultSet,
-  DataStoreCatalog,
-  ProjectorManager,
-} from './model'
-
 import {
   MpAttributeTable,
   MpAttributeTableList,
@@ -90,10 +73,13 @@ import {
   MpMeasurement,
   //   MpOutputImage,
   //   MpSplitScreen,
-  //   MpStratifiedHousehold,
+  MpStratifiedHousehold,
 } from './widgets/tool'
 
+import { KuoZhanWeiJian } from './widgets/kuo-zhan-wei-jian-mu-lu'
+
 const components = [
+  KuoZhanWeiJian,
   MpAttributeTable,
   MpAttributeTableList,
   MpTreeLayer,
@@ -154,7 +140,7 @@ const components = [
   MpMeasurement,
   // MpOutputImage,
   // MpSplitScreen,
-  // MpStratifiedHousehold,
+  MpStratifiedHousehold,
 ]
 
 const install = (Vue) => {

@@ -45,8 +45,11 @@
 
 <script lang="ts">
 import { Mixins, Component } from 'vue-property-decorator'
-import { WidgetMixin } from '@mapgis/web-app-framework'
-import { api, dataCatalogManagerInstance } from '../../../model'
+import {
+  WidgetMixin,
+  api,
+  dataCatalogManagerInstance,
+} from '@mapgis/web-app-framework'
 
 @Component({
   name: 'MpMapStory',

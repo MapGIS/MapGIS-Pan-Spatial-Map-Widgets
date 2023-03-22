@@ -1,8 +1,12 @@
-import { AppMixin, LayerType, Feature } from '@mapgis/web-app-framework'
+import {
+  AppMixin,
+  LayerType,
+  Feature,
+  baseConfigInstance,
+  dataCatalogManagerInstance,
+} from '@mapgis/web-app-framework'
 
 const { FeatureQuery } = Feature
-
-import { baseConfigInstance, dataCatalogManagerInstance } from '../../../model'
 
 // LayerTypeUtil
 export default {

@@ -55,7 +55,7 @@ export default {
     // 显示开关
     visible: {
       get() {
-        console.log(this.isVisible(ModuleType.CREATE))
+        debugger
         return this.isVisible(ModuleType.CREATE)
       },
       set(nV) {

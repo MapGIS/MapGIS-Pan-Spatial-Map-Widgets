@@ -50,14 +50,12 @@ import {
   LoadStatus,
   Document,
   FitBound,
-} from '@mapgis/web-app-framework'
-import {
   api,
   dataCatalogManagerInstance,
   DataCatalogManager,
   eventBus,
   events,
-} from '../../../model'
+} from '@mapgis/web-app-framework'
 
 import AddDataList from './components/AddDataList.vue'
 import AddDataUrl from './components/AddDataUrl.vue'

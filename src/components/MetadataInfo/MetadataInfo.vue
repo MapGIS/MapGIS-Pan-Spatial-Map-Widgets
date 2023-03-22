@@ -46,8 +46,8 @@ import {
   IGSTileLayer,
   Layer,
   Metadata,
+  baseConfigInstance,
 } from '@mapgis/web-app-framework'
-import { baseConfigInstance } from '../../model'
 
 import MpMetadataInfoDoc from './MetadataInfoDoc'
 import MpMetadataInfoTile from './MetadataInfoTile'

@@ -39,8 +39,13 @@
 <script lang="ts">
 import { Mixins, Component } from 'vue-property-decorator'
 import { MapgisUiEmpty } from '@mapgis/webclient-vue-ui'
-import { WidgetMixin, UUID } from '@mapgis/web-app-framework'
-import { eventBus, events, api } from '../../../model'
+import {
+  WidgetMixin,
+  UUID,
+  api,
+  eventBus,
+  events,
+} from '@mapgis/web-app-framework'
 import { TreeConfig } from './tree-config'
 
 @Component({ name: 'MpBookmark' })

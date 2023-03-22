@@ -12,8 +12,13 @@
 
 <script lang="ts">
 import { Mixins, Component, Watch, Provide } from 'vue-property-decorator'
-import { LayerType, WidgetMixin } from '@mapgis/web-app-framework'
-import { eventBus, events, api } from '../../../model'
+import {
+  LayerType,
+  WidgetMixin,
+  api,
+  eventBus,
+  events,
+} from '@mapgis/web-app-framework'
 
 @Component({
   name: 'MpOverlayManager',

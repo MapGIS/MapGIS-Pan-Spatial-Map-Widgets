@@ -38,8 +38,10 @@ import {
   FitBound,
   LayerType,
   UUID,
+  api,
+  baseConfigInstance,
+  DataCatalogManager,
 } from '@mapgis/web-app-framework'
-import { api, baseConfigInstance, DataCatalogManager } from '../../../model'
 
 @Component({ name: 'MpZoom' })
 export default class MpZoom extends Mixins(WidgetMixin) {

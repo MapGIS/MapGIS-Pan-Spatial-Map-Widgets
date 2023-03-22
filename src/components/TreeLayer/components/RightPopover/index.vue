@@ -14,7 +14,7 @@
 
 <script>
 import layerTypeUtil from '../../mixin/layer-type-util'
-import { DataFlowList } from '../../../../model'
+import { DataFlowList } from '@mapgis/web-app-framework'
 import * as turf from '@turf/turf'
 
 export default {

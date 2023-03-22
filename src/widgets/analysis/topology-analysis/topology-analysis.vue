@@ -140,8 +140,8 @@ import {
   UUID,
   IGSMapImageLayer,
   IGSVectorLayer,
+  baseConfigInstance,
 } from '@mapgis/web-app-framework'
-import { baseConfigInstance } from '../../../model'
 import mapboxLayer from './map-layer/mapbox-layer.vue'
 import cesiumLayer from './map-layer/cesium-layer'
 import featureList from './feature-list.vue'

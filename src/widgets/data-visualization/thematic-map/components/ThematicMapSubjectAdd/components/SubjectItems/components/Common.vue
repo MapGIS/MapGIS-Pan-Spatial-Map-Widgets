@@ -86,8 +86,12 @@
   </div>
 </template>
 <script lang="ts">
-import { Layer, LayerType, Catalog } from '@mapgis/web-app-framework'
-import { dataCatalogManagerInstance } from '../../../../../../../../model'
+import {
+  Layer,
+  LayerType,
+  Catalog,
+  dataCatalogManagerInstance,
+} from '@mapgis/web-app-framework'
 import url from 'url'
 import _cloneDeep from 'lodash/cloneDeep'
 import _last from 'lodash/last'

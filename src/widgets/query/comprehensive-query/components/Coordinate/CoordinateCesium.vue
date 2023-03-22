@@ -18,9 +18,8 @@ import {
   ColorUtil,
   Feature,
   Overlay,
+  markerIconInstance,
 } from '@mapgis/web-app-framework'
-
-import { markerIconInstance } from '../../../../../model'
 
 @Component({
   components: {},

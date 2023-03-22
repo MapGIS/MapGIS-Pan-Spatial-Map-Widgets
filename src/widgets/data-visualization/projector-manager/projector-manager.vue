@@ -23,8 +23,7 @@
 </template>
 <script lang="ts">
 import { Component, Mixins, Watch } from 'vue-property-decorator'
-import { WidgetMixin } from '@mapgis/web-app-framework'
-import { api, ProjectorManager } from '../../../model'
+import { WidgetMixin, api, ProjectorManager } from '@mapgis/web-app-framework'
 
 @Component({
   name: 'MpProjectorManager',

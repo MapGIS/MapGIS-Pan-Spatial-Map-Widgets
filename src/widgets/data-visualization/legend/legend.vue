@@ -28,13 +28,13 @@
 </template>
 
 <script lang="ts">
-import { WidgetMixin } from '@mapgis/web-app-framework'
 import {
+  WidgetMixin,
   dataCatalogManagerInstance,
+  api,
   eventBus,
   events,
-  api,
-} from '../../../model'
+} from '@mapgis/web-app-framework'
 
 export default {
   name: 'MpLegend',

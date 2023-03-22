@@ -81,8 +81,10 @@ import {
   Exhibition,
   WidgetMixin,
   PopupOverlay,
+  api,
+  markerIconInstance,
+  baseConfigInstance,
 } from '@mapgis/web-app-framework'
-import { api, markerIconInstance, baseConfigInstance } from '../../../model'
 import Zone from './components/ZoneFrame/Zone.vue'
 import Coordinate from './components/Coordinate/Coordinate.vue'
 import Frame from './components/ZoneFrame/Frame.vue'

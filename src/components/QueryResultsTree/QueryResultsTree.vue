@@ -59,8 +59,9 @@ import {
   Feature,
   Catalog,
   MapMixin,
+  baseConfigInstance,
+  dataCatalogManagerInstance,
 } from '@mapgis/web-app-framework'
-import { baseConfigInstance, dataCatalogManagerInstance } from '../../model'
 import _last from 'lodash/last'
 
 const { DocumentCatalog } = Catalog

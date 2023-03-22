@@ -20,9 +20,8 @@
   </div>
 </template>
 <script lang="ts">
-import { Layer, Feature } from '@mapgis/web-app-framework'
+import { Layer, Feature, baseConfigInstance } from '@mapgis/web-app-framework'
 import CesiumMixin from '../../mixins/cesium'
-import { baseConfigInstance } from '../../../../../../../model'
 import { LayerServiceType } from '../../../../store'
 
 interface ISectionColor {

@@ -185,13 +185,11 @@ import {
   CoordinateSystemType,
   Objects,
   FitBound,
-} from '@mapgis/web-app-framework'
-import {
   baseConfigInstance,
   DataCatalogManager,
   events,
   eventBus,
-} from '../../model'
+} from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../MetadataInfo/MetadataInfo.vue'
 import MpCustomQuery from '../CustomQuery/CustomQuery.vue'
 import MpUnifyModify from './components/UnifyModify/UnifyModify.vue'

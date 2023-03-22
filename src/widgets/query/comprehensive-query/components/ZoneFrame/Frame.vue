@@ -70,8 +70,12 @@ import {
   Prop,
   Emit,
 } from 'vue-property-decorator'
-import { AppMixin, Feature } from '@mapgis/web-app-framework'
-import { baseConfigInstance, api } from '../../../../../model'
+import {
+  AppMixin,
+  Feature,
+  baseConfigInstance,
+  api,
+} from '@mapgis/web-app-framework'
 import axios from 'axios'
 import ZoneFrameMapbox from './ZoneFrameMapbox.vue'
 import ZoneFrameCesium from './ZoneFrameCesium.vue'

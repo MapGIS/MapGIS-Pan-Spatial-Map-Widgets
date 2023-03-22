@@ -22,8 +22,9 @@ import {
   LayerType,
   LoadStatus,
   FitBound,
+  api,
+  DataCatalogManager,
 } from '@mapgis/web-app-framework'
-import { api, DataCatalogManager } from '../../../model'
 import MpBasemapItem from './components/BasemapItem/BasemapItem.vue'
 
 export default {

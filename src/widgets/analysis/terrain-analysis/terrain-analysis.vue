@@ -19,12 +19,11 @@
 
 <script lang="ts">
 import { Mixins, Component } from 'vue-property-decorator'
-import { WidgetMixin } from '@mapgis/web-app-framework'
+import { WidgetMixin, api } from '@mapgis/web-app-framework'
 import MpAspectSlope from './aspect-slope-analysis.vue'
 import MpFlooding from './flooding.vue'
 import MpCutFillAnalysis from './cut-fill-analysis.vue'
 import MpContourAnalysis from './contour-analysis.vue'
-import { api } from '../../../model'
 
 @Component({
   name: 'MpTerrainAnalysis',

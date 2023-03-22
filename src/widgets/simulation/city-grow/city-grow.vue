@@ -67,8 +67,7 @@
 
 <script lang="ts">
 import { Mixins, Component, Watch } from 'vue-property-decorator'
-import { WidgetMixin, UrlUtil } from '@mapgis/web-app-framework'
-import { api } from '../../../model'
+import { WidgetMixin, UrlUtil, api } from '@mapgis/web-app-framework'
 
 @Component({
   name: 'MpCityGrow',

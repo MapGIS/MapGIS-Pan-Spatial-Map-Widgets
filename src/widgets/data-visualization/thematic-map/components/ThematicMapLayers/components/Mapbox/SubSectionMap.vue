@@ -28,7 +28,7 @@
 import BaseMixin from '../../mixins/base'
 import { getMarker, IMarker } from '../../../../utils'
 import _debounce from 'lodash/debounce'
-import { baseConfigInstance } from '../../../../../../../model'
+import { baseConfigInstance } from '@mapgis/web-app-framework'
 
 export default {
   name: 'MapboxSubSectionMap',

@@ -11,75 +11,83 @@
   </div>
 </template>
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator'
 import { Document, Layer, Objects } from '@mapgis/web-app-framework'
 
-@Component
-export default class MapboxView extends Vue {
-  @Prop() readonly document!: Document
+export default {
+  name: 'MapboxView',
+  props: {
+    document: Document,
+    layer: {
+      type: Layer,
+      default: () => ({}),
+    },
+  },
+  data() {
+    return {
+      isMapLoaded: false,
 
-  @Prop({ default: () => ({}) }) readonly layer!: Layer
-
-  isMapLoaded = false
-
-  /**
-   * 是否处于分屏状态
-   */
-  splitScreen = true
-
-  get drawComponent() {
-    return this.$refs.draw
-  }
+      /**
+       * 是否处于分屏状态
+       */
+      splitScreen: true,
+    }
+  },
+  computed: {
+    drawComponent() {
+      return this.$refs.draw
+    },
+  },
 
   beforeDestroy() {
     this.isMapLoaded = false
-  }
+  },
+  methods: {
+    /**
+     * 供父组件调用
+     * 二维默认画矩形
+     * @param {string} [mode = 'draw-rectangle'] 参考MpDrawPro组件内定义的mode类型
+     */
+    openDraw(mode = 'draw-rectangle') {
+      this.drawComponent.openDraw(mode)
+    },
 
-  /**
-   * 供父组件调用
-   * 二维默认画矩形
-   * @param {string} [mode = 'draw-rectangle'] 参考MpDrawPro组件内定义的mode类型
-   */
-  openDraw(mode = 'draw-rectangle') {
-    this.drawComponent.openDraw(mode)
-  }
+    /**
+     * 供父组件调用
+     */
+    closeDraw() {
+      this.drawComponent.closeDraw()
+    },
 
-  /**
-   * 供父组件调用
-   */
-  closeDraw() {
-    this.drawComponent.closeDraw()
-  }
+    /**
+     * 获取经纬度范围
+     */
+    getRect({ xmin, ymin, xmax, ymax }) {
+      return Objects.GeometryExp.creatRectByMinMax(xmin, ymin, xmax, ymax)
+    },
 
-  /**
-   * 获取经纬度范围
-   */
-  getRect({ xmin, ymin, xmax, ymax }) {
-    return Objects.GeometryExp.creatRectByMinMax(xmin, ymin, xmax, ymax)
-  }
+    /**
+     * 绘制完成的回调
+     */
+    onDrawFinished({ mode, feature, shape, center }) {
+      if (this.isMapLoaded) {
+        const rect = this.getRect(shape)
+        this.$emit('draw-finished', { geometry: rect, rect })
+      }
+    },
 
-  /**
-   * 绘制完成的回调
-   */
-  onDrawFinished({ mode, feature, shape, center }) {
-    if (this.isMapLoaded) {
-      const rect = this.getRect(shape)
-      this.$emit('draw-finished', { geometry: rect, rect })
-    }
-  }
-
-  /**
-   * 地图加载成功回调
-   * @param payload { map, mapbox }
-   */
-  onMapLoad(payload) {
-    this.isMapLoaded = true
-    this.$emit('load', payload)
-    // 禁用鼠标右键事件
-    document.getElementsByClassName('mapbox-view').forEach((element) => {
-      element.oncontextmenu = () => false
-    })
-  }
+    /**
+     * 地图加载成功回调
+     * @param payload { map, mapbox }
+     */
+    onMapLoad(payload) {
+      this.isMapLoaded = true
+      this.$emit('load', payload)
+      // 禁用鼠标右键事件
+      document.getElementsByClassName('mapbox-view').forEach((element) => {
+        element.oncontextmenu = () => false
+      })
+    },
+  },
 }
 </script>
 

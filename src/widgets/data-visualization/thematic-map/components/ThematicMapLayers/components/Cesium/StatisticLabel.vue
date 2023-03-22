@@ -13,9 +13,8 @@
   </mp-3d-marker-pro>
 </template>
 <script lang="ts">
-import { Layer, Feature } from '@mapgis/web-app-framework'
+import { Layer, Feature, baseConfigInstance } from '@mapgis/web-app-framework'
 import CesiumMixin from '../../mixins/cesium'
-import { baseConfigInstance } from '../../../../../../../model'
 
 export default {
   name: 'CesiumStatisticLabel',

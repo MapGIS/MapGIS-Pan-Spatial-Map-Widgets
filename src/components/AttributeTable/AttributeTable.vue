@@ -196,11 +196,8 @@
 import {
   baseConfigInstance,
   markerIconInstance,
-  events,
   DataFlowList,
   ActiveResultSet,
-} from '../../model'
-import {
   DomUtil,
   AppMixin,
   ExhibitionMixin,
@@ -211,6 +208,7 @@ import {
   Feature,
   Objects,
   Exhibition,
+  events,
 } from '@mapgis/web-app-framework'
 import * as Zondy from '@mapgis/webclient-es6-service'
 import MpAttributeTableColumnSetting from './AttributeTableColumnSetting.vue'

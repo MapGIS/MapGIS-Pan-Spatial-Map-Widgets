@@ -169,8 +169,8 @@ import {
   WidgetMixin,
   Analysis,
   UUID,
+  markerIconInstance,
 } from '@mapgis/web-app-framework'
-import { markerIconInstance } from '../../../model'
 import MpHinderTable from './hinder-table'
 import MpCoordinateTable from './coordinate-table'
 import MpAnakysisResultTable from './analysis-result-table'

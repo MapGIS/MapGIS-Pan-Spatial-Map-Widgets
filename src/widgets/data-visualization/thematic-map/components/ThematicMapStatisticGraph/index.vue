@@ -111,8 +111,7 @@ import {
 // import { barChartOptions } from './config/barChartOptions'
 // import { lineChartOptions } from './config/lineChartOptions'
 // import { pieChartOptions } from './config/pieChartOptions'
-import { baseConfigInstance } from '../../../../../model'
-import { LayerType } from '@mapgis/web-app-framework'
+import { LayerType, baseConfigInstance } from '@mapgis/web-app-framework'
 
 enum windowMode {
   max = 'max',

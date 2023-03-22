@@ -67,8 +67,7 @@
 </template>
 
 <script lang="ts">
-import { WidgetMixin } from '@mapgis/web-app-framework'
-import { baseConfigInstance } from '../../../model'
+import { WidgetMixin, baseConfigInstance } from '@mapgis/web-app-framework'
 import _cloneDeep from 'lodash/cloneDeep'
 import {
   ModuleType,
@@ -78,9 +77,6 @@ import {
   moduleTypeList,
 } from './store'
 import store from './store/module/index'
-
-console.log(store.state.subjectConfig, 'store')
-console.log(mapGetters('subjectConfig'), 'subjectConfig')
 
 import ThematicMapAttributeTable from './components/ThematicMapAttributeTable'
 import ThematicMapStatisticGraph from './components/ThematicMapStatisticGraph'
@@ -145,14 +141,11 @@ export default {
     ...mapMutations([
       'setVisible',
       'setBaseConfig',
-      // 'setSubjectConfig',
+      'setSubjectConfig',
       'updateSubjectConfig',
       'setSelectedSubjectList',
       'resetVisible',
     ]),
-    setSubjectConfig(config) {
-      mapMutations.setSubjectConfig(config)
-    },
     /**
      * 展示专题图树加载提示
      */
@@ -354,7 +347,7 @@ export default {
 
   created() {
     debugger
-    const subjectConfig1 = this.widgetInfo.config.subjectConfig
+    const { subjectConfig } = this.widgetInfo.config
     let { baseConfig } = this.widgetInfo.config
     if (!baseConfig) {
       // 防止后面因为baseconfig未定义导致进程中断
@@ -367,11 +360,11 @@ export default {
       }
     }
     this.setBaseConfig(baseConfig)
-    this.setSubjectConfig(subjectConfig1)
+    this.setSubjectConfig(subjectConfig)
   },
 
   beforeDestroy() {
-    // this.onClear()
+    this.onClear()
   },
 }
 </script>

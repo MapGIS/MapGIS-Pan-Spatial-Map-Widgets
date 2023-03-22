@@ -48,7 +48,7 @@
 
 <script lang="ts">
 import { Component, Vue, Prop, Emit } from 'vue-property-decorator'
-import { baseConfigInstance } from '../../../../../model'
+import { baseConfigInstance } from '@mapgis/web-app-framework'
 import axios from 'axios'
 import * as Zondy from '@mapgis/webclient-es6-service'
 import XLSX from 'xlsx'

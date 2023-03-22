@@ -40,8 +40,7 @@
 
 <script lang="ts">
 import { Component, Vue, Prop, Mixins } from 'vue-property-decorator'
-import { AppMixin } from '@mapgis/web-app-framework'
-import { eventBus } from '../../../../../model'
+import { AppMixin, eventBus } from '@mapgis/web-app-framework'
 import MarkerEditWindow from '../MarkerWindow/MarkerEditWindow'
 
 @Component({ components: { MarkerEditWindow } })

@@ -6,8 +6,13 @@
 
 <script lang="ts">
 import { Mixins, Component, Watch } from 'vue-property-decorator'
-import { LayerType, WidgetMixin } from '@mapgis/web-app-framework'
-import { dataCatalogManagerInstance, eventBus, events } from '../../../model'
+import {
+  LayerType,
+  WidgetMixin,
+  dataCatalogManagerInstance,
+  eventBus,
+  events,
+} from '@mapgis/web-app-framework'
 
 @Component({
   name: 'MpModelFlatten',

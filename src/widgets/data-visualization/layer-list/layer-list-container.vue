@@ -31,11 +31,14 @@
 </template>
 
 <script lang="ts">
-import { AppMixin } from '@mapgis/web-app-framework'
+import {
+  AppMixin,
+  api,
+  dataCatalogManagerInstance,
+} from '@mapgis/web-app-framework'
 import { MapgisUiEmpty } from '@mapgis/webclient-vue-ui'
 import { MpTreeLayer } from '../../../components'
 import layerOpacity from './layer-opacity.vue'
-import { api, dataCatalogManagerInstance } from '../../../model'
 
 export default {
   name: 'MpLayerListContainer',

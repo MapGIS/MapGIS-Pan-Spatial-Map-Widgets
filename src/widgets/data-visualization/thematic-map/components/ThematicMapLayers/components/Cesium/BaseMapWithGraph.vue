@@ -28,7 +28,7 @@
 <script lang="ts">
 import CesiumMixin from '../../mixins/cesium'
 import { getMarker, IMarker } from '../../../../utils'
-import { baseConfigInstance } from '../../../../../../../model'
+import { baseConfigInstance } from '@mapgis/web-app-framework'
 
 export default {
   name: 'CesiumBaseMapWithGraph',
