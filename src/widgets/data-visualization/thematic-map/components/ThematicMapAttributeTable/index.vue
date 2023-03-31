@@ -13,22 +13,22 @@
       >
         <div class="thematic-map-attribute-table">
           <mapgis-ui-spin :spinning="loading">
-            <mp-row-flex
+            <mapgis-ui-row-flex
               :span="[13, 10]"
               justify="space-between"
               class="attribute-table-head"
             >
               <template #label>
-                <mp-row-flex label="专题" :label-width="44">
+                <mapgis-ui-row-flex label="专题" :label-width="44">
                   <mapgis-ui-select
                     @change="onSubjectChange"
                     :value="subject"
                     :options="subjectList"
                     size="small"
                   />
-                </mp-row-flex>
+                </mapgis-ui-row-flex>
               </template>
-              <mp-row-flex label="时间" :label-width="44">
+              <mapgis-ui-row-flex label="时间" :label-width="44">
                 <mapgis-ui-select
                   @change="onTimeChange"
                   :value="time"
@@ -40,8 +40,8 @@
                     >{{ y }}</mapgis-ui-select-option
                   >
                 </mapgis-ui-select>
-              </mp-row-flex>
-            </mp-row-flex>
+              </mapgis-ui-row-flex>
+            </mapgis-ui-row-flex>
             <!-- 分页列表 -->
             <mapgis-ui-empty v-if="!tableColumns.length" />
             <mapgis-ui-table
@@ -67,7 +67,7 @@ import {
   mapGetters,
   mapMutations,
   hasHighlightSubjectList,
-  LayerServiceType,
+  LayerServiceType
 } from '../../store'
 
 export default {
@@ -81,7 +81,7 @@ export default {
       'selectedSubjectList',
       'selectedSubjectTime',
       'selectedSubjectTimeList',
-      'linkageFid',
+      'linkageFid'
     ]),
     layerServiceType() {
       return this.subjectData?.layerServiceType
@@ -101,7 +101,7 @@ export default {
         if (!nV) {
           this.resetVisible(ModuleType.TABLE)
         }
-      },
+      }
     },
     // 是否支持图属高亮
     hasHighlight() {
@@ -122,7 +122,7 @@ export default {
         showSizeChanger: true,
         showLessItems: true,
         pageSizeOptions: ['20', '40', '60', '80', '100'],
-        showTotal: (total) => `共${total}条`,
+        showTotal: (total) => `共${total}条`
       }
     },
 
@@ -131,9 +131,9 @@ export default {
       return this.selectedSubjectList.map(({ id, title, ...others }) => ({
         value: id,
         label: title,
-        ...others,
+        ...others
       }))
-    },
+    }
   },
   methods: {
     ...mapMutations([
@@ -142,7 +142,7 @@ export default {
       'setSelectedSubjectTime',
       'setLinkage',
       'resetLinkage',
-      'resetVisible',
+      'resetVisible'
     ]),
     /**
      * 自定义行数据和事件
@@ -152,14 +152,14 @@ export default {
     setCustomRow(record, index) {
       return {
         class: {
-          'row-highlight': record._highlight,
+          'row-highlight': record._highlight
         },
         on: this.hasHighlight
           ? {
               mouseenter: () => this.setLinkage(record.fid),
-              mouseleave: this.resetLinkage,
+              mouseleave: this.resetLinkage
             }
-          : {},
+          : {}
       }
     },
 
@@ -185,7 +185,7 @@ export default {
             } else {
               return front.length - end.length
             }
-          },
+          }
         }
       })
     },
@@ -197,14 +197,14 @@ export default {
       this.setFeaturesQuery({
         params: {
           page: this.page - 1,
-          pageCount: this.pageCount,
+          pageCount: this.pageCount
         },
         onSuccess: (geojson: Feature.FeatureIGSGeoJSON) => {
           this.total = geojson?.dataCount || 0
           this.tableData = geojson
             ? geojson.features.map(({ properties }) => properties)
             : []
-        },
+        }
       })
     },
 
@@ -264,7 +264,7 @@ export default {
         this.onClearHighlight()
         this.onHighlight(fid)
       }
-    },
+    }
   },
   data() {
     return {
@@ -290,7 +290,7 @@ export default {
       tableColumns: [],
 
       // 列表数据
-      tableData: [],
+      tableData: []
     }
   },
   watch: {
@@ -302,12 +302,12 @@ export default {
         if (this.subject !== nV) {
           this.subject = nV
         }
-      },
+      }
     },
     /**
      * 监听: 时间和时间轴变化
      */
-    selectedSubjectTime() {
+    selectedSubjectTime(nV) {
       if (this.time !== nV) {
         this.time = nV
       }
@@ -320,20 +320,20 @@ export default {
       handler() {
         this.setTableColumns()
         this.onTableChange({
-          current: 1,
+          current: 1
         })
-      },
+      }
     },
     /**
      * 监听: 联动项变化
      */
     linkageFid(nV) {
       this.setHighlight(nV)
-    },
+    }
   },
   beforeDestroy() {
     this.resetLinkage()
-  },
+  }
 }
 </script>
 <style lang="less" scoped>

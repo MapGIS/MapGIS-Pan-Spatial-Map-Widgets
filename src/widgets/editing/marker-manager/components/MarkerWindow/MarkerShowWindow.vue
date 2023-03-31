@@ -18,16 +18,16 @@
       <img style="width: 100%" :src="`${baseUrl}${marker.picture}`" />
     </mapgis-ui-modal>
 
-    <mp-toolbar class="marker-toolbar">
-      <mp-toolbar-command-group>
-        <mp-toolbar-command
+    <mapgis-ui-toolbar class="marker-toolbar">
+      <mapgis-ui-toolbar-command-group>
+        <mapgis-ui-toolbar-command
           class="marker-manager-toolbar-edit-button"
           title="编辑"
           icon="edit"
           @click="onMarkerEdit"
         />
-      </mp-toolbar-command-group>
-    </mp-toolbar>
+      </mapgis-ui-toolbar-command-group>
+    </mapgis-ui-toolbar>
 
     <marker-edit-window
       :visible="editWindowVisible"

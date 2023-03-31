@@ -2,31 +2,31 @@
   <div class="hex-bin">
     <mapgis-ui-row>
       <mapgis-ui-col :span="12">
-        <mp-row-flex label="半径大小" :label-width="72">
+        <mapgis-ui-row-flex label="半径大小" :label-width="72">
           <mapgis-ui-input-number v-model="themeStyle.size" :min="10" />
-        </mp-row-flex>
+        </mapgis-ui-row-flex>
       </mapgis-ui-col>
       <mapgis-ui-col :span="12">
-        <mp-row-flex label="最大权重" :label-width="72">
+        <mapgis-ui-row-flex label="最大权重" :label-width="72">
           <mapgis-ui-input-number v-model="themeStyle.max" :min="1" />
-        </mp-row-flex>
+        </mapgis-ui-row-flex>
       </mapgis-ui-col>
     </mapgis-ui-row>
     <mapgis-ui-row>
       <mapgis-ui-col :span="12">
-        <mp-row-flex label="透明度" :label-width="72">
+        <mapgis-ui-row-flex label="透明度" :label-width="72">
           <mapgis-ui-input-number
             v-model="themeStyle.globalAlpha"
             :step="0.1"
             :min="0.1"
             :max="1"
           />
-        </mp-row-flex>
+        </mapgis-ui-row-flex>
       </mapgis-ui-col>
       <mapgis-ui-col :span="12">
-        <mp-row-flex label="渐变颜色" :label-width="72">
+        <mapgis-ui-row-flex label="渐变颜色" :label-width="72">
           <color-picker-setting v-model="themeStyle.gradient" />
-        </mp-row-flex>
+        </mapgis-ui-row-flex>
       </mapgis-ui-col>
     </mapgis-ui-row>
   </div>

@@ -1,7 +1,7 @@
 <template>
   <div class="base-items">
     <!-- 专题名称 -->
-    <mp-row-flex :label-width="84" label="专题分类">
+    <mapgis-ui-row-flex :label-width="84" label="专题分类">
       <mp-tree-select
         @change="subjectClassifyChange"
         :value="subjectClassify"
@@ -11,25 +11,25 @@
         description="输入内容可自动创建专题分类"
         placeholder="输入内容可自动创建专题分类"
       />
-    </mp-row-flex>
+    </mapgis-ui-row-flex>
     <!-- 专题图名称 -->
-    <mp-row-flex :label-width="84" label="专题图名称">
+    <mapgis-ui-row-flex :label-width="84" label="专题图名称">
       <mapgis-ui-input
         @change="subjectTitleChange"
         :value="baseItemsObj.title"
         :allow-clear="true"
         placeholder="请输入专题图名称"
       />
-    </mp-row-flex>
+    </mapgis-ui-row-flex>
     <!-- 专题图类型 -->
-    <mp-row-flex :label-width="84" label="专题图类型">
+    <mapgis-ui-row-flex :label-width="84" label="专题图类型">
       <mapgis-ui-select
         @change="subjectTypeChange"
         :options="subjectTypeList"
         :value="baseItemsObj.type"
         placeholder="请选择专题图类型"
       />
-    </mp-row-flex>
+    </mapgis-ui-row-flex>
   </div>
 </template>
 <script lang="ts">

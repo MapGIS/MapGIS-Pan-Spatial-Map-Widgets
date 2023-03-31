@@ -2,8 +2,11 @@
   <div class="mp-widget-network-analysis">
     <div id="network-analysis-el">
       <mapgis-ui-spin :spinning="showLoading">
-        <mp-setting-form :label-col="{ span: 5 }" :wrapper-col="{ span: 12 }">
-          <!-- <mp-setting-form :wrapper-width="180"> -->
+        <mapgis-ui-setting-form
+          :label-col="{ span: 5 }"
+          :wrapper-col="{ span: 12 }"
+        >
+          <!-- <mapgis-ui-setting-form :wrapper-width="180"> -->
           <mapgis-ui-form-item label="选择数据" class="select-data">
             <mapgis-ui-select
               class="select-box"
@@ -45,7 +48,7 @@
             <mapgis-ui-radio-group v-model="groupRadio" :options="optionsRadio">
             </mapgis-ui-radio-group>
           </mapgis-ui-form-item>
-        </mp-setting-form>
+        </mapgis-ui-setting-form>
         <div v-if="showButton" class="control-button-container">
           <mapgis-ui-button
             class="control-button"

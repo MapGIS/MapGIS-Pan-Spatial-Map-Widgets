@@ -1,15 +1,15 @@
 <template>
   <div class="split-screen-setting">
-    <mp-group-tab size="small" title="设置" :has-top-margin="false">
-      <mp-toolbar slot="handle" :bordered="false">
-        <mp-toolbar-command
+    <mapgis-ui-group-tab size="small" title="设置" :has-top-margin="false">
+      <mapgis-ui-toolbar slot="handle" :bordered="false">
+        <mapgis-ui-toolbar-command
           title="全屏"
           :icon="fullScreen ? 'fullscreen-exit' : 'fullscreen'"
           @click="onToggleScreen"
         />
-      </mp-toolbar>
-    </mp-group-tab>
-    <mp-setting-form layout="vertical" size="small">
+      </mapgis-ui-toolbar>
+    </mapgis-ui-group-tab>
+    <mapgis-ui-setting-form layout="vertical" size="small">
       <mapgis-ui-form-item label="屏数">
         <mapgis-ui-select :value="screenCount" @change="onScreenCountChange">
           <mapgis-ui-select-option
@@ -54,7 +54,7 @@
           </mapgis-ui-select>
         </mapgis-ui-form-item>
       </template>
-    </mp-setting-form>
+    </mapgis-ui-setting-form>
   </div>
 </template>
 

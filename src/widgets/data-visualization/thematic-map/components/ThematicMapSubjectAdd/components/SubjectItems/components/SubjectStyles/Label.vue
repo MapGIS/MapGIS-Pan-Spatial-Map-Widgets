@@ -3,66 +3,66 @@
   <div class="cluster-label">
     <mapgis-ui-row>
       <mapgis-ui-col :span="12">
-        <mp-row-flex label="最小半径" :label-width="72">
+        <mapgis-ui-row-flex label="最小半径" :label-width="72">
           <mapgis-ui-input-number v-model="themeStyle.minSize" :min="1" />
-        </mp-row-flex>
+        </mapgis-ui-row-flex>
       </mapgis-ui-col>
       <mapgis-ui-col :span="12">
-        <mp-row-flex label="最大半径" :label-width="72">
+        <mapgis-ui-row-flex label="最大半径" :label-width="72">
           <mapgis-ui-input-number v-model="themeStyle.maxSize" :min="1" />
-        </mp-row-flex>
+        </mapgis-ui-row-flex>
       </mapgis-ui-col>
     </mapgis-ui-row>
     <mapgis-ui-row>
       <mapgis-ui-col :span="12">
-        <mp-row-flex
+        <mapgis-ui-row-flex
           :label-width="72"
           label="聚合点数"
           title="点数多于此值才会被聚合"
         >
           <mapgis-ui-input-number v-model="themeStyle.minPoints" :min="1" />
-        </mp-row-flex>
+        </mapgis-ui-row-flex>
       </mapgis-ui-col>
       <mapgis-ui-col :span="12">
-        <mp-row-flex label="聚合级别" :label-width="72">
+        <mapgis-ui-row-flex label="聚合级别" :label-width="72">
           <mapgis-ui-input-number
             v-model="themeStyle.maxClusterZoom"
             :min="1"
           />
-        </mp-row-flex>
+        </mapgis-ui-row-flex>
       </mapgis-ui-col>
     </mapgis-ui-row>
     <mapgis-ui-row>
       <mapgis-ui-col :span="12">
-        <mp-row-flex label="像素半径" :label-width="72">
+        <mapgis-ui-row-flex label="像素半径" :label-width="72">
           <mapgis-ui-input-number v-model="themeStyle.clusterRadius" :min="1" />
-        </mp-row-flex>
+        </mapgis-ui-row-flex>
       </mapgis-ui-col>
       <mapgis-ui-col :span="12">
-        <mp-row-flex
+        <mapgis-ui-row-flex
           :label-width="72"
           label="细腻程度"
           title="细腻程度越高聚合后点越密集"
         >
           <mapgis-ui-input-number v-model="themeStyle.extent" :min="1" />
-        </mp-row-flex>
+        </mapgis-ui-row-flex>
       </mapgis-ui-col>
     </mapgis-ui-row>
     <mapgis-ui-row>
       <mapgis-ui-col :span="12">
-        <mp-row-flex :label-width="72" label="透明度">
+        <mapgis-ui-row-flex :label-width="72" label="透明度">
           <mapgis-ui-input-number
             v-model="themeStyle.globalAlpha"
             :step="0.1"
             :min="0.1"
             :max="1"
           />
-        </mp-row-flex>
+        </mapgis-ui-row-flex>
       </mapgis-ui-col>
       <mapgis-ui-col :span="12">
-        <mp-row-flex :label-width="72" label="渐变颜色">
+        <mapgis-ui-row-flex :label-width="72" label="渐变颜色">
           <color-picker-setting v-model="themeStyle.gradient" />
-        </mp-row-flex>
+        </mapgis-ui-row-flex>
       </mapgis-ui-col>
     </mapgis-ui-row>
   </div>

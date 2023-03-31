@@ -12,16 +12,16 @@
       :tools="tools"
       class="animation-items-dropdown"
     >
-      <mp-row-flex :span="[6, 18]" label="展示方式" label-align="right">
+      <mapgis-ui-row-flex :span="[6, 18]" label="展示方式" label-align="right">
         {{ animation.type }}
-      </mp-row-flex>
-      <mp-row-flex :span="[6, 18]" label="拖尾大小" label-align="right">
+      </mapgis-ui-row-flex>
+      <mapgis-ui-row-flex :span="[6, 18]" label="拖尾大小" label-align="right">
         <mapgis-ui-input-number v-model="animation.trails" :min="1" />
-      </mp-row-flex>
-      <mp-row-flex :span="[6, 18]" label="单个时间" label-align="right">
+      </mapgis-ui-row-flex>
+      <mapgis-ui-row-flex :span="[6, 18]" label="单个时间" label-align="right">
         <mapgis-ui-input-number v-model="animation.duration" :min="1" />
-      </mp-row-flex>
-      <mp-row-flex :span="[6, 18]" label="起止时间" label-align="right">
+      </mapgis-ui-row-flex>
+      <mapgis-ui-row-flex :span="[6, 18]" label="起止时间" label-align="right">
         <div class="steps-range">
           <mapgis-ui-space>
             <mapgis-ui-input-number
@@ -35,7 +35,7 @@
             />
           </mapgis-ui-space>
         </div>
-      </mp-row-flex>
+      </mapgis-ui-row-flex>
     </mp-card>
   </mapgis-ui-dropdown>
 </template>

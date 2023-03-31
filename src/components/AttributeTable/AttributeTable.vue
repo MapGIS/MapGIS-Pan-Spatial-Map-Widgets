@@ -1,6 +1,6 @@
 <template>
   <div ref="attributeTable" :id="id" class="mp-attribute-table">
-    <mp-toolbar class="header-bar" size="small" :bordered="false">
+    <mapgis-ui-toolbar class="header-bar" size="small" :bordered="false">
       <div class="title">
         {{ selectedDescription }}
       </div>
@@ -11,17 +11,17 @@
         size="small"
         style="margin: 0 8px"
       />
-      <mp-toolbar-command
+      <mapgis-ui-toolbar-command
         title="缩放至已选择"
         icon="environment"
         @click="onZoomTo"
       />
-      <mp-toolbar-command
+      <mapgis-ui-toolbar-command
         title="清除选择"
         icon="close-square"
         @click="onClearSelection"
       />
-      <mp-toolbar-space />
+      <mapgis-ui-toolbar-space />
       <mapgis-ui-dropdown class="download-dropdown">
         <mapgis-ui-menu slot="overlay" @click="handleMenuClick">
           <mapgis-ui-menu-item key="jsonData">
@@ -41,14 +41,18 @@
           <mapgis-ui-icon type="download" />
         </mapgis-ui-button>
       </mapgis-ui-dropdown>
-      <mp-toolbar-command
+      <mapgis-ui-toolbar-command
         title="属性统计"
         icon="bar-chart"
         @click="onStatistics"
       />
-      <mp-toolbar-command title="过滤器" icon="filter" @click="onFilter" />
+      <mapgis-ui-toolbar-command
+        title="过滤器"
+        icon="filter"
+        @click="onFilter"
+      />
       <mapgis-ui-divider type="vertical" />
-      <mp-toolbar-command
+      <mapgis-ui-toolbar-command
         title="刷新"
         :icon="loading ? 'loading' : 'reload'"
         @click="onRefresh"
@@ -57,12 +61,12 @@
         v-if="tableColumns.length"
         :columns="tableColumns"
       />
-      <mp-toolbar-command
+      <mapgis-ui-toolbar-command
         title="全屏"
         :icon="fullScreen ? 'fullscreen-exit' : 'fullscreen'"
         @click="onToggleScreen"
       />
-    </mp-toolbar>
+    </mapgis-ui-toolbar>
     <mapgis-ui-table
       :id="tableId"
       bordered
@@ -229,9 +233,7 @@ export default {
   mixins: [AttributeUtil],
   provide() {
     return {
-      popupShowType() {
-        return baseConfigInstance.config.popupShowType
-      },
+      popupShowType: baseConfigInstance.config.popupShowType,
     }
   },
   props: {

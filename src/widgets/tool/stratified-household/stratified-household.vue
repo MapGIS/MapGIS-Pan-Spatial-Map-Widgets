@@ -22,7 +22,7 @@
     ></mapgis-3d-stratified-household>
     <!-- 关系图谱 -->
     <mp-window-wrapper :visible="relationshipGraphShow">
-      <mapgis-ui-window
+      <mp-window
         class="relationship-graph-wrapper"
         ref="relationshipGraphWindow"
         @window-size="onResize"
@@ -46,7 +46,7 @@
             @project-screen="handleProjectScreen"
           />
         </div>
-      </mapgis-ui-window>
+      </mp-window>
     </mp-window-wrapper>
   </div>
 </template>

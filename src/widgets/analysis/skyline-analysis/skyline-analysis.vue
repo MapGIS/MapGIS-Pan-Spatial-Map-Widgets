@@ -10,7 +10,7 @@
     </mapgis-3d-skyline>
     <!-- 二维天际线 -->
     <mp-window-wrapper :visible="skyline2dVisible">
-      <mapgis-ui-window
+      <mp-window
         @window-size="onSkyline2dWindowSize"
         :visible.sync="skyline2dVisible"
         :min-width="800"
@@ -22,7 +22,7 @@
         <div ref="skyline2dChart">
           <div id="skyline-2d-chart" />
         </div>
-      </mapgis-ui-window>
+      </mp-window>
     </mp-window-wrapper>
   </div>
 </template>

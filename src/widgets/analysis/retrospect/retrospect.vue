@@ -1,18 +1,18 @@
 <template>
   <div class="mp-widget-retrospect">
     <mapgis-ui-spin :spinning="loading">
-      <mp-setting-form
+      <mapgis-ui-setting-form
         layout="vertical"
         v-show="timeLineList.length"
         :no-last-margin-bottom="true"
       >
         <mapgis-ui-form-item>
-          <mp-group-tab
+          <mapgis-ui-group-tab
             slot="label"
             title="专题选择"
             :has-top-margin="false"
             :has-bottom-margin="false"
-          ></mp-group-tab>
+          ></mapgis-ui-group-tab>
           <mapgis-ui-tree-select
             class="retrospect-tree-select"
             :value="subject"
@@ -57,12 +57,12 @@
           </mapgis-ui-row>
         </mapgis-ui-form-item>
         <mapgis-ui-form-item v-show="showInterval">
-          <mp-group-tab
+          <mapgis-ui-group-tab
             slot="label"
             title="时间间隔"
             :has-top-margin="false"
             :has-bottom-margin="false"
-          ></mp-group-tab>
+          ></mapgis-ui-group-tab>
           <mapgis-ui-row
             type="flex"
             align="middle"
@@ -81,7 +81,7 @@
             </mapgis-ui-col>
           </mapgis-ui-row>
         </mapgis-ui-form-item>
-      </mp-setting-form>
+      </mapgis-ui-setting-form>
       <!-- 空数据友好提示 -->
       <mapgis-ui-empty v-show="!timeLineList.length" :image="simpleImage" />
     </mapgis-ui-spin>

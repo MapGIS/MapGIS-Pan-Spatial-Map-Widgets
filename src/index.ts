@@ -1,30 +1,26 @@
-import MapgisUi from '@mapgis/webclient-vue-ui'
-import VueMapbox from '@mapgis/webclient-vue-mapboxgl'
-import VueCesium from '@mapgis/webclient-vue-cesium'
-
 import {
   MpAttributeTable,
   MpAttributeTableList,
   MpTreeLayer,
 } from './components'
 
-// import {
-//   MpBufferAnalysis,
-//   MpDynamicSectionAnalysis,
-//   MpHeightLimitedAnalysis,
-//   MpModelFlatten,
-//   MpNetworkAnalysis,
-//   MpOverlayAnalysis,
-//   MpProfileAnalysis,
-//   MpRetrospect,
-//   MpSceneRoaming,
-//   MpShadowAnalysis,
-//   MpSkylineAnalysis,
-//   MpSwipe,
-//   MpTerrainAnalysis,
-//   MpTopologyAnalysis,
-//   MpVisibilityAnalysis,
-// } from './widgets/analysis'
+import {
+  //   MpBufferAnalysis,
+  //   MpDynamicSectionAnalysis,
+  //   MpHeightLimitedAnalysis,
+  //   MpModelFlatten,
+  //   MpNetworkAnalysis,
+  //   MpOverlayAnalysis,
+  //   MpProfileAnalysis,
+  //   MpRetrospect,
+  //   MpSceneRoaming,
+  //   MpShadowAnalysis,
+  //   MpSkylineAnalysis,
+  MpSwipe,
+  //   MpTerrainAnalysis,
+  //   MpTopologyAnalysis,
+  //   MpVisibilityAnalysis,
+} from './widgets/analysis'
 
 import {
   // MpAddData,
@@ -33,7 +29,7 @@ import {
 } from './widgets/data-manager'
 
 import {
-  // MpBookmark,
+  MpBookmark,
   MpLayerList,
   MpLayerListContainer,
   MpLegend,
@@ -60,7 +56,10 @@ import {
 //   MpMapDataV,
 // } from './widgets/extended'
 
-// import { MpComprehensiveQuery, MpFeatureQuery } from './widgets/query'
+import {
+  MpComprehensiveQuery,
+  //  MpFeatureQuery
+} from './widgets/query'
 
 // import {
 //   MpBuildingGrow,
@@ -72,7 +71,7 @@ import {
   //   MpBimComponent,
   MpMeasurement,
   //   MpOutputImage,
-  //   MpSplitScreen,
+  MpSplitScreen,
   MpStratifiedHousehold,
 } from './widgets/tool'
 
@@ -92,7 +91,7 @@ const components = [
   // MpSceneRoaming,
   // MpShadowAnalysis,
   // MpSkylineAnalysis,
-  // MpSwipe,
+  MpSwipe,
   // MpTerrainAnalysis,
   // MpTopologyAnalysis,
   // MpVisibilityAnalysis,
@@ -101,7 +100,7 @@ const components = [
   MpBasemapManager,
   MpDataCatalog,
   // data-visualization
-  // MpBookmark,
+  MpBookmark,
   MpLayerList,
   MpLayerListContainer,
   MpLegend,
@@ -126,7 +125,7 @@ const components = [
   // MpKibanaV,
   // MpMapDataV,
   // query
-  // MpComprehensiveQuery,
+  MpComprehensiveQuery,
   // MpFeatureQuery,
   // simulation
   // MpBuildingGrow,
@@ -136,14 +135,17 @@ const components = [
   // MpBimComponent,
   MpMeasurement,
   // MpOutputImage,
-  // MpSplitScreen,
+  MpSplitScreen,
   MpStratifiedHousehold,
 ]
 
+import { thematicMapStore } from './widgets/data-visualization/thematic-map/store'
+
 const install = (Vue) => {
-  Vue.use(VueMapbox)
-  Vue.use(VueCesium)
-  Vue.use(MapgisUi)
+  // Vue.use(VueMapbox)
+  // Vue.use(VueCesium)
+  // Vue.use(MapgisUi)
+  Vue.observable(thematicMapStore)
   components.forEach((component) => {
     Vue.component(
       (component.options && component.options.name) || component.name,

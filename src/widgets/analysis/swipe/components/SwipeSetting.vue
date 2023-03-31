@@ -1,5 +1,5 @@
 <template>
-  <mp-setting-form class="swipe-setting" layout="vertical" size="small">
+  <mapgis-ui-setting-form class="swipe-setting" layout="vertical" size="small">
     <mapgis-ui-form-item :label="`${directionLayerTitle.aboveTitle}图层`">
       <mapgis-ui-select :value="aboveLayer.id" @change="onAboveChange">
         <mapgis-ui-select-option
@@ -30,82 +30,80 @@
         </mapgis-ui-radio>
       </mapgis-ui-radio-group>
     </mapgis-ui-form-item>
-  </mp-setting-form>
+  </mapgis-ui-setting-form>
 </template>
 
 <script lang="ts">
-import { Vue, Watch, Component, Inject } from 'vue-property-decorator'
+export default {
+  name: 'SwipeSetting',
+  inject: {
+    swipe: {
+      from: 'swipe',
+      default: () => ({}),
+    },
+  },
+  computed: {
+    // 卷帘方向
+    direction() {
+      return this.swipe.is2DMapMode ? this.swipe.direction : 'vertical'
+    },
+    // 卷帘方向变化，同步更改图层选择框的标题
+    directionLayerTitle(): {
+      aboveTitle: string
+      belowTitle: string
+    } {
+      let aboveTitle = '左侧'
+      let belowTitle = '右侧'
+      if (this.direction !== 'vertical') {
+        aboveTitle = '上层'
+        belowTitle = '下层'
+      }
+      return {
+        aboveTitle,
+        belowTitle,
+      }
+    },
+    // 上级(左侧)图层
+    aboveLayer() {
+      return this.swipe.aboveLayer || {}
+    },
+    // 下级(右侧)图层
+    belowLayer() {
+      return this.swipe.belowLayer || {}
+    },
 
-@Component
-export default class SwipeSetting extends Vue {
-  @Inject({
-    from: 'swipe',
-    default: () => ({}),
-  })
-  readonly swipe!: any
+    // 上级(左侧)图层列表
+    aboveLayers() {
+      return this.swipe.aboveLayers || []
+    },
 
-  // 卷帘方向
-  get direction() {
-    return this.swipe.is2DMapMode ? this.swipe.direction : 'vertical'
-  }
+    // 下级(右侧)图层列表
+    belowLayers() {
+      return this.swipe.belowLayers || []
+    },
+  },
+  methods: {
+    /**
+     * 上层(左侧)图层变化
+     */
+    onAboveChange(value: string) {
+      this.swipe.onAboveChange(value)
+    },
 
-  // 卷帘方向变化，同步更改图层选择框的标题
-  get directionLayerTitle(): {
-    aboveTitle: string
-    belowTitle: string
-  } {
-    let aboveTitle = '左侧'
-    let belowTitle = '右侧'
-    if (this.direction !== 'vertical') {
-      aboveTitle = '上层'
-      belowTitle = '下层'
-    }
-    return {
-      aboveTitle,
-      belowTitle,
-    }
-  }
+    /**
+     * 下层(右侧)图层变化
+     */
+    onBelowChange(value: string) {
+      this.swipe.onBelowChange(value)
+    },
 
-  // 上级(左侧)图层
-  get aboveLayer() {
-    return this.swipe.aboveLayer || {}
-  }
-
-  // 下级(右侧)图层
-  get belowLayer() {
-    return this.swipe.belowLayer || {}
-  }
-
-  // 上级(左侧)图层列表
-  get aboveLayers() {
-    return this.swipe.aboveLayers || []
-  }
-
-  // 下级(右侧)图层列表
-  get belowLayers() {
-    return this.swipe.belowLayers || []
-  }
-
-  /**
-   * 上层(左侧)图层变化
-   */
-  onAboveChange(value: string) {
-    this.swipe.onAboveChange(value)
-  }
-
-  /**
-   * 下层(右侧)图层变化
-   */
-  onBelowChange(value: string) {
-    this.swipe.onBelowChange(value)
-  }
-
-  /**
-   * 卷帘方向变化
-   */
-  onDirectionChange(e) {
-    this.swipe.onDirectChange(e.target.value)
-  }
+    /**
+     * 卷帘方向变化
+     */
+    onDirectionChange(e) {
+      this.swipe.onDirectChange(e.target.value)
+    },
+  },
 }
 </script>
 <style lang="less" scoped>

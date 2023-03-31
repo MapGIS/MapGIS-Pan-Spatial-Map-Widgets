@@ -6,7 +6,7 @@
       :overlay-style="{ zIndex: 1000 }"
     >
       <div class="button" @click="beforeSwitchMapMode">
-        <mp-icon :icon="icon" />
+        <mapgis-ui-icon :icon="icon" />
       </div>
     </mapgis-ui-tooltip>
   </div>

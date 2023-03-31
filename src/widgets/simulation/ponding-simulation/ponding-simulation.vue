@@ -16,7 +16,7 @@
       :multiSpeed="multiSpeed"
     />
     <mp-window-wrapper :visible="showTimeline">
-      <mp-placement
+      <mapgis-ui-placement
         :position="'bottom-left'"
         v-show="showTimeline"
         :offset="[52, 60]"
@@ -39,7 +39,7 @@
           @play="addSimulation"
           @loaded="handleLoaded"
         />
-      </mp-placement>
+      </mapgis-ui-placement>
     </mp-window-wrapper>
   </div>
 </template>

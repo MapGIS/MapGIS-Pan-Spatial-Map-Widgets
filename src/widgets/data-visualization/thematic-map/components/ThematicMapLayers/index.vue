@@ -97,7 +97,7 @@ export default {
   data() {
     return {
       // 高亮选项的标注点
-      maker: {},
+      marker: {},
       // 要素数据
       geojson: null,
     }

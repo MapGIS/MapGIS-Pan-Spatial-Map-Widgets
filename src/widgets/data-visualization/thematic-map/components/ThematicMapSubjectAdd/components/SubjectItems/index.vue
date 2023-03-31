@@ -1,21 +1,31 @@
 <template>
   <div class="subject-items">
     <!-- 设置面板头部 -->
-    <mp-toolbar :bordered="false" class="subject-items-head">
-      <mp-toolbar-title :has-padding="false"> 专题图设置 </mp-toolbar-title>
-      <mp-toolbar-command-group>
-        <mp-toolbar-command @click="add" title="新增" icon="plus" />
+    <mapgis-ui-toolbar :bordered="false" class="subject-items-head">
+      <mapgis-ui-toolbar-title :has-padding="false">
+        专题图设置
+      </mapgis-ui-toolbar-title>
+      <mapgis-ui-toolbar-command-group>
+        <mapgis-ui-toolbar-command @click="add" title="新增" icon="plus" />
         <template v-if="configList.length">
           <template v-if="!showCheckbox">
-            <mp-toolbar-command @click="edit" title="编辑" icon="edit" />
+            <mapgis-ui-toolbar-command @click="edit" title="编辑" icon="edit" />
           </template>
           <template v-else>
-            <mp-toolbar-command @click="remove" title="删除" icon="delete" />
-            <mp-toolbar-command @click="cancel" title="取消" icon="close" />
+            <mapgis-ui-toolbar-command
+              @click="remove"
+              title="删除"
+              icon="delete"
+            />
+            <mapgis-ui-toolbar-command
+              @click="cancel"
+              title="取消"
+              icon="close"
+            />
           </template>
         </template>
-      </mp-toolbar-command-group>
-    </mp-toolbar>
+      </mapgis-ui-toolbar-command-group>
+    </mapgis-ui-toolbar>
     <!-- 设置面板内容 -->
     <div class="subject-items-content">
       <mapgis-ui-empty class="subject-items-empty" v-if="!configList.length" />
@@ -93,7 +103,7 @@ export default {
   },
   props: {
     subjectType: {
-      type: Object,
+      type: String,
     },
     value: {
       type: Array,

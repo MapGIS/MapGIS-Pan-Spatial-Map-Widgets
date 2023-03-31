@@ -1,6 +1,6 @@
 <template>
   <div class="mp-widget-add-data beauty-scroll">
-    <mp-toolbar class="add-data-toolbar">
+    <mapgis-ui-toolbar class="add-data-toolbar">
       <add-data-category-select
         :categories="categories"
         :value="categoryName"
@@ -8,17 +8,21 @@
         size="small"
         class="add-data-category-select"
       />
-      <mp-toolbar-command-group>
-        <mp-toolbar-command title="添加分类" icon="plus" @click="onAddCategory">
-        </mp-toolbar-command>
-      </mp-toolbar-command-group>
-      <mp-toolbar-space></mp-toolbar-space>
+      <mapgis-ui-toolbar-command-group>
+        <mapgis-ui-toolbar-command
+          title="添加分类"
+          icon="plus"
+          @click="onAddCategory"
+        >
+        </mapgis-ui-toolbar-command>
+      </mapgis-ui-toolbar-command-group>
+      <mapgis-ui-toolbar-space></mapgis-ui-toolbar-space>
       <mapgis-ui-divider type="vertical" />
-      <mp-toolbar-command-group>
-        <mp-toolbar-command title="保存" icon="save" @click="onSaveData">
-        </mp-toolbar-command>
-      </mp-toolbar-command-group>
-    </mp-toolbar>
+      <mapgis-ui-toolbar-command-group>
+        <mapgis-ui-toolbar-command title="保存" icon="save" @click="onSaveData">
+        </mapgis-ui-toolbar-command>
+      </mapgis-ui-toolbar-command-group>
+    </mapgis-ui-toolbar>
     <mapgis-ui-space direction="vertical" class="full-width">
       <mapgis-ui-row>
         <mapgis-ui-table
@@ -121,19 +125,19 @@
                 :value="record.url"
                 auto-size
               ></mapgis-ui-textarea>
-              <mp-toolbar class="data-content-toolbar">
-                <mp-toolbar-command-group>
+              <mapgis-ui-toolbar class="data-content-toolbar">
+                <mapgis-ui-toolbar-command-group>
                   <mapgis-ui-popconfirm
                     title="确认删除?"
                     @confirm="() => onDeleteData(record)"
                   >
-                    <mp-toolbar-command
+                    <mapgis-ui-toolbar-command
                       title="删除"
                       icon="delete"
-                    ></mp-toolbar-command>
+                    ></mapgis-ui-toolbar-command>
                   </mapgis-ui-popconfirm>
-                </mp-toolbar-command-group>
-              </mp-toolbar>
+                </mapgis-ui-toolbar-command-group>
+              </mapgis-ui-toolbar>
             </div>
           </template>
           <template slot="customRenderType" slot-scope="text">

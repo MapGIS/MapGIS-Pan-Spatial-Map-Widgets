@@ -274,20 +274,20 @@ export default {
   .drawer-handle {
     background-color: $base-bg-color;
     border: 1px solid $primary-color;
+    position: absolute;
+    height: 64px;
+    top: calc(50% - 32px);
+    left: -16px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px 0 0 4px;
+    border-right-color: transparent;
+    cursor: pointer;
     &:hover {
       color: white;
       background: $primary-color;
-      position: absolute;
-      height: 64px;
-      top: calc(50% - 32px);
-      left: -16px;
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      align-items: center;
-      border-radius: 4px 0 0 4px;
-      border-right-color: transparent;
-      cursor: pointer;
     }
   }
   &.max {

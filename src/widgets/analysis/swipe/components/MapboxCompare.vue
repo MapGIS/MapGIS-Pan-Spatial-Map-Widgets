@@ -41,135 +41,140 @@
   </div>
 </template>
 <script lang="ts">
-import { Vue, Component, Watch, Inject } from 'vue-property-decorator'
 import { Document, Layer } from '@mapgis/web-app-framework'
 import SwipeSetting from './SwipeSetting'
 
-@Component({
+export default {
+  name: 'MapboxCompare',
   components: {
     SwipeSetting,
   },
-})
-export default class MapboxCompare extends Vue {
-  @Inject({
-    from: 'swipe',
-    default: () => ({}),
-  })
-  readonly swipe!: any
-
-  // 上级(左侧)地图Document
-  aboveDocument: Document = new Document()
-
-  // 下级(右侧)地图Document
-  belowDocument: Document = new Document()
-
-  // 弹框开关
-  settingPanelVisible = true
-
-  // 卷帘方向
-  get direction() {
-    return this.swipe.direction || 'vertical'
-  }
-
-  // 上级(左侧)图层
-  get aboveLayer() {
-    return this.swipe.aboveLayer || {}
-  }
-
-  // 下级(右侧)图层
-  get belowLayer() {
-    return this.swipe.belowLayer || {}
-  }
-
-  // 是否展示卷帘
-  get showCompare() {
-    return this.aboveLayer.id && this.belowLayer.id
-  }
-
-  // 弹框wrap样式
-  get drawerWrapStyle() {
+  inject: {
+    swipe: {
+      from: 'swipe',
+      default: () => ({}),
+    },
+  },
+  data() {
     return {
-      position: 'absolute',
+      // 上级(左侧)地图Document
+      aboveDocument: new Document(),
+
+      // 下级(右侧)地图Document
+      belowDocument: new Document(),
+
+      // 弹框开关
+      settingPanelVisible: true,
     }
-  }
+  },
+  computed: {
+    // 卷帘方向
+    direction() {
+      return this.swipe.direction || 'vertical'
+    },
+    // 上级(左侧)图层
+    aboveLayer() {
+      return this.swipe.aboveLayer || {}
+    },
 
-  // 弹框头部样式
-  get drawerHeaderStyle() {
-    return {
-      display: 'none',
-    }
-  }
+    // 下级(右侧)图层
+    belowLayer() {
+      return this.swipe.belowLayer || {}
+    },
 
-  // 弹框内容样式
-  get drawerBodyStyle() {
-    return {
-      display: 'flex',
-      padding: '12px',
-    }
-  }
+    // 是否展示卷帘
+    showCompare() {
+      return this.aboveLayer.id && this.belowLayer.id
+    },
 
-  /**
-   * 遮罩层样式
-   */
-  get drawerMaskStyle() {
-    return {
-      backgroundColor: 'transparent',
-    }
-  }
+    // 弹框wrap样式
+    drawerWrapStyle() {
+      return {
+        position: 'absolute',
+      }
+    },
 
-  /**
-   * 监听: 上级(左侧)图层
-   */
-  @Watch('aboveLayer.id', { immediate: true })
-  watchAboveLayer() {
-    this.addLayerToMap('above')
-  }
+    // 弹框头部样式
+    drawerHeaderStyle() {
+      return {
+        display: 'none',
+      }
+    },
 
-  /**
-   * 监听: 下级(右侧)图层
-   */
-  @Watch('belowLayer.id', { immediate: true })
-  watchBelowLayer() {
-    this.addLayerToMap('below')
-  }
+    // 弹框内容样式
+    drawerBodyStyle() {
+      return {
+        display: 'flex',
+        padding: '12px',
+      }
+    },
 
-  /**
-   * 点击遮罩层关闭面板
-   */
-  onSettingPanelClose() {
-    this.settingPanelVisible = false
-  }
-
-  /**
-   * 面板开关
-   */
-  onToggleSettingPanel() {
-    this.settingPanelVisible = !this.settingPanelVisible
-  }
-
-  /**
-   * 添加图层
-   */
-  private addLayerToMap(type: 'above' | 'below') {
-    const { defaultMap } = this[`${type}Document`]
-    const layer = this[`${type}Layer`]
-    if (layer) {
-      defaultMap.removeAll()
-      defaultMap.add(layer)
-    }
-  }
-
-  private handleLoad(payLoad) {
-    const { map } = payLoad
-    const fullExtent = this.aboveLayer.fullExtent || this.belowLayer.fullExtent
-    const { xmin, ymin, xmax, ymax } = fullExtent
-    setTimeout(function () {
-      map.fitBounds([
-        [xmin, ymin],
-        [xmax, ymax],
-      ])
-    }, 300)
-  }
+    /**
+     * 遮罩层样式
+     */
+    drawerMaskStyle() {
+      return {
+        backgroundColor: 'transparent',
+      }
+    },
+  },
+  watch: {
+    /**
+     * 监听: 上级(左侧)图层
+     */
+    'aboveLayer.id': {
+      immediate: true,
+      handler() {
+        this.addLayerToMap('above')
+      },
+    },
+    /**
+     * 监听: 下级(右侧)图层
+     */
+    'belowLayer.id': {
+      immediate: true,
+      handler() {
+        this.addLayerToMap('below')
+      },
+    },
+  },
+  methods: {
+    /**
+     * 点击遮罩层关闭面板
+     */
+    onSettingPanelClose() {
+      this.settingPanelVisible = false
+    },
+    /**
+     * 面板开关
+     */
+    onToggleSettingPanel() {
+      this.settingPanelVisible = !this.settingPanelVisible
+    },
+    /**
+     * 添加图层
+     */
+    addLayerToMap(type: 'above' | 'below') {
+      const { defaultMap } = this[`${type}Document`]
+      const layer = this[`${type}Layer`]
+      if (layer) {
+        defaultMap.removeAll()
+        defaultMap.add(layer)
+      }
+    },
+    handleLoad(payLoad) {
+      const { map } = payLoad
+      const fullExtent =
+        this.aboveLayer.fullExtent || this.belowLayer.fullExtent
+      const { xmin, ymin, xmax, ymax } = fullExtent
+      setTimeout(function () {
+        map.fitBounds([
+          [xmin, ymin],
+          [xmax, ymax],
+        ])
+      }, 300)
+    },
+  },
 }
 </script>
 

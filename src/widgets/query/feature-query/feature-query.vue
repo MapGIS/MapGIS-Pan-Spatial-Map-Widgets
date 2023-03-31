@@ -7,9 +7,9 @@
       @finished="onDrawFinished"
     >
     </mp-3d-draw-pro>
-    <mp-toolbar>
-      <mp-toolbar-command-group>
-        <mp-toolbar-command
+    <mapgis-ui-toolbar>
+      <mapgis-ui-toolbar-command-group>
+        <mapgis-ui-toolbar-command
           v-for="type in queryTypes"
           :key="type.id"
           :title="type.label"
@@ -17,21 +17,21 @@
           :active="queryType === type.id"
           @click="onOpenDraw(type.id)"
         >
-        </mp-toolbar-command>
-      </mp-toolbar-command-group>
-      <mp-toolbar-space />
-      <mp-toolbar-command-group>
+        </mapgis-ui-toolbar-command>
+      </mapgis-ui-toolbar-command-group>
+      <mapgis-ui-toolbar-space />
+      <mapgis-ui-toolbar-command-group>
         <mapgis-ui-divider type="vertical" />
-        <mp-toolbar-command
+        <mapgis-ui-toolbar-command
           title="设置"
           icon="setting"
           :active="showSettingPanel"
           @click="showSettingPanel = !showSettingPanel"
         />
-      </mp-toolbar-command-group>
-    </mp-toolbar>
+      </mapgis-ui-toolbar-command-group>
+    </mapgis-ui-toolbar>
     <div v-show="showSettingPanel">
-      <mp-setting-form layout="vertical" style="padding-top: 8px">
+      <mapgis-ui-setting-form layout="vertical" style="padding-top: 8px">
         <mapgis-ui-form-item label="缓冲半径(km)">
           <mapgis-ui-slider
             v-model="sliderIndex"
@@ -41,7 +41,7 @@
             :tipFormatter="() => `${limits}km`"
           />
         </mapgis-ui-form-item>
-      </mp-setting-form>
+      </mapgis-ui-setting-form>
     </div>
   </div>
 </template>

@@ -1,18 +1,18 @@
 <template>
   <div class="mp-widget-func-warehouse">
     <mapgis-ui-spin :spinning="showLoading">
-      <mp-setting-form
+      <mapgis-ui-setting-form
         v-if="group.length"
         layout="vertical"
         :no-last-margin-bottom="true"
       >
         <mapgis-ui-form-item>
-          <mp-group-tab
+          <mapgis-ui-group-tab
             slot="label"
             title="功能类型"
             :has-top-margin="false"
             :has-bottom-margin="false"
-          ></mp-group-tab>
+          ></mapgis-ui-group-tab>
           <mapgis-ui-select v-model="selectGroupIndex">
             <mapgis-ui-select-option v-for="item in group" :key="item.index">
               {{ item.groupName }}
@@ -20,12 +20,12 @@
           </mapgis-ui-select>
         </mapgis-ui-form-item>
         <mapgis-ui-form-item>
-          <mp-group-tab
+          <mapgis-ui-group-tab
             slot="label"
             title="功能列表"
             :has-top-margin="false"
             :has-bottom-margin="false"
-          ></mp-group-tab>
+          ></mapgis-ui-group-tab>
           <mapgis-ui-table
             v-if="
               group[this.selectGroupIndex] &&
@@ -56,7 +56,7 @@
             </template>
           </mapgis-ui-table>
         </mapgis-ui-form-item>
-      </mp-setting-form>
+      </mapgis-ui-setting-form>
       <mapgis-ui-empty v-else :image="simpleImage" />
     </mapgis-ui-spin>
     <mp-window-wrapper :visible="openHandlerWindow">

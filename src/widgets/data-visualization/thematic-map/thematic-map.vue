@@ -110,11 +110,7 @@ export default {
     },
   },
   provide() {
-    return {
-      popupShowType() {
-        return baseConfigInstance.config.popupShowType
-      },
-    }
+    return { popupShowType: baseConfigInstance.config.popupShowType }
   },
   data() {
     return {

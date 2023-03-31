@@ -34,7 +34,7 @@
     </mapgis-3d-analysis-profile>
     <!-- 剖面信息 -->
     <mp-window-wrapper :visible="profile2dVisible">
-      <mapgis-ui-window
+      <mp-window
         @window-size="onProfile2dWindowSize"
         :visible.sync="profile2dVisible"
         :min-width="800"
@@ -46,7 +46,7 @@
         <div ref="profile2dChart">
           <div id="profileeChart" style="width: 800px; height: 180px"></div>
         </div>
-      </mapgis-ui-window>
+      </mp-window>
     </mp-window-wrapper>
   </div>
 </template>

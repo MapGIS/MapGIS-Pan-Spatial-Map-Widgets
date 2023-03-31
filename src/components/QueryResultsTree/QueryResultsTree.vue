@@ -121,7 +121,7 @@ export default {
     },
     // 待查询的图层的查询范围
     geometry: {
-      type: [Rectangle, Rectangle3D],
+      type: Object,
     },
     // 参与查询的地图索引,可选属性,仅对1、3两种类型的图层有效。
     mapIndex: {

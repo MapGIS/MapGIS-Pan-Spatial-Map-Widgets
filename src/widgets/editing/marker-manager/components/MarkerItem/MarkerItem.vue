@@ -1,16 +1,16 @@
 <template>
   <div :class="['marker-item', { active }]">
     <div class="content" @click="$emit('goto-marker', marker)">
-      <mp-toolbar-command-group
+      <mapgis-ui-toolbar-command-group
         remove-first-command-left-margin
         remove-last-command-right-margin
       >
-        <mp-toolbar-command
+        <mapgis-ui-toolbar-command
           :icon="icons[marker.feature.geometry.type]"
           title=""
           :hoverBordered="false"
-        ></mp-toolbar-command>
-      </mp-toolbar-command-group>
+        ></mapgis-ui-toolbar-command>
+      </mapgis-ui-toolbar-command-group>
       <div class="name" :title="marker.title">
         {{ marker.title }}
       </div>

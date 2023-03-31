@@ -2,7 +2,7 @@
   <!-- 侧边工具栏 -->
   <transition name="fade">
     <mp-window-wrapper :visible="visible">
-      <mp-placement
+      <mapgis-ui-placement
         v-show="visible"
         class="thematic-map-manage-tools"
         position="center-right"
@@ -19,7 +19,7 @@
             </mapgis-ui-tooltip>
           </mapgis-ui-col>
         </mapgis-ui-row>
-      </mp-placement>
+      </mapgis-ui-placement>
     </mp-window-wrapper>
   </transition>
 </template>

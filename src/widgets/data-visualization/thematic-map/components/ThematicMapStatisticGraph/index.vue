@@ -17,15 +17,15 @@
           <mapgis-ui-spin :spinning="loading">
             <div ref="statisticGraph" class="thematic-map-statistic-graph">
               <!-- 指标和图表切换 -->
-              <!-- <mp-row-flex class="target" :span="[16, 8]" content-align="right">
-                <mp-row-flex slot="label" :label-width="44" label="指标">
+              <!-- <mapgis-ui-row-flex class="target" :span="[16, 8]" content-align="right">
+                <mapgis-ui-row-flex slot="label" :label-width="44" label="指标">
                   <mapgis-ui-select
                     @change="onTargetChange"
                     :value="target"
                     :options="targetList"
                     size="small"
                   />
-                </mp-row-flex>
+                </mapgis-ui-row-flex>
                 <mapgis-ui-tooltip
                   v-for="item in chartConfig"
                   :key="item.type"
@@ -37,7 +37,7 @@
                     @click="onChartTypeChange(item.type)"
                   />
                 </mapgis-ui-tooltip>
-              </mp-row-flex> -->
+              </mapgis-ui-row-flex> -->
               <!-- 图表 -->
               <!-- <div id="thematic-map-graph-chart" v-show="showChart" /> -->
               <div v-if="statisticParamas && graph">

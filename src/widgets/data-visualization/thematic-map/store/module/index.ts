@@ -66,4 +66,3 @@ export const mapMutations = (arr: Array<keyof Mutations>) => {
 }
 
 export default store
-window.aaaa = mapGetters

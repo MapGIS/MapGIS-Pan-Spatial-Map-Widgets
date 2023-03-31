@@ -82,8 +82,8 @@ export default class MpDynamicSectionAnalysis extends Mixins(WidgetMixin) {
 }
 </script>
 
-<style lang="scss" scoped>
-@import './style/index.scss';
+<style lang="less" scoped>
+@import './style/index.less';
 
 ::v-deep {
   .ant-input-number {

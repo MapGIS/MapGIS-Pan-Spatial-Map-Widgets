@@ -8,7 +8,7 @@
     :emptyVisible="emptyVisible"
     title="图表配置"
   >
-    <mp-row-flex slot="top" label="分组字段" :label-width="72">
+    <mapgis-ui-row-flex slot="top" label="分组字段" :label-width="72">
       <mapgis-ui-select
         v-model="field"
         :options="fieldList"
@@ -16,20 +16,20 @@
         size="small"
         placeholder="请选择"
       />
-    </mp-row-flex>
-    <!-- <mp-row-flex slot="top" :span="[11, 11]" justify="space-between">
-      <mp-row-flex slot="label" label="分组字段" :label-width="72">
+    </mapgis-ui-row-flex>
+    <!-- <mapgis-ui-row-flex slot="top" :span="[11, 11]" justify="space-between">
+      <mapgis-ui-row-flex slot="label" label="分组字段" :label-width="72">
         <mapgis-ui-select v-model="field" :options="fieldList" placeholder="请选择" />
-      </mp-row-flex>
-      <mp-row-flex label="统计方式" :label-width="72">
+      </mapgis-ui-row-flex>
+      <mapgis-ui-row-flex label="统计方式" :label-width="72">
         <mapgis-ui-select
           v-model="way"
           :options="statisticWays"
           :disabled="true"
           placeholder="请选择"
         />
-      </mp-row-flex>
-    </mp-row-flex> -->
+      </mapgis-ui-row-flex>
+    </mapgis-ui-row-flex> -->
   </editable-field-table>
 </template>
 <script lang="ts">
@@ -225,7 +225,7 @@ export default {
 }
 </script>
 <style lang="less" scoped>
-::v-deep .mp-row-flex {
+::v-deep .mapgis-ui-row-flex {
   padding-bottom: 8px;
 }
 </style>

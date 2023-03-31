@@ -45,7 +45,7 @@
           </mapgis-ui-list-item>
         </mapgis-ui-list>
       </div>
-      <mp-toolbar-command title="列配置" icon="setting" />
+      <mapgis-ui-toolbar-command title="列配置" icon="setting" />
     </mapgis-ui-popover>
   </div>
 </template>

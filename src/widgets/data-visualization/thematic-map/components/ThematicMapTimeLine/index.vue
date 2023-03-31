@@ -12,7 +12,11 @@
       <div class="thematic-map-time-line">
         <mapgis-ui-spin :spinning="loading">
           <!-- 时间轴 -->
-          <mp-row-flex v-show="timeList.length" :span="[2, 22]" align="top">
+          <mapgis-ui-row-flex
+            v-show="timeList.length"
+            :span="[2, 22]"
+            align="top"
+          >
             <template #label>
               <mapgis-ui-tooltip placement="bottom" :title="autoPlay.tooltip">
                 <mapgis-ui-iconfont
@@ -23,7 +27,7 @@
               </mapgis-ui-tooltip>
             </template>
             <div id="thematic-map-time-line-chart" />
-          </mp-row-flex>
+          </mapgis-ui-row-flex>
           <!-- 空数据友好提示 -->
           <mapgis-ui-empty v-show="!timeList.length" />
         </mapgis-ui-spin>

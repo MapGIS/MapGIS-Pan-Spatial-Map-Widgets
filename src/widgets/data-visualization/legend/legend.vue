@@ -1,8 +1,8 @@
 <template>
   <div class="mp-widget-legend">
-    <MpWindowWrapper :visible="visible">
+    <mp-window-wrapper :visible="visible">
       <template v-slot:default="slotProps">
-        <MpWindow
+        <mp-window
           anchor="top-right"
           title="图例"
           :visible.sync="visible"
@@ -20,9 +20,9 @@
               <img class="contain-img" :src="item.imgUrl" alt="" />
             </div>
           </template>
-        </MpWindow>
+        </mp-window>
       </template>
-    </MpWindowWrapper>
+    </mp-window-wrapper>
     <mp-map-widget-button :widget="widget" @click="onClickWidget" />
   </div>
 </template>

@@ -135,9 +135,12 @@ export default {
       layerServiceTypeEnum: LayerServiceType,
 
       uploadUrl: `${this.baseUrl}/api/local-storage`,
-
-      // 示例
-      examples: [
+    }
+  },
+  computed: {
+    // 示例
+    examples() {
+      return [
         {
           label: '示例1',
           serverType: this.layerServiceTypeEnum.igsImage,
@@ -160,8 +163,10 @@ export default {
           content:
             'http://192.168.82.89:8089/igs/rest/services/白模/SceneServer',
         },
-      ],
-      layerServiceTypes: [
+      ]
+    },
+    layerServiceTypes() {
+      return [
         { label: 'MapGIS 地图服务', value: this.layerServiceTypeEnum.igsImage },
         {
           label: 'MapGIS 图层地图服务',
@@ -169,10 +174,8 @@ export default {
         },
         { label: 'GEOJSON 服务', value: this.layerServiceTypeEnum.geojson },
         { label: 'M3D 服务', value: this.layerServiceTypeEnum.igsScene },
-      ],
-    }
-  },
-  computed: {
+      ]
+    },
     exampleContent() {
       return (
         this.examples.find((item) => item.serverType === this.layerServiceType)

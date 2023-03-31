@@ -46,7 +46,7 @@
         ref="cityGrowOptions"
       ></mapgis-3d-city-grow-options>
       <mp-window-wrapper :visible="startCityGrow">
-        <mp-placement
+        <mapgis-ui-placement
           :position="'bottom-left'"
           v-show="startCityGrow"
           :offset="[52, 60]"
@@ -59,7 +59,7 @@
             ref="cityGrow"
             @loaded="load"
           ></mapgis-3d-city-grow>
-        </mp-placement>
+        </mapgis-ui-placement>
       </mp-window-wrapper>
     </div>
   </div>

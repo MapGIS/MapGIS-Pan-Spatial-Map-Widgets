@@ -1,19 +1,19 @@
 <template>
-  <mp-toolbar class="mp-split-screen-toolbar">
-    <mp-toolbar-title>
+  <mapgis-ui-toolbar class="mp-split-screen-toolbar">
+    <mapgis-ui-toolbar-title>
       {{ title }}
-    </mp-toolbar-title>
-    <mp-toolbar-command-group>
-      <mp-toolbar-command
+    </mapgis-ui-toolbar-title>
+    <mapgis-ui-toolbar-command-group>
+      <mapgis-ui-toolbar-command
         v-for="item in resTools"
         :key="item.label"
         :title="item.label"
         :icon="item.icon"
         @click="onIconClick(item)"
       >
-      </mp-toolbar-command>
-    </mp-toolbar-command-group>
-  </mp-toolbar>
+      </mapgis-ui-toolbar-command>
+    </mapgis-ui-toolbar-command-group>
+  </mapgis-ui-toolbar>
 </template>
 
 <script lang="ts">
@@ -30,7 +30,7 @@ export default {
   props: {
     title: String,
     excludes: {
-      type: Object | Array,
+      type: [Object, Array],
     },
     tools: Array,
   },
@@ -86,7 +86,7 @@ export default {
 <style lang="scss" scoped>
 .mp-split-screen-toolbar {
   // 有穿透
-  .mp-toolbar-title {
+  .mapgis-ui-toolbar-title {
     color: $primary-color;
   }
 }

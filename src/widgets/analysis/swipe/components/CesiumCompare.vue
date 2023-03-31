@@ -16,48 +16,49 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Vue, Inject } from 'vue-property-decorator'
 import { Layer } from '@mapgis/web-app-framework'
 import SwipeSetting from './SwipeSetting'
 
-@Component({
+export default {
+  name: 'CesiumCompare',
   components: {
     SwipeSetting,
   },
-})
-export default class CesiumCompare extends Vue {
-  @Inject({
-    from: 'swipe',
-    default: () => ({}),
-  })
-  readonly swipe!: any
+  inject: {
+    swipe: {
+      from: 'swipe',
+      default: () => ({}),
+    },
+  },
+  computed: {
+    // 上级(左侧)图层列表
+    beforeLayers() {
+      return this.getLayerIds(this.swipe.aboveLayer)
+    },
 
-  // 上级(左侧)图层列表
-  get beforeLayers() {
-    return this.getLayerIds(this.swipe.aboveLayer)
-  }
+    // 下级(右侧)图层列表
+    afterLayers() {
+      return this.getLayerIds(this.swipe.belowLayer)
+    },
 
-  // 下级(右侧)图层列表
-  get afterLayers() {
-    return this.getLayerIds(this.swipe.belowLayer)
-  }
+    // 是否展示卷帘
+    showCompare() {
+      return this.beforeLayers.length && this.afterLayers.length
+    },
 
-  // 是否展示卷帘
-  get showCompare() {
-    return this.beforeLayers.length && this.afterLayers.length
-  }
-
-  // 刷新标志
-  get refreshFlag() {
-    return () => this.swipe.refreshCesiumCompare
-  }
-
-  /**
-   * 获取图层ID列表
-   */
-  getLayerIds({ id }: Layer) {
-    return id ? [id] : []
-  }
+    // 刷新标志
+    refreshFlag() {
+      return () => this.swipe.refreshCesiumCompare
+    },
+  },
+  methods: {
+    /**
+     * 获取图层ID列表
+     */
+    getLayerIds({ id }: Layer) {
+      return id ? [id] : []
+    },
+  },
 }
 </script>
 

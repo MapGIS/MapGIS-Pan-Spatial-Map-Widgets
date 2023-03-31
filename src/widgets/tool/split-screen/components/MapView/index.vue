@@ -84,18 +84,19 @@ export default {
     MpQueryResultTree,
   },
   mixins: [MapViewMixin],
+  inject: ['map', 'mapbox'],
   provide() {
     const self = this
     return {
-      mapbox() {
+      get mapbox() {
         return self.ssMapbox
       },
-      map() {
+      get map() {
         return self.ssMap
       },
     }
   },
-  inject: ['map', 'mapbox'],
+
   props: {
     // 是否全部三维屏
     isAll3d: {
@@ -108,7 +109,7 @@ export default {
     },
     // 需要resize
     resize: {
-      type: String | Boolean,
+      type: [String, Boolean],
     },
     // 当前活动的窗口ID
     mapViewId: String,

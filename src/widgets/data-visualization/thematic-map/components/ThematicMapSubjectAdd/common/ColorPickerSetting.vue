@@ -18,7 +18,7 @@
         :data-source="tableData"
       >
         <template slot="color" slot-scope="text, record">
-          <mp-color-picker-confirm
+          <mapgis-ui-sketch-color-picker-confirm
             v-model="record.color"
             :border-radius="false"
             class="color-picker-confirm"

@@ -22,8 +22,8 @@
       <div class="query-section panel-container">
         <mapgis-ui-tabs v-model="locationType" size="small" type="card">
           <mapgis-ui-tab-pane
-            v-for="item in locationTypes"
-            :key="item"
+            v-for="(item, index) in locationTypes"
+            :key="index"
             :tab="tab(item)"
           >
             <zone
@@ -71,7 +71,6 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component } from 'vue-property-decorator'
 import {
   LayerType,
   AppMixin,
@@ -94,109 +93,319 @@ import * as turf from '@turf/turf'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
-@Component({
+export default {
   name: 'MpComprehensiveQuery',
   components: { Zone, Coordinate, Frame, PlaceNameMapbox, PlaceNameCesium },
-})
-export default class MpComprehensiveQuery extends Mixins(
-  WidgetMixin,
-  ExhibitionControllerMixin,
-  AppMixin,
-  MapMixin
-) {
-  /**
-   * 查询范围
-   */
-  private extent = null
+  mixins: [WidgetMixin, ExhibitionControllerMixin, AppMixin, MapMixin],
+  data() {
+    return {
+      /**
+       * 查询范围
+       */
+      extent: null,
 
-  /**
-   * 是否开启聚合标注
-   */
-  private cluster = false
+      /**
+       * 是否开启聚合标注
+       */
+      cluster: false,
 
-  private colorCluster = ''
+      colorCluster: '',
 
-  /**
-   * 控制面板回传回来的范围
-   */
-  private geoJSONExtent = null
+      /**
+       * 控制面板回传回来的范围
+       */
+      geoJSONExtent: null,
 
-  /**
-   * 查询的结果
-   */
-  private current = { type: 'FeatureCollection', features: [] }
+      /**
+       * 查询的结果
+       */
+      current: { type: 'FeatureCollection', features: [] },
 
-  private districtName = ''
+      districtName: '',
 
-  /**
-   * 鼠标移入的marker
-   */
-  private hoverMarker = []
+      /**
+       * 鼠标移入的marker
+       */
+      hoverMarker: [],
 
-  /**
-   * 行政区范围
-   */
-  private district = null
+      /**
+       * 行政区范围
+       */
+      district: null,
 
-  /**
-   * 默认图标
-   */
-  private defaultMarkerIcon = ''
+      /**
+       * 默认图标
+       */
+      defaultMarkerIcon: '',
 
-  /**
-   * 上一id，用于清除之前的高亮区域
-   */
-  private preId = ''
+      /**
+       * 上一id，用于清除之前的高亮区域
+       */
+      preId: '',
 
-  private entityNames = []
+      entityNames: [],
 
-  private currentLayer = null
+      currentLayer: null,
 
-  /**
-   * 选中图标
-   */
-  private selectedMarkerIcon = ''
+      /**
+       * 选中图标
+       */
+      selectedMarkerIcon: '',
 
-  // 可选district：行政区划定位；coordinate：坐标定位；map-sheet：图幅号定位
-  private locationType = 'district'
+      // 可选district：行政区划定位；coordinate：坐标定位；map-sheet：图幅号定位
+      locationType: 'district',
 
-  private selectShowProperty = null
-
-  private get highlightStyle() {
-    return baseConfigInstance.config.colorConfig
-  }
-
-  get logoType() {
-    return this.locationType || 'district'
-  }
-
-  /**
-   * logo地址
-   */
-  get logo() {
-    return `${this.appAssetsUrl}${this.widgetInfo.uri}/images/${this.logoType}.png`
-  }
-
-  /**
-   * 微件配置信息
-   */
-  private get config() {
-    return this.widgetInfo.config
-  }
-
-  private get locationTypes() {
-    return this.config.placeName.locationMode
-  }
-
-  tab(item) {
-    if (item === 'district') {
-      return '行政区划定位'
-    } else if (item === 'coordinate') {
-      return '坐标定位'
-    } else if (item === 'map-sheet') {
-      return '图幅定位'
+      selectShowProperty: null,
     }
-  }
+  },
+  computed: {
+    highlightStyle() {
+      return baseConfigInstance.config.colorConfig
+    },
+
+    logoType() {
+      return this.locationType || 'district'
+    },
+
+    /**
+     * logo地址
+     */
+    logo() {
+      return `${this.appAssetsUrl}${this.widgetInfo.uri}/images/${this.logoType}.png`
+    },
+
+    /**
+     * 微件配置信息
+     */
+    config() {
+      return this.widgetInfo.config
+    },
+
+    locationTypes() {
+      return this.config.placeName.locationMode
+    },
+  },
+  methods: {
+    tab(item) {
+      if (item === 'district') {
+        return '行政区划定位'
+      } else if (item === 'coordinate') {
+        return '坐标定位'
+      } else if (item === 'map-sheet') {
+        return '图幅定位'
+      }
+    },
+
+    /**
+     * 点击关闭的回调函数
+     */
+    onClose() {
+      this.$refs.zone && this.$refs.zone.clear()
+      this.$refs.coordinate && this.$refs.coordinate.clear()
+      this.$refs['map-sheet'] && this.$refs['map-sheet'].clear()
+      this.closePopup()
+      this.analysisManager = null
+      if (this.sceneController) {
+        this.sceneController.removeCameraChangedEvent(this.changeFilterWithMap)
+      }
+    },
+
+    /**
+     * 查询时的回调函数（在没有查询范围时，采用当前屏幕的范围）
+     * 如果是dataStore数据，并且查询keyword为空，在采用当前可视范围
+     */
+    onSearch(isDataStoreQuery, val) {
+      if (
+        this.geoJSONExtent === null ||
+        JSON.stringify(this.geoJSONExtent) === '{}' ||
+        (isDataStoreQuery && !val)
+      ) {
+        this.extent = this.getBounds()
+      } else {
+        this.extent = this.geoJSONExtent
+      }
+    },
+
+    /**
+     * 设置聚合图标的颜色
+     */
+    setColorCluster(color: string) {
+      this.colorCluster = color
+    },
+
+    /**
+     * 手动选择范围的时候回调函数
+     */
+    change(val) {
+      this.geoJSONExtent = val
+    },
+
+    /**
+     * 获取屏幕范围
+     */
+    getBounds() {
+      let polygon
+      if (this.is2DMapMode) {
+        const { _ne, _sw } = this.map.getBounds()
+        const { lng: xmax, lat: ymax } = _ne
+        const { lng: xmin, lat: ymin } = _sw
+        polygon = turf.polygon(
+          [
+            [
+              [xmin, ymax],
+              [xmax, ymax],
+              [xmax, ymin],
+              [xmin, ymin],
+              [xmin, ymax],
+            ],
+          ],
+          { name: 'bounds' }
+        )
+      } else {
+        const Rectangle = this.viewer.camera.computeViewRectangle()
+        const xmin = (Rectangle.west / Math.PI) * 180
+        const ymax = (Rectangle.north / Math.PI) * 180
+        const xmax = (Rectangle.east / Math.PI) * 180
+        const ymin = (Rectangle.south / Math.PI) * 180
+        polygon = turf.polygon(
+          [
+            [
+              [xmin, ymax],
+              [xmax, ymax],
+              [xmax, ymin],
+              [xmin, ymin],
+              [xmin, ymax],
+            ],
+          ],
+          { name: 'bounds' }
+        )
+      }
+      return polygon
+    },
+
+    /**
+     * 当前展示的结果回调函数（将查询结果展示至地图上）
+     */
+    currentResult(geojson) {
+      // igs查询时设置字段别名在此处处理
+      this.current = this.config.placeName
+        ? this.setAliasKeys(geojson)
+        : geojson
+    },
+
+    /**
+     * 当前点击的条目的回调函数（实现点击后跳转中心点）
+     */
+    clickItem(feature) {
+      const center = Feature.getGeoJSONFeatureCenter(feature)
+      const bound = feature.bound
+      const { xmin, ymin, xmax, ymax } = bound
+      if (this.is2DMapMode) {
+        this.map.flyTo({
+          center: center,
+          curve: 1,
+          easing(t) {
+            return t
+          },
+        })
+      } else {
+        const { viewer, Cesium } = this
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(center[0], center[1]),
+          duration: 1000,
+          orientation: {
+            heading: Cesium.Math.toRadians(0), // 0 // 绕垂直于地心的轴旋转 ,相当于头部左右转
+            pitch: Cesium.Math.toRadians(-90), // -90  //绕经度线旋转， 相当于头部上下
+            roll: Cesium.Math.toRadians(0), // 0         //绕纬度线旋转 ，面对的一面瞬时针转
+          },
+        })
+      }
+    },
+
+    /**
+     * 当前选中的坐标
+     */
+    selectMarkers(selectMarkers) {
+      this.hoverMarker = selectMarkers
+    },
+
+    /**
+     * 聚合按钮改变时的回调
+     */
+    changeCluster(val) {
+      this.current = { type: 'FeatureCollection', features: [] }
+      this.cluster = val
+    },
+
+    /**
+     * 打开属性表回调函数
+     */
+    openAttributeTable(exhibition) {
+      this.addExhibition(new AttributeTableExhibition(exhibition))
+      this.openExhibitionPanel()
+    },
+
+    /**
+     * 关闭属性表回调函数
+     */
+    removeAttributeTable(exhibitionId) {
+      this.removeExhibition(exhibitionId)
+    },
+
+    /**
+     * 关闭右侧展示气泡框
+     */
+    closePopup() {
+      this.popupOverlayInstance.setContent(null)
+    },
+
+    /**
+     * 获取当前综合查询tab页key别名配置
+     */
+    selectItem(data) {
+      // 先关闭气泡框
+      this.closePopup()
+      let showProperty
+      if (data) {
+        showProperty = this.config.placeName.queryTable.find(
+          (item) => item.placeName === data
+        )
+      }
+      // 如果配置为空采用默认配置
+      this.selectShowProperty =
+        showProperty && showProperty.showField.length > 0
+          ? showProperty.showField
+          : this.config.placeName.defaultShowField
+    },
+
+    /**
+     * 设置别名key
+     */
+    setAliasKeys(data) {
+      if (data && data.features.length > 0) {
+        const dataCopy = JSON.parse(JSON.stringify(data))
+        dataCopy.features.forEach((item) => {
+          const property = {}
+          const properties = item.properties
+          Object.keys(properties).forEach((key) => {
+            const info = this.selectShowProperty.find(
+              (itemKey) => itemKey.fieldName === key
+            )
+            info
+              ? (property[info.showName] = properties[key])
+              : (property[key] = properties[key])
+          })
+          item.properties = property
+        })
+        return dataCopy
+      }
+      return data
+    },
+  },
+
+  created() {
+    this.popupOverlayInstance = PopupOverlay.getInstance()
+  },
 
   async mounted() {
     try {
@@ -216,214 +425,6 @@ export default class MpComprehensiveQuery extends Mixins(
     } catch (error) {
       console.log(error)
     }
-  }
-
-  /**
-   * 点击关闭的回调函数
-   */
-  onClose() {
-    this.$refs.zone && this.$refs.zone.clear()
-    this.$refs.coordinate && this.$refs.coordinate.clear()
-    this.$refs['map-sheet'] && this.$refs['map-sheet'].clear()
-    this.closePopup()
-    this.analysisManager = null
-    if (this.sceneController) {
-      this.sceneController.removeCameraChangedEvent(this.changeFilterWithMap)
-    }
-  }
-
-  /**
-   * 查询时的回调函数（在没有查询范围时，采用当前屏幕的范围）
-   * 如果是dataStore数据，并且查询keyword为空，在采用当前可视范围
-   */
-  onSearch(isDataStoreQuery, val) {
-    if (
-      this.geoJSONExtent === null ||
-      JSON.stringify(this.geoJSONExtent) === '{}' ||
-      (isDataStoreQuery && !val)
-    ) {
-      this.extent = this.getBounds()
-    } else {
-      this.extent = this.geoJSONExtent
-    }
-  }
-
-  /**
-   * 设置聚合图标的颜色
-   */
-  setColorCluster(color: string) {
-    this.colorCluster = color
-  }
-
-  /**
-   * 手动选择范围的时候回调函数
-   */
-  change(val) {
-    this.geoJSONExtent = val
-  }
-
-  /**
-   * 获取屏幕范围
-   */
-  getBounds() {
-    let polygon
-    if (this.is2DMapMode) {
-      const { _ne, _sw } = this.map.getBounds()
-      const { lng: xmax, lat: ymax } = _ne
-      const { lng: xmin, lat: ymin } = _sw
-      polygon = turf.polygon(
-        [
-          [
-            [xmin, ymax],
-            [xmax, ymax],
-            [xmax, ymin],
-            [xmin, ymin],
-            [xmin, ymax],
-          ],
-        ],
-        { name: 'bounds' }
-      )
-    } else {
-      const Rectangle = this.viewer.camera.computeViewRectangle()
-      const xmin = (Rectangle.west / Math.PI) * 180
-      const ymax = (Rectangle.north / Math.PI) * 180
-      const xmax = (Rectangle.east / Math.PI) * 180
-      const ymin = (Rectangle.south / Math.PI) * 180
-      polygon = turf.polygon(
-        [
-          [
-            [xmin, ymax],
-            [xmax, ymax],
-            [xmax, ymin],
-            [xmin, ymin],
-            [xmin, ymax],
-          ],
-        ],
-        { name: 'bounds' }
-      )
-    }
-    return polygon
-  }
-
-  /**
-   * 当前展示的结果回调函数（将查询结果展示至地图上）
-   */
-  currentResult(geojson) {
-    // igs查询时设置字段别名在此处处理
-    this.current = this.config.placeName ? this.setAliasKeys(geojson) : geojson
-  }
-
-  /**
-   * 当前点击的条目的回调函数（实现点击后跳转中心点）
-   */
-  clickItem(feature) {
-    const center = Feature.getGeoJSONFeatureCenter(feature)
-    const bound = feature.bound
-    const { xmin, ymin, xmax, ymax } = bound
-    if (this.is2DMapMode) {
-      this.map.flyTo({
-        center: center,
-        curve: 1,
-        easing(t) {
-          return t
-        },
-      })
-    } else {
-      const { viewer, Cesium } = this
-      viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(center[0], center[1]),
-        duration: 1000,
-        orientation: {
-          heading: Cesium.Math.toRadians(0), // 0 // 绕垂直于地心的轴旋转 ,相当于头部左右转
-          pitch: Cesium.Math.toRadians(-90), // -90  //绕经度线旋转， 相当于头部上下
-          roll: Cesium.Math.toRadians(0), // 0         //绕纬度线旋转 ，面对的一面瞬时针转
-        },
-      })
-    }
-  }
-
-  /**
-   * 当前选中的坐标
-   */
-  selectMarkers(selectMarkers) {
-    this.hoverMarker = selectMarkers
-  }
-
-  /**
-   * 聚合按钮改变时的回调
-   */
-  changeCluster(val) {
-    this.current = { type: 'FeatureCollection', features: [] }
-    this.cluster = val
-  }
-
-  /**
-   * 打开属性表回调函数
-   */
-  openAttributeTable(exhibition) {
-    this.addExhibition(new AttributeTableExhibition(exhibition))
-    this.openExhibitionPanel()
-  }
-
-  /**
-   * 关闭属性表回调函数
-   */
-  removeAttributeTable(exhibitionId) {
-    this.removeExhibition(exhibitionId)
-  }
-
-  /**
-   * 关闭右侧展示气泡框
-   */
-  closePopup() {
-    this.popupOverlayInstance.setContent(null)
-  }
-
-  /**
-   * 获取当前综合查询tab页key别名配置
-   */
-  selectItem(data) {
-    // 先关闭气泡框
-    this.closePopup()
-    let showProperty
-    if (data) {
-      showProperty = this.config.placeName.queryTable.find(
-        (item) => item.placeName === data
-      )
-    }
-    // 如果配置为空采用默认配置
-    this.selectShowProperty =
-      showProperty && showProperty.showField.length > 0
-        ? showProperty.showField
-        : this.config.placeName.defaultShowField
-  }
-
-  /**
-   * 设置别名key
-   */
-  setAliasKeys(data) {
-    if (data && data.features.length > 0) {
-      const dataCopy = JSON.parse(JSON.stringify(data))
-      dataCopy.features.forEach((item) => {
-        const property = {}
-        const properties = item.properties
-        Object.keys(properties).forEach((key) => {
-          const info = this.selectShowProperty.find(
-            (itemKey) => itemKey.fieldName === key
-          )
-          info
-            ? (property[info.showName] = properties[key])
-            : (property[key] = properties[key])
-        })
-        item.properties = property
-      })
-      return dataCopy
-    }
-    return data
-  }
-
-  created() {
-    this.popupOverlayInstance = PopupOverlay.getInstance()
-  }
+  },
 }
 </script>

@@ -1,7 +1,7 @@
 <template>
   <mapgis-ui-spin :spinning="loading" style="padding: 8px 16px">
     <div class="mp-widget-topology-analysis">
-      <mp-group-tab
+      <mapgis-ui-group-tab
         slot="label"
         title="选择源要素(仅限区要素)"
         :has-top-margin="false"
@@ -16,16 +16,16 @@
               {{ item.title }}
             </mapgis-ui-select-option>
           </mapgis-ui-select>
-          <mp-toolbar :bordered="false">
-            <mp-toolbar-command
+          <mapgis-ui-toolbar :bordered="false">
+            <mapgis-ui-toolbar-command
               icon="search"
               title="查询要素"
               @click="draw('target')"
-            ></mp-toolbar-command>
-          </mp-toolbar>
+            ></mapgis-ui-toolbar-command>
+          </mapgis-ui-toolbar>
         </div>
-      </mp-group-tab>
-      <mp-setting-form
+      </mapgis-ui-group-tab>
+      <mapgis-ui-setting-form
         layout="vertical"
         :class="[isFullScreen === true ? '' : 'fixed-table']"
       >
@@ -54,8 +54,12 @@
             <mapgis-ui-empty v-else description="请点击搜索按钮查询要素" />
           </div>
         </mapgis-ui-form-item>
-      </mp-setting-form>
-      <mp-group-tab slot="label" title="选择目标要素" :has-top-margin="false">
+      </mapgis-ui-setting-form>
+      <mapgis-ui-group-tab
+        slot="label"
+        title="选择目标要素"
+        :has-top-margin="false"
+      >
         <div slot="handle" class="layer-select-container">
           <mapgis-ui-select v-model="aDataIndex" @change="changeAnalysis">
             <mapgis-ui-select-option
@@ -66,16 +70,16 @@
               {{ item.title }}
             </mapgis-ui-select-option>
           </mapgis-ui-select>
-          <mp-toolbar :bordered="false">
-            <mp-toolbar-command
+          <mapgis-ui-toolbar :bordered="false">
+            <mapgis-ui-toolbar-command
               icon="search"
               title="查询要素"
               @click="draw('analysis')"
-            ></mp-toolbar-command>
-          </mp-toolbar>
+            ></mapgis-ui-toolbar-command>
+          </mapgis-ui-toolbar>
         </div>
-      </mp-group-tab>
-      <mp-setting-form
+      </mapgis-ui-group-tab>
+      <mapgis-ui-setting-form
         layout="vertical"
         :class="[isFullScreen === true ? '' : 'fixed-table']"
       >
@@ -103,7 +107,7 @@
             <mapgis-ui-empty v-else description="请点击搜索按钮查询要素" />
           </div>
         </mapgis-ui-form-item>
-      </mp-setting-form>
+      </mapgis-ui-setting-form>
       <div class="analysis-actions">
         <mapgis-ui-tag color="#87d068" v-if="massage">
           {{ massage }}

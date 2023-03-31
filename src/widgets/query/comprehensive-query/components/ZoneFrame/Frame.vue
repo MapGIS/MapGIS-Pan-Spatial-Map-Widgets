@@ -1,6 +1,6 @@
 <template>
   <div class="frame-container">
-    <mp-setting-form layout="vertical">
+    <mapgis-ui-setting-form layout="vertical">
       <mapgis-ui-form-item label="比例尺">
         <mapgis-ui-select :options="scaleArray" v-model="scale" />
       </mapgis-ui-form-item>
@@ -13,7 +13,7 @@
           @search="onSearch"
         />
       </mapgis-ui-form-item>
-    </mp-setting-form>
+    </mapgis-ui-setting-form>
     <mapgis-ui-space direction="vertical" style="flex: 1">
       <mapgis-ui-spin :spinning="loading">
         <mapgis-ui-list
@@ -63,14 +63,6 @@
 
 <script lang="ts">
 import {
-  Component,
-  Watch,
-  Mixins,
-  Model,
-  Prop,
-  Emit,
-} from 'vue-property-decorator'
-import {
   AppMixin,
   Feature,
   baseConfigInstance,
@@ -80,185 +72,191 @@ import axios from 'axios'
 import ZoneFrameMapbox from './ZoneFrameMapbox.vue'
 import ZoneFrameCesium from './ZoneFrameCesium.vue'
 
-@Component({
+export default {
+  name: 'Frame',
+  mixins: [AppMixin],
   components: {
     ZoneFrameMapbox,
     ZoneFrameCesium,
   },
-})
-export default class Frame extends Mixins(AppMixin) {
-  @Prop()
-  readonly active!: boolean
+  props: {
+    active: Boolean,
+  },
+  data() {
+    return {
+      scale: 'Scale_20w',
 
-  @Emit()
-  change(val: Feature.FeatureGeoJSON | null) {}
+      scaleArray: [
+        { label: '1:5千', value: 'Scale_5000' },
+        { label: '1:1万', value: 'Scale_1w' },
+        { label: '1:2万5', value: 'Scale_2w5' },
+        { label: '1:5万', value: 'Scale_5w' },
+        { label: '1:10万', value: 'Scale_10w' },
+        { label: '1:20万', value: 'Scale_20w' },
+        { label: '1:25万', value: 'Scale_25w' },
+        { label: '1:50万', value: 'Scale_50w' },
+        { label: '1:100万', value: 'Scale_100w' },
+      ],
 
-  private scale = 'Scale_20w'
+      total: 0,
 
-  private scaleArray = [
-    { label: '1:5千', value: 'Scale_5000' },
-    { label: '1:1万', value: 'Scale_1w' },
-    { label: '1:2万5', value: 'Scale_2w5' },
-    { label: '1:5万', value: 'Scale_5w' },
-    { label: '1:10万', value: 'Scale_10w' },
-    { label: '1:20万', value: 'Scale_20w' },
-    { label: '1:25万', value: 'Scale_25w' },
-    { label: '1:50万', value: 'Scale_50w' },
-    { label: '1:100万', value: 'Scale_100w' },
-  ]
+      list: [],
 
-  private total = 0
+      pageNumber: 1,
 
-  private list: string[] = []
+      pageSize: 20,
 
-  private pageNumber = 1
+      loading: false,
 
-  private pageSize = 20
+      keyword: '',
 
-  private loading = false
+      selectItem: '',
 
-  private keyword = ''
+      frameFeature: {},
 
-  private selectItem = ''
+      center: [],
 
-  private frameFeature: Record<string, any> = {}
+      frameConfig: {
+        ip: '',
+        port: '',
+        name: '',
+        gdbp: '',
+      },
+    }
+  },
+  methods: {
+    change(val) {
+      this.$emit('change', val)
+    },
+    async onSearch() {
+      this.loading = true
+      try {
+        const { scale, pageNumber, pageSize, keyword } = this
+        // 通过sheetConfig内的ip、port、name去获取地图范围，构造成[xMin, yMin, xMax, yMax]，用于查询图幅号
+        const {
+          data: { xMin, yMin, xMax, yMax },
+        } = await axios.get(
+          `http://${this.frameConfig.ip}:${this.frameConfig.port}/igs/rest/mrms/info/${this.frameConfig.name}`
+        )
 
-  private center = []
-
-  private frameConfig = {
-    ip: '',
-    port: '',
-    name: '',
-    gdbp: '',
-  }
-
-  private get pagination() {
-    if (this.total) {
-      return {
-        size: 'small',
-        total: this.total,
-        pageSize: this.pageSize,
-        showSizeChanger: true,
-        current: this.pageNumber,
-        onChange: (page) => {
-          this.pageNumber = page
-          this.onSearch()
-        },
-        onShowSizeChange: (current, size) => {
-          this.pageSize = size
-          this.onSearch()
-        },
+        const { content, totalElements } = await api.getFrameNoList(
+          this.frameConfig.ip,
+          this.frameConfig.port,
+          this.frameConfig.gdbp,
+          xMin,
+          yMin,
+          xMax,
+          yMax,
+          scale,
+          pageNumber - 1,
+          pageSize,
+          keyword,
+          baseConfigInstance.config.projectionName,
+          baseConfigInstance.config.projectionName
+        )
+        this.list = content || []
+        this.total = totalElements || 0
+      } catch (error) {
+        this.list = []
+        this.total = 0
+      } finally {
+        this.loading = false
       }
-    }
+    },
 
-    return false
-  }
-
-  private get highlightStyle() {
-    return baseConfigInstance.config.colorConfig
-  }
-
-  @Watch('scale', { immediate: true })
-  private paramsChange() {
-    this.list = []
-    this.total = 0
-    this.pageNumber = 1
-    this.pageSize = 20
-    this.onSearch()
-  }
-
-  @Watch('active')
-  activeChange(val) {
-    if (!val) {
-      this.selectItem = ''
-      this.clear()
-    }
-  }
-
-  async mounted() {
-    this.frameConfig = await api.getConfig('sheet')
-  }
-
-  private async onSearch() {
-    this.loading = true
-    try {
-      const { scale, pageNumber, pageSize, keyword } = this
-      // 通过sheetConfig内的ip、port、name去获取地图范围，构造成[xMin, yMin, xMax, yMax]，用于查询图幅号
+    async select(item: string) {
+      this.selectItem = item
       const {
-        data: { xMin, yMin, xMax, yMax },
-      } = await axios.get(
-        `http://${this.frameConfig.ip}:${this.frameConfig.port}/igs/rest/mrms/info/${this.frameConfig.name}`
-      )
-
-      const { content, totalElements } = await api.getFrameNoList(
+        data: { XMin, YMin, XMax, YMax },
+      } = await api.getFrameExtentByNo(
         this.frameConfig.ip,
         this.frameConfig.port,
-        this.frameConfig.gdbp,
-        xMin,
-        yMin,
-        xMax,
-        yMax,
-        scale,
-        pageNumber - 1,
-        pageSize,
-        keyword,
+        item,
         baseConfigInstance.config.projectionName,
         baseConfigInstance.config.projectionName
       )
-      this.list = content || []
-      this.total = totalElements || 0
-    } catch (error) {
-      this.list = []
-      this.total = 0
-    } finally {
-      this.loading = false
-    }
-  }
 
-  private async select(item: string) {
-    this.selectItem = item
-    const {
-      data: { XMin, YMin, XMax, YMax },
-    } = await api.getFrameExtentByNo(
-      this.frameConfig.ip,
-      this.frameConfig.port,
-      item,
-      baseConfigInstance.config.projectionName,
-      baseConfigInstance.config.projectionName
-    )
-
-    this.clear()
-    this.frameFeature = {
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          properties: { name: item },
-          geometry: {
-            type: 'Polygon',
-            coordinates: [
-              [
-                [XMin, YMin],
-                [XMax, YMin],
-                [XMax, YMax],
-                [XMin, YMax],
-                [XMin, YMin],
+      this.clear()
+      this.frameFeature = {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            properties: { name: item },
+            geometry: {
+              type: 'Polygon',
+              coordinates: [
+                [
+                  [XMin, YMin],
+                  [XMax, YMin],
+                  [XMax, YMax],
+                  [XMin, YMax],
+                  [XMin, YMin],
+                ],
               ],
-            ],
+            },
           },
-        },
-      ],
-    }
-    this.center = [(XMin + XMax) / 2, (YMin + YMax) / 2]
+        ],
+      }
+      this.center = [(XMin + XMax) / 2, (YMin + YMax) / 2]
 
-    this.change(this.frameFeature)
-  }
+      this.change(this.frameFeature)
+    },
 
-  private clear() {
-    this.frameFeature = {}
-    this.center = []
-    this.change(this.frameFeature)
-  }
+    clear() {
+      this.frameFeature = {}
+      this.center = []
+      this.change(this.frameFeature)
+    },
+  },
+  computed: {
+    pagination() {
+      if (this.total) {
+        return {
+          size: 'small',
+          total: this.total,
+          pageSize: this.pageSize,
+          showSizeChanger: true,
+          current: this.pageNumber,
+          onChange: (page) => {
+            this.pageNumber = page
+            this.onSearch()
+          },
+          onShowSizeChange: (current, size) => {
+            this.pageSize = size
+            this.onSearch()
+          },
+        }
+      }
+
+      return false
+    },
+    highlightStyle() {
+      return baseConfigInstance.config.colorConfig
+    },
+  },
+  watch: {
+    scale: {
+      immediate: true,
+      handler() {
+        this.list = []
+        this.total = 0
+        this.pageNumber = 1
+        this.pageSize = 20
+        this.onSearch()
+      },
+    },
+    active(val) {
+      if (!val) {
+        this.selectItem = ''
+        this.clear()
+      }
+    },
+  },
+
+  async mounted() {
+    this.frameConfig = await api.getConfig('sheet')
+  },
 }
 </script>
 

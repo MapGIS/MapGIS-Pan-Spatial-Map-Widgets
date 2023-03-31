@@ -6,14 +6,14 @@
     :subject-config="subjectConfig"
     :emptyVisible="emptyVisible"
   >
-    <mp-row-flex slot="top" label="标题" :label-width="50">
+    <mapgis-ui-row-flex slot="top" label="标题" :label-width="50">
       <mapgis-ui-input
         v-model="title"
         @change="onInputChange()"
         placeholder="请填写"
         size="small"
       />
-    </mp-row-flex>
+    </mapgis-ui-row-flex>
   </editable-field-table>
 </template>
 <script lang="ts">
@@ -151,7 +151,7 @@ export default {
 }
 </script>
 <style lang="less" scoped>
-::v-deep .mp-row-flex {
+::v-deep .mapgis-ui-row-flex {
   padding-bottom: 8px;
 }
 </style>
