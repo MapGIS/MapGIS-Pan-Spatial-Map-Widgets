@@ -45,40 +45,44 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator'
-
-@Component({
+export default {
   name: 'AddDataCategory',
-})
-export default class AddDataCategory extends Vue {
-  @Prop({ type: Boolean }) visible
+  props: {
+    visible: { type: Boolean },
+    categories: { type: Array },
+  },
 
-  @Prop({ type: Array }) categories
-
-  private name = ''
-
-  private description = ''
-
-  get okButtonDisabled() {
+  data() {
     return {
-      props: {
-        disabled:
-          !this.name.length ||
-          this.categories.some((category) => category.name === this.name),
-      },
+      name: '',
+      description: '',
     }
-  }
+  },
 
-  onAddCancel() {
-    this.$emit('finished')
-  }
+  computed: {
+    okButtonDisabled() {
+      return {
+        props: {
+          disabled:
+            !this.name.length ||
+            this.categories.some((category) => category.name === this.name),
+        },
+      }
+    },
+  },
 
-  onAddOk() {
-    this.$emit('added', { name: this.name, description: this.description })
-    this.$emit('finished')
-    this.name = ''
-    this.description = ''
-  }
+  methods: {
+    onAddCancel() {
+      this.$emit('finished')
+    },
+
+    onAddOk() {
+      this.$emit('added', { name: this.name, description: this.description })
+      this.$emit('finished')
+      this.name = ''
+      this.description = ''
+    },
+  },
 }
 </script>
 

@@ -72,12 +72,9 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
-
-@Component({
+export default {
   name: 'MarkerImportFileDesc',
-})
-export default class MarkerImportFileDesc extends Vue {}
+}
 </script>
 
 <style lang="scss" scoped>

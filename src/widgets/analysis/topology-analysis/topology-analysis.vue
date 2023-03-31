@@ -137,7 +137,6 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component, Watch } from 'vue-property-decorator'
 import {
   LayerType,
   WidgetMixin,
@@ -151,308 +150,311 @@ import cesiumLayer from './map-layer/cesium-layer'
 import featureList from './feature-list.vue'
 import * as Zondy from '@mapgis/webclient-es6-service'
 
-@Component({
+export default {
   name: 'MpTopologyAnalysis',
+  mixins: [WidgetMixin],
   components: {
     mapboxLayer,
     cesiumLayer,
     featureList,
   },
-})
-export default class MpTopologyAnalysis extends Mixins(WidgetMixin) {
-  queryType = 'target'
 
-  tDataIndex = null
-
-  aDataIndex = null
-
-  tDataArr = []
-
-  aDataArr = []
-
-  tDataTab = ''
-
-  aDataTab = ''
-
-  isFullScreen = false
-
-  loading = false
-
-  massage = ''
-
-  geoJSONTarget = null
-
-  geoJSONAnalysis = null
-
-  isWidgetOpen = false
-
-  // 微件窗口模式切换时回调
-  onWindowSize(mode) {
-    this.isFullScreen = mode === 'max'
-  }
-
-  onOpen() {
-    this.isWidgetOpen = true
-  }
-
-  get drawLayer() {
-    return this.is2DMapMode ? this.$refs.mapboxLayer : this.$refs.cesiumLayer
-  }
-
-  get drawComponent() {
-    return this.is2DMapMode ? this.$refs.draw : this.$refs.draw3d
-  }
-
-  // 目标类
-  get tData() {
-    if (this.tDataIndex !== null) {
-      return this.layerArrOption[this.tDataIndex]
+  data() {
+    return {
+      queryType: 'target',
+      tDataIndex: null,
+      aDataIndex: null,
+      tDataArr: [],
+      aDataArr: [],
+      tDataTab: '',
+      aDataTab: '',
+      isFullScreen: false,
+      loading: false,
+      massage: '',
+      geoJSONTarget: null,
+      geoJSONAnalysis: null,
+      isWidgetOpen: false,
     }
-    return null
-  }
+  },
 
-  // 分析类
-  get aData() {
-    if (this.aDataIndex !== null) {
-      return this.layerArrOption[this.aDataIndex]
-    }
-    return null
-  }
+  computed: {
+    drawLayer() {
+      return this.is2DMapMode ? this.$refs.mapboxLayer : this.$refs.cesiumLayer
+    },
 
-  selectItem(geoJSON, type) {
-    if (type === 'Target') {
-      this.geoJSONTarget = geoJSON
-    } else {
-      this.geoJSONAnalysis = geoJSON
-    }
-  }
+    drawComponent() {
+      return this.is2DMapMode ? this.$refs.draw : this.$refs.draw3d
+    },
 
-  changeTarget() {
-    this.tDataArr = []
-
-    this.tDataTab = ''
-
-    this.massage = ''
-
-    this.geoJSONTarget = null
-  }
-
-  changeAnalysis() {
-    this.aDataArr = []
-
-    this.aDataTab = ''
-
-    this.massage = ''
-
-    this.geoJSONAnalysis = null
-  }
-
-  @Watch('document.defaultMap', { immediate: true, deep: true })
-  documentChange(val: Array<unknown>) {
-    this.aDataIndex = null
-    this.tDataIndex = null
-    this.layerArrOption = []
-    this.changeTarget()
-    this.changeAnalysis()
-    const arr = []
-    val.layers().forEach((data) => {
-      if (
-        data.type === LayerType.IGSMapImage ||
-        data.type === LayerType.IGSVector
-      ) {
-        arr.push(data)
+    // 目标类
+    tData() {
+      if (this.tDataIndex !== null) {
+        return this.layerArrOption[this.tDataIndex]
       }
-    })
-    if (arr.length > 0) {
-      this.layerArrOption = arr
-      this.aDataIndex = 0
-      this.tDataIndex = 0
-    }
-  }
+      return null
+    },
 
-  draw(type) {
-    this.queryType = type
-    this.drawComponent && this.drawComponent.openDraw('draw-rectangle')
-  }
+    // 分析类
+    aData() {
+      if (this.aDataIndex !== null) {
+        return this.layerArrOption[this.aDataIndex]
+      }
+      return null
+    },
+  },
 
-  clickFunciton(e) {
-    if (this.queryType === 'target') {
+  watch: {
+    'document.defaultMap': {
+      immediate: true,
+      deep: true,
+      handler: 'documentChange',
+    },
+  },
+
+  methods: {
+    // 微件窗口模式切换时回调
+    onWindowSize(mode) {
+      this.isFullScreen = mode === 'max'
+    },
+
+    onOpen() {
+      this.isWidgetOpen = true
+    },
+
+    documentChange(val: Array<unknown>) {
+      this.aDataIndex = null
+      this.tDataIndex = null
+      this.layerArrOption = []
+      this.changeTarget()
+      this.changeAnalysis()
+      const arr = []
+      val.layers().forEach((data) => {
+        if (
+          data.type === LayerType.IGSMapImage ||
+          data.type === LayerType.IGSVector
+        ) {
+          arr.push(data)
+        }
+      })
+      if (arr.length > 0) {
+        this.layerArrOption = arr
+        this.aDataIndex = 0
+        this.tDataIndex = 0
+      }
+    },
+
+    selectItem(geoJSON, type) {
+      if (type === 'Target') {
+        this.geoJSONTarget = geoJSON
+      } else {
+        this.geoJSONAnalysis = geoJSON
+      }
+    },
+
+    changeTarget() {
       this.tDataArr = []
+
       this.tDataTab = ''
-    } else {
+
+      this.massage = ''
+
+      this.geoJSONTarget = null
+    },
+
+    changeAnalysis() {
       this.aDataArr = []
+
       this.aDataTab = ''
-    }
-    const { xmin, ymin, xmax, ymax } = e.shape
-    const geo = new Zondy.Common.Rectangle(xmin, ymin, xmax, ymax)
-    const layer = this.queryType === 'target' ? this.tData : this.aData
-    if (layer) {
-      if (layer.type === LayerType.IGSMapImage) {
-        this.queryFeaturesByDoc(layer, geo)
-      } else if (layer.type === LayerType.IGSVector) {
-        this.quertFeatruesByVector(layer, geo)
+
+      this.massage = ''
+
+      this.geoJSONAnalysis = null
+    },
+
+    draw(type) {
+      this.queryType = type
+      this.drawComponent && this.drawComponent.openDraw('draw-rectangle')
+    },
+
+    clickFunciton(e) {
+      if (this.queryType === 'target') {
+        this.tDataArr = []
+        this.tDataTab = ''
+      } else {
+        this.aDataArr = []
+        this.aDataTab = ''
       }
-    }
-  }
+      const { xmin, ymin, xmax, ymax } = e.shape
+      const geo = new Zondy.Common.Rectangle(xmin, ymin, xmax, ymax)
+      const layer = this.queryType === 'target' ? this.tData : this.aData
+      if (layer) {
+        if (layer.type === LayerType.IGSMapImage) {
+          this.queryFeaturesByDoc(layer, geo)
+        } else if (layer.type === LayerType.IGSVector) {
+          this.quertFeatruesByVector(layer, geo)
+        }
+      }
+    },
 
-  private queryFeaturesByDoc(layer: IGSMapImageLayer, geometry) {
-    if (!layer.isVisible) {
-      return
-    }
-    const { ip, port, docName } = layer._parseUrl(layer.url)
-
-    const arr = []
-    const sublayers = layer.allSublayers
-    sublayers.forEach((sublayer) => {
-      if (
-        !sublayer.visible ||
-        (sublayer.sublayers && sublayer.sublayers.length > 0)
-      ) {
+    queryFeaturesByDoc(layer: IGSMapImageLayer, geometry) {
+      if (!layer.isVisible) {
         return
       }
-      arr.push({
-        id: sublayer.id,
-        name: sublayer.title,
-        ip: ip || baseConfigInstance.config.ip,
-        port: Number(port || baseConfigInstance.config.port),
-        serverType: layer.type,
-        layerIndex: sublayer.id,
-        serverName: docName,
-        serverUrl: layer.url,
-        geometry: geometry,
-      })
-    })
-    if (this.queryType === 'target') {
-      this.tDataArr = arr
-      this.tDataTab = arr.length > 0 ? arr[0].id : ''
-    } else {
-      this.aDataArr = arr
-      this.aDataTab = arr.length > 0 ? arr[0].id : ''
-    }
-  }
+      const { ip, port, docName } = layer._parseUrl(layer.url)
 
-  private quertFeatruesByVector(layer: IGSVectorLayer, geometry) {
-    if (!layer.isVisible) {
-      return
-    }
-    const { ip, port, docName } = layer._parseUrl(layer.url)
-
-    const arr = [
-      {
-        ip: ip || baseConfigInstance.config.ip,
-        port: Number(port || baseConfigInstance.config.port),
-        serverType: layer.type,
-        gdbp: layer.gdbps,
-        geometry: geometry,
-        name: layer.title,
-      },
-    ]
-    if (this.queryType === 'target') {
-      this.tDataArr = arr
-      this.tDataTab = arr.length > 0 ? arr[0].id : ''
-    } else {
-      this.aDataArr = arr
-      this.aDataTab = arr.length > 0 ? arr[0].id : ''
-    }
-  }
-
-  analysis() {
-    if (this.geoJSONAnalysis && this.geoJSONTarget) {
-      this.loading = true
-      this.massage = ''
-      const target = this.geoJSONTarget.features[0].properties
-      const analysis = this.geoJSONAnalysis.features[0].properties
-      const { ip, port } = baseConfigInstance.config
-      let analysisService
-
-      if (target.ftype === 1) {
-        const targetGeom = target.fGeom.PntGeom[0]
-        analysisService = new Zondy.MRGS.TopAnalysis({
-          relativeObj: targetGeom,
-          ip,
-          port,
-        })
-      } else if (target.ftype === 2) {
-        const targetGeom = target.fGeom.LinGeom[0]
-        analysisService = new Zondy.MRGS.TopAnalysis({
-          relativeObj: targetGeom,
-          ip,
-          port,
-        })
-      } else if (analysis.ftype === 3) {
-        const targetGeom = target.fGeom.RegGeom[0]
-        analysisService = new Zondy.MRGS.TopAnalysis({
-          relativeObj: targetGeom,
-          ip,
-          port,
-        })
-      }
-      if (analysis.ftype === 1) {
-        const analysisGeom = analysis.fGeom.PntGeom[0]
-        analysisService.setPnt(analysisGeom)
-      } else if (analysis.ftype === 2) {
-        const analysisGeom = analysis.fGeom.LinGeom[0]
-        analysisService.setLine(analysisGeom)
-      } else if (analysis.ftype === 3) {
-        const analysisGeom = analysis.fGeom.RegGeom[0]
-        analysisService.setReg(analysisGeom)
-      }
-      analysisService.execute(
-        (res) => {
-          let msg = ''
-          if (res === 'Include') {
-            msg = '包含'
-          } else if (res === 'Disjoin') {
-            msg = '相离'
-          } else if (res === 'Intersect') {
-            msg = '相交'
-          } else {
-            msg = '相邻'
-          }
-          this.loading = false
-          this.massage = `分析结果: ${msg}`
-        },
-        () => {
-          this.loading = false
+      const arr = []
+      const sublayers = layer.allSublayers
+      sublayers.forEach((sublayer) => {
+        if (
+          !sublayer.visible ||
+          (sublayer.sublayers && sublayer.sublayers.length > 0)
+        ) {
+          return
         }
-      )
-    } else {
-      this.$message.error('未选择要素')
-    }
-  }
+        arr.push({
+          id: sublayer.id,
+          name: sublayer.title,
+          ip: ip || baseConfigInstance.config.ip,
+          port: Number(port || baseConfigInstance.config.port),
+          serverType: layer.type,
+          layerIndex: sublayer.id,
+          serverName: docName,
+          serverUrl: layer.url,
+          geometry: geometry,
+        })
+      })
+      if (this.queryType === 'target') {
+        this.tDataArr = arr
+        this.tDataTab = arr.length > 0 ? arr[0].id : ''
+      } else {
+        this.aDataArr = arr
+        this.aDataTab = arr.length > 0 ? arr[0].id : ''
+      }
+    },
 
-  // 面板关闭时候触发函数
-  onClose() {
-    this.isWidgetOpen = false
-    this.drawComponent.clear()
-    this.reset()
-  }
+    quertFeatruesByVector(layer: IGSVectorLayer, geometry) {
+      if (!layer.isVisible) {
+        return
+      }
+      const { ip, port, docName } = layer._parseUrl(layer.url)
 
-  reset() {
-    this.queryType = 'target'
+      const arr = [
+        {
+          ip: ip || baseConfigInstance.config.ip,
+          port: Number(port || baseConfigInstance.config.port),
+          serverType: layer.type,
+          gdbp: layer.gdbps,
+          geometry: geometry,
+          name: layer.title,
+        },
+      ]
+      if (this.queryType === 'target') {
+        this.tDataArr = arr
+        this.tDataTab = arr.length > 0 ? arr[0].id : ''
+      } else {
+        this.aDataArr = arr
+        this.aDataTab = arr.length > 0 ? arr[0].id : ''
+      }
+    },
 
-    // this.tDataIndex = null
+    analysis() {
+      if (this.geoJSONAnalysis && this.geoJSONTarget) {
+        this.loading = true
+        this.massage = ''
+        const target = this.geoJSONTarget.features[0].properties
+        const analysis = this.geoJSONAnalysis.features[0].properties
+        const { ip, port } = baseConfigInstance.config
+        let analysisService
 
-    // this.aDataIndex = null
+        if (target.ftype === 1) {
+          const targetGeom = target.fGeom.PntGeom[0]
+          analysisService = new Zondy.MRGS.TopAnalysis({
+            relativeObj: targetGeom,
+            ip,
+            port,
+          })
+        } else if (target.ftype === 2) {
+          const targetGeom = target.fGeom.LinGeom[0]
+          analysisService = new Zondy.MRGS.TopAnalysis({
+            relativeObj: targetGeom,
+            ip,
+            port,
+          })
+        } else if (analysis.ftype === 3) {
+          const targetGeom = target.fGeom.RegGeom[0]
+          analysisService = new Zondy.MRGS.TopAnalysis({
+            relativeObj: targetGeom,
+            ip,
+            port,
+          })
+        }
+        if (analysis.ftype === 1) {
+          const analysisGeom = analysis.fGeom.PntGeom[0]
+          analysisService.setPnt(analysisGeom)
+        } else if (analysis.ftype === 2) {
+          const analysisGeom = analysis.fGeom.LinGeom[0]
+          analysisService.setLine(analysisGeom)
+        } else if (analysis.ftype === 3) {
+          const analysisGeom = analysis.fGeom.RegGeom[0]
+          analysisService.setReg(analysisGeom)
+        }
+        analysisService.execute(
+          (res) => {
+            let msg = ''
+            if (res === 'Include') {
+              msg = '包含'
+            } else if (res === 'Disjoin') {
+              msg = '相离'
+            } else if (res === 'Intersect') {
+              msg = '相交'
+            } else {
+              msg = '相邻'
+            }
+            this.loading = false
+            this.massage = `分析结果: ${msg}`
+          },
+          () => {
+            this.loading = false
+          }
+        )
+      } else {
+        this.$message.error('未选择要素')
+      }
+    },
 
-    this.tDataArr = []
+    // 面板关闭时候触发函数
+    onClose() {
+      this.isWidgetOpen = false
+      this.drawComponent.clear()
+      this.reset()
+    },
 
-    this.aDataArr = []
+    reset() {
+      this.queryType = 'target'
 
-    this.tDataTab = ''
+      // this.tDataIndex = null
 
-    this.aDataTab = ''
+      // this.aDataIndex = null
 
-    this.isFullScreen = false
+      this.tDataArr = []
 
-    this.loading = false
+      this.aDataArr = []
 
-    this.massage = ''
+      this.tDataTab = ''
 
-    this.geoJSONTarget = null
+      this.aDataTab = ''
 
-    this.geoJSONAnalysis = null
-  }
+      this.isFullScreen = false
+
+      this.loading = false
+
+      this.massage = ''
+
+      this.geoJSONTarget = null
+
+      this.geoJSONAnalysis = null
+    },
+  },
 }
 </script>
 

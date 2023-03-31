@@ -67,63 +67,65 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator'
 import { UrlUtil } from '@mapgis/web-app-framework'
 import AddDataCategorySelect from './AddDataCategorySelect.vue'
 import AddDataTypeSelect from './AddDataTypeSelect.vue'
 
-@Component({
+export default {
   name: 'AddDataUrl',
   components: {
     AddDataCategorySelect,
     AddDataTypeSelect,
   },
-})
-export default class AddDataUrl extends Vue {
-  @Prop({ type: Array }) urlDataTypes
+  props: {
+    urlDataTypes: Array,
+    categories: Array,
+  },
 
-  @Prop({ type: Array }) categories
-
-  private categoryName = this.categories.length ? this.categories[0].name : ''
-
-  private urlDataType = this.urlDataTypes.length ? this.urlDataTypes[0] : null
-
-  private url = ''
-
-  private name = ''
-
-  private token = ''
-
-  get hasToken() {
-    return (
-      (this.urlDataType && this.urlDataType.value === 'IMAGEARCGIS') || false
-    )
-  }
-
-  onCategorySelect(val) {
-    this.categoryName = val
-  }
-
-  onDataTypeSelect(val) {
-    this.urlDataType = val
-  }
-
-  onAdd() {
-    if (!UrlUtil.isUrlValid(this.url)) {
-      this.$message.warn('请输入正确的数据地址')
-      return
+  data() {
+    return {
+      categoryName: this.categories.length ? this.categories[0].name : '',
+      urlDataType: this.urlDataTypes.length ? this.urlDataTypes[0] : null,
+      url: '',
+      name: '',
+      token: '',
     }
+  },
 
-    // 应该要对地址进行解析，判断是否有效
-    const data = {
-      name: this.categoryName,
-      data: { type: this.urlDataType.value, url: this.url, name: this.name },
-    }
-    if (this.hasToken) {
-      this.$set(data.data, 'token', this.token)
-    }
-    this.$emit('added', data)
-  }
+  computed: {
+    hasToken() {
+      return (
+        (this.urlDataType && this.urlDataType.value === 'IMAGEARCGIS') || false
+      )
+    },
+  },
+
+  methods: {
+    onCategorySelect(val) {
+      this.categoryName = val
+    },
+
+    onDataTypeSelect(val) {
+      this.urlDataType = val
+    },
+
+    onAdd() {
+      if (!UrlUtil.isUrlValid(this.url)) {
+        this.$message.warn('请输入正确的数据地址')
+        return
+      }
+
+      // 应该要对地址进行解析，判断是否有效
+      const data = {
+        name: this.categoryName,
+        data: { type: this.urlDataType.value, url: this.url, name: this.name },
+      }
+      if (this.hasToken) {
+        this.$set(data.data, 'token', this.token)
+      }
+      this.$emit('added', data)
+    },
+  },
 }
 </script>
 

@@ -17,21 +17,19 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator'
-
-@Component({
+export default {
   name: 'AddDataCategorySelect',
-})
-export default class AddDataCategorySelect extends Vue {
-  @Prop({ type: Array }) categories
+  props: {
+    categories: { type: Array },
+    size: { type: String, default: 'default' },
+    value: { type: String },
+  },
 
-  @Prop({ type: String, default: 'default' }) size
-
-  @Prop({ type: String }) value
-
-  onSelect(val) {
-    this.$emit('select', val)
-  }
+  methods: {
+    onSelect(val) {
+      this.$emit('select', val)
+    },
+  },
 }
 </script>
 

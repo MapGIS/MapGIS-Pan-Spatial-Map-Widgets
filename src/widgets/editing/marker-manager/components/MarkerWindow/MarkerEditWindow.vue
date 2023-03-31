@@ -59,66 +59,82 @@
 </template>
 
 <script lang="ts">
-import { Component, Mixins, Prop, Watch } from 'vue-property-decorator'
 import { AppMixin, UUID } from '@mapgis/web-app-framework'
 
-@Component({})
-export default class MarkerEditWindow extends Mixins(AppMixin) {
-  @Prop({ type: Object, required: true }) marker!: Record<string, any>
+export default {
+  name: 'MarkerEditWindow',
+  mixins: [AppMixin],
+  props: {
+    marker: {
+      type: Object,
+      required: true,
+    },
+    visible: {
+      type: Boolean,
+      default: false,
+    },
+  },
 
-  @Prop({ type: Boolean, default: false }) visible
-
-  private markerValue = {}
-
-  private previewVisible = false
-
-  private previewImage = ''
-
-  private fileList = []
-
-  @Watch('marker', { immediate: true })
-  markerChange() {
-    this.updateMarkerValue()
-  }
-
-  private onFileChange({ fileList, file }) {
-    this.fileList = fileList
-    if (file.status === 'done') {
-      this.markerValue.picture = file.response.url
+  data() {
+    return {
+      markerValue: {},
+      previewVisible: false,
+      previewImage: '',
+      fileList: [],
     }
-  }
+  },
 
-  private onCancel() {
-    // 还原markerValue
-    this.updateMarkerValue()
-    this.$emit('cancel')
-  }
+  watch: {
+    marker: {
+      immediate: true,
+      handler: 'markerChange',
+    },
+  },
 
-  private onFilePreview(file) {
-    this.previewVisible = true
-    this.previewImage = file.url || `${this.baseUrl}${file.response.url}`
-  }
+  methods: {
+    markerChange() {
+      this.updateMarkerValue()
+    },
 
-  private onPreviewCancel() {
-    this.previewVisible = false
-  }
+    onFileChange({ fileList, file }) {
+      this.fileList = fileList
+      if (file.status === 'done') {
+        this.markerValue.picture = file.response.url
+      }
+    },
 
-  private updateMarkerValue() {
-    this.markerValue = { ...this.marker }
+    onCancel() {
+      // 还原markerValue
+      this.updateMarkerValue()
+      this.$emit('cancel')
+    },
 
-    if (this.markerValue.picture) {
-      this.fileList = [
-        {
-          uid: UUID.uuid(),
-          name: 'image.png',
-          status: 'done',
-          url: `${this.baseUrl}${this.markerValue.picture}`,
-        },
-      ]
-    } else {
-      this.fileList = []
-    }
-  }
+    onFilePreview(file) {
+      this.previewVisible = true
+      this.previewImage = file.url || `${this.baseUrl}${file.response.url}`
+    },
+
+    onPreviewCancel() {
+      this.previewVisible = false
+    },
+
+    updateMarkerValue() {
+      this.markerValue = { ...this.marker }
+
+      if (this.markerValue.picture) {
+        this.fileList = [
+          {
+            uid: UUID.uuid(),
+            name: 'image.png',
+            status: 'done',
+            url: `${this.baseUrl}${this.markerValue.picture}`,
+          },
+        ]
+      } else {
+        this.fileList = []
+      }
+    },
+  },
 }
 </script>
 

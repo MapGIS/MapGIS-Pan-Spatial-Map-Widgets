@@ -12,21 +12,26 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component } from 'vue-property-decorator'
 import { WidgetMixin, DomUtil } from '@mapgis/web-app-framework'
 
-@Component({ name: 'MpMapDataV' })
-export default class MpMapDataV extends Mixins(WidgetMixin) {
-  get url() {
-    return this.widgetInfo.config.url
-  }
+export default {
+  name: 'MpMapDataV',
+  mixins: [WidgetMixin],
 
-  onOpen() {
-    const el = this.$refs.mapDataV
-    if (!DomUtil.inFullScreen(el)) {
-      this.$message.warn('对不起，您的浏览器不支持全屏模式')
-    }
-  }
+  computed: {
+    url() {
+      return this.widgetInfo.config.url
+    },
+  },
+
+  methods: {
+    onOpen() {
+      const el = this.$refs.mapDataV
+      if (!DomUtil.inFullScreen(el)) {
+        this.$message.warn('对不起，您的浏览器不支持全屏模式')
+      }
+    },
+  },
 }
 </script>
 

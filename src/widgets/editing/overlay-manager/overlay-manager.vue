@@ -11,7 +11,6 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component, Watch, Provide } from 'vue-property-decorator'
 import {
   LayerType,
   WidgetMixin,
@@ -20,19 +19,23 @@ import {
   events,
 } from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpOverlayManager',
-})
-export default class MpOverlayAnalysis extends Mixins(WidgetMixin) {
-  get uploadUrl() {
-    return `${this.baseUrl}/api/local-storage/pictures`
-  }
+  mixins: [WidgetMixin],
 
-  private dataSource = []
+  data() {
+    return {
+      dataSource: [],
+      models: {},
+      firstOpen: true,
+    }
+  },
 
-  private models = {}
-
-  private firstOpen = true
+  computed: {
+    uploadUrl() {
+      return `${this.baseUrl}/api/local-storage/pictures`
+    },
+  },
 
   async mounted() {
     let config = await api.getWidgetConfig('overlay-manager')
@@ -50,51 +53,53 @@ export default class MpOverlayAnalysis extends Mixins(WidgetMixin) {
         }
       })
     }
-  }
+  },
 
-  async onOpen() {
-    if (this.firstOpen) {
+  methods: {
+    async onOpen() {
+      if (this.firstOpen) {
+        let config = await api.getWidgetConfig('overlay-manager')
+        if (!config) {
+          config = {}
+        }
+        const { dataSource } = config
+        if (dataSource) {
+          const dataSource = config.dataSource
+          for (let i = 0; i < dataSource.length; i++) {
+            const features = dataSource[i]
+            for (let j = 0; j < features.length; j++) {
+              const { style } = features[j]
+              const { url } = style
+              if (url) {
+                features[j].style.url = this.baseUrl + url
+              }
+            }
+          }
+        }
+        this.firstOpen = false
+        this.dataSource = dataSource
+      } else {
+        this.$refs.graphicLayer.$_showCurrentGraphic()
+      }
+    },
+
+    onClose() {
+      // this.$refs.graphicLayer.$_hideAllGraphic()
+      this.$refs.graphicLayer.$_stopDrawAll()
+    },
+
+    async save(e) {
       let config = await api.getWidgetConfig('overlay-manager')
       if (!config) {
         config = {}
       }
-      const { dataSource } = config
-      if (dataSource) {
-        const dataSource = config.dataSource
-        for (let i = 0; i < dataSource.length; i++) {
-          const features = dataSource[i]
-          for (let j = 0; j < features.length; j++) {
-            const { style } = features[j]
-            const { url } = style
-            if (url) {
-              features[j].style.url = this.baseUrl + url
-            }
-          }
-        }
-      }
-      this.firstOpen = false
-      this.dataSource = dataSource
-    } else {
-      this.$refs.graphicLayer.$_showCurrentGraphic()
-    }
-  }
-
-  onClose() {
-    // this.$refs.graphicLayer.$_hideAllGraphic()
-    this.$refs.graphicLayer.$_stopDrawAll()
-  }
-
-  async save(e) {
-    let config = await api.getWidgetConfig('overlay-manager')
-    if (!config) {
-      config = {}
-    }
-    config.dataSource = e
-    api.saveWidgetConfig({
-      name: 'overlay-manager',
-      config: config,
-    })
-  }
+      config.dataSource = e
+      api.saveWidgetConfig({
+        name: 'overlay-manager',
+        config: config,
+      })
+    },
+  },
 }
 </script>
 

@@ -27,92 +27,92 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Mixins } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 import { Util } from '@mapgis/webclient-vue-ui'
 
 const { ColorUtil } = Util
 
-@Component({
+export default {
   name: 'MpSkylineAnalysis',
-})
-export default class MpSkylineAnalysis extends Mixins(WidgetMixin) {
-  // 天际线分析结果宽度
-  private skylineWidth = 2
+  mixins: [WidgetMixin],
+  data() {
+    return {
+      // 天际线分析结果宽度
+      skylineWidth: 2,
+      // 天际线分析结果颜色
+      skylineColor: 'rgb(255,0,0)',
+      // 二维天际线图表显示
+      skyline2dVisible: false,
+      // 天际线分析二维图表
+      skyline2dChart: null,
+      // 天际线分析对象
+      skyLineAnalysis: null,
+    }
+  },
 
-  // 天际线分析结果颜色
-  private skylineColor = 'rgb(255,0,0)'
+  methods: {
+    onClose() {
+      this.skyLineAnalysis.unmount()
 
-  // 二维天际线图表显示
-  private skyline2dVisible = false
+      this.hideAnalysis2d()
+    },
 
-  // 天际线分析二维图表
-  private skyline2dChart = null
+    onOpen() {
+      this.skyLineAnalysis.mount()
+      this.changeSkylineWindowApha()
+    },
 
-  // 天际线分析对象
-  private skyLineAnalysis = null
+    remove() {
+      this.hideAnalysis2d()
+    },
 
-  onClose() {
-    this.skyLineAnalysis.unmount()
+    load(skyLineAnalysis) {
+      this.skyLineAnalysis = skyLineAnalysis
+    },
 
-    this.hideAnalysis2d()
-  }
+    /**
+     * 二维天际线图表弹框size变化
+     * @param mode
+     */
+    onSkyline2dWindowSize(mode?: 'max' | 'normal') {
+      this.$nextTick(() => {
+        if (this.skyline2dChart) {
+          const width =
+            mode === 'max' ? this.$refs.skyline2dChart.clientWidth : 800
+          this.skyline2dChart.resize({ width })
+        }
+      })
+      this.changeSkylineWindowApha()
+    },
 
-  onOpen() {
-    this.skyLineAnalysis.mount()
-    this.changeSkylineWindowApha()
-  }
+    changeSkylineWindowApha() {
+      const components = document.getElementsByClassName('mp-window-wrapper')[0]
+      const bgColor = document.defaultView.getComputedStyle(components, null)[
+        'background-color'
+      ]
+      const colorObject = ColorUtil.getColorObject(bgColor, 0.6)
+      const { r, g, b, a } = colorObject
+      const component = this.$refs.skylineWindow
 
-  remove() {
-    this.hideAnalysis2d()
-  }
+      component.style.background = `rgba(${r},${g},${b},${a})`
+    },
 
-  load(skyLineAnalysis) {
-    this.skyLineAnalysis = skyLineAnalysis
-  }
+    /**
+     * 展示二维天际线
+     * todo 绘制完成回调添加二维坐标点 #143
+     */
+    showAnalysis2d(skyline2dChart) {
+      this.skyline2dVisible = true
+      this.skyline2dChart = skyline2dChart
+    },
 
-  /**
-   * 二维天际线图表弹框size变化
-   * @param mode
-   */
-  onSkyline2dWindowSize(mode?: 'max' | 'normal') {
-    this.$nextTick(() => {
-      if (this.skyline2dChart) {
-        const width =
-          mode === 'max' ? this.$refs.skyline2dChart.clientWidth : 800
-        this.skyline2dChart.resize({ width })
-      }
-    })
-    this.changeSkylineWindowApha()
-  }
-
-  changeSkylineWindowApha() {
-    const components = document.getElementsByClassName('mp-window-wrapper')[0]
-    const bgColor = document.defaultView.getComputedStyle(components, null)[
-      'background-color'
-    ]
-    const colorObject = ColorUtil.getColorObject(bgColor, 0.6)
-    const { r, g, b, a } = colorObject
-    const component = this.$refs.skylineWindow
-
-    component.style.background = `rgba(${r},${g},${b},${a})`
-  }
-
-  /**
-   * 展示二维天际线
-   * todo 绘制完成回调添加二维坐标点 #143
-   */
-  showAnalysis2d(skyline2dChart) {
-    this.skyline2dVisible = true
-    this.skyline2dChart = skyline2dChart
-  }
-
-  /**
-   * 隐藏二维天际线
-   */
-  hideAnalysis2d() {
-    this.skyline2dVisible = false
-  }
+    /**
+     * 隐藏二维天际线
+     */
+    hideAnalysis2d() {
+      this.skyline2dVisible = false
+    },
+  },
 }
 </script>
 

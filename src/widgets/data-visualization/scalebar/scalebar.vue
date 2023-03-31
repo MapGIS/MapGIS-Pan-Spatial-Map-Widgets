@@ -3,11 +3,12 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
-@Component({ name: 'MpScalebar' })
-export default class MpScalebar extends Mixins(WidgetMixin) {}
+export default {
+  name: 'MpScalebar',
+  mixins: [WidgetMixin],
+}
 </script>
 
 <style lang="scss">

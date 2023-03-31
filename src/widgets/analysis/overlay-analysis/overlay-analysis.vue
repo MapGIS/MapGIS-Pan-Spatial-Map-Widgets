@@ -73,7 +73,6 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component, Watch } from 'vue-property-decorator'
 import {
   LayerType,
   WidgetMixin,
@@ -82,186 +81,184 @@ import {
   events,
 } from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpOverlayAnalysis',
-})
-export default class MpOverlayAnalysis extends Mixins(WidgetMixin) {
-  private layout = 'vertical'
+  mixins: [WidgetMixin],
 
-  private baseOverlayUrl = 'http://localhost:6163'
-
-  private srcType = 'Layer'
-
-  private srcALayer = ''
-
-  private srcBLayer = ''
-
-  private srcAFeature = {}
-
-  private srcBFeature = {}
-
-  private overlay = null
-
-  tDataIndex = null
-
-  dDataIndex = null
-
-  isFullScreen = false
-
-  isWidgetOpen = false
-
-  selectLevel = false
-
-  feature = undefined
-
-  destLayer = ''
-
-  add = false
-
-  finishLayer = false
-
-  finishFeature = false
-
-  changeSelectLevel() {
-    this.selectLevel = !this.selectLevel
-    if (this.selectLevel == false) {
-      this.srcType = 'Layer'
-    } else {
-      this.srcType = 'Feature'
-      if (JSON.stringify(ActiveResultSet.activeResultSet) == '{}') {
-        this.$message.warn('当前选择要素为空，请重新选择')
-        this.selectLevel = true
-        this.changeSelectLevel()
-      } else {
-        this.srcAFeature = ActiveResultSet.activeResultSet
-      }
+  data() {
+    return {
+      layout: 'vertical',
+      baseOverlayUrl: 'http://localhost:6163',
+      srcType: 'Layer',
+      srcALayer: '',
+      srcBLayer: '',
+      srcAFeature: {},
+      srcBFeature: {},
+      overlay: null,
+      tDataIndex: null,
+      dDataIndex: null,
+      isFullScreen: false,
+      isWidgetOpen: false,
+      selectLevel: false,
+      feature: undefined,
+      destLayer: '',
+      add: false,
+      finishLayer: false,
+      finishFeature: false,
     }
-  }
+  },
 
   // 监听图层列表，当图层发生变化时动态改变layerArrOption数组
-  @Watch('document.defaultMap', { deep: true, immediate: true })
-  documentChange(val: Array<unknown>) {
-    this.tDataIndex = null
-    this.dDataIndex = null
-    this.layerArrOption = []
-    const arr = []
-    val.layers().forEach((data) => {
-      if (data.type === LayerType.IGSVector) {
-        arr.push(data)
-      } else if (data.type === LayerType.IGSMapImage) {
-        arr.push(...data.sublayers)
+  watch: {
+    'document.defaultMap': {
+      handler: 'documentChange',
+      deep: true,
+      immediate: true,
+    },
+  },
+
+  computed: {
+    // 获取当前下拉框中的图层对象和索引值
+    tData() {
+      if (this.tDataIndex !== null) {
+        return this.layerArrOption[this.tDataIndex]
       }
-    })
-    if (arr.length > 0) {
-      this.layerArrOption = arr
-      this.tDataIndex = 0
-      this.dDataIndex = 0
-    }
-    this.tchangeTarget()
-    this.dchangeTarget()
-  }
+      return null
+    },
+    dData() {
+      if (this.dDataIndex !== null) {
+        return this.layerArrOption[this.dDataIndex]
+      }
+      return null
+    },
+  },
 
-  // 微件窗口模式切换时回调
-  onWindowSize(mode) {
-    this.isFullScreen = mode === 'max'
-  }
+  methods: {
+    // 监听图层列表，当图层发生变化时动态改变layerArrOption数组
+    documentChange(val: Array<unknown>) {
+      this.tDataIndex = null
+      this.dDataIndex = null
+      this.layerArrOption = []
+      const arr = []
+      val.layers().forEach((data) => {
+        if (data.type === LayerType.IGSVector) {
+          arr.push(data)
+        } else if (data.type === LayerType.IGSMapImage) {
+          arr.push(...data.sublayers)
+        }
+      })
+      if (arr.length > 0) {
+        this.layerArrOption = arr
+        this.tDataIndex = 0
+        this.dDataIndex = 0
+      }
+      this.tchangeTarget()
+      this.dchangeTarget()
+    },
 
-  load(overlay) {
-    this.overlay = overlay
-  }
-
-  /**
-   * 打开模块
-   */
-  onOpen() {
-    this.isWidgetOpen = true
-    this.overlay.mount()
-  }
-
-  // 获取当前下拉框中的图层对象和索引值
-  get tData() {
-    if (this.tDataIndex !== null) {
-      return this.layerArrOption[this.tDataIndex]
-    }
-    return null
-  }
-
-  get dData() {
-    if (this.dDataIndex !== null) {
-      return this.layerArrOption[this.dDataIndex]
-    }
-    return null
-  }
-
-  tchangeTarget() {
-    const tlayerCurrent = this.tData
-    if (tlayerCurrent != null) {
-      if (tlayerCurrent.type == 6) {
-        this.baseOverlayUrl = tlayerCurrent.url
-        this.srcALayer = tlayerCurrent.gdbps
+    changeSelectLevel() {
+      this.selectLevel = !this.selectLevel
+      if (this.selectLevel == false) {
+        this.srcType = 'Layer'
       } else {
-        this.baseOverlayUrl = tlayerCurrent.layer.url
-        this.srcALayer = tlayerCurrent.url
+        this.srcType = 'Feature'
+        if (JSON.stringify(ActiveResultSet.activeResultSet) == '{}') {
+          this.$message.warn('当前选择要素为空，请重新选择')
+          this.selectLevel = true
+          this.changeSelectLevel()
+        } else {
+          this.srcAFeature = ActiveResultSet.activeResultSet
+        }
       }
-    }
-  }
+    },
 
-  dchangeTarget() {
-    const dlayerCurrent = this.dData
-    if (dlayerCurrent != null) {
-      if (dlayerCurrent.type == 6) {
-        this.baseOverlayUrl = dlayerCurrent.url
-        this.srcBLayer = dlayerCurrent.gdbps
-      } else {
-        this.baseOverlayUrl = dlayerCurrent.layer.url
-        this.srcBLayer = dlayerCurrent.url
+    // 微件窗口模式切换时回调
+    onWindowSize(mode) {
+      this.isFullScreen = mode === 'max'
+    },
+
+    load(overlay) {
+      this.overlay = overlay
+    },
+
+    /**
+     * 打开模块
+     */
+    onOpen() {
+      this.isWidgetOpen = true
+      this.overlay.mount()
+    },
+
+    tchangeTarget() {
+      const tlayerCurrent = this.tData
+      if (tlayerCurrent != null) {
+        if (tlayerCurrent.type == 6) {
+          this.baseOverlayUrl = tlayerCurrent.url
+          this.srcALayer = tlayerCurrent.gdbps
+        } else {
+          this.baseOverlayUrl = tlayerCurrent.layer.url
+          this.srcALayer = tlayerCurrent.url
+        }
       }
-    }
-  }
+    },
 
-  showLayer(data) {
-    this.finishLayer = true
-    this.destLayer = data
-    if (this.add == true) {
-      this.addNewLayer()
-    }
-  }
+    dchangeTarget() {
+      const dlayerCurrent = this.dData
+      if (dlayerCurrent != null) {
+        if (dlayerCurrent.type == 6) {
+          this.baseOverlayUrl = dlayerCurrent.url
+          this.srcBLayer = dlayerCurrent.gdbps
+        } else {
+          this.baseOverlayUrl = dlayerCurrent.layer.url
+          this.srcBLayer = dlayerCurrent.url
+        }
+      }
+    },
 
-  showAdd(data) {
-    this.add = data
-  }
+    showLayer(data) {
+      this.finishLayer = true
+      this.destLayer = data
+      if (this.add == true) {
+        this.addNewLayer()
+      }
+    },
 
-  addNewLayer() {
-    const ip = (this.baseOverlayUrl || '').split('/')[2].split(':')[0]
-    const port = (this.baseOverlayUrl || '').split('/')[2].split(':')[1]
-    // const url = `${this.baseOverlayUrl}?gdbps=${this.destLayer}`
-    const url = `http://${ip}:${port}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
-    const index = url.lastIndexOf('/')
-    const layerName = url.substring(index + 1, url.length)
-    const data = {
-      name: 'IGS图层',
-      description: '综合分析_结果图层',
-      data: {
-        type: 'IGSVector',
-        url,
-        name: layerName,
-      },
-    }
-    eventBus.$emit(events.ADD_DATA_EVENT, data)
-  }
+    showAdd(data) {
+      this.add = data
+    },
 
-  /**
-   * 关闭模块
-   */
-  onClose() {
-    this.isWidgetOpen = false
-    this.reset()
-    this.overlay.unmount()
-  }
+    addNewLayer() {
+      const ip = (this.baseOverlayUrl || '').split('/')[2].split(':')[0]
+      const port = (this.baseOverlayUrl || '').split('/')[2].split(':')[1]
+      // const url = `${this.baseOverlayUrl}?gdbps=${this.destLayer}`
+      const url = `http://${ip}:${port}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
+      const index = url.lastIndexOf('/')
+      const layerName = url.substring(index + 1, url.length)
+      const data = {
+        name: 'IGS图层',
+        description: '综合分析_结果图层',
+        data: {
+          type: 'IGSVector',
+          url,
+          name: layerName,
+        },
+      }
+      eventBus.$emit(events.ADD_DATA_EVENT, data)
+    },
 
-  reset() {
-    this.isFullScreen = false
-  }
+    /**
+     * 关闭模块
+     */
+    onClose() {
+      this.isWidgetOpen = false
+      this.reset()
+      this.overlay.unmount()
+    },
+
+    reset() {
+      this.isFullScreen = false
+    },
+  },
 }
 </script>
 

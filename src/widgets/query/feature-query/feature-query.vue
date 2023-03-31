@@ -47,7 +47,6 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Mixins, Watch, Inject } from 'vue-property-decorator'
 import {
   WidgetMixin,
   ExhibitionControllerMixin,
@@ -92,86 +91,76 @@ enum QueryType {
   Cube = 'Cube',
 }
 
-@Component({
+export default {
   name: 'MpFeatureQuery',
-})
-export default class MpFeatureQuery extends Mixins(
-  WidgetMixin,
-  ExhibitionControllerMixin
-) {
-  private limitsArray: Array<number> = [0, 0.1, 0.5, 1, 5]
+  mixins: [WidgetMixin, ExhibitionControllerMixin],
 
-  private showSettingPanel = false
-
-  private sliderIndex = 0
-
-  private queryType = ''
-
-  private tempActiveExhibitionId = ''
-
-  // 判断微件是否执行了失活onDeActive函数
-  private doDeActive = false
-
-  private defaultQueryTypes2d = [
-    QueryType.Point,
-    QueryType.Circle,
-    QueryType.Rectangle,
-    QueryType.Polygon,
-    QueryType.LineString,
-  ]
-
-  private defaultQueryTypes3d = [
-    QueryType.Point,
-    QueryType.Polygon,
-    QueryType.LineString,
-    // QueryType.Rectangle,
-    QueryType.Cube,
-  ]
-
-  private queryTypes2DrawModes = {
-    Point: 'draw-point',
-    Circle: 'draw-circle',
-    Rectangle: 'draw-rectangle',
-    Polygon: 'draw-polygon',
-    LineString: 'draw-polyline',
-    Cube: 'draw-cube',
-  }
-
-  private get marks() {
+  data() {
     return {
-      ...this.limitsArray,
+      limitsArray: [0, 0.1, 0.5, 1, 5],
+      showSettingPanel: false,
+      sliderIndex: 0,
+      queryType: '',
+      tempActiveExhibitionId: '',
+      // 判断微件是否执行了失活onDeActive函数
+      doDeActive: false,
+      defaultQueryTypes2d: [
+        QueryType.Point,
+        QueryType.Circle,
+        QueryType.Rectangle,
+        QueryType.Polygon,
+        QueryType.LineString,
+      ],
+      defaultQueryTypes3d: [
+        QueryType.Point,
+        QueryType.Polygon,
+        QueryType.LineString,
+        // QueryType.Rectangle,
+        QueryType.Cube,
+      ],
+      queryTypes2DrawModes: {
+        Point: 'draw-point',
+        Circle: 'draw-circle',
+        Rectangle: 'draw-rectangle',
+        Polygon: 'draw-polygon',
+        LineString: 'draw-polyline',
+        Cube: 'draw-cube',
+      },
     }
-  }
-
-  private get limits() {
-    return this.limitsArray[this.sliderIndex]
-  }
-
-  private get queryTypes2d() {
-    return this.widgetInfo.config.queryType.filter((type) => {
-      return this.defaultQueryTypes2d.includes(type.id)
-    })
-  }
-
-  private get queryTypes3d() {
-    return this.widgetInfo.config.queryType.filter((type) => {
-      return this.defaultQueryTypes3d.includes(type.id)
-    })
-  }
-
-  private get queryTypes() {
-    return this.is2DMapMode ? this.queryTypes2d : this.queryTypes3d
-  }
-
-  get drawComponent() {
-    return this.is2DMapMode ? this.$refs.draw : this.$refs.draw3d
-  }
+  },
+  computed: {
+    marks() {
+      return {
+        ...this.limitsArray,
+      }
+    },
+    limits() {
+      return this.limitsArray[this.sliderIndex]
+    },
+    queryTypes2d() {
+      return this.widgetInfo.config.queryType.filter((type) => {
+        return this.defaultQueryTypes2d.includes(type.id)
+      })
+    },
+    queryTypes3d() {
+      return this.widgetInfo.config.queryType.filter((type) => {
+        return this.defaultQueryTypes3d.includes(type.id)
+      })
+    },
+    queryTypes() {
+      return this.is2DMapMode ? this.queryTypes2d : this.queryTypes3d
+    },
+    drawComponent() {
+      return this.is2DMapMode ? this.$refs.draw : this.$refs.draw3d
+    },
+  },
 
   // 二三维地图模式切换时
-  @Watch('mapRender')
-  mapRenderChange() {
-    this.onClearDraw()
-  }
+  watch: {
+    mapRender() {
+      this.onClearDraw()
+    },
+  },
 
   created() {
     this.widgetInfo.config.queryType.forEach((type) => {
@@ -184,216 +173,257 @@ export default class MpFeatureQuery extends Mixins(
       this.vueCesium,
       this.viewer
     )
-  }
+  },
 
-  // 微件激活时
-  onActive() {
-    this.map.getCanvas().style.cursor = this.widgetInfo.config.cursorType
-    this.doDeActive = false
-  }
+  methods: {
+    // 微件激活时
+    onActive() {
+      this.map.getCanvas().style.cursor = this.widgetInfo.config.cursorType
+      this.doDeActive = false
+    },
 
-  // 微件关闭时
-  onClose() {
-    this.onClearDraw()
-    if (!this.doDeActive) {
+    // 微件关闭时
+    onClose() {
+      this.onClearDraw()
+      if (!this.doDeActive) {
+        this.map.getCanvas().style.cursor = 'grab'
+      }
+    },
+
+    // 微件失活时
+    onDeActive() {
+      this.onClearDraw()
+      this.doDeActive = true
       this.map.getCanvas().style.cursor = 'grab'
-    }
-  }
+    },
 
-  // 微件失活时
-  onDeActive() {
-    this.onClearDraw()
-    this.doDeActive = true
-    this.map.getCanvas().style.cursor = 'grab'
-  }
+    // 打开绘制，点击图标激活对应类型的绘制功能
+    onOpenDraw(type) {
+      this.queryType = type
+      this.drawComponent &&
+        this.drawComponent.openDraw(this.queryTypes2DrawModes[type])
+    },
 
-  // 打开绘制，点击图标激活对应类型的绘制功能
-  private onOpenDraw(type) {
-    this.queryType = type
-    this.drawComponent &&
-      this.drawComponent.openDraw(this.queryTypes2DrawModes[type])
-  }
+    // 移除绘制
+    onClearDraw() {
+      this.queryType = ''
+      this.drawComponent && this.drawComponent.closeDraw()
+    },
 
-  // 移除绘制
-  private onClearDraw() {
-    this.queryType = ''
-    this.drawComponent && this.drawComponent.closeDraw()
-  }
+    // 'start'响应事件(开始绘制)
+    onDrawStart() {},
 
-  // 'start'响应事件(开始绘制)
-  private onDrawStart() {}
+    // 'finished'响应事件(结束绘制)
+    onDrawFinished({ mode, feature, shape, center }) {
+      if (shape) {
+        this.queryLayers(shape)
+      }
 
-  // 'finished'响应事件(结束绘制)
-  private onDrawFinished({ mode, feature, shape, center }) {
-    if (shape) {
-      this.queryLayers(shape)
-    }
+      this.queryType = ''
+    },
 
-    this.queryType = ''
-  }
-
-  private queryLayers(shape: Record<string, number>) {
-    if (!this.document) {
-      return
-    }
-
-    let nearDis = this.limits * 1000
-    const { projectionName } = baseConfigInstance.config
-
-    if (
-      projectionName.indexOf('度') !== -1 ||
-      projectionName.indexOf('分') !== -1 ||
-      projectionName.indexOf('秒') !== -1
-    ) {
-      const distanceUnits = 103133.845
-      nearDis /= distanceUnits
-    }
-
-    const layers = this.document.defaultMap.layers()
-
-    layers.forEach((layer) => {
-      if (!this.isCrossWithLayer(layer, shape)) {
+    queryLayers(shape: Record<string, number>) {
+      if (!this.document) {
         return
       }
 
-      const geometry = this.toQueryGeometry(layer, shape, nearDis)
+      let nearDis = this.limits * 1000
+      const { projectionName } = baseConfigInstance.config
 
-      switch (layer.type) {
-        case LayerType.IGSVector:
-          this.quertFeatruesByVector(layer, geometry)
-          break
-        case LayerType.IGSMapImage:
-          this.queryFeaturesByDoc(layer, geometry)
-          break
-        case LayerType.IGSScene:
-          this.queryFeaturesByIGSScene(layer, geometry)
-          break
-        case LayerType.ArcGISMapImage:
-          this.queryFeaturesByArcgis(layer, geometry)
-          break
-        default:
-          break
+      if (
+        projectionName.indexOf('度') !== -1 ||
+        projectionName.indexOf('分') !== -1 ||
+        projectionName.indexOf('秒') !== -1
+      ) {
+        const distanceUnits = 103133.845
+        nearDis /= distanceUnits
       }
-    })
-  }
 
-  private async queryFeaturesByIGSScene(layer, geometry) {
-    if (!layer.isVisible) {
-      return
-    }
-    const { ip, port, docName } = layer._parseUrl(layer.url)
+      const layers = this.document.defaultMap.layers()
 
-    const exhibition: IAttributeTableListExhibition = {
-      id: `${layer.id}`,
-      name: `${layer.title} 查询结果`,
-      description: '',
-      options: [],
-    }
-    let activeOptionId = ''
-    const {
-      activeScene: { sublayers },
-    } = layer
-    const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(layer.id)
-    if (layerConfig && layerConfig.bindData) {
-      for (let index = 0; index < sublayers.length; index++) {
-        const item = sublayers[index]
-        if (!item.visible) {
+      layers.forEach((layer) => {
+        if (!this.isCrossWithLayer(layer, shape)) {
           return
         }
-        exhibition.options.push({
-          id: item.id,
-          name: item.title || item.name,
+
+        const geometry = this.toQueryGeometry(layer, shape, nearDis)
+
+        switch (layer.type) {
+          case LayerType.IGSVector:
+            this.quertFeatruesByVector(layer, geometry)
+            break
+          case LayerType.IGSMapImage:
+            this.queryFeaturesByDoc(layer, geometry)
+            break
+          case LayerType.IGSScene:
+            this.queryFeaturesByIGSScene(layer, geometry)
+            break
+          case LayerType.ArcGISMapImage:
+            this.queryFeaturesByArcgis(layer, geometry)
+            break
+          default:
+            break
+        }
+      })
+    },
+
+    async queryFeaturesByIGSScene(layer, geometry) {
+      if (!layer.isVisible) {
+        return
+      }
+      const { ip, port, docName } = layer._parseUrl(layer.url)
+
+      const exhibition: IAttributeTableListExhibition = {
+        id: `${layer.id}`,
+        name: `${layer.title} 查询结果`,
+        description: '',
+        options: [],
+      }
+      let activeOptionId = ''
+      const {
+        activeScene: { sublayers },
+      } = layer
+      const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
+        layer.id
+      )
+      if (layerConfig && layerConfig.bindData) {
+        for (let index = 0; index < sublayers.length; index++) {
+          const item = sublayers[index]
+          if (!item.visible) {
+            return
+          }
+          exhibition.options.push({
+            id: item.id,
+            name: item.title || item.name,
+            ip: ip || baseConfigInstance.config.ip,
+            port: Number(port || baseConfigInstance.config.port),
+            serverType: layer.type,
+            gdbp: layerConfig.bindData.gdbps,
+            geometry: geometry,
+          })
+          const { TotalCount } = await this.queryCount(
+            exhibition.options[index],
+            true
+          )
+          if (TotalCount > 0) {
+            activeOptionId = item.id
+          }
+        }
+        this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
+      }
+    },
+
+    /**
+     * 设置activeExhibitionId和activeOptionId
+     * @param exhibition 展示面板对象
+     * @param activeOptionId 展示面板中激活的图层Id
+     * @param totalCount 查询数据总数
+     */
+    setActiveExhibitionIdAndOptionId(
+      exhibition: IAttributeTableListExhibition,
+      activeOptionId?: string,
+      totalCount?: number
+    ) {
+      const attributeTableListExhibition = new AttributeTableListExhibition(
+        exhibition
+      )
+      if (activeOptionId && activeOptionId !== '') {
+        attributeTableListExhibition.activeOptionId = activeOptionId
+      }
+      this.addExhibition(attributeTableListExhibition)
+      /**
+       * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
+       * 修改人：龚跃健
+       * 修改时间：2023/1/31
+       */
+      if ((activeOptionId && activeOptionId !== '') || totalCount) {
+        this.tempActiveExhibitionId = exhibition.id
+      }
+      if (this.tempActiveExhibitionId !== '') {
+        this.activeExhibitionId = this.tempActiveExhibitionId
+      }
+      this.openExhibitionPanel()
+    },
+
+    getIpPort({ isDataStoreQuery, ip, port }) {
+      const ipPortObj = isDataStoreQuery
+        ? {
+            ip: baseConfigInstance.config.DataStoreIp,
+            port: Number(baseConfigInstance.config.DataStorePort),
+          }
+        : {
+            ip: ip || baseConfigInstance.config.ip,
+            port: Number(port || baseConfigInstance.config.port),
+          }
+
+      return ipPortObj
+    },
+
+    async queryFeaturesByDoc(layer: IGSMapImageLayer, geometry) {
+      if (!layer.isVisible) {
+        return
+      }
+      const { ip, port, docName } = layer._parseUrl(layer.url)
+
+      const exhibition: IAttributeTableListExhibition = {
+        id: `${layer.id}`,
+        name: `${layer.title} 查询结果`,
+        description: '',
+        options: [],
+      }
+
+      const sublayers = layer.allSublayers
+
+      let activeOptionId = ''
+
+      for (let index = 0; index < sublayers.length; index++) {
+        const sublayer = sublayers[index]
+        if (!sublayer.visible && sublayer.sublayers.length > 0) {
+          return
+        }
+        /**
+         * 修改说明：IGS地图文档和图层服务全部都走IGS的接口，不再判断是否为pg数据
+         * 修改人：龚跃健
+         * 日期：2022-5-10
+         */
+        const isDataStoreQuery = false
+        const DNSName = undefined
+        const ipPortObj = this.getIpPort({
+          isDataStoreQuery,
           ip: ip || baseConfigInstance.config.ip,
           port: Number(port || baseConfigInstance.config.port),
+        })
+        exhibition.options.push({
+          id: sublayer.id,
+          name: sublayer.title,
+          DNSName,
+          isDataStoreQuery,
+          ...ipPortObj,
           serverType: layer.type,
-          gdbp: layerConfig.bindData.gdbps,
+          gdbp: sublayer.url,
+          layerIndex: sublayer.id,
+          serverName: docName,
+          serverUrl: layer.url,
           geometry: geometry,
         })
-        const { TotalCount } = await this.queryCount(
-          exhibition.options[index],
-          true
-        )
+        /**
+         * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
+         * 修改人：龚跃健
+         * 修改时间：2023/1/31
+         */
+        const { TotalCount } = await this.queryCount(exhibition.options[index])
         if (TotalCount > 0) {
-          activeOptionId = item.id
+          activeOptionId = sublayer.id
         }
       }
       this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
-    }
-  }
+    },
 
-  /**
-   * 设置activeExhibitionId和activeOptionId
-   * @param exhibition 展示面板对象
-   * @param activeOptionId 展示面板中激活的图层Id
-   * @param totalCount 查询数据总数
-   */
-  private setActiveExhibitionIdAndOptionId(
-    exhibition: IAttributeTableListExhibition,
-    activeOptionId?: string,
-    totalCount?: number
-  ) {
-    const attributeTableListExhibition = new AttributeTableListExhibition(
-      exhibition
-    )
-    if (activeOptionId && activeOptionId !== '') {
-      attributeTableListExhibition.activeOptionId = activeOptionId
-    }
-    this.addExhibition(attributeTableListExhibition)
-    /**
-     * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
-     * 修改人：龚跃健
-     * 修改时间：2023/1/31
-     */
-    if ((activeOptionId && activeOptionId !== '') || totalCount) {
-      this.tempActiveExhibitionId = exhibition.id
-    }
-    if (this.tempActiveExhibitionId !== '') {
-      this.activeExhibitionId = this.tempActiveExhibitionId
-    }
-    this.openExhibitionPanel()
-  }
-
-  getIpPort({ isDataStoreQuery, ip, port }) {
-    const ipPortObj = isDataStoreQuery
-      ? {
-          ip: baseConfigInstance.config.DataStoreIp,
-          port: Number(baseConfigInstance.config.DataStorePort),
-        }
-      : {
-          ip: ip || baseConfigInstance.config.ip,
-          port: Number(port || baseConfigInstance.config.port),
-        }
-
-    return ipPortObj
-  }
-
-  private async queryFeaturesByDoc(layer: IGSMapImageLayer, geometry) {
-    if (!layer.isVisible) {
-      return
-    }
-    const { ip, port, docName } = layer._parseUrl(layer.url)
-
-    const exhibition: IAttributeTableListExhibition = {
-      id: `${layer.id}`,
-      name: `${layer.title} 查询结果`,
-      description: '',
-      options: [],
-    }
-
-    const sublayers = layer.allSublayers
-
-    let activeOptionId = ''
-
-    for (let index = 0; index < sublayers.length; index++) {
-      const sublayer = sublayers[index]
-      if (!sublayer.visible && sublayer.sublayers.length > 0) {
+    async quertFeatruesByVector(layer: IGSVectorLayer, geometry) {
+      if (!layer.isVisible) {
         return
       }
-      /**
-       * 修改说明：IGS地图文档和图层服务全部都走IGS的接口，不再判断是否为pg数据
-       * 修改人：龚跃健
-       * 日期：2022-5-10
-       */
+      const { ip, port, docName } = layer._parseUrl(layer.url)
       const isDataStoreQuery = false
       const DNSName = undefined
       const ipPortObj = this.getIpPort({
@@ -401,463 +431,426 @@ export default class MpFeatureQuery extends Mixins(
         ip: ip || baseConfigInstance.config.ip,
         port: Number(port || baseConfigInstance.config.port),
       })
-      exhibition.options.push({
-        id: sublayer.id,
-        name: sublayer.title,
-        DNSName,
-        isDataStoreQuery,
-        ...ipPortObj,
-        serverType: layer.type,
-        gdbp: sublayer.url,
-        layerIndex: sublayer.id,
-        serverName: docName,
-        serverUrl: layer.url,
-        geometry: geometry,
-      })
+
+      const exhibition: IAttributeTableListExhibition = {
+        id: `${layer.id}`,
+        name: `${layer.title} 查询结果`,
+        options: [
+          {
+            id: layer.id,
+            DNSName,
+            isDataStoreQuery,
+            ...ipPortObj,
+            serverType: layer.type,
+            gdbp: layer.gdbps,
+            geometry: geometry,
+          },
+        ],
+      }
       /**
        * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
        * 修改人：龚跃健
        * 修改时间：2023/1/31
        */
-      const { TotalCount } = await this.queryCount(exhibition.options[index])
-      if (TotalCount > 0) {
-        activeOptionId = sublayer.id
-      }
-    }
-    this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
-  }
+      const { TotalCount } = await this.queryCount(exhibition.options[0])
+      this.setActiveExhibitionIdAndOptionId(exhibition, null, TotalCount)
+    },
 
-  private async quertFeatruesByVector(layer: IGSVectorLayer, geometry) {
-    if (!layer.isVisible) {
-      return
-    }
-    const { ip, port, docName } = layer._parseUrl(layer.url)
-    const isDataStoreQuery = false
-    const DNSName = undefined
-    const ipPortObj = this.getIpPort({
-      isDataStoreQuery,
-      ip: ip || baseConfigInstance.config.ip,
-      port: Number(port || baseConfigInstance.config.port),
-    })
-
-    const exhibition: IAttributeTableListExhibition = {
-      id: `${layer.id}`,
-      name: `${layer.title} 查询结果`,
-      options: [
-        {
-          id: layer.id,
-          DNSName,
-          isDataStoreQuery,
-          ...ipPortObj,
-          serverType: layer.type,
-          gdbp: layer.gdbps,
-          geometry: geometry,
-        },
-      ],
-    }
-    /**
-     * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
-     * 修改人：龚跃健
-     * 修改时间：2023/1/31
-     */
-    const { TotalCount } = await this.queryCount(exhibition.options[0])
-    this.setActiveExhibitionIdAndOptionId(exhibition, null, TotalCount)
-  }
-
-  // IGSMapImage、IGSVector图层获取总页数
-  private async queryCount(optionVal, isScence = false) {
-    const {
-      ip,
-      port,
-      isDataStoreQuery,
-      serverName,
-      layerIndex,
-      gdbp,
-      geometry,
-    } = optionVal
-    const featureSet = await FeatureQuery.query(
-      {
+    // IGSMapImage、IGSVector图层获取总页数
+    async queryCount(optionVal, isScence = false) {
+      const {
         ip,
-        port: port.toString(),
-        f: 'json',
-        IncludeAttribute: false,
-        IncludeGeometry: false,
-        IncludeWebGraphic: false,
+        port,
         isDataStoreQuery,
-        geometry,
-        where: null,
+        serverName,
+        layerIndex,
         gdbp,
-        docName: serverName,
-        layerIdxs: layerIndex,
-        rtnLabel: false,
-      },
-      false,
-      isScence
-    )
-    return featureSet
-  }
+        geometry,
+      } = optionVal
+      const featureSet = await FeatureQuery.query(
+        {
+          ip,
+          port: port.toString(),
+          f: 'json',
+          IncludeAttribute: false,
+          IncludeGeometry: false,
+          IncludeWebGraphic: false,
+          isDataStoreQuery,
+          geometry,
+          where: null,
+          gdbp,
+          docName: serverName,
+          layerIdxs: layerIndex,
+          rtnLabel: false,
+        },
+        false,
+        isScence
+      )
+      return featureSet
+    },
 
-  private async queryFeaturesByArcgis(layer, geometry) {
-    if (!layer.isVisible) {
-      return
-    }
-
-    const exhibition: IAttributeTableListExhibition = {
-      id: `${layer.id}`,
-      name: `${layer.title} 查询结果`,
-      description: '',
-      options: [],
-    }
-    let activeOptionId = ''
-
-    const sublayers = layer.allSublayers
-    for (let index = 0; index < sublayers.length; index++) {
-      const sublayer = sublayers[index]
-      if (!sublayer.visible) {
+    async queryFeaturesByArcgis(layer, geometry) {
+      if (!layer.isVisible) {
         return
       }
-      exhibition.options.push({
-        id: sublayer.id,
-        name: sublayer.title,
-        serverType: layer.type,
-        layerIndex: sublayer.id,
-        serverUrl: layer.url,
-        geometry: geometry,
-      })
-      /**
-       * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
-       * 修改人：龚跃健
-       * 修改时间：2023/1/31
-       */
-      const { count } = await ArcGISFeatureQuery.getTotal({
-        f: 'pjson',
-        where: null,
-        geometry,
-        serverUrl: layer.url,
-        layerIndex: sublayer.id,
-      })
 
-      if (count > 0) {
-        activeOptionId = sublayer.id
+      const exhibition: IAttributeTableListExhibition = {
+        id: `${layer.id}`,
+        name: `${layer.title} 查询结果`,
+        description: '',
+        options: [],
       }
-    }
-    this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
-  }
+      let activeOptionId = ''
 
-  private toQueryGeometry(
-    layer,
-    shape: Record<string, number> | Array<Record<string, number>>,
-    nearDis
-  ) {
-    let geometry
+      const sublayers = layer.allSublayers
+      for (let index = 0; index < sublayers.length; index++) {
+        const sublayer = sublayers[index]
+        if (!sublayer.visible) {
+          return
+        }
+        exhibition.options.push({
+          id: sublayer.id,
+          name: sublayer.title,
+          serverType: layer.type,
+          layerIndex: sublayer.id,
+          serverUrl: layer.url,
+          geometry: geometry,
+        })
+        /**
+         * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
+         * 修改人：龚跃健
+         * 修改时间：2023/1/31
+         */
+        const { count } = await ArcGISFeatureQuery.getTotal({
+          f: 'pjson',
+          where: null,
+          geometry,
+          serverUrl: layer.url,
+          layerIndex: sublayer.id,
+        })
 
-    switch (this.queryType) {
-      case QueryType.Point:
-        if (!this.is2DMapMode && layer.type === LayerType.IGSScene) {
-          // 三维查询需要用到局部坐标，这里把经纬度转换成局部坐标,这里z轴不做转换
-          const transform = this.getLayerTranform(layer)
-          const offset = this.getLayerOffset(layer)
-          if (transform) {
-            const { x, y, z } =
-              this.sceneController.globelPositionToLocalPosition(
+        if (count > 0) {
+          activeOptionId = sublayer.id
+        }
+      }
+      this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
+    },
+
+    toQueryGeometry(
+      layer,
+      shape: Record<string, number> | Array<Record<string, number>>,
+      nearDis
+    ) {
+      let geometry
+
+      switch (this.queryType) {
+        case QueryType.Point:
+          if (!this.is2DMapMode && layer.type === LayerType.IGSScene) {
+            // 三维查询需要用到局部坐标，这里把经纬度转换成局部坐标,这里z轴不做转换
+            const transform = this.getLayerTranform(layer)
+            const offset = this.getLayerOffset(layer)
+            if (transform) {
+              const { x, y, z } =
+                this.sceneController.globelPositionToLocalPosition(
+                  shape,
+                  transform,
+                  offset
+                )
+              geometry = new Point3D(x, y, shape.z)
+            }
+          } else {
+            let pointNearDis = nearDis
+            if (!pointNearDis) {
+              // 如果nearDis为0，需要重置nearDis为0.0000001之类的，小数位数与坐标位数保持一致。igs接口这个参数不能直接设置为0
+              const xStr = shape.x.toString().split('.')[1]
+              pointNearDis = 0.0001 || Number(`0.${xStr}`) / Number(xStr)
+            }
+            geometry = new Zondy.Common.Point2D(shape.x, shape.y, {
+              nearDis: pointNearDis,
+            })
+          }
+          break
+        case QueryType.LineString:
+          if (!this.is2DMapMode && layer.type === LayerType.IGSScene) {
+            // 三维查询需要用到局部坐标，这里把经纬度转换成局部坐标,这里z轴不做转换
+            const transform = this.getLayerTranform(layer)
+            const offset = this.getLayerOffset(layer)
+            if (transform) {
+              const { xmin, ymin, xmax, ymax, zmin, zmax } = this.toQueryRect3D(
                 shape,
                 transform,
                 offset
               )
-            geometry = new Point3D(x, y, shape.z)
-          }
-        } else {
-          let pointNearDis = nearDis
-          if (!pointNearDis) {
-            // 如果nearDis为0，需要重置nearDis为0.0000001之类的，小数位数与坐标位数保持一致。igs接口这个参数不能直接设置为0
-            const xStr = shape.x.toString().split('.')[1]
-            pointNearDis = 0.0001 || Number(`0.${xStr}`) / Number(xStr)
-          }
-          geometry = new Zondy.Common.Point2D(shape.x, shape.y, {
-            nearDis: pointNearDis,
-          })
-        }
-        break
-      case QueryType.LineString:
-        if (!this.is2DMapMode && layer.type === LayerType.IGSScene) {
-          // 三维查询需要用到局部坐标，这里把经纬度转换成局部坐标,这里z轴不做转换
-          const transform = this.getLayerTranform(layer)
-          const offset = this.getLayerOffset(layer)
-          if (transform) {
-            const { xmin, ymin, xmax, ymax, zmin, zmax } = this.toQueryRect3D(
-              shape,
-              transform,
-              offset
-            )
 
-            geometry = new Rectangle3D(xmin, ymin, zmin, xmax, ymax, zmax)
-          }
-        } else {
-          let lineNearDis = nearDis
-          const pointArray = shape.map((item: Record<string, number>) => {
-            if (!lineNearDis) {
-              // 如果nearDis为0，需要重置nearDis为0.0000001之类的，小数位数与坐标位数保持一致。igs接口这个参数不能直接设置为0
-              const xStr = item.x.toString().split('.')[1]
-              lineNearDis = Number(`0.${xStr}`) / Number(xStr)
+              geometry = new Rectangle3D(xmin, ymin, zmin, xmax, ymax, zmax)
             }
-            return new Zondy.Common.Point2D(item.x, item.y, {
+          } else {
+            let lineNearDis = nearDis
+            const pointArray = shape.map((item: Record<string, number>) => {
+              if (!lineNearDis) {
+                // 如果nearDis为0，需要重置nearDis为0.0000001之类的，小数位数与坐标位数保持一致。igs接口这个参数不能直接设置为0
+                const xStr = item.x.toString().split('.')[1]
+                lineNearDis = Number(`0.${xStr}`) / Number(xStr)
+              }
+              return new Zondy.Common.Point2D(item.x, item.y, {
+                nearDis: lineNearDis,
+              })
+            })
+
+            geometry = new Zondy.Common.PolyLine(pointArray, {
               nearDis: lineNearDis,
             })
-          })
-
-          geometry = new Zondy.Common.PolyLine(pointArray, {
-            nearDis: lineNearDis,
-          })
-        }
-        break
-      case QueryType.Polygon:
-        if (!this.is2DMapMode && layer.type === LayerType.IGSScene) {
-          // 三维查询需要用到局部坐标，这里把经纬度转换成局部坐标,这里z轴不做转换
-          const transform = this.getLayerTranform(layer)
-          const offset = this.getLayerOffset(layer)
-          if (transform) {
-            const { xmin, ymin, xmax, ymax, zmin, zmax } = this.toQueryRect3D(
-              shape,
-              transform,
-              offset
-            )
-
-            geometry = new Rectangle3D(xmin, ymin, zmin, xmax, ymax, zmax)
           }
-        } else {
-          let polyNearDis = nearDis
-          const pointArray = shape.map((item: Record<string, number>) => {
-            if (!polyNearDis) {
-              // 如果nearDis为0，需要重置nearDis为0.0000001之类的，小数位数与坐标位数保持一致。igs接口这个参数不能直接设置为0
-              const xStr = item.x.toString().split('.')[1]
-              polyNearDis = Number(`0.${xStr}`) / Number(xStr)
+          break
+        case QueryType.Polygon:
+          if (!this.is2DMapMode && layer.type === LayerType.IGSScene) {
+            // 三维查询需要用到局部坐标，这里把经纬度转换成局部坐标,这里z轴不做转换
+            const transform = this.getLayerTranform(layer)
+            const offset = this.getLayerOffset(layer)
+            if (transform) {
+              const { xmin, ymin, xmax, ymax, zmin, zmax } = this.toQueryRect3D(
+                shape,
+                transform,
+                offset
+              )
+
+              geometry = new Rectangle3D(xmin, ymin, zmin, xmax, ymax, zmax)
             }
-            return new Zondy.Common.Point2D(item.x, item.y, {
-              nearDis: polyNearDis,
+          } else {
+            let polyNearDis = nearDis
+            const pointArray = shape.map((item: Record<string, number>) => {
+              if (!polyNearDis) {
+                // 如果nearDis为0，需要重置nearDis为0.0000001之类的，小数位数与坐标位数保持一致。igs接口这个参数不能直接设置为0
+                const xStr = item.x.toString().split('.')[1]
+                polyNearDis = Number(`0.${xStr}`) / Number(xStr)
+              }
+              return new Zondy.Common.Point2D(item.x, item.y, {
+                nearDis: polyNearDis,
+              })
             })
-          })
 
-          geometry = new Zondy.Common.Polygon(pointArray)
-        }
-        break
-      case QueryType.Cube:
-      case QueryType.Circle:
-      case QueryType.Rectangle:
-        if (!this.is2DMapMode && layer.type === LayerType.IGSScene) {
-          // 三维查询需要用到局部坐标，这里把经纬度转换成局部坐标,这里z轴不做转换
-          const transform = this.getLayerTranform(layer)
-          const offset = this.getLayerOffset(layer)
-          if (transform) {
-            const { xmin, ymin, xmax, ymax, zmin, zmax } = shape
-
-            geometry = this.transQueryRect3D(
-              { xmin, ymin, xmax, ymax, zmin, zmax },
-              transform,
-              offset
-            )
+            geometry = new Zondy.Common.Polygon(pointArray)
           }
-        } else {
-          const { xmin, ymin, xmax, ymax } = shape
-          geometry = new Zondy.Common.Rectangle(xmin, ymin, xmax, ymax)
-        }
-        break
-      default:
-        break
-    }
+          break
+        case QueryType.Cube:
+        case QueryType.Circle:
+        case QueryType.Rectangle:
+          if (!this.is2DMapMode && layer.type === LayerType.IGSScene) {
+            // 三维查询需要用到局部坐标，这里把经纬度转换成局部坐标,这里z轴不做转换
+            const transform = this.getLayerTranform(layer)
+            const offset = this.getLayerOffset(layer)
+            if (transform) {
+              const { xmin, ymin, xmax, ymax, zmin, zmax } = shape
 
-    return geometry
-  }
-
-  private transQueryRect3D(
-    { xmin, ymin, xmax, ymax, zmin, zmax },
-    transform,
-    offset
-  ) {
-    if (transform) {
-      const minPosition = this.sceneController.globelPositionToLocalPosition(
-        { x: xmin, y: ymin, z: zmin },
-        transform,
-        offset
-      )
-      const maxPosition = this.sceneController.globelPositionToLocalPosition(
-        { x: xmax, y: ymax, z: zmax },
-        transform,
-        offset
-      )
-      return new Rectangle3D(
-        minPosition.x,
-        minPosition.y,
-        zmin,
-        maxPosition.x,
-        maxPosition.y,
-        zmax
-      )
-    }
-    return undefined
-  }
-
-  private toQueryRect3D(shape, transform, offset) {
-    const positions = shape.map((item) => {
-      const { x, y, z } = this.sceneController.globelPositionToLocalPosition(
-        item,
-        transform,
-        offset
-      )
-      return {
-        x,
-        y,
-        z: item.z,
+              geometry = this.transQueryRect3D(
+                { xmin, ymin, xmax, ymax, zmin, zmax },
+                transform,
+                offset
+              )
+            }
+          } else {
+            const { xmin, ymin, xmax, ymax } = shape
+            geometry = new Zondy.Common.Rectangle(xmin, ymin, xmax, ymax)
+          }
+          break
+        default:
+          break
       }
-    })
-    let xmin = 0
-    let ymin = 0
-    let zmin = 0
-    let xmax = 0
-    let ymax = 0
-    let zmax = 0
-    positions.forEach(({ x, y, z }, index) => {
-      if (index === 0) {
-        xmin = x
-        ymin = y
-        zmin = z
-        xmax = x
-        ymax = y
-        zmax = z
-      } else {
-        xmin = xmin - x < 0 ? xmin : x
-        ymin = ymin - y < 0 ? ymin : y
-        zmin = zmin - z < 0 ? zmin : z
-        xmax = xmax - x > 0 ? xmax : x
-        ymax = ymax - y > 0 ? ymax : y
-        zmax = zmax - z > 0 ? zmax : z
-      }
-    })
-    return {
-      xmin,
-      ymin,
-      xmax,
-      ymax,
-      zmin,
-      zmax,
-    }
-  }
 
-  private getLayerTranform(layer) {
-    let tranform = null
-    const {
-      activeScene: { sublayers },
-    } = layer
-    let visibleSublayerId = ''
+      return geometry
+    },
 
-    if (sublayers) {
-      sublayers.forEach((sublayer) => {
-        if (sublayer.visible) {
-          visibleSublayerId = sublayer.id
-        }
-      })
-    }
-
-    if (visibleSublayerId !== '') {
-      const source = this.sceneController.findSource(visibleSublayerId)
-      if (source) {
-        tranform = source.root.transform
-      }
-    }
-    return tranform
-  }
-
-  private getLayerOffset(layer) {
-    let offset = null
-    const {
-      activeScene: { sublayers },
-    } = layer
-    let visibleSublayerId = ''
-
-    if (sublayers) {
-      sublayers.forEach((sublayer) => {
-        if (sublayer.visible) {
-          visibleSublayerId = sublayer.id
-        }
-      })
-    }
-
-    if (visibleSublayerId !== '') {
-      const source = this.sceneController.findSource(visibleSublayerId)
-      if (source) {
-        offset = source._asset.offset
-      }
-    }
-    return offset
-  }
-
-  private isCrossWithLayer(layer, shape): boolean {
-    const { fullExtent, type } = layer
-    const { ymax, ymin, xmax, xmin } = fullExtent
-    let geometry
-    let extentPolygon
-
-    if (!this.is2DMapMode && type === LayerType.IGSScene) {
-      const tranform = this.getLayerTranform(layer)
-      if (tranform) {
-        const extent = this.sceneController.localExtentToGlobelExtent(
-          fullExtent,
-          tranform
+    transQueryRect3D(
+      { xmin, ymin, xmax, ymax, zmin, zmax },
+      transform,
+      offset
+    ) {
+      if (transform) {
+        const minPosition = this.sceneController.globelPositionToLocalPosition(
+          { x: xmin, y: ymin, z: zmin },
+          transform,
+          offset
         )
+        const maxPosition = this.sceneController.globelPositionToLocalPosition(
+          { x: xmax, y: ymax, z: zmax },
+          transform,
+          offset
+        )
+        return new Rectangle3D(
+          minPosition.x,
+          minPosition.y,
+          zmin,
+          maxPosition.x,
+          maxPosition.y,
+          zmax
+        )
+      }
+      return undefined
+    },
+
+    toQueryRect3D(shape, transform, offset) {
+      const positions = shape.map((item) => {
+        const { x, y, z } = this.sceneController.globelPositionToLocalPosition(
+          item,
+          transform,
+          offset
+        )
+        return {
+          x,
+          y,
+          z: item.z,
+        }
+      })
+      let xmin = 0
+      let ymin = 0
+      let zmin = 0
+      let xmax = 0
+      let ymax = 0
+      let zmax = 0
+      positions.forEach(({ x, y, z }, index) => {
+        if (index === 0) {
+          xmin = x
+          ymin = y
+          zmin = z
+          xmax = x
+          ymax = y
+          zmax = z
+        } else {
+          xmin = xmin - x < 0 ? xmin : x
+          ymin = ymin - y < 0 ? ymin : y
+          zmin = zmin - z < 0 ? zmin : z
+          xmax = xmax - x > 0 ? xmax : x
+          ymax = ymax - y > 0 ? ymax : y
+          zmax = zmax - z > 0 ? zmax : z
+        }
+      })
+      return {
+        xmin,
+        ymin,
+        xmax,
+        ymax,
+        zmin,
+        zmax,
+      }
+    },
+
+    getLayerTranform(layer) {
+      let tranform = null
+      const {
+        activeScene: { sublayers },
+      } = layer
+      let visibleSublayerId = ''
+
+      if (sublayers) {
+        sublayers.forEach((sublayer) => {
+          if (sublayer.visible) {
+            visibleSublayerId = sublayer.id
+          }
+        })
+      }
+
+      if (visibleSublayerId !== '') {
+        const source = this.sceneController.findSource(visibleSublayerId)
+        if (source) {
+          tranform = source.root.transform
+        }
+      }
+      return tranform
+    },
+
+    getLayerOffset(layer) {
+      let offset = null
+      const {
+        activeScene: { sublayers },
+      } = layer
+      let visibleSublayerId = ''
+
+      if (sublayers) {
+        sublayers.forEach((sublayer) => {
+          if (sublayer.visible) {
+            visibleSublayerId = sublayer.id
+          }
+        })
+      }
+
+      if (visibleSublayerId !== '') {
+        const source = this.sceneController.findSource(visibleSublayerId)
+        if (source) {
+          offset = source._asset.offset
+        }
+      }
+      return offset
+    },
+
+    isCrossWithLayer(layer, shape): boolean {
+      const { fullExtent, type } = layer
+      const { ymax, ymin, xmax, xmin } = fullExtent
+      let geometry
+      let extentPolygon
+
+      if (!this.is2DMapMode && type === LayerType.IGSScene) {
+        const tranform = this.getLayerTranform(layer)
+        if (tranform) {
+          const extent = this.sceneController.localExtentToGlobelExtent(
+            fullExtent,
+            tranform
+          )
+          extentPolygon = polygon([
+            [
+              [Number(extent.xmin), Number(extent.ymin)],
+              [Number(extent.xmax), Number(extent.ymin)],
+              [Number(extent.xmax), Number(extent.ymax)],
+              [Number(extent.xmin), Number(extent.ymax)],
+              [Number(extent.xmin), Number(extent.ymin)],
+            ],
+          ])
+        }
+      } else {
         extentPolygon = polygon([
           [
-            [Number(extent.xmin), Number(extent.ymin)],
-            [Number(extent.xmax), Number(extent.ymin)],
-            [Number(extent.xmax), Number(extent.ymax)],
-            [Number(extent.xmin), Number(extent.ymax)],
-            [Number(extent.xmin), Number(extent.ymin)],
+            [Number(xmin), Number(ymin)],
+            [Number(xmax), Number(ymin)],
+            [Number(xmax), Number(ymax)],
+            [Number(xmin), Number(ymax)],
+            [Number(xmin), Number(ymin)],
           ],
         ])
       }
-    } else {
-      extentPolygon = polygon([
-        [
-          [Number(xmin), Number(ymin)],
-          [Number(xmax), Number(ymin)],
-          [Number(xmax), Number(ymax)],
-          [Number(xmin), Number(ymax)],
-          [Number(xmin), Number(ymin)],
-        ],
-      ])
-    }
-    switch (this.queryType) {
-      case QueryType.Point:
-        geometry = point([shape.x, shape.y])
-        break
-      case QueryType.LineString:
-        geometry = lineString(shape.map((point) => [point.x, point.y]))
-        break
-      case QueryType.Polygon:
-        geometry = polygon([shape.map((point) => [point.x, point.y])])
-        break
-      case QueryType.Cube:
-      case QueryType.Circle:
-      case QueryType.Rectangle:
-        const { ymax, ymin, xmax, xmin } = shape
-        geometry = polygon([
-          [
-            [xmin, ymin],
-            [xmax, ymin],
-            [xmax, ymax],
-            [xmin, ymax],
-            [xmin, ymin],
-          ],
-        ])
-        break
-      default:
-        return false
-    }
-    return (
-      // 交叉或者包含都会继续查询
-      !booleanDisjoint(extentPolygon, geometry) ||
-      booleanContains(extentPolygon, geometry) ||
-      booleanContains(geometry, extentPolygon)
-    )
-  }
+      switch (this.queryType) {
+        case QueryType.Point:
+          geometry = point([shape.x, shape.y])
+          break
+        case QueryType.LineString:
+          geometry = lineString(shape.map((point) => [point.x, point.y]))
+          break
+        case QueryType.Polygon:
+          geometry = polygon([shape.map((point) => [point.x, point.y])])
+          break
+        case QueryType.Cube:
+        case QueryType.Circle:
+        case QueryType.Rectangle:
+          const { ymax, ymin, xmax, xmin } = shape
+          geometry = polygon([
+            [
+              [xmin, ymin],
+              [xmax, ymin],
+              [xmax, ymax],
+              [xmin, ymax],
+              [xmin, ymin],
+            ],
+          ])
+          break
+        default:
+          return false
+      }
+      return (
+        // 交叉或者包含都会继续查询
+        !booleanDisjoint(extentPolygon, geometry) ||
+        booleanContains(extentPolygon, geometry) ||
+        booleanContains(geometry, extentPolygon)
+      )
+    },
+  },
 }
 </script>
 

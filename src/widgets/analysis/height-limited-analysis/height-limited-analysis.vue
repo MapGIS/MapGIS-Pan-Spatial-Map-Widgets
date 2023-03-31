@@ -11,50 +11,48 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component, Watch } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpHeightLimitedAnalysis',
-})
-export default class MpHeightLimitedAnalysis extends Mixins(WidgetMixin) {
-  private color = 'rgba(255,140,0,0.6)'
+  mixins: [WidgetMixin],
+  data() {
+    return {
+      color: 'rgba(255,140,0,0.6)',
+      heightLimit: 80,
+      maxSliderHeight: 180,
+      minSliderHeight: 0,
+      drawStyle: {
+        color: '#FF0000',
+        opacity: 0.6,
+      },
+      // 控高分析对象
+      heightLimitedAnalysis: undefined,
+    }
+  },
+  methods: {
+    onActive() {
+      this.heightLimitedAnalysis.mount()
+    },
 
-  private heightLimit = 80
+    /**
+     * 打开模块
+     */
+    onOpen() {
+      this.heightLimitedAnalysis.mount()
+    },
 
-  private maxSliderHeight = 180
+    /**
+     * 关闭模块
+     */
+    onClose() {
+      this.heightLimitedAnalysis.unmount()
+    },
 
-  private minSliderHeight = 0
-
-  private drawStyle = {
-    color: '#FF0000',
-    opacity: 0.6,
-  }
-
-  // 控高分析对象
-  private heightLimitedAnalysis = undefined
-
-  onActive() {
-    this.heightLimitedAnalysis.mount()
-  }
-
-  /**
-   * 打开模块
-   */
-  onOpen() {
-    this.heightLimitedAnalysis.mount()
-  }
-
-  /**
-   * 关闭模块
-   */
-  onClose() {
-    this.heightLimitedAnalysis.unmount()
-  }
-
-  load(e) {
-    this.heightLimitedAnalysis = e
-  }
+    load(e) {
+      this.heightLimitedAnalysis = e
+    },
+  },
 }
 </script>
 

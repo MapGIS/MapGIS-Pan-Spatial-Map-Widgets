@@ -5,25 +5,26 @@ import {
 } from './components'
 
 import {
-  //   MpBufferAnalysis,
-  //   MpDynamicSectionAnalysis,
-  //   MpHeightLimitedAnalysis,
-  //   MpModelFlatten,
-  //   MpNetworkAnalysis,
-  //   MpOverlayAnalysis,
-  //   MpProfileAnalysis,
-  //   MpRetrospect,
-  //   MpSceneRoaming,
-  //   MpShadowAnalysis,
-  //   MpSkylineAnalysis,
+  MpBufferAnalysis,
+  MpDynamicSectionAnalysis,
+  MpHeightLimitedAnalysis,
+  MpModelFlatten,
+  MpNetworkAnalysis,
+  MpOverlayAnalysis,
+  MpProfileAnalysis,
+  MpRetrospect,
+  MpSceneRoaming,
+  MpShadowAnalysis,
+  MpSkylineAnalysis,
   MpSwipe,
-  //   MpTerrainAnalysis,
-  //   MpTopologyAnalysis,
-  //   MpVisibilityAnalysis,
+  MpTerrainAnalysis,
+  MpTopologyAnalysis,
+  MpVisibilityAnalysis,
+  MpVisualAnalysis,
 } from './widgets/analysis'
 
 import {
-  // MpAddData,
+  MpAddData,
   MpBasemapManager,
   MpDataCatalog,
 } from './widgets/data-manager'
@@ -34,43 +35,40 @@ import {
   MpLayerListContainer,
   MpLegend,
   MpMapModePicker,
-  // MpMapStory,
-  // MpParticleEffects,
-  // MpProjectorManager,
-  // MpRotate,
-  // MpScalebar,
-  // MpSceneSetting,
+  MpMapStory,
+  MpParticleEffects,
+  MpProjectorManager,
+  MpRotate,
+  MpScalebar,
+  MpSceneSetting,
   MpThematicMap,
-  // MpVectorTileCarto,
-  // MpViewpointManager,
-  // MpZoom,
+  MpVectorTileCarto,
+  MpViewpointManager,
+  MpZoom,
 } from './widgets/data-visualization'
 
-// import { MpMarkerManager, MpOverlayManager } from './widgets/editing'
-
-// import {
-//   MpAbindCard,
-//   MpAbout,
-//   MpFuncWarehouse,
-//   MpKibanaV,
-//   MpMapDataV,
-// } from './widgets/extended'
+import { MpMarkerManager, MpOverlayManager } from './widgets/editing'
 
 import {
-  MpComprehensiveQuery,
-  //  MpFeatureQuery
-} from './widgets/query'
+  MpAbindCard,
+  MpAbout,
+  MpFuncWarehouse,
+  MpKibanaV,
+  MpMapDataV,
+} from './widgets/extended'
 
-// import {
-//   MpBuildingGrow,
-//   MpCityGrow,
-//   MpPondingSimulation,
-// } from './widgets/simulation'
+import { MpComprehensiveQuery, MpFeatureQuery } from './widgets/query'
 
 import {
-  //   MpBimComponent,
+  MpBuildingGrow,
+  MpCityGrow,
+  MpPondingSimulation,
+} from './widgets/simulation'
+
+import {
+  MpBimComponent,
   MpMeasurement,
-  //   MpOutputImage,
+  MpOutputImage,
   MpSplitScreen,
   MpStratifiedHousehold,
 } from './widgets/tool'
@@ -80,23 +78,24 @@ const components = [
   MpAttributeTableList,
   MpTreeLayer,
   // analysis
-  // MpBufferAnalysis,
-  // MpDynamicSectionAnalysis,
-  // MpHeightLimitedAnalysis,
-  // MpModelFlatten,
-  // MpNetworkAnalysis,
-  // MpOverlayAnalysis,
-  // MpProfileAnalysis,
-  // MpRetrospect,
-  // MpSceneRoaming,
-  // MpShadowAnalysis,
-  // MpSkylineAnalysis,
+  MpBufferAnalysis,
+  MpDynamicSectionAnalysis,
+  MpHeightLimitedAnalysis,
+  MpModelFlatten,
+  MpNetworkAnalysis,
+  MpOverlayAnalysis,
+  MpProfileAnalysis,
+  MpRetrospect,
+  MpSceneRoaming,
+  MpShadowAnalysis,
+  MpSkylineAnalysis,
   MpSwipe,
-  // MpTerrainAnalysis,
-  // MpTopologyAnalysis,
-  // MpVisibilityAnalysis,
+  MpTerrainAnalysis,
+  MpTopologyAnalysis,
+  MpVisibilityAnalysis,
+  MpVisualAnalysis,
   // data-manager
-  // MpAddData,
+  MpAddData,
   MpBasemapManager,
   MpDataCatalog,
   // data-visualization
@@ -105,36 +104,36 @@ const components = [
   MpLayerListContainer,
   MpLegend,
   MpMapModePicker,
-  // MpMapStory,
-  // MpParticleEffects,
-  // MpProjectorManager,
-  // MpRotate,
-  // MpScalebar,
-  // MpSceneSetting,
+  MpMapStory,
+  MpParticleEffects,
+  MpProjectorManager,
+  MpRotate,
+  MpScalebar,
+  MpSceneSetting,
   MpThematicMap,
-  // MpVectorTileCarto,
-  // MpViewpointManager,
-  // MpZoom,
+  MpVectorTileCarto,
+  MpViewpointManager,
+  MpZoom,
   // editing
-  // MpMarkerManager,
-  // MpOverlayManager,
+  MpMarkerManager,
+  MpOverlayManager,
   // extended
-  // MpAbindCard,
-  // MpAbout,
-  // MpFuncWarehouse,
-  // MpKibanaV,
-  // MpMapDataV,
+  MpAbindCard,
+  MpAbout,
+  MpFuncWarehouse,
+  MpKibanaV,
+  MpMapDataV,
   // query
   MpComprehensiveQuery,
-  // MpFeatureQuery,
+  MpFeatureQuery,
   // simulation
-  // MpBuildingGrow,
-  // MpCityGrow,
-  // MpPondingSimulation,
+  MpBuildingGrow,
+  MpCityGrow,
+  MpPondingSimulation,
   // tool
-  // MpBimComponent,
+  MpBimComponent,
   MpMeasurement,
-  // MpOutputImage,
+  MpOutputImage,
   MpSplitScreen,
   MpStratifiedHousehold,
 ]

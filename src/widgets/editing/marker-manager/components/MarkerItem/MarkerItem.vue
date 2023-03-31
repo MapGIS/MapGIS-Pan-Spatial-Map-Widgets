@@ -39,22 +39,26 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator'
+export default {
+  name: 'MpMarkerItem',
+  props: {
+    marker: Object,
+    icons: Object,
+    active: Boolean,
+  },
 
-@Component({ name: 'MpMarkerItem' })
-export default class MpMarkerItem extends Vue {
-  @Prop({ type: Object }) marker
+  data() {
+    return {
+      actionMenuVisible: false,
+    }
+  },
 
-  @Prop({ type: Object }) icons
-
-  @Prop({ type: Boolean }) active
-
-  private actionMenuVisible = false
-
-  onDeleteMarker() {
-    this.actionMenuVisible = false
-    this.$emit('delete-marker', this.marker)
-  }
+  methods: {
+    onDeleteMarker() {
+      this.actionMenuVisible = false
+      this.$emit('delete-marker', this.marker)
+    },
+  },
 }
 </script>
 

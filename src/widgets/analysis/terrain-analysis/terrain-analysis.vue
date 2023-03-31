@@ -10,124 +10,129 @@
         <div class="analysis-type-text">{{ type.title }}</div>
       </div>
     </div>
-    <MpAspectSlope v-show="tab === 'aspectSlope'" ref="aspectSlopeAnalysis" />
-    <MpContourAnalysis v-show="tab === 'contour'" ref="contourAnalysis" />
-    <MpFlooding v-show="tab === 'flooding'" ref="floodingAnalysis" />
-    <MpCutFillAnalysis v-show="tab === 'cut-fill'" ref="cutFillAnalysis" />
+    <mp-aspect-slope v-show="tab === 'aspectSlope'" ref="aspectSlopeAnalysis" />
+    <mp-contour-analysis v-show="tab === 'contour'" ref="contourAnalysis" />
+    <mp-flooding v-show="tab === 'flooding'" ref="floodingAnalysis" />
+    <mp-cut-fill-analysis v-show="tab === 'cut-fill'" ref="cutFillAnalysis" />
   </div>
 </template>
 
 <script lang="ts">
-import { Mixins, Component } from 'vue-property-decorator'
 import { WidgetMixin, api } from '@mapgis/web-app-framework'
 import MpAspectSlope from './aspect-slope-analysis.vue'
 import MpFlooding from './flooding.vue'
 import MpCutFillAnalysis from './cut-fill-analysis.vue'
 import MpContourAnalysis from './contour-analysis.vue'
 
-@Component({
+export default {
   name: 'MpTerrainAnalysis',
+  mixins: [WidgetMixin],
   components: {
     MpAspectSlope,
     MpFlooding,
     MpCutFillAnalysis,
     MpContourAnalysis,
   },
-})
-export default class MpTerrainAnalysis extends Mixins(WidgetMixin) {
-  private tab = 'aspectSlope'
 
-  private preTab = 'aspectSlope'
-
-  private analysis = [
-    {
-      title: '坡向坡度',
-      key: 'aspectSlope',
-      image: 'aspect.png',
-    },
-    {
-      title: '等值线',
-      key: 'contour',
-      image: 'contour.png',
-    },
-    {
-      title: '淹没',
-      key: 'flooding',
-      image: 'flooding.png',
-    },
-    {
-      title: '填挖方',
-      key: 'cut-fill',
-      image: 'cut-fill.png',
-    },
-  ]
-
-  // 获取当前面板对应的组件
-  get currentAnalysisComponent() {
-    return this.getAnalysisComponent(this.tab)
-  }
-
-  get typeImage() {
-    return function (image) {
-      return `${this.appAssetsUrl}${this.widgetInfo.uri}/images/${image}`
+  data() {
+    return {
+      tab: 'aspectSlope',
+      preTab: 'aspectSlope',
+      analysis: [
+        {
+          title: '坡向坡度',
+          key: 'aspectSlope',
+          image: 'aspect.png',
+        },
+        {
+          title: '等值线',
+          key: 'contour',
+          image: 'contour.png',
+        },
+        {
+          title: '淹没',
+          key: 'flooding',
+          image: 'flooding.png',
+        },
+        {
+          title: '填挖方',
+          key: 'cut-fill',
+          image: 'cut-fill.png',
+        },
+      ],
     }
-  }
+  },
 
-  getAnalysisComponent(tab: string) {
-    if (tab == 'aspectSlope') {
-      return this.$refs.aspectSlopeAnalysis
-    } else if (tab == 'contour') {
-      return this.$refs.contourAnalysis
-    } else if (tab == 'flooding') {
-      return this.$refs.floodingAnalysis
-    } else if (tab == 'cut-fill') {
-      return this.$refs.cutFillAnalysis
-    }
-    return null
-  }
+  computed: {
+    // 获取当前面板对应的组件
+    currentAnalysisComponent() {
+      return this.getAnalysisComponent(this.tab)
+    },
 
-  // 切换面板
-  changeTab(activeKey: string) {
-    this.tab = activeKey
-    if (this.preTab !== this.tab) {
-      const preAnalysisComponent = this.getAnalysisComponent(this.preTab)
-      preAnalysisComponent.onDeActive()
-      this.preTab = this.tab
-    }
-    if (this.tab === 'flooding') {
-      this.setFloodConfig()
-    }
-    if (this.currentAnalysisComponent) {
+    typeImage() {
+      return function (image) {
+        return `${this.appAssetsUrl}${this.widgetInfo.uri}/images/${image}`
+      }
+    },
+  },
+
+  methods: {
+    getAnalysisComponent(tab: string) {
+      if (tab == 'aspectSlope') {
+        return this.$refs.aspectSlopeAnalysis
+      } else if (tab == 'contour') {
+        return this.$refs.contourAnalysis
+      } else if (tab == 'flooding') {
+        return this.$refs.floodingAnalysis
+      } else if (tab == 'cut-fill') {
+        return this.$refs.cutFillAnalysis
+      }
+      return null
+    },
+
+    // 切换面板
+    changeTab(activeKey: string) {
+      this.tab = activeKey
+      if (this.preTab !== this.tab) {
+        const preAnalysisComponent = this.getAnalysisComponent(this.preTab)
+        preAnalysisComponent.onDeActive()
+        this.preTab = this.tab
+      }
+      if (this.tab === 'flooding') {
+        this.setFloodConfig()
+      }
+      if (this.currentAnalysisComponent) {
+        this.currentAnalysisComponent.onActive()
+      }
+    },
+
+    // 微件打开时
+    onOpen() {
       this.currentAnalysisComponent.onActive()
-    }
-  }
+    },
 
-  // 微件打开时
-  onOpen() {
-    this.currentAnalysisComponent.onActive()
-  }
+    async setFloodConfig() {
+      let config = await api.getWidgetConfig('terrain-analysis')
+      config = config || {}
+      const { floodAnalysis } = config
+      this.$refs.floodingAnalysis.setConfig(floodAnalysis)
+    },
 
-  async setFloodConfig() {
-    let config = await api.getWidgetConfig('terrain-analysis')
-    config = config || {}
-    const { floodAnalysis } = config
-    this.$refs.floodingAnalysis.setConfig(floodAnalysis)
-  }
+    // 微件激活时
+    onActive() {
+      this.currentAnalysisComponent.onActive()
+    },
 
-  // 微件激活时
-  onActive() {
-    this.currentAnalysisComponent.onActive()
-  }
+    // 微件关闭时
+    onClose() {
+      this.currentAnalysisComponent.onDeActive()
+    },
 
-  // 微件关闭时
-  onClose() {
-    this.currentAnalysisComponent.onDeActive()
-  }
-
-  // 微件失活时
-  onDeActive() {
-    this.currentAnalysisComponent.onDeActive()
-  }
+    // 微件失活时
+    onDeActive() {
+      this.currentAnalysisComponent.onDeActive()
+    },
+  },
 }
 </script>
 

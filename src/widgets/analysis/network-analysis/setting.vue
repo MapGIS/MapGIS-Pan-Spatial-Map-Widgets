@@ -38,28 +38,38 @@
     </mapgis-ui-form-item>
   </mapgis-ui-form>
 </template>
+
 <script>
-import { Vue, Prop, Component, Watch } from 'vue-property-decorator'
+export default {
+  name: 'Setting',
+  props: {
+    value: {
+      type: Object,
+    },
+  },
 
-@Component({ name: 'Setting' })
-export default class Setting extends Vue {
-  @Prop({ type: Object }) value
+  data() {
+    return {
+      options: [
+        { value: 'Weight1', label: '缺省网络权值' },
+        // { value: '2', label: '顺距离' },
+        // { value: '3', label: '逆距离' },
+        // { value: '4', label: '顺时' },
+        // { value: '5', label: '逆时' }
+      ],
+    }
+  },
 
-  options = [
-    { value: 'Weight1', label: '缺省网络权值' },
-    // { value: '2', label: '顺距离' },
-    // { value: '3', label: '逆距离' },
-    // { value: '4', label: '顺时' },
-    // { value: '5', label: '逆时' }
-  ]
-
-  valueChange(key, val) {
-    const { value } = this
-    value[key] = val
-    this.$emit('input', value)
-  }
+  methods: {
+    valueChange(key, val) {
+      const { value } = this
+      value[key] = val
+      this.$emit('input', value)
+    },
+  },
 }
 </script>
+
 <style lang="less" scoped>
 .form-card-container {
   display: flex;
