@@ -46,7 +46,6 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { UUID } from '@mapgis/web-app-framework'
 
 interface ITableDataItem {
@@ -55,130 +54,136 @@ interface ITableDataItem {
   max: number
 }
 
-@Component({ name: 'MpColorsSetting' })
-export default class MpColorsSetting extends Vue {
+export default {
   // [{ min: 0, max: 60, color: 'rgba(244, 67, 54, 0.5)' }...]
-  @Prop() readonly value!: Record<string, string>
-
-  @Prop({
-    type: String,
-    default: '角度范围',
-  })
-  readonly rangeField?: string
-
-  defaultColor = 'rgb(64,169,255,0.5)'
-
-  dropdownVisible = false
-
-  tableColumns = [
-    {
-      title: '颜色',
-      dataIndex: 'color',
-      align: 'center',
-      scopedSlots: { customRender: 'color' },
+  name: 'MpColorsSetting',
+  props: {
+    value: {
+      type: String,
     },
-    {
-      title: this.rangeField,
-      dataIndex: 'max',
-      scopedSlots: { customRender: 'max' },
+    rangeField: {
+      type: String,
+      default: '角度范围',
     },
-    {
-      title: '操作',
-      align: 'center',
-      scopedSlots: { customRender: 'operation' },
+  },
+  data() {
+    return {
+      defaultColor: 'rgb(64,169,255,0.5)',
+      dropdownVisible: false,
+      tableColumns: [
+        {
+          title: '颜色',
+          dataIndex: 'color',
+          align: 'center',
+          scopedSlots: { customRender: 'color' },
+        },
+        {
+          title: this.rangeField,
+          dataIndex: 'max',
+          scopedSlots: { customRender: 'max' },
+        },
+        {
+          title: '操作',
+          align: 'center',
+          scopedSlots: { customRender: 'operation' },
+        },
+      ],
+      tableData: [],
+      emitValue: [],
+    }
+  },
+
+  watch: {
+    value: { immediate: true, deep: true, handler: 'valueChange' },
+    tableData: { immediate: true, deep: true, handler: 'tableDataChange' },
+  },
+
+  methods: {
+    valueChange() {
+      if (JSON.stringify(this.value) !== JSON.stringify(this.emitValue)) {
+        this.initTableData()
+      }
     },
-  ]
 
-  tableData: ITableDataItem[] = []
+    tableDataChange() {
+      this.emitValue = this.tableData.map(({ min, max, color }) => ({
+        min,
+        max,
+        color,
+      }))
+      this.$emit('input', this.emitValue)
+    },
 
-  emitValue = []
+    /**
+     * 修改选中行的最大值，后面一行的最小值同步变化
+     */
+    changeMax(record, index) {
+      // console.log(record, index)
+      if (record.max > this.tableData[index + 1].max) {
+        record.max = this.tableData[index + 1].max
+      }
+      if (index < this.tableData.length - 1) {
+        this.tableData[index + 1].min = record.max
+      }
+    },
 
-  @Watch('value', { immediate: true, deep: true })
-  valueChange() {
-    if (JSON.stringify(this.value) !== JSON.stringify(this.emitValue)) {
-      this.initTableData()
-    }
-  }
+    /**
+     * 获取每行的可输入最大值（就是后一行的最大值）
+     */
+    getMax(index) {
+      return index < this.tableData.length - 1
+        ? this.tableData[index + 1].max
+        : this.tableData[this.tableData.length - 1].max
+    },
 
-  @Watch('tableData', { immediate: true, deep: true })
-  tableDataChange() {
-    this.emitValue = this.tableData.map(({ min, max, color }) => ({
-      min,
-      max,
-      color,
-    }))
-    this.$emit('input', this.emitValue)
-  }
+    /**
+     * 初始化列表数据
+     */
+    initTableData() {
+      if (!this.value || this.value.length === 0) {
+        return
+      }
+      this.tableData = this.value.map(({ min, max, color }) => ({
+        key: UUID.uuid(),
+        min,
+        max,
+        color,
+      }))
+    },
 
-  /**
-   * 修改选中行的最大值，后面一行的最小值同步变化
-   */
-  changeMax(record, index) {
-    // console.log(record, index)
-    if (record.max > this.tableData[index + 1].max) {
-      record.max = this.tableData[index + 1].max
-    }
-    if (index < this.tableData.length - 1) {
-      this.tableData[index + 1].min = record.max
-    }
-  }
+    /**
+     * 删除，删除后，前一行和后一行要衔接上
+     */
+    remove(index: number) {
+      const length = this.tableData.length
+      if (index === 0) {
+        this.tableData[index + 1].min = this.tableData[index].min
+      } else if (index < length - 1) {
+        this.tableData[index + 1].min = this.tableData[index].min
+        this.tableData[index - 1].max = this.tableData[index + 1].min
+      } else {
+        this.tableData[index - 1].max = this.tableData[index].min
+      }
+      this.tableData.splice(index, 1)
+    },
 
-  /**
-   * 获取每行的可输入最大值（就是后一行的最大值）
-   */
-  getMax(index) {
-    return index < this.tableData.length - 1
-      ? this.tableData[index + 1].max
-      : this.tableData[this.tableData.length - 1].max
-  }
-
-  /**
-   * 初始化列表数据
-   */
-  initTableData() {
-    if (!this.value || this.value.length === 0) {
-      return
-    }
-    this.tableData = this.value.map(({ min, max, color }) => ({
-      key: UUID.uuid(),
-      min,
-      max,
-      color,
-    }))
-  }
-
-  /**
-   * 删除，删除后，前一行和后一行要衔接上
-   */
-  remove(index: number) {
-    const length = this.tableData.length
-    if (index === 0) {
-      this.tableData[index + 1].min = this.tableData[index].min
-    } else if (index < length - 1) {
-      this.tableData[index + 1].min = this.tableData[index].min
-      this.tableData[index - 1].max = this.tableData[index + 1].min
-    } else {
-      this.tableData[index - 1].max = this.tableData[index].min
-    }
-    this.tableData.splice(index, 1)
-  }
-
-  /**
-   * 添加，向下插入一行，把该行的最大最小值的间隔一分为二
-   */
-  add(index) {
-    const length = this.tableData.length
-    const { min, max } = this.tableData[index]
-    const num = Math.ceil((max + min) / 2)
-    this.tableData[index].max = num
-    const node = {
-      key: UUID.uuid(),
-      color: this.defaultColor,
-      min: num,
-      max,
-    }
-    this.tableData.splice(index + 1, 0, node)
-  }
+    /**
+     * 添加，向下插入一行，把该行的最大最小值的间隔一分为二
+     */
+    add(index) {
+      const length = this.tableData.length
+      const { min, max } = this.tableData[index]
+      const num = Math.ceil((max + min) / 2)
+      this.tableData[index].max = num
+      const node = {
+        key: UUID.uuid(),
+        color: this.defaultColor,
+        min: num,
+        max,
+      }
+      this.tableData.splice(index + 1, 0, node)
+    },
+  },
 }
 </script>
 

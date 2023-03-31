@@ -55,7 +55,6 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component, Watch } from 'vue-property-decorator'
 import {
   WidgetMixin,
   LayerType,
@@ -64,89 +63,96 @@ import {
   ModelCacheFormat,
 } from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpBuildingGrow',
-})
-export default class MpBuildingGrow extends Mixins(WidgetMixin) {
-  private m3dLayers = []
+  mixins: [WidgetMixin],
 
-  private startBuildingGrow = false
-
-  private playWidth = 500
-
-  private vueIndex = undefined
-
-  private steps = 2
-
-  private selectDefaultVal = undefined
-
-  // 建筑生长对象
-  private buildingGrow = null
-
-  onLayerChange(value: string) {
-    this.deleteBuildingGrow()
-    const { viewer, vueKey, vueCesium } = this
-    const find = vueCesium.M3DIgsManager.findSource(vueKey, value)
-    const m3ds = find.source
-    const m3d = m3ds && m3ds.length > 0 ? m3ds[0] : undefined
-    viewer.camera.flyToBoundingSphere(m3d.boundingSphere)
-    this.vueIndex = value
-  }
-
-  startGrow() {
-    this.startBuildingGrow = true
-  }
-
-  deleteBuildingGrow() {
-    this.hideBuildingGrow()
-    if (this.buildingGrow) {
-      this.buildingGrow.unmount()
+  data() {
+    return {
+      m3dLayers: [],
+      startBuildingGrow: false,
+      playWidth: 500,
+      vueIndex: undefined,
+      steps: 2,
+      selectDefaultVal: undefined,
+      // 建筑生长对象
+      buildingGrow: null,
     }
-  }
+  },
 
-  loaded(e) {
-    this.buildingGrow = e.component
-  }
+  watch: {
+    document: {
+      immediate: true,
+      deep: true,
+      handler: 'getScenes',
+    },
+  },
 
-  onClose() {
-    this.hideBuildingGrow()
-    if (this.buildingGrow) {
-      this.buildingGrow.unmount()
-    }
-  }
-
-  hideBuildingGrow() {
-    this.startBuildingGrow = false
-  }
-
-  /**
-   * 动态获取基础目录树上已勾选的三维模型数据
-   */
-  @Watch('document', { immediate: true, deep: true })
-  getScenes() {
-    if (!this.document) return
-    const m3dLayers = []
-    this.document.defaultMap
-      .clone()
-      .getFlatLayers()
-      .forEach((layer, index) => {
-        if (layer.loadStatus === LoadStatus.loaded) {
-          if (layer.type === LayerType.ModelCache) {
-            if (layer.format === ModelCacheFormat.m3d) {
-              this.vueIndex = layer.id
-              // 剖切分析暂时只支持模型
-              m3dLayers.push({
-                title: layer.title,
-                vueIndex: this.vueIndex,
-              })
+  methods: {
+    /**
+     * 动态获取基础目录树上已勾选的三维模型数据
+     */
+    getScenes() {
+      if (!this.document) return
+      const m3dLayers = []
+      this.document.defaultMap
+        .clone()
+        .getFlatLayers()
+        .forEach((layer, index) => {
+          if (layer.loadStatus === LoadStatus.loaded) {
+            if (layer.type === LayerType.ModelCache) {
+              if (layer.format === ModelCacheFormat.m3d) {
+                this.vueIndex = layer.id
+                // 剖切分析暂时只支持模型
+                m3dLayers.push({
+                  title: layer.title,
+                  vueIndex: this.vueIndex,
+                })
+              }
             }
           }
-        }
-      })
-    this.m3dLayers = m3dLayers
-    const m3dLength = m3dLayers.length
-    this.selectDefaultVal = m3dLayers[m3dLength - 1]
-  }
+        })
+      this.m3dLayers = m3dLayers
+      const m3dLength = m3dLayers.length
+      this.selectDefaultVal = m3dLayers[m3dLength - 1]
+    },
+
+    onLayerChange(value: string) {
+      this.deleteBuildingGrow()
+      const { viewer, vueKey, vueCesium } = this
+      const find = vueCesium.M3DIgsManager.findSource(vueKey, value)
+      const m3ds = find.source
+      const m3d = m3ds && m3ds.length > 0 ? m3ds[0] : undefined
+      viewer.camera.flyToBoundingSphere(m3d.boundingSphere)
+      this.vueIndex = value
+    },
+
+    startGrow() {
+      this.startBuildingGrow = true
+    },
+
+    deleteBuildingGrow() {
+      this.hideBuildingGrow()
+      if (this.buildingGrow) {
+        this.buildingGrow.unmount()
+      }
+    },
+
+    loaded(e) {
+      this.buildingGrow = e.component
+    },
+
+    onClose() {
+      this.hideBuildingGrow()
+      if (this.buildingGrow) {
+        this.buildingGrow.unmount()
+      }
+    },
+
+    hideBuildingGrow() {
+      this.startBuildingGrow = false
+    },
+  },
 }
 </script>
 

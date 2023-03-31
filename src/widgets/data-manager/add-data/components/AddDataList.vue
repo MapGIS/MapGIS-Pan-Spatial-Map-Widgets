@@ -159,236 +159,243 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import AddDataCategorySelect from './AddDataCategorySelect.vue'
 import AddDataCategory from './AddDataCategory.vue'
 import { MapgisUiEmpty } from '@mapgis/webclient-vue-ui'
 
-@Component({
+export default {
   name: 'AddDataList',
   components: {
     AddDataCategorySelect,
     AddDataCategory,
   },
-})
-export default class AddDataList extends Vue {
-  @Prop({ type: Array }) dataList
+  props: {
+    dataList: Array,
+    dataTypes: Array,
+    categories: Array,
+  },
 
-  @Prop({ type: Array }) dataTypes
-
-  @Prop({ type: Array }) categories
-
-  private categoryName = this.categories.length ? this.categories[0].name : ''
-
-  private categoryDataList = []
-
-  private pagination = {
-    current: 1,
-    showSizeChanger: true,
-    size: 'small',
-    total: this.categoryDataList.length,
-    showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
-    pageSizeOptions: ['5', '10', '15', '20'],
-    pageSize: 10,
-  }
-
-  private searchText = ''
-
-  private searchInput = null
-
-  private searchedColumn = ''
-
-  private pageSizeOptions = ['5', '10', '15', '20']
-
-  private selectedRowKeys = []
-
-  private preSelectedRowKeys = []
-
-  private addCategoryVisible = false
-
-  get columns() {
-    return [
-      {
-        title: '名称',
-        dataIndex: 'name',
-        sorter: (a, b) => a.name < b.name,
-        ellipsis: true,
-        scopedSlots: {
-          filterDropdown: 'filterDropdown',
-          filterIcon: 'filterIcon',
-          customRender: 'customRenderName',
-        },
-        onFilter: (value, record) =>
-          record.name.toString().toLowerCase().includes(value.toLowerCase()),
-        onFilterDropdownVisibleChange: (visible) => {
-          if (visible) {
-            setTimeout(() => {
-              this.searchInput.focus()
-            }, 0)
-          }
-        },
+  data() {
+    return {
+      categoryName: this.categories.length ? this.categories[0].name : '',
+      categoryDataList: [],
+      pagination: {
+        current: 1,
+        showSizeChanger: true,
+        size: 'small',
+        // total: this.categoryDataList.length,
+        showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
+        pageSizeOptions: ['5', '10', '15', '20'],
+        pageSize: 10,
       },
-      {
-        title: '类型',
-        dataIndex: 'type',
-        sorter: (a, b) =>
-          this.typeDescription(a.type) < this.typeDescription(b.type),
-        ellipsis: true,
-        scopedSlots: { customRender: 'customRenderType' },
-        filters: this.dataTypes,
-        onFilter: (value, record) => record.type.indexOf(value) === 0,
+      searchText: '',
+      searchInput: null,
+      searchedColumn: '',
+      pageSizeOptions: ['5', '10', '15', '20'],
+      selectedRowKeys: [],
+      preSelectedRowKeys: [],
+      addCategoryVisible: false,
+    }
+  },
+
+  computed: {
+    'pagination.total'() {
+      return this.categoryDataList.length
+    },
+    columns() {
+      return [
+        {
+          title: '名称',
+          dataIndex: 'name',
+          sorter: (a, b) => a.name < b.name,
+          ellipsis: true,
+          scopedSlots: {
+            filterDropdown: 'filterDropdown',
+            filterIcon: 'filterIcon',
+            customRender: 'customRenderName',
+          },
+          onFilter: (value, record) =>
+            record.name.toString().toLowerCase().includes(value.toLowerCase()),
+          onFilterDropdownVisibleChange: (visible) => {
+            if (visible) {
+              setTimeout(() => {
+                this.searchInput.focus()
+              }, 0)
+            }
+          },
+        },
+        {
+          title: '类型',
+          dataIndex: 'type',
+          sorter: (a, b) =>
+            this.typeDescription(a.type) < this.typeDescription(b.type),
+          ellipsis: true,
+          scopedSlots: { customRender: 'customRenderType' },
+          filters: this.dataTypes,
+          onFilter: (value, record) => record.type.indexOf(value) === 0,
+        },
+      ]
+    },
+
+    typeDescription() {
+      return function (typeVal) {
+        const type = this.dataTypes.find((item) => {
+          return item.value === typeVal
+        })
+        return type ? type.text : ''
+      }
+    },
+  },
+
+  watch: {
+    categoryName: {
+      immediate: true,
+      handler() {
+        this.changeCategory()
       },
-    ]
-  }
-
-  get typeDescription() {
-    return function (typeVal) {
-      const type = this.dataTypes.find((item) => {
-        return item.value === typeVal
-      })
-      return type ? type.text : ''
-    }
-  }
-
-  @Watch('categoryName', { immediate: true })
-  changeCategory() {
-    this.queryData()
-  }
-
-  onCategorySelect(val) {
-    this.categoryName = val
-  }
-
-  onAddCategory() {
-    this.addCategoryVisible = true
-  }
-
-  onSaveData() {
-    this.$emit('save')
-  }
-
-  onTableChange(pagination) {
-    this.pagination = { ...pagination }
-  }
-
-  onSearch(selectedKeys, confirm, dataIndex) {
-    confirm()
-    this.searchText = selectedKeys[0]
-    this.searchedColumn = dataIndex
-  }
-
-  onSearchReset(clearFilters) {
-    clearFilters()
-    this.searchText = ''
-  }
-
-  onSelectChange(selectedRowKeys) {
-    this.selectedRowKeys = selectedRowKeys
-    let newChecked = []
-    let newUnChecked = []
-    // 区分哪些是新选中的，哪些是新取消选中的
-    if (this.preSelectedRowKeys.length === 0) {
-      newChecked = this.selectedRowKeys
-    } else if (this.selectedRowKeys.length === 0) {
-      newUnChecked = this.preSelectedRowKeys
-    } else {
-      newChecked = this.selectedRowKeys.reduce((result, item) => {
-        if (this.preSelectedRowKeys.includes(item) === false) {
-          result.push(item)
-        }
-        return result
-      }, [])
-
-      newUnChecked = this.preSelectedRowKeys.reduce((result, item) => {
-        if (this.selectedRowKeys.includes(item) === false) {
-          result.push(item)
-        }
-        return result
-      }, [])
-    }
-
-    for (let i = 0; i < this.categoryDataList.length; i++) {
-      const dataItem = this.categoryDataList[i]
-      if (
-        newChecked.some((item) => item === dataItem.id) &&
-        dataItem.visible === false
-      ) {
-        dataItem.visible = true
-        this.addLayer(dataItem)
-      }
-      if (
-        newUnChecked.some((item) => item === dataItem.id) &&
-        dataItem.visible === true
-      ) {
-        dataItem.visible = false
-        this.removeLayer(dataItem)
-      }
-    }
-
-    this.preSelectedRowKeys = JSON.parse(JSON.stringify(this.selectedRowKeys))
-  }
-
-  onAddCategoryFinished() {
-    this.addCategoryVisible = false
-  }
-
-  onAddCategoryOk({ name, description }) {
-    this.$emit('add-category', { name, description })
-    this.categoryName = name
-  }
-
-  onDeleteData(dataItem) {
-    const selected = this.selectedRowKeys.find((key) => key === dataItem.id)
-    if (selected) {
-      // 需要从文档中移除
-      this.removeLayer(dataItem)
-    }
-
-    const index = this.categoryDataList.findIndex(
-      (item) => item.id == dataItem.id
-    )
-
-    if (index >= 0) {
-      this.categoryDataList.splice(index, 1)
-    }
-  }
+    },
+  },
 
   beforeCreate() {
     this.simpleImage = MapgisUiEmpty.PRESENTED_IMAGE_SIMPLE
-  }
+  },
 
-  private queryData() {
-    const category = this.dataList.find((category) => {
-      return category.name === this.categoryName
-    })
+  methods: {
+    changeCategory() {
+      this.queryData()
+    },
 
-    if (!category) {
-      return []
-    }
-    this.categoryDataList = category.children
-  }
+    onCategorySelect(val) {
+      this.categoryName = val
+    },
 
-  private selectData(name, data) {
-    this.categoryName = name
-    this.queryData()
-    this.selectedRowKeys.push(data.id)
-    this.onSelectChange(this.selectedRowKeys)
-  }
+    onAddCategory() {
+      this.addCategoryVisible = true
+    },
 
-  private unSelectData(id) {
-    const index = this.selectedRowKeys.findIndex((item) => item === id)
+    onSaveData() {
+      this.$emit('save')
+    },
 
-    this.selectedRowKeys.splice(index, 1)
-    this.onSelectChange(this.selectedRowKeys)
-  }
+    onTableChange(pagination) {
+      this.pagination = { ...pagination }
+    },
 
-  private addLayer(dataItem) {
-    this.$emit('add-layer', dataItem)
-  }
+    onSearch(selectedKeys, confirm, dataIndex) {
+      confirm()
+      this.searchText = selectedKeys[0]
+      this.searchedColumn = dataIndex
+    },
 
-  private removeLayer(dataItem) {
-    this.$emit('remove-layer', dataItem)
-  }
+    onSearchReset(clearFilters) {
+      clearFilters()
+      this.searchText = ''
+    },
+
+    onSelectChange(selectedRowKeys) {
+      this.selectedRowKeys = selectedRowKeys
+      let newChecked = []
+      let newUnChecked = []
+      // 区分哪些是新选中的，哪些是新取消选中的
+      if (this.preSelectedRowKeys.length === 0) {
+        newChecked = this.selectedRowKeys
+      } else if (this.selectedRowKeys.length === 0) {
+        newUnChecked = this.preSelectedRowKeys
+      } else {
+        newChecked = this.selectedRowKeys.reduce((result, item) => {
+          if (this.preSelectedRowKeys.includes(item) === false) {
+            result.push(item)
+          }
+          return result
+        }, [])
+
+        newUnChecked = this.preSelectedRowKeys.reduce((result, item) => {
+          if (this.selectedRowKeys.includes(item) === false) {
+            result.push(item)
+          }
+          return result
+        }, [])
+      }
+
+      for (let i = 0; i < this.categoryDataList.length; i++) {
+        const dataItem = this.categoryDataList[i]
+        if (
+          newChecked.some((item) => item === dataItem.id) &&
+          dataItem.visible === false
+        ) {
+          dataItem.visible = true
+          this.addLayer(dataItem)
+        }
+        if (
+          newUnChecked.some((item) => item === dataItem.id) &&
+          dataItem.visible === true
+        ) {
+          dataItem.visible = false
+          this.removeLayer(dataItem)
+        }
+      }
+
+      this.preSelectedRowKeys = JSON.parse(JSON.stringify(this.selectedRowKeys))
+    },
+
+    onAddCategoryFinished() {
+      this.addCategoryVisible = false
+    },
+
+    onAddCategoryOk({ name, description }) {
+      this.$emit('add-category', { name, description })
+      this.categoryName = name
+    },
+
+    onDeleteData(dataItem) {
+      const selected = this.selectedRowKeys.find((key) => key === dataItem.id)
+      if (selected) {
+        // 需要从文档中移除
+        this.removeLayer(dataItem)
+      }
+
+      const index = this.categoryDataList.findIndex(
+        (item) => item.id == dataItem.id
+      )
+
+      if (index >= 0) {
+        this.categoryDataList.splice(index, 1)
+      }
+    },
+
+    queryData() {
+      const category = this.dataList.find((category) => {
+        return category.name === this.categoryName
+      })
+
+      if (!category) {
+        return []
+      }
+      this.categoryDataList = category.children
+    },
+
+    selectData(name, data) {
+      this.categoryName = name
+      this.queryData()
+      this.selectedRowKeys.push(data.id)
+      this.onSelectChange(this.selectedRowKeys)
+    },
+
+    unSelectData(id) {
+      const index = this.selectedRowKeys.findIndex((item) => item === id)
+
+      this.selectedRowKeys.splice(index, 1)
+      this.onSelectChange(this.selectedRowKeys)
+    },
+
+    addLayer(dataItem) {
+      this.$emit('add-layer', dataItem)
+    },
+
+    removeLayer(dataItem) {
+      this.$emit('remove-layer', dataItem)
+    },
+  },
 }
 </script>
 

@@ -5,18 +5,22 @@
 </template>
 
 <script lang="ts">
-import { Component, Mixins } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpRotate',
-})
-export default class MpRotate extends Mixins(WidgetMixin) {
-  private rotate = undefined
+  mixins: [WidgetMixin],
+  data() {
+    return {
+      rotate: undefined,
+    }
+  },
 
-  loaded(e) {
-    this.rotate = e
-  }
+  methods: {
+    loaded(e) {
+      this.rotate = e
+    },
+  },
 }
 </script>
 

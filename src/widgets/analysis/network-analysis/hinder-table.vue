@@ -37,23 +37,29 @@
   </div>
 </template>
 <script lang="ts">
-import { Vue, Prop, Component, Emit } from 'vue-property-decorator'
+export default {
+  name: 'MpHinderTable',
+  props: {
+    data: {
+      type: Array,
+    },
+    columns: {
+      type: Array,
+    },
+    isFullScreen: {
+      type: Boolean,
+    },
+  },
 
-@Component({ name: 'MpHinderTable' })
-export default class MpHinderTable extends Vue {
-  @Prop(Array) data!: array
+  methods: {
+    rowClick(props) {
+      this.$emit('rowClick', props)
+    },
 
-  @Prop(Array) columns!: array
-
-  @Prop(Boolean) isFullScreen!: boolean
-
-  rowClick(props) {
-    this.$emit('rowClick', props)
-  }
-
-  deleteRow(props, type) {
-    this.$emit('deleteRow', props, type)
-  }
+    deleteRow(props, type) {
+      this.$emit('deleteRow', props, type)
+    },
+  },
 }
 </script>
 <style lang="less">

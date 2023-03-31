@@ -45,50 +45,50 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpPondingSimulation',
-})
-export default class MpPondingSimulation extends Mixins(WidgetMixin) {
-  private pondingTime = 24
+  mixins: [WidgetMixin],
+  data() {
+    return {
+      pondingTime: 24,
+      multiSpeed: 1,
+      pond: false,
+      sliderValue: 0,
+      showTimeline: false,
+    }
+  },
 
-  private multiSpeed = 1
+  methods: {
+    /**
+     * 微件打开时
+     */
+    onOpen() {
+      this.ponding.mounted()
+      this.showTimeline = true
+    },
 
-  private pond = false
+    /**
+     * 微件关闭时
+     */
+    onClose() {
+      this.ponding.destroyed()
+      this.showTimeline = false
+    },
 
-  private sliderValue = 0
+    loaded(ponding) {
+      this.ponding = ponding
+    },
 
-  private showTimeline = false
+    handleLoaded(timeline) {
+      this.timeline = timeline
+    },
 
-  /**
-   * 微件打开时
-   */
-  onOpen() {
-    this.ponding.mounted()
-    this.showTimeline = true
-  }
-
-  /**
-   * 微件关闭时
-   */
-  onClose() {
-    this.ponding.destroyed()
-    this.showTimeline = false
-  }
-
-  loaded(ponding) {
-    this.ponding = ponding
-  }
-
-  handleLoaded(timeline) {
-    this.timeline = timeline
-  }
-
-  addSimulation() {
-    this.ponding.addSimulation()
-  }
+    addSimulation() {
+      this.ponding.addSimulation()
+    },
+  },
 }
 </script>
 

@@ -63,7 +63,6 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component, Watch } from 'vue-property-decorator'
 import {
   LayerType,
   WidgetMixin,
@@ -75,221 +74,219 @@ import { Style } from '@mapgis/webclient-es6-service'
 
 const { FillStyle } = Style
 
-@Component({
+export default {
   name: 'MpBufferAnalysis',
-})
-export default class MpBufferAnalysis extends Mixins(WidgetMixin) {
-  private layout = 'vertical'
+  mixins: [WidgetMixin],
+  data() {
+    return {
+      layout: 'vertical',
+      baseBufferUrl: 'http://localhost:6163/',
+      srcType: 'Layer',
+      srcLayer: '',
+      srcFeature: {},
+      buffer: null,
+      tDataIndex: null,
+      isFullScreen: false,
+      isWidgetOpen: false,
+      featureStyle: new FillStyle({
+        color: 'rgba(255,0,0,1)',
+        outlineColor: 'rgba(255,0,0,1)',
+        outlineWidth: 3,
+        opacity: 1,
+      }),
+      destLayer: '',
+      feature: undefined,
+      selectLevel: false,
+      add: false,
+      finishLayer: false,
+      finishFeature: false,
+    }
+  },
 
-  private baseBufferUrl = 'http://localhost:6163/'
+  watch: {
+    'document.defaultMap': {
+      handler: 'documentChange',
+      deep: true,
+      immediate: true,
+    },
+  },
+  computed: {
+    tData() {
+      if (this.tDataIndex !== null) {
+        return this.layerArrOption[this.tDataIndex]
+      }
+      return null
+    },
+  },
 
-  private srcType = 'Layer'
+  methods: {
+    changeSelectLevel() {
+      this.selectLevel = !this.selectLevel
+      if (this.selectLevel == false) {
+        this.srcType = 'Layer'
+      } else {
+        this.srcType = 'Feature'
+        if (JSON.stringify(ActiveResultSet.activeResultSet) == '{}') {
+          this.$message.warn('当前选择要素为空，请重新选择')
+          this.selectLevel = true
+          this.changeSelectLevel()
+        } else {
+          this.srcFeature = ActiveResultSet.activeResultSet
+        }
+      }
+    },
 
-  private srcLayer = ''
+    // 监听图层列表，当图层发生变化时动态改变layerArrOption数组
+    documentChange(val: Array<unknown>) {
+      this.tDataIndex = null
+      this.layerArrOption = []
+      const arr = []
+      val.layers().forEach((data) => {
+        if (data.type === LayerType.IGSVector) {
+          arr.push(data)
+        } else if (data.type === LayerType.IGSMapImage) {
+          arr.push(...data.sublayers)
+        }
+      })
+      if (arr.length > 0) {
+        this.layerArrOption = arr
+        this.tDataIndex = 0
+      }
+      this.tchangeTarget()
+    },
 
-  private srcFeature = {}
+    // 微件窗口模式切换时回调
+    onWindowSize(mode) {
+      this.isFullScreen = mode === 'max'
+    },
 
-  private buffer = null
+    load(buffer) {
+      this.buffer = buffer
+    },
 
-  tDataIndex = null
+    /**
+     * 打开模块
+     */
+    onOpen() {
+      this.isWidgetOpen = true
+      this.buffer.mount()
+    },
 
-  isFullScreen = false
+    tchangeTarget(event) {
+      const layerCurrent = this.tData
+      if (layerCurrent != null) {
+        if (layerCurrent.type == 6) {
+          this.baseBufferUrl = layerCurrent.url
+          this.srcLayer = layerCurrent.gdbps
+        } else {
+          this.baseBufferUrl = layerCurrent.layer.url
+          this.srcLayer = layerCurrent.url
+        }
+      }
+    },
 
-  isWidgetOpen = false
+    getResultLayer() {
+      const ip = (this.baseBufferUrl || '').split('/')[2].split(':')[0]
+      const port = (this.baseBufferUrl || '').split('/')[2].split(':')[1]
+      const url = `http://${ip}:${port}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
+      const index = url.lastIndexOf('/')
+      const layerName = url.substring(index + 1, url.length)
+      return [url, layerName]
+    },
 
-  featureStyle = new FillStyle({
-    color: 'rgba(255,0,0,1)',
-    outlineColor: 'rgba(255,0,0,1)',
-    outlineWidth: 3,
-    opacity: 1,
-  })
+    /**
+     * 若缓冲区分析生成新图层，将结果显示在地图容器中，并用图层列表管理
+     */
+    addNewLayer(bufferStyle, renderType) {
+      const resultLayer: Array<string> = this.getResultLayer()
+      const highlightStyle = {
+        polygon: new FillStyle({
+          width: 8,
+          color: '#ffff00',
+          opacity: 0.8,
+          outlineColor: '#ff0000',
+        }),
+      }
+      const data = {
+        name: 'IGS图层',
+        description: '综合分析_结果图层',
+        data: {
+          type: 'IGSVector',
+          url: resultLayer[0],
+          name: resultLayer[1],
+          renderType: renderType,
+          featureStyle: bufferStyle,
+          highlightStyle: highlightStyle,
+        },
+      }
+      eventBus.$emit(events.ADD_DATA_EVENT, data)
+    },
 
-  selectLevel = false
+    /**
+     * 要素级增加GeoJsonLayer支持
+     */
+    addNewGeoJsonLayer() {
+      const resultFeature = this.feature
+      const highlightStyle = {
+        polygon: new FillStyle({
+          width: 8,
+          color: '#ffff00',
+          opacity: 0.8,
+          outlineColor: '#ff0000',
+        }),
+      }
+      const data = {
+        name: 'GeoJson图层',
+        description: '综合分析_结果图层',
+        data: {
+          type: 'GeoJson',
+          url: this.destLayer,
+          source: resultFeature,
+          featureStyle: this.featureStyle,
+          name: this.destLayer,
+          highlightStyle: highlightStyle,
+        },
+      }
+      eventBus.$emit(events.ADD_DATA_EVENT, data)
+    },
 
-  private destLayer = ''
+    /**
+     * 关闭模块
+     */
+    onClose() {
+      this.isWidgetOpen = false
+      this.reset()
+      this.add = false
+      this.buffer.unmount()
+    },
 
-  private feature = undefined
-
-  add = false
-
-  finishLayer = false
-
-  finishFeature = false
-
-  changeSelectLevel() {
-    this.selectLevel = !this.selectLevel
-    if (this.selectLevel == false) {
+    reset() {
+      this.isFullScreen = false
+      this.destLayer = ''
+      this.selectLevel = false
       this.srcType = 'Layer'
-    } else {
-      this.srcType = 'Feature'
-      if (JSON.stringify(ActiveResultSet.activeResultSet) == '{}') {
-        this.$message.warn('当前选择要素为空，请重新选择')
-        this.selectLevel = true
-        this.changeSelectLevel()
-      } else {
-        this.srcFeature = ActiveResultSet.activeResultSet
+    },
+
+    showLayer(data, bufferStyle, renderType) {
+      this.finishLayer = true
+      this.destLayer = data
+      if (this.add == true) {
+        this.addNewLayer(bufferStyle, renderType)
       }
-    }
-  }
+    },
 
-  // 监听图层列表，当图层发生变化时动态改变layerArrOption数组
-  @Watch('document.defaultMap', { deep: true, immediate: true })
-  documentChange(val: Array<unknown>) {
-    this.tDataIndex = null
-    this.layerArrOption = []
-    const arr = []
-    val.layers().forEach((data) => {
-      if (data.type === LayerType.IGSVector) {
-        arr.push(data)
-      } else if (data.type === LayerType.IGSMapImage) {
-        arr.push(...data.sublayers)
+    showFeature(data) {
+      ;[this.feature, this.destLayer, this.featureStyle] = data
+      this.finishFeature = true
+      if (this.add == true) {
+        this.addNewGeoJsonLayer()
       }
-    })
-    if (arr.length > 0) {
-      this.layerArrOption = arr
-      this.tDataIndex = 0
-    }
-    this.tchangeTarget()
-  }
+    },
 
-  // 微件窗口模式切换时回调
-  onWindowSize(mode) {
-    this.isFullScreen = mode === 'max'
-  }
-
-  load(buffer) {
-    this.buffer = buffer
-  }
-
-  /**
-   * 打开模块
-   */
-  onOpen() {
-    this.isWidgetOpen = true
-    this.buffer.mount()
-  }
-
-  get tData() {
-    if (this.tDataIndex !== null) {
-      return this.layerArrOption[this.tDataIndex]
-    }
-    return null
-  }
-
-  tchangeTarget(event) {
-    const layerCurrent = this.tData
-    if (layerCurrent != null) {
-      if (layerCurrent.type == 6) {
-        this.baseBufferUrl = layerCurrent.url
-        this.srcLayer = layerCurrent.gdbps
-      } else {
-        this.baseBufferUrl = layerCurrent.layer.url
-        this.srcLayer = layerCurrent.url
-      }
-    }
-  }
-
-  getResultLayer() {
-    const ip = (this.baseBufferUrl || '').split('/')[2].split(':')[0]
-    const port = (this.baseBufferUrl || '').split('/')[2].split(':')[1]
-    const url = `http://${ip}:${port}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
-    const index = url.lastIndexOf('/')
-    const layerName = url.substring(index + 1, url.length)
-    return [url, layerName]
-  }
-
-  /**
-   * 若缓冲区分析生成新图层，将结果显示在地图容器中，并用图层列表管理
-   */
-  addNewLayer(bufferStyle, renderType) {
-    const resultLayer: Array<string> = this.getResultLayer()
-    const highlightStyle = {
-      polygon: new FillStyle({
-        width: 8,
-        color: '#ffff00',
-        opacity: 0.8,
-        outlineColor: '#ff0000',
-      }),
-    }
-    const data = {
-      name: 'IGS图层',
-      description: '综合分析_结果图层',
-      data: {
-        type: 'IGSVector',
-        url: resultLayer[0],
-        name: resultLayer[1],
-        renderType: renderType,
-        featureStyle: bufferStyle,
-        highlightStyle: highlightStyle,
-      },
-    }
-    eventBus.$emit(events.ADD_DATA_EVENT, data)
-  }
-
-  /**
-   * 要素级增加GeoJsonLayer支持
-   */
-  addNewGeoJsonLayer() {
-    const resultFeature = this.feature
-    const highlightStyle = {
-      polygon: new FillStyle({
-        width: 8,
-        color: '#ffff00',
-        opacity: 0.8,
-        outlineColor: '#ff0000',
-      }),
-    }
-    const data = {
-      name: 'GeoJson图层',
-      description: '综合分析_结果图层',
-      data: {
-        type: 'GeoJson',
-        url: this.destLayer,
-        source: resultFeature,
-        featureStyle: this.featureStyle,
-        name: this.destLayer,
-        highlightStyle: highlightStyle,
-      },
-    }
-    eventBus.$emit(events.ADD_DATA_EVENT, data)
-  }
-
-  /**
-   * 关闭模块
-   */
-  onClose() {
-    this.isWidgetOpen = false
-    this.reset()
-    this.add = false
-    this.buffer.unmount()
-  }
-
-  reset() {
-    this.isFullScreen = false
-    this.destLayer = ''
-    this.selectLevel = false
-    this.srcType = 'Layer'
-  }
-
-  showLayer(data, bufferStyle, renderType) {
-    this.finishLayer = true
-    this.destLayer = data
-    if (this.add == true) {
-      this.addNewLayer(bufferStyle, renderType)
-    }
-  }
-
-  showFeature(data) {
-    ;[this.feature, this.destLayer, this.featureStyle] = data
-    this.finishFeature = true
-    if (this.add == true) {
-      this.addNewGeoJsonLayer()
-    }
-  }
-
-  showAdd(data) {
-    this.add = data
-  }
+    showAdd(data) {
+      this.add = data
+    },
+  },
 }
 </script>
 

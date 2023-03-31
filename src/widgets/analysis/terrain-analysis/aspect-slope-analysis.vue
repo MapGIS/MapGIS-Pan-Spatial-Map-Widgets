@@ -2,36 +2,37 @@
   <mapgis-3d-aspect-slope id="aspect-slope-analysis" @loaded="load" />
 </template>
 <script lang="ts">
-import { Component, Mixins } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpAspectSlope',
-})
-export default class MpAspectSlope extends Mixins(WidgetMixin) {
-  load(aspectSlope) {
-    this.aspectSlope = aspectSlope
-  }
+  mixins: [WidgetMixin],
 
-  onActive() {
-    this.aspectSlope.mount()
-  }
+  methods: {
+    load(aspectSlope) {
+      this.aspectSlope = aspectSlope
+    },
 
-  // 微件失活时
-  onDeActive() {
-    this.aspectSlope.unmount()
-  }
+    onActive() {
+      this.aspectSlope.mount()
+    },
 
-  // 微件窗口模式切换时回调
-  onWindowSize(mode) {
-    this.isFullScreen = mode === 'max'
-    this.$nextTick(() => {
-      const el = document.getElementById('aspect-slope-analysis')
-      if (el) {
-        el.style.width = `${mode === 'max' ? this.$el.clientWidth : 300}px`
-      }
-    })
-  }
+    // 微件失活时
+    onDeActive() {
+      this.aspectSlope.unmount()
+    },
+
+    // 微件窗口模式切换时回调
+    onWindowSize(mode) {
+      this.isFullScreen = mode === 'max'
+      this.$nextTick(() => {
+        const el = document.getElementById('aspect-slope-analysis')
+        if (el) {
+          el.style.width = `${mode === 'max' ? this.$el.clientWidth : 300}px`
+        }
+      })
+    },
+  },
 }
 </script>
 <style lang="less">

@@ -13,26 +13,24 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator'
+export default {
+  name: 'AddDataTypeSelect',
+  props: {
+    types: { type: Array },
+    size: { type: String, default: 'default' },
+    value: { type: Object },
+  },
 
-@Component({
-  name: 'AddDataTypeSelect'
-})
-export default class AddDataTypeSelect extends Vue {
-  @Prop({ type: Array }) types
-
-  @Prop({ type: String, default: 'default' }) size
-
-  @Prop({ type: Object }) value
-
-  onSelect(val) {
-    this.$emit(
-      'select',
-      this.types.find(type => {
-        return type.text == val
-      })
-    )
-  }
+  methods: {
+    onSelect(val) {
+      this.$emit(
+        'select',
+        this.types.find((type) => {
+          return type.text == val
+        })
+      )
+    },
+  },
 }
 </script>
 

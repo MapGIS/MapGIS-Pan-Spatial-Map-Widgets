@@ -66,141 +66,135 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component, Watch } from 'vue-property-decorator'
 import { WidgetMixin, UrlUtil, api } from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpCityGrow',
-})
-export default class MpCityGrow extends Mixins(WidgetMixin) {
-  private radioVal = 1
+  mixins: [WidgetMixin],
 
-  private selectResult = ''
-
-  private url = ''
-
-  private cityGrowOptions = {}
-
-  private urlExample =
-    'http://<server>:<port>/igs/rest/mrfs/docs/{docName}/{mapIndex}/{layerIndex}'
-
-  private featureStyle = {}
-
-  private startCityGrow = false
-
-  private playWidth = 711
-
-  // 城市生长对象
-  private cityGrow = null
-
-  private handleSearchTag = false
-
-  private urlOptionsArray = [
-    {
-      baseUrl:
-        'http://192.168.21.191:6163/igs/rest/mrfs/docs/shengZhenBaiMo/0/0',
-      startTimeField: 'startTime',
-      endTimeField: 'endTime',
-      heightField: 'height',
-    },
-  ]
-
-  private urlOptions = []
+  data() {
+    return {
+      radioVal: 1,
+      selectResult: '',
+      url: '',
+      cityGrowOptions: {},
+      urlExample:
+        'http://<server>:<port>/igs/rest/mrfs/docs/{docName}/{mapIndex}/{layerIndex}',
+      featureStyle: {},
+      startCityGrow: false,
+      playWidth: 711,
+      // 城市生长对象
+      cityGrow: null,
+      handleSearchTag: false,
+      urlOptionsArray: [
+        {
+          baseUrl:
+            'http://192.168.21.191:6163/igs/rest/mrfs/docs/shengZhenBaiMo/0/0',
+          startTimeField: 'startTime',
+          endTimeField: 'endTime',
+          heightField: 'height',
+        },
+      ],
+      urlOptions: [],
+    }
+  },
 
   async mounted() {
     const config = await api.getWidgetConfig('city-grow')
     this.urlOptions = config || this.urlOptionsArray
-  }
+  },
 
-  load(e) {
-    this.cityGrow = e
-  }
+  methods: {
+    load(e) {
+      this.cityGrow = e
+    },
 
-  onUrlChange(val) {
-    if (val && !this.handleSearchTag) {
-      const mapOption = this.urlOptions.filter((x) => x.baseUrl === val)
+    onUrlChange(val) {
+      if (val && !this.handleSearchTag) {
+        const mapOption = this.urlOptions.filter((x) => x.baseUrl === val)
 
-      this.cityGrowOptions = mapOption[0]
-      this.url = val
-    } else if (val === undefined) {
+        this.cityGrowOptions = mapOption[0]
+        this.url = val
+      } else if (val === undefined) {
+        this.cityGrowOptions = {}
+        this.selectResult = ''
+      }
+    },
+
+    handleBlur(value) {
+      if (value == undefined || value == '') {
+        if (typeof this.cityGrowOptions === 'string') {
+          this.selectResult = this.cityGrowOptions
+        }
+      }
+    },
+
+    handleSearch(value) {
+      if (value !== '') {
+        if (!UrlUtil.isUrlValid(value)) {
+          this.$message.warn('请输入正确的数据地址')
+          return
+        }
+        this.cityGrowOptions = value
+        this.url = value
+        this.handleSearchTag = true
+      } else {
+        this.handleSearchTag = false
+      }
+    },
+
+    getCityGrowOptions(featureStyle) {
+      this.featureStyle = {}
+      this.$nextTick(function () {
+        this.featureStyle = featureStyle
+        this.saveConfig()
+      })
+      this.startCityGrow = true
+    },
+
+    saveConfig() {
+      let findTag = false
+      const config = JSON.parse(JSON.stringify(this.urlOptions))
+      this.featureStyle.baseUrl = this.url
+
+      for (let i = 0; i < this.urlOptions.length; i++) {
+        if (this.urlOptions[i].baseUrl === this.url) {
+          config[i] = this.featureStyle
+          findTag = true
+        }
+      }
+      if (!findTag) {
+        config.push(this.featureStyle)
+      }
+
+      api
+        .saveWidgetConfig({
+          name: 'city-grow',
+          config: config,
+        })
+        .then(() => {
+          console.log('更新城市生长配置成功')
+        })
+        .catch(() => {
+          console.log('更新城市生长配置失败')
+        })
+    },
+
+    onClose() {
+      this.hideCityGrow()
+      if (this.cityGrow) {
+        this.cityGrow.unmount()
+      }
+
       this.cityGrowOptions = {}
+      this.$refs.cityGrowOptions.unmount()
       this.selectResult = ''
-    }
-  }
+    },
 
-  handleBlur(value) {
-    if (value == undefined || value == '') {
-      if (typeof this.cityGrowOptions === 'string') {
-        this.selectResult = this.cityGrowOptions
-      }
-    }
-  }
-
-  handleSearch(value) {
-    if (value !== '') {
-      if (!UrlUtil.isUrlValid(value)) {
-        this.$message.warn('请输入正确的数据地址')
-        return
-      }
-      this.cityGrowOptions = value
-      this.url = value
-      this.handleSearchTag = true
-    } else {
-      this.handleSearchTag = false
-    }
-  }
-
-  getCityGrowOptions(featureStyle) {
-    this.featureStyle = {}
-    this.$nextTick(function () {
-      this.featureStyle = featureStyle
-      this.saveConfig()
-    })
-    this.startCityGrow = true
-  }
-
-  saveConfig() {
-    let findTag = false
-    const config = JSON.parse(JSON.stringify(this.urlOptions))
-    this.featureStyle.baseUrl = this.url
-
-    for (let i = 0; i < this.urlOptions.length; i++) {
-      if (this.urlOptions[i].baseUrl === this.url) {
-        config[i] = this.featureStyle
-        findTag = true
-      }
-    }
-    if (!findTag) {
-      config.push(this.featureStyle)
-    }
-
-    api
-      .saveWidgetConfig({
-        name: 'city-grow',
-        config: config,
-      })
-      .then(() => {
-        console.log('更新城市生长配置成功')
-      })
-      .catch(() => {
-        console.log('更新城市生长配置失败')
-      })
-  }
-
-  onClose() {
-    this.hideCityGrow()
-    if (this.cityGrow) {
-      this.cityGrow.unmount()
-    }
-
-    this.cityGrowOptions = {}
-    this.$refs.cityGrowOptions.unmount()
-    this.selectResult = ''
-  }
-
-  hideCityGrow() {
-    this.startCityGrow = false
-  }
+    hideCityGrow() {
+      this.startCityGrow = false
+    },
+  },
 }
 </script>
 

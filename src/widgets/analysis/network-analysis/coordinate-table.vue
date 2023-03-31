@@ -40,25 +40,32 @@
   </div>
 </template>
 <script lang="ts">
-import { Vue, Prop, Component, Emit } from 'vue-property-decorator'
+export default {
+  name: 'MpCoordinateTable',
+  props: {
+    data: {
+      type: Array,
+    },
+    columns: {
+      type: Array,
+    },
+    showButton: {
+      type: Boolean,
+    },
+    isFullScreen: {
+      type: Boolean,
+    },
+  },
 
-@Component({ name: 'MpCoordinateTable' })
-export default class MpCoordinateTable extends Vue {
-  @Prop(Array) data!: array
+  methods: {
+    rowClick(props) {
+      this.$emit('rowClick', props)
+    },
 
-  @Prop(Array) columns!: array
-
-  @Prop(Boolean) showButton!: boolean
-
-  @Prop(Boolean) isFullScreen!: boolean
-
-  rowClick(props) {
-    this.$emit('rowClick', props)
-  }
-
-  deleteRow(index, type) {
-    this.$emit('deleteRow', index, type)
-  }
+    deleteRow(index, type) {
+      this.$emit('deleteRow', index, type)
+    },
+  },
 }
 </script>
 <style lang="less">

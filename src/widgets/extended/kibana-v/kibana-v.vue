@@ -27,25 +27,30 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
-@Component({ name: 'MpKibanaV' })
-export default class MpKibanaV extends Mixins(WidgetMixin) {
-  get config() {
-    return this.widgetInfo.config.map((item) => {
-      return {
-        title: item.title,
-        link: item.link,
-        image: `${this.baseUrl}${item.image}`,
-      }
-    })
-  }
+export default {
+  name: 'MpKibanaV',
+  mixins: [WidgetMixin],
 
-  // 点击触发预览
-  private onView(item) {
-    window.open(item.link)
-  }
+  computed: {
+    config() {
+      return this.widgetInfo.config.map((item) => {
+        return {
+          title: item.title,
+          link: item.link,
+          image: `${this.baseUrl}${item.image}`,
+        }
+      })
+    },
+  },
+
+  methods: {
+    // 点击触发预览
+    onView(item) {
+      window.open(item.link)
+    },
+  },
 }
 </script>
 
