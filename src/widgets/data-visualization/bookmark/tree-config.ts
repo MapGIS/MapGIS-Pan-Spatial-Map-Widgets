@@ -2,7 +2,7 @@ export class TreeConfig {
   private static _instance: TreeConfig
 
   public readonly config = {
-    GUID: 'guid'
+    GUID: 'guid',
   }
 
   private constructor() {}

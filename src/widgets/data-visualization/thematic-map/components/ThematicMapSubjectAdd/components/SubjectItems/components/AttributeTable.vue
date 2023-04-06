@@ -4,10 +4,10 @@
     :columns="tableColumns"
     :data="tableData"
     :subject-config="subjectConfig"
+    :emptyVisible="emptyVisible"
   />
 </template>
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { INewSubjectConfig } from '../../../../../store'
 import EditableFieldTable from '../../../common/EditableFieldTable.vue'
 
@@ -22,67 +22,105 @@ interface ITable {
   showFieldsTitle: Record<string, string>
 }
 
-@Component({
+export default {
+  name: 'AttributeTable',
   components: {
-    EditableFieldTable
-  }
-})
-export default class AttributeTable extends Vue {
-  @Prop({ default: () => ({}) }) readonly subjectConfig!: INewSubjectConfig
+    EditableFieldTable,
+  },
+  props: {
+    subjectConfig: {
+      type: Object,
+      default: () => ({}),
+    },
+  },
+  data() {
+    return {
+      tableData: [],
 
-  @Watch('subjectConfig.table', { deep: true })
-  tableDataChange({ showFields = [], showFieldsTitle } = {}) {
-    if (showFields.length === this.tableData.length) {
-      this.tableData = showFields.map((f, i) => ({
-        index: i,
-        field: f,
-        alias: showFieldsTitle[f]
-      }))
+      emptyVisible: false,
     }
-  }
-
-  tableData = []
-
-  get tableColumns() {
-    return [
-      {
-        type: 'Select',
-        title: '属性字段',
-        dataIndex: 'field',
-        width: 160
+  },
+  computed: {
+    tableColumns() {
+      return [
+        {
+          type: 'Select',
+          title: '属性字段',
+          dataIndex: 'field',
+          width: 160,
+        },
+        {
+          type: 'Input',
+          title: '属性别名',
+          dataIndex: 'alias',
+        },
+      ]
+    },
+  },
+  watch: {
+    'subjectConfig.table': {
+      deep: true,
+      handler({ showFields = [], showFieldsTitle } = {}) {
+        if (showFields.length === this.tableData.length) {
+          this.setTableData(showFields, showFieldsTitle)
+        }
       },
-      {
-        type: 'Input',
-        title: '属性别名',
-        dataIndex: 'alias'
-      }
-    ]
-  }
+    },
+  },
 
-  /**
-   * 属性配置变化
-   */
-  onChange(data: ITableDataItem[] = []) {
-    const table =
-      data.length && data.some(({ field }) => !!field)
-        ? data.reduce(
-            ({ showFields, showFieldsTitle }, { field, alias }) => {
-              if (field) {
-                if (!showFields.includes(field)) {
-                  showFields.push(field)
+  mounted() {
+    this.initTableData()
+  },
+  methods: {
+    /**
+     * 回显表格数据
+     */
+    initTableData() {
+      if (!this.subjectConfig.table) return
+      const { showFields = [], showFieldsTitle } = this.subjectConfig.table
+      if (showFields.length) {
+        this.setTableData(showFields, showFieldsTitle)
+        this.emptyVisible = true
+      }
+    },
+
+    /**
+     * 调整表格数据格式
+     */
+    setTableData(showFields, showFieldsTitle) {
+      const addNum = 1000
+      this.tableData = showFields.map((f, i) => ({
+        index: addNum + i,
+        field: f,
+        alias: showFieldsTitle[f],
+      }))
+    },
+
+    /**
+     * 属性配置变化
+     */
+    onChange(data: ITableDataItem[] = []) {
+      const table =
+        data.length && data.some(({ field }) => !!field)
+          ? data.reduce(
+              ({ showFields, showFieldsTitle }, { field, alias }) => {
+                if (field) {
+                  if (!showFields.includes(field)) {
+                    showFields.push(field)
+                  }
+                  showFieldsTitle[field] = alias
                 }
-                showFieldsTitle[field] = alias
+                return { showFields, showFieldsTitle }
+              },
+              {
+                showFields: [],
+                showFieldsTitle: {},
               }
-              return { showFields, showFieldsTitle }
-            },
-            {
-              showFields: [],
-              showFieldsTitle: {}
-            }
-          )
-        : undefined
-    this.tableData = data
-    this.$emit('change', { table })
-  }
+            )
+          : undefined
+      this.tableData = data
+      this.$emit('change', { table })
+    },
+  },
 }
 </script>

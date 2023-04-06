@@ -6,39 +6,39 @@ const chartOptions = ({ x, y }) => {
         type: 'line',
         lineStyle: {
           color: '#41aeff',
-          type: 'solid'
-        }
+          type: 'solid',
+        },
       },
       textStyle: {
-        fontSize: 10
-      }
+        fontSize: 10,
+      },
     },
     title: {
-      show: false
+      show: false,
     },
     toolbox: {
       feature: {
         saveAsImage: {
           type: 'png',
           show: true,
-          title: '保存为图片'
+          title: '保存为图片',
         },
-        restore: { show: true, title: '刷新' }
-      }
+        restore: { show: true, title: '刷新' },
+      },
     },
     grid: {
       top: 20,
       left: 25,
       right: 0,
       bottom: 20,
-      contentLabel: false
+      contentLabel: false,
     },
     xAxis: {
       show: false,
       data: x,
       axisLabel: {
-        rotate: 60
-      }
+        rotate: 60,
+      },
     },
     yAxis: {
       min: 0,
@@ -46,9 +46,9 @@ const chartOptions = ({ x, y }) => {
       splitLine: {
         lineStyle: {
           color: '#d9d9d9',
-          type: 'dotted'
-        }
-      }
+          type: 'dotted',
+        },
+      },
     },
     series: [
       {
@@ -56,10 +56,10 @@ const chartOptions = ({ x, y }) => {
         data: y,
         smooth: true,
         itemStyle: {
-          color: '#40a9ff'
-        }
-      }
-    ]
+          color: '#40a9ff',
+        },
+      },
+    ],
   }
 }
 

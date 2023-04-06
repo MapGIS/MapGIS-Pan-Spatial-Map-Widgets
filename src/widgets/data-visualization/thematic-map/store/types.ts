@@ -5,18 +5,19 @@ export const tuple = <T extends string[]>(...args: T) => args
 // 要素查询的数据格式
 export enum FeatureFormatType {
   json = 'json',
-  geojson = 'geojson'
+  geojson = 'geojson',
 }
 
 // 节点类型
 type NodeType = 'panel' | 'list' | 'subject'
 
 // 专题图配置
-export enum ConfigType {
-  doc = 'doc',
-  gdbp = 'gdbp',
-  geojson = 'geojson',
-  excel = 'excel'
+export enum LayerServiceType {
+  igsImage = 'IGSIMAGE',
+  igsVector = 'IGSVECTOR',
+  geojson = 'GEOJSON',
+  excel = 'EXCEL',
+  igsScene = 'IGSScene',
 }
 
 // 专题图专题功能模块
@@ -25,7 +26,7 @@ export enum ModuleType {
   GRAPH = 'GRAPH', // 统计表
   TIMELINE = 'TIMELINE', // 时间轴
   CREATE = 'CREATE', // 新建专题图
-  TOOLS = 'TOOLS' // 管理工具栏
+  TOOLS = 'TOOLS', // 管理工具栏
 }
 
 /**
@@ -51,7 +52,7 @@ export type ISubjectType =
 // 专题图配置
 export interface ISubjectData {
   subjectType: ISubjectType
-  configType: keyof ConfigType
+  layerServiceType: keyof LayerServiceType
   time?: string
   ip?: string
   port?: string
@@ -89,7 +90,7 @@ interface IOldSubjectConfig extends ISubjectConfigBase {
   children?: IOldSubjectConfig[] // 子节点数据,panel和list有,subject没有
   type?: ISubjectType // 专题类型
   config?: {
-    type?: keyof ConfigType // 数据请求方式
+    type?: keyof LayerServiceType // 数据请求方式
     data:
       | Array<ISubjectData>
       | Array<{
@@ -124,11 +125,11 @@ export type ISubjectConfigNode =
   | undefined
 
 export interface IFeatureQueryParams {
-  ip: string
-  port: string
-  gdbp: string
-  docName: string
-  layerIndex: string
+  ip?: string
+  port?: string
+  gdbp?: string
+  docName?: string
+  layerIndex?: string
   layerName?: string
   fields?: string
   page?: number
@@ -136,7 +137,8 @@ export interface IFeatureQueryParams {
   IncludeAttribute?: boolean
   IncludeGeometry?: boolean
   IncludeWebGraphic?: boolean
-  configType?: ConfigType
+  layerServiceType?: LayerServiceType
+  src?: string
 }
 
 export interface State {

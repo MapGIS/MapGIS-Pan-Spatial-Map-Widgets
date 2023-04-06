@@ -1,32 +1,32 @@
 <template>
   <div class="mp-widget-func-warehouse">
-    <a-spin :spinning="showLoading">
-      <mp-setting-form
+    <mapgis-ui-spin :spinning="showLoading">
+      <mapgis-ui-setting-form
         v-if="group.length"
         layout="vertical"
         :no-last-margin-bottom="true"
       >
-        <a-form-item>
-          <mp-group-tab
+        <mapgis-ui-form-item>
+          <mapgis-ui-group-tab
             slot="label"
             title="功能类型"
             :has-top-margin="false"
             :has-bottom-margin="false"
-          ></mp-group-tab>
-          <a-select v-model="selectGroupIndex">
-            <a-select-option v-for="item in group" :key="item.index">
+          ></mapgis-ui-group-tab>
+          <mapgis-ui-select v-model="selectGroupIndex">
+            <mapgis-ui-select-option v-for="item in group" :key="item.index">
               {{ item.groupName }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item>
-          <mp-group-tab
+            </mapgis-ui-select-option>
+          </mapgis-ui-select>
+        </mapgis-ui-form-item>
+        <mapgis-ui-form-item>
+          <mapgis-ui-group-tab
             slot="label"
             title="功能列表"
             :has-top-margin="false"
             :has-bottom-margin="false"
-          ></mp-group-tab>
-          <a-table
+          ></mapgis-ui-group-tab>
+          <mapgis-ui-table
             v-if="
               group[this.selectGroupIndex] &&
               group[this.selectGroupIndex].children
@@ -43,22 +43,22 @@
             "
           >
             <template slot="operate" slot-scope="text, record">
-              <a-tooltip placement="bottom">
+              <mapgis-ui-tooltip placement="bottom">
                 <template slot="title">
                   <span>执行</span>
                 </template>
-                <a-icon
-                  type="swap"
+                <mapgis-ui-iconfont
+                  type="mapgis-swap"
                   class="func-execute"
                   @click="openHandle(record)"
-                ></a-icon>
-              </a-tooltip>
+                ></mapgis-ui-iconfont>
+              </mapgis-ui-tooltip>
             </template>
-          </a-table>
-        </a-form-item>
-      </mp-setting-form>
-      <a-empty v-else :image="simpleImage" />
-    </a-spin>
+          </mapgis-ui-table>
+        </mapgis-ui-form-item>
+      </mapgis-ui-setting-form>
+      <mapgis-ui-empty v-else :image="simpleImage" />
+    </mapgis-ui-spin>
     <mp-window-wrapper :visible="openHandlerWindow">
       <template v-slot:default="slotProps">
         <mp-window
@@ -84,10 +84,12 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component } from 'vue-property-decorator'
-import { Empty } from 'ant-design-vue'
-import { WidgetMixin, Analysis } from '@mapgis/web-app-framework'
-import { baseConfigInstance } from '../../../model'
+import { MapgisUiEmpty } from '@mapgis/webclient-vue-ui'
+import {
+  WidgetMixin,
+  Analysis,
+  baseConfigInstance,
+} from '@mapgis/web-app-framework'
 import MpHandlerWindow from './handler-window.vue'
 
 // {
@@ -108,162 +110,183 @@ import MpHandlerWindow from './handler-window.vue'
 //     "Version": ""
 // }
 
-@Component({ name: 'MpFuncWarehouse', components: { MpHandlerWindow } })
-export default class MpFuncWarehouse extends Mixins(WidgetMixin) {
-  private selectGroupIndex = 0
+export default {
+  name: 'MpFuncWarehouse',
+  mixins: [WidgetMixin],
+  components: { MpHandlerWindow },
 
-  private group = []
+  data() {
+    return {
+      selectGroupIndex: 0,
+      group: [],
+      // 是否打开功能执行界面
+      openHandlerWindow: false,
+      // 要执行功能的参数集合
+      handlerSelect: {},
+      // 表头
+      columns: [
+        {
+          title: '流程号',
+          dataIndex: 'FlowNo',
+          align: 'center',
+          width: 80,
+          ellipsis: true,
+        },
+        {
+          title: '功能名称',
+          dataIndex: 'FlowName',
+          align: 'center',
+          width: 160,
+          ellipsis: true,
+        },
+        {
+          title: '创建者',
+          dataIndex: 'Creator',
+          align: 'center',
+          ellipsis: true,
+        },
+        {
+          title: '创建时间',
+          dataIndex: 'CreateDate',
+          align: 'center',
+          width: 100,
+          ellipsis: true,
+        },
+        {
+          title: '描述',
+          dataIndex: 'Description',
+          align: 'center',
+          width: 100,
+          ellipsis: true,
+        },
+        {
+          title: '版本',
+          dataIndex: 'Version',
+          align: 'center',
+          ellipsis: true,
+        },
+        {
+          key: 'operate',
+          title: '执行',
+          dataIndex: 'Handle',
+          align: 'center',
+          width: 60,
+          fixed: 'right',
+          scopedSlots: { customRender: 'operate' },
+        },
+      ],
+      // 分页器配置
+      pagination: {
+        showSizeChanger: true,
+        size: 'small',
+        // total: () => this.group.length,
+        showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
+      },
+      showLoading: false,
+    }
+  },
 
-  // 是否打开功能执行界面
-  private openHandlerWindow = false
-
-  // 要执行功能的参数集合
-  private handlerSelect = {}
-
-  // 表头
-  private columns = [
-    {
-      title: '流程号',
-      dataIndex: 'FlowNo',
-      align: 'center',
-      width: 80,
-      ellipsis: true,
+  computed: {
+    total() {
+      return this.group.length
     },
-    {
-      title: '功能名称',
-      dataIndex: 'FlowName',
-      align: 'center',
-      width: 160,
-      ellipsis: true,
+    // ip
+    ip() {
+      return this.widgetInfo.config.ip || baseConfigInstance.config.ip
     },
-    { title: '创建者', dataIndex: 'Creator', align: 'center', ellipsis: true },
-    {
-      title: '创建时间',
-      dataIndex: 'CreateDate',
-      align: 'center',
-      width: 100,
-      ellipsis: true,
+    // port
+    port() {
+      return this.widgetInfo.config.port || baseConfigInstance.config.ip
     },
-    {
-      title: '描述',
-      dataIndex: 'Description',
-      align: 'center',
-      width: 100,
-      ellipsis: true,
-    },
-    { title: '版本', dataIndex: 'Version', align: 'center', ellipsis: true },
-    {
-      key: 'operate',
-      title: '执行',
-      dataIndex: 'Handle',
-      align: 'center',
-      width: 60,
-      fixed: 'right',
-      scopedSlots: { customRender: 'operate' },
-    },
-  ]
-
-  // 分页器配置
-  private pagination = {
-    showSizeChanger: true,
-    size: 'small',
-    total: this.group.length,
-    showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
-  }
-
-  private showLoading = false
-
-  // ip
-  get ip() {
-    return this.widgetInfo.config.ip || baseConfigInstance.config.ip
-  }
-
-  // port
-  get port() {
-    return this.widgetInfo.config.port || baseConfigInstance.config.ip
-  }
+  },
 
   beforeCreate() {
-    this.simpleImage = Empty.PRESENTED_IMAGE_SIMPLE
-  }
+    this.simpleImage = MapgisUiEmpty.PRESENTED_IMAGE_SIMPLE
+  },
 
-  // 面板打开时候触发函数
-  onOpen() {
-    this.init()
-  }
+  methods: {
+    // 面板打开时候触发函数
+    onOpen() {
+      this.init()
+    },
 
-  // 面板关闭时候触发函数
-  onClose() {
-    this.reset()
-  }
+    // 面板关闭时候触发函数
+    onClose() {
+      this.reset()
+    },
 
-  // 初始化的时候获取服务上功能仓库列表信息
-  init() {
-    const { ip, port } = this
-    this.showLoading = true
-    Analysis.WorkflowAnalysis.getWorkflowList({ ip, port })
-      .then((res) => {
-        this.showLoading = false
-        this.constructData(res)
-      })
-      .catch((err) => {
-        this.showLoading = false
-      })
-  }
+    // 初始化的时候获取服务上功能仓库列表信息
+    init() {
+      const { ip, port } = this
+      this.showLoading = true
+      Analysis.WorkflowAnalysis.getWorkflowList({ ip, port })
+        .then((res) => {
+          this.showLoading = false
+          this.constructData(res)
+        })
+        .catch((err) => {
+          this.showLoading = false
+        })
+    },
 
-  // 重置
-  reset() {
-    this.selectGroupIndex = 0
-    this.group = []
-    this.openHandlerWindow = false
-    this.handlerSelect = {}
-  }
+    // 重置
+    reset() {
+      this.selectGroupIndex = 0
+      this.group = []
+      this.openHandlerWindow = false
+      this.handlerSelect = {}
+    },
 
-  // 打开功能执行界面
-  openHandle(row) {
-    this.handlerSelect = row
-    this.openHandlerWindow = true
-  }
+    // 打开功能执行界面
+    openHandle(row) {
+      this.handlerSelect = row
+      this.openHandlerWindow = true
+    },
 
-  // 分类列表数据
-  constructData(res) {
-    const groups = []
-    for (let i = 0; i < res.length; i++) {
-      if (!groups.includes(res[i].Group)) {
-        groups.push(res[i].Group)
-      }
-    }
-    const data = []
-    for (let i = 0; i < groups.length; i++) {
-      const group = {}
-      group.groupName = groups[i]
-      group.index = i
-      group.children = []
-      for (let j = 0; j < res.length; j++) {
-        if (res[j].Group === groups[i]) {
-          group.children.push(res[j])
+    // 分类列表数据
+    constructData(res) {
+      const groups = []
+      for (let i = 0; i < res.length; i++) {
+        if (!groups.includes(res[i].Group)) {
+          groups.push(res[i].Group)
         }
       }
-      data.push(group)
-    }
-    this.group = data
-    this.selectGroupIndex = 0
-  }
+      const data = []
+      for (let i = 0; i < groups.length; i++) {
+        const group = {}
+        group.groupName = groups[i]
+        group.index = i
+        group.children = []
+        for (let j = 0; j < res.length; j++) {
+          if (res[j].Group === groups[i]) {
+            group.children.push(res[j])
+          }
+        }
+        data.push(group)
+      }
+      this.group = data
+      this.selectGroupIndex = 0
+    },
+  },
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .mp-widget-func-warehouse {
+  padding: 8px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  .ant-table-wrapper {
+  .mapgis-ui-table-wrapper {
     width: 300px;
     .func-execute {
       &:hover {
-        color: @primary-color;
+        color: $primary-color;
       }
     }
   }
+}
+.mapgis-ui-form-item {
+  margin-bottom: 0;
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
-  <a-card class="symbol-container">
-    <a-card-grid
+  <mapgis-ui-card class="symbol-container">
+    <mapgis-ui-card-grid
       v-for="item in symbols"
       :key="item.Name"
       class="symbol-item"
@@ -11,61 +11,62 @@
         :src="`data:image/png;base64,${item.SymbolData}`"
       />
       <p>{{ item.Name }}</p>
-    </a-card-grid>
-  </a-card>
+    </mapgis-ui-card-grid>
+  </mapgis-ui-card>
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch, Prop } from 'vue-property-decorator'
-
 import { Catalog } from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpSymbol',
-  components: {}
-})
-export default class MpSymbol extends Vue {
-  @Prop(Object) readonly queryParams!: Record<string, any>
-
-  private symbols: Record<string, any> = {}
+  props: ['queryParams'],
+  data() {
+    return {
+      symbols: {},
+    }
+  },
 
   mounted() {
     this.changeParams()
-  }
-
-  @Watch('queryParams', { deep: true })
-  async changeParams() {
-    if (Object.keys(this.queryParams).length < 1) {
-      return
-    }
-    const { ip, port, sysLibraryGuid } = this.queryParams
-    let { geomType } = this.queryParams
-    if (geomType.indexOf('Reg') >= 0) {
-      geomType = 'GeomReg'
-    } else if (geomType.indexOf('Lin') >= 0) {
-      geomType = 'GeomLin'
-    } else if (geomType.indexOf('Pnt') >= 0) {
-      geomType = 'GeomPnt'
-    }
-    const libName = await Catalog.SystemLibraryCatalog.getSystemLibraryNameByGuid(
-      {
-        ip,
-        port,
-        sysLibraryGuid
-      }
-    )
-    const res = await Catalog.SystemLibraryCatalog.getSymbols({
-      ip,
-      port,
-      systemLibName: libName,
-      geomType
-    })
-    this.symbols = res.Data
-  }
-
-  toggle(symbolNo) {
-    this.$emit('symbolNo', symbolNo)
-  }
+  },
+  watch: {
+    queryParams: {
+      async handler() {
+        if (Object.keys(this.queryParams).length < 1) {
+          return
+        }
+        const { ip, port, sysLibraryGuid } = this.queryParams
+        let { geomType } = this.queryParams
+        if (geomType.indexOf('Reg') >= 0) {
+          geomType = 'GeomReg'
+        } else if (geomType.indexOf('Lin') >= 0) {
+          geomType = 'GeomLin'
+        } else if (geomType.indexOf('Pnt') >= 0) {
+          geomType = 'GeomPnt'
+        }
+        const libName =
+          await Catalog.SystemLibraryCatalog.getSystemLibraryNameByGuid({
+            ip,
+            port,
+            sysLibraryGuid,
+          })
+        const res = await Catalog.SystemLibraryCatalog.getSymbols({
+          ip,
+          port,
+          systemLibName: libName,
+          geomType,
+        })
+        this.symbols = res.Data
+      },
+      deep: true,
+    },
+  },
+  methods: {
+    toggle(symbolNo) {
+      this.$emit('symbolNo', symbolNo)
+    },
+  },
 }
 </script>
 

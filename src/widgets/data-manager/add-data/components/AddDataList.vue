@@ -1,6 +1,6 @@
 <template>
   <div class="mp-widget-add-data beauty-scroll">
-    <mp-toolbar class="add-data-toolbar">
+    <mapgis-ui-toolbar class="add-data-toolbar">
       <add-data-category-select
         :categories="categories"
         :value="categoryName"
@@ -8,20 +8,24 @@
         size="small"
         class="add-data-category-select"
       />
-      <mp-toolbar-command-group>
-        <mp-toolbar-command title="添加分类" icon="plus" @click="onAddCategory">
-        </mp-toolbar-command>
-      </mp-toolbar-command-group>
-      <mp-toolbar-space></mp-toolbar-space>
-      <a-divider type="vertical" />
-      <mp-toolbar-command-group>
-        <mp-toolbar-command title="保存" icon="save" @click="onSaveData">
-        </mp-toolbar-command>
-      </mp-toolbar-command-group>
-    </mp-toolbar>
-    <a-space direction="vertical" class="full-width">
-      <a-row>
-        <a-table
+      <mapgis-ui-toolbar-command-group>
+        <mapgis-ui-toolbar-command
+          title="添加分类"
+          icon="plus"
+          @click="onAddCategory"
+        >
+        </mapgis-ui-toolbar-command>
+      </mapgis-ui-toolbar-command-group>
+      <mapgis-ui-toolbar-space></mapgis-ui-toolbar-space>
+      <mapgis-ui-divider type="vertical" />
+      <mapgis-ui-toolbar-command-group>
+        <mapgis-ui-toolbar-command title="保存" icon="save" @click="onSaveData">
+        </mapgis-ui-toolbar-command>
+      </mapgis-ui-toolbar-command-group>
+    </mapgis-ui-toolbar>
+    <mapgis-ui-space direction="vertical" class="full-width">
+      <mapgis-ui-row>
+        <mapgis-ui-table
           class="data-table"
           :columns="columns"
           :data-source="categoryDataList"
@@ -29,7 +33,7 @@
           :row-selection="{
             columnWidth: 20,
             selectedRowKeys: selectedRowKeys,
-            onChange: onSelectChange
+            onChange: onSelectChange,
           }"
           :rowKey="
             (record, index) => {
@@ -46,23 +50,23 @@
               selectedKeys,
               confirm,
               clearFilters,
-              column
+              column,
             }"
             style="padding: 8px"
           >
-            <a-input
-              v-ant-ref="c => (searchInput = c)"
+            <mapgis-ui-input
+              v-mapgis-ui-ref="(c) => (searchInput = c)"
               :placeholder="`请输入${column.title}`"
               :value="selectedKeys[0]"
-              style="width: 188px; margin-bottom: 8px; display: block;"
+              style="width: 188px; margin-bottom: 8px; display: block"
               @change="
-                e => setSelectedKeys(e.target.value ? [e.target.value] : [])
+                (e) => setSelectedKeys(e.target.value ? [e.target.value] : [])
               "
               @pressEnter="
                 () => onSearch(selectedKeys, confirm, column.dataIndex)
               "
             />
-            <a-button
+            <mapgis-ui-button
               type="primary"
               icon="search"
               size="small"
@@ -70,26 +74,29 @@
               @click="() => onSearch(selectedKeys, confirm, column.dataIndex)"
             >
               搜索
-            </a-button>
-            <a-button
+            </mapgis-ui-button>
+            <mapgis-ui-button
               size="small"
               style="width: 90px"
               @click="() => onSearchReset(clearFilters)"
             >
               重置
-            </a-button>
+            </mapgis-ui-button>
           </div>
-          <a-icon
+          <mapgis-ui-iconfont
             slot="filterIcon"
             slot-scope="filtered"
-            type="search"
+            type="mapgis-search"
             :style="{ color: filtered ? '#108ee9' : undefined }"
           />
           <template
             slot="customRenderName"
             slot-scope="text, record, index, column"
           >
-            <span v-if="searchText && searchedColumn === column.dataIndex">
+            <span
+              v-if="searchText && searchedColumn === column.dataIndex"
+              :title="text"
+            >
               <template
                 v-for="(fragment, i) in text
                   .toString()
@@ -107,38 +114,41 @@
               </template>
             </span>
             <template v-else>
-              {{ text }}
+              <span :title="text">{{ text }}</span>
             </template>
           </template>
           <template slot="expandedRowRender" slot-scope="record">
             <div class="data-content">
-              <a-textarea
+              <mapgis-ui-textarea
                 class="data-url"
                 disabled
                 :value="record.url"
                 auto-size
-              ></a-textarea>
-              <mp-toolbar class="data-content-toolbar">
-                <mp-toolbar-command-group>
-                  <a-popconfirm
+              ></mapgis-ui-textarea>
+              <mapgis-ui-toolbar class="data-content-toolbar">
+                <mapgis-ui-toolbar-command-group>
+                  <mapgis-ui-popconfirm
                     title="确认删除?"
                     @confirm="() => onDeleteData(record)"
                   >
-                    <mp-toolbar-command
+                    <mapgis-ui-toolbar-command
                       title="删除"
                       icon="delete"
-                    ></mp-toolbar-command>
-                  </a-popconfirm>
-                </mp-toolbar-command-group>
-              </mp-toolbar>
+                    ></mapgis-ui-toolbar-command>
+                  </mapgis-ui-popconfirm>
+                </mapgis-ui-toolbar-command-group>
+              </mapgis-ui-toolbar>
             </div>
           </template>
           <template slot="customRenderType" slot-scope="text">
-            <div>{{ typeDescription(text) }}</div>
+            <span :title="typeDescription(text)">{{
+              typeDescription(text)
+            }}</span>
           </template>
-        </a-table>
-      </a-row>
-    </a-space>
+          <!-- <mapgis-ui-empty class="mapgis-ui-empty-normal" :image="simpleImage" /> -->
+        </mapgis-ui-table>
+      </mapgis-ui-row>
+    </mapgis-ui-space>
     <add-data-category
       :categories="categories"
       :visible="addCategoryVisible"
@@ -149,238 +159,248 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import AddDataCategorySelect from './AddDataCategorySelect.vue'
 import AddDataCategory from './AddDataCategory.vue'
+import { MapgisUiEmpty } from '@mapgis/webclient-vue-ui'
 
-@Component({
+export default {
   name: 'AddDataList',
   components: {
     AddDataCategorySelect,
-    AddDataCategory
-  }
-})
-export default class AddDataList extends Vue {
-  @Prop({ type: Array }) dataList
+    AddDataCategory,
+  },
+  props: {
+    dataList: Array,
+    dataTypes: Array,
+    categories: Array,
+  },
 
-  @Prop({ type: Array }) dataTypes
-
-  @Prop({ type: Array }) categories
-
-  private categoryName = this.categories.length ? this.categories[0].name : ''
-
-  private categoryDataList = []
-
-  private pagination = {
-    current: 1,
-    showSizeChanger: true,
-    size: 'small',
-    total: this.categoryDataList.length,
-    showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
-    pageSizeOptions: ['5', '10', '15', '20'],
-    pageSize: 10
-  }
-
-  private searchText = ''
-
-  private searchInput = null
-
-  private searchedColumn = ''
-
-  private pageSizeOptions = ['5', '10', '15', '20']
-
-  private selectedRowKeys = []
-
-  private preSelectedRowKeys = []
-
-  private addCategoryVisible = false
-
-  get columns() {
-    return [
-      {
-        title: '名称',
-        dataIndex: 'name',
-        sorter: (a, b) => a.name < b.name,
-        scopedSlots: {
-          filterDropdown: 'filterDropdown',
-          filterIcon: 'filterIcon',
-          customRender: 'customRenderName'
-        },
-        onFilter: (value, record) =>
-          record.name
-            .toString()
-            .toLowerCase()
-            .includes(value.toLowerCase()),
-        onFilterDropdownVisibleChange: visible => {
-          if (visible) {
-            setTimeout(() => {
-              this.searchInput.focus()
-            }, 0)
-          }
-        }
+  data() {
+    return {
+      categoryName: this.categories.length ? this.categories[0].name : '',
+      categoryDataList: [],
+      pagination: {
+        current: 1,
+        showSizeChanger: true,
+        size: 'small',
+        // total: this.categoryDataList.length,
+        showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
+        pageSizeOptions: ['5', '10', '15', '20'],
+        pageSize: 10,
       },
-      {
-        title: '类型',
-        dataIndex: 'type',
-        sorter: (a, b) =>
-          this.typeDescription(a.type) < this.typeDescription(b.type),
-        scopedSlots: { customRender: 'customRenderType' },
-        filters: this.dataTypes,
-        onFilter: (value, record) => record.type.indexOf(value) === 0
-      }
-    ]
-  }
-
-  get typeDescription() {
-    return function(typeVal) {
-      const type = this.dataTypes.find(item => {
-        return item.value === typeVal
-      })
-      return type ? type.text : ''
+      searchText: '',
+      searchInput: null,
+      searchedColumn: '',
+      pageSizeOptions: ['5', '10', '15', '20'],
+      selectedRowKeys: [],
+      preSelectedRowKeys: [],
+      addCategoryVisible: false,
     }
-  }
+  },
 
-  @Watch('categoryName', { immediate: true })
-  changeCategory() {
-    this.queryData()
-  }
+  computed: {
+    'pagination.total'() {
+      return this.categoryDataList.length
+    },
+    columns() {
+      return [
+        {
+          title: '名称',
+          dataIndex: 'name',
+          sorter: (a, b) => a.name < b.name,
+          ellipsis: true,
+          scopedSlots: {
+            filterDropdown: 'filterDropdown',
+            filterIcon: 'filterIcon',
+            customRender: 'customRenderName',
+          },
+          onFilter: (value, record) =>
+            record.name.toString().toLowerCase().includes(value.toLowerCase()),
+          onFilterDropdownVisibleChange: (visible) => {
+            if (visible) {
+              setTimeout(() => {
+                this.searchInput.focus()
+              }, 0)
+            }
+          },
+        },
+        {
+          title: '类型',
+          dataIndex: 'type',
+          sorter: (a, b) =>
+            this.typeDescription(a.type) < this.typeDescription(b.type),
+          ellipsis: true,
+          scopedSlots: { customRender: 'customRenderType' },
+          filters: this.dataTypes,
+          onFilter: (value, record) => record.type.indexOf(value) === 0,
+        },
+      ]
+    },
 
-  onCategorySelect(val) {
-    this.categoryName = val
-  }
-
-  onAddCategory() {
-    this.addCategoryVisible = true
-  }
-
-  onSaveData() {
-    this.$emit('save')
-  }
-
-  onTableChange(pagination) {
-    this.pagination = { ...pagination }
-  }
-
-  onSearch(selectedKeys, confirm, dataIndex) {
-    confirm()
-    this.searchText = selectedKeys[0]
-    this.searchedColumn = dataIndex
-  }
-
-  onSearchReset(clearFilters) {
-    clearFilters()
-    this.searchText = ''
-  }
-
-  onSelectChange(selectedRowKeys) {
-    this.selectedRowKeys = selectedRowKeys
-    let newChecked = []
-    let newUnChecked = []
-    // 区分哪些是新选中的，哪些是新取消选中的
-    if (this.preSelectedRowKeys.length === 0) {
-      newChecked = this.selectedRowKeys
-    } else if (this.selectedRowKeys.length === 0) {
-      newUnChecked = this.preSelectedRowKeys
-    } else {
-      newChecked = this.selectedRowKeys.reduce((result, item) => {
-        if (this.preSelectedRowKeys.includes(item) === false) {
-          result.push(item)
-        }
-        return result
-      }, [])
-
-      newUnChecked = this.preSelectedRowKeys.reduce((result, item) => {
-        if (this.selectedRowKeys.includes(item) === false) {
-          result.push(item)
-        }
-        return result
-      }, [])
-    }
-
-    for (let i = 0; i < this.categoryDataList.length; i++) {
-      const dataItem = this.categoryDataList[i]
-      if (
-        newChecked.some(item => item === dataItem.id) &&
-        dataItem.visible === false
-      ) {
-        dataItem.visible = true
-        this.addLayer(dataItem)
+    typeDescription() {
+      return function (typeVal) {
+        const type = this.dataTypes.find((item) => {
+          return item.value === typeVal
+        })
+        return type ? type.text : ''
       }
-      if (
-        newUnChecked.some(item => item === dataItem.id) &&
-        dataItem.visible === true
-      ) {
-        dataItem.visible = false
+    },
+  },
+
+  watch: {
+    categoryName: {
+      immediate: true,
+      handler() {
+        this.changeCategory()
+      },
+    },
+  },
+
+  beforeCreate() {
+    this.simpleImage = MapgisUiEmpty.PRESENTED_IMAGE_SIMPLE
+  },
+
+  methods: {
+    changeCategory() {
+      this.queryData()
+    },
+
+    onCategorySelect(val) {
+      this.categoryName = val
+    },
+
+    onAddCategory() {
+      this.addCategoryVisible = true
+    },
+
+    onSaveData() {
+      this.$emit('save')
+    },
+
+    onTableChange(pagination) {
+      this.pagination = { ...pagination }
+    },
+
+    onSearch(selectedKeys, confirm, dataIndex) {
+      confirm()
+      this.searchText = selectedKeys[0]
+      this.searchedColumn = dataIndex
+    },
+
+    onSearchReset(clearFilters) {
+      clearFilters()
+      this.searchText = ''
+    },
+
+    onSelectChange(selectedRowKeys) {
+      this.selectedRowKeys = selectedRowKeys
+      let newChecked = []
+      let newUnChecked = []
+      // 区分哪些是新选中的，哪些是新取消选中的
+      if (this.preSelectedRowKeys.length === 0) {
+        newChecked = this.selectedRowKeys
+      } else if (this.selectedRowKeys.length === 0) {
+        newUnChecked = this.preSelectedRowKeys
+      } else {
+        newChecked = this.selectedRowKeys.reduce((result, item) => {
+          if (this.preSelectedRowKeys.includes(item) === false) {
+            result.push(item)
+          }
+          return result
+        }, [])
+
+        newUnChecked = this.preSelectedRowKeys.reduce((result, item) => {
+          if (this.selectedRowKeys.includes(item) === false) {
+            result.push(item)
+          }
+          return result
+        }, [])
+      }
+
+      for (let i = 0; i < this.categoryDataList.length; i++) {
+        const dataItem = this.categoryDataList[i]
+        if (
+          newChecked.some((item) => item === dataItem.id) &&
+          dataItem.visible === false
+        ) {
+          dataItem.visible = true
+          this.addLayer(dataItem)
+        }
+        if (
+          newUnChecked.some((item) => item === dataItem.id) &&
+          dataItem.visible === true
+        ) {
+          dataItem.visible = false
+          this.removeLayer(dataItem)
+        }
+      }
+
+      this.preSelectedRowKeys = JSON.parse(JSON.stringify(this.selectedRowKeys))
+    },
+
+    onAddCategoryFinished() {
+      this.addCategoryVisible = false
+    },
+
+    onAddCategoryOk({ name, description }) {
+      this.$emit('add-category', { name, description })
+      this.categoryName = name
+    },
+
+    onDeleteData(dataItem) {
+      const selected = this.selectedRowKeys.find((key) => key === dataItem.id)
+      if (selected) {
+        // 需要从文档中移除
         this.removeLayer(dataItem)
       }
-    }
 
-    this.preSelectedRowKeys = JSON.parse(JSON.stringify(this.selectedRowKeys))
-  }
+      const index = this.categoryDataList.findIndex(
+        (item) => item.id == dataItem.id
+      )
 
-  onAddCategoryFinished() {
-    this.addCategoryVisible = false
-  }
+      if (index >= 0) {
+        this.categoryDataList.splice(index, 1)
+      }
+    },
 
-  onAddCategoryOk({ name, description }) {
-    this.$emit('add-category', { name, description })
-    this.categoryName = name
-  }
+    queryData() {
+      const category = this.dataList.find((category) => {
+        return category.name === this.categoryName
+      })
 
-  onDeleteData(dataItem) {
-    const selected = this.selectedRowKeys.find(key => key === dataItem.id)
-    if (selected) {
-      // 需要从文档中移除
-      this.removeLayer(dataItem)
-    }
+      if (!category) {
+        return []
+      }
+      this.categoryDataList = category.children
+    },
 
-    const index = this.categoryDataList.findIndex(
-      item => item.id == dataItem.id
-    )
+    selectData(name, data) {
+      this.categoryName = name
+      this.queryData()
+      this.selectedRowKeys.push(data.id)
+      this.onSelectChange(this.selectedRowKeys)
+    },
 
-    if (index >= 0) {
-      this.categoryDataList.splice(index, 1)
-    }
-  }
+    unSelectData(id) {
+      const index = this.selectedRowKeys.findIndex((item) => item === id)
 
-  private queryData() {
-    const category = this.dataList.find(category => {
-      return category.name === this.categoryName
-    })
+      this.selectedRowKeys.splice(index, 1)
+      this.onSelectChange(this.selectedRowKeys)
+    },
 
-    if (!category) {
-      return []
-    }
-    this.categoryDataList = category.children
-  }
+    addLayer(dataItem) {
+      this.$emit('add-layer', dataItem)
+    },
 
-  private selectData(name, data) {
-    this.categoryName = name
-    this.queryData()
-    this.selectedRowKeys.push(data.id)
-    this.onSelectChange(this.selectedRowKeys)
-  }
-
-  private unSelectData(id) {
-    const index = this.selectedRowKeys.findIndex(item => item === id)
-
-    this.selectedRowKeys.splice(index, 1)
-    this.onSelectChange(this.selectedRowKeys)
-  }
-
-  private addLayer(dataItem) {
-    this.$emit('add-layer', dataItem)
-  }
-
-  private removeLayer(dataItem) {
-    this.$emit('remove-layer', dataItem)
-  }
+    removeLayer(dataItem) {
+      this.$emit('remove-layer', dataItem)
+    },
+  },
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .mp-widget-add-data {
-  overflow: auto;
   .add-data-toolbar {
     margin-bottom: 10px;
     .add-data-category-select {
@@ -391,17 +411,18 @@ export default class AddDataList extends Vue {
   .full-width {
     width: 100%;
   }
+  overflow: auto;
   .data-table {
     .data-content {
       display: flex;
       flex-direction: column;
       .data-url {
+        color: $text-color-secondary;
         padding: 3px 0;
-        color: @text-color-secondary;
         word-break: break-all;
         white-space: break-spaces;
         font-size: 12px;
-        &.ant-input {
+        &.mapgis-ui-input {
           border: none;
           background-color: transparent;
           resize: none;
@@ -411,15 +432,24 @@ export default class AddDataList extends Vue {
         flex-direction: row-reverse;
       }
     }
-    /deep/.ant-table-expand-icon-th,
-    /deep/.ant-table-row-expand-icon-cell {
+
+    ::v-deep .mapgis-ui-table-expand-icon-th,
+    ::v-deep .mapgis-ui-table-row-expand-icon-cell {
       width: 20px;
       min-width: 20px;
     }
-    /deep/.ant-table-pagination.ant-pagination {
+    ::v-deep .mapgis-ui-table-pagination.mapgis-ui-pagination {
       margin: 8px 0 0 0;
-      .ant-pagination-options-size-changer.ant-select {
+      ::v-deep .mapgis-ui-pagination-item-active {
+        background: none !important;
+      }
+      .mapgis-ui-pagination-options-size-changer.mapgis-ui-select {
         margin-right: 0;
+      }
+    }
+    ::v-deep .mapgis-ui-empty {
+      .mapgis-ui-empty-image {
+        height: 100% !important;
       }
     }
   }

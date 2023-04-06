@@ -6,14 +6,14 @@
 import { Component, Mixins, Prop } from 'vue-property-decorator'
 import {
   ExhibitionControllerMixin,
-  Exhibition
+  Exhibition,
 } from '@mapgis/web-app-framework'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
 @Component({
   name: 'MpCustomQuery',
-  components: {}
+  components: {},
 })
 export default class MpCustomQuery extends Mixins(ExhibitionControllerMixin) {
   @Prop(Object) readonly queryParams!: Record<string, any>

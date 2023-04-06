@@ -15,15 +15,15 @@ export const lineChartOptions = ({ color, title, x, y }) => {
         type: 'line',
         lineStyle: {
           color: _color,
-          type: 'dashed'
-        }
-      }
+          type: 'dashed',
+        },
+      },
     },
     grid: {
       top: 20,
       left: gridX,
       bottom: 40,
-      right: 0
+      right: 0,
     },
     dataZoom: {
       show: true,
@@ -34,7 +34,7 @@ export const lineChartOptions = ({ color, title, x, y }) => {
       start: 0,
       end: 70,
       showDetail: false,
-      zoomLock: true
+      zoomLock: true,
     },
     title: {
       left: 'right',
@@ -42,8 +42,8 @@ export const lineChartOptions = ({ color, title, x, y }) => {
       padding: 0,
       textStyle: {
         fontSize: 14,
-        fontFamily: '微软雅黑'
-      }
+        fontFamily: '微软雅黑',
+      },
     },
     xAxis: {
       data: x,
@@ -51,25 +51,25 @@ export const lineChartOptions = ({ color, title, x, y }) => {
         rotate: 60,
         interval: 1,
         fontSize: 10,
-        fontFamily: '微软雅黑'
-      }
+        fontFamily: '微软雅黑',
+      },
     },
     yAxis: {
       axisLabel: {
-        fontFamily: '微软雅黑'
+        fontFamily: '微软雅黑',
       },
       axisTick: {
-        show: true
+        show: true,
       },
       axisLine: {
-        show: true
+        show: true,
       },
       splitLine: {
         lineStyle: {
           color: splitColor,
-          type: 'dotted'
-        }
-      }
+          type: 'dotted',
+        },
+      },
     },
     series: [
       {
@@ -77,9 +77,9 @@ export const lineChartOptions = ({ color, title, x, y }) => {
         data: y,
         smooth: true,
         itemStyle: {
-          color: _color
-        }
-      }
-    ]
+          color: _color,
+        },
+      },
+    ],
   }
 }

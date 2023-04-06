@@ -1,61 +1,67 @@
 <template>
   <div class="mp-widget-kibana-v">
-    <a-list
+    <mapgis-ui-list
       v-if="config.length"
       :grid="{ gutter: 24, xl: 4, lg: 3, md: 3, sm: 2, xs: 1 }"
       style="margin: 0 -8px"
     >
-      <a-list-item
+      <mapgis-ui-list-item
         v-for="(item, index) in config"
         :key="index"
         style="padding: 0 8px"
       >
-        <a-card class="kibana-v-card" hoverable @click="onView(item)">
+        <mapgis-ui-card class="kibana-v-card" hoverable @click="onView(item)">
           <div slot="cover" class="img-box">
             <img :src="item.image" :alt="item.title" />
           </div>
-          <a-card-meta>
+          <mapgis-ui-card-meta>
             <div slot="title" :title="item.title">
               {{ item.title }}
             </div>
-          </a-card-meta>
-        </a-card>
-      </a-list-item>
-    </a-list>
-    <div class="empty-box" v-else><a-empty /></div>
+          </mapgis-ui-card-meta>
+        </mapgis-ui-card>
+      </mapgis-ui-list-item>
+    </mapgis-ui-list>
+    <div class="empty-box" v-else><mapgis-ui-empty /></div>
   </div>
 </template>
 
 <script lang="ts">
-import { Mixins, Component } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
-@Component({ name: 'MpKibanaV' })
-export default class MpKibanaV extends Mixins(WidgetMixin) {
-  get config() {
-    return this.widgetInfo.config.map(item => {
-      return {
-        title: item.title,
-        link: item.link,
-        image: `${this.baseUrl}${item.image}`
-      }
-    })
-  }
+export default {
+  name: 'MpKibanaV',
+  mixins: [WidgetMixin],
 
-  // 点击触发预览
-  private onView(item) {
-    window.open(item.link)
-  }
+  computed: {
+    config() {
+      return this.widgetInfo.config.map((item) => {
+        return {
+          title: item.title,
+          link: item.link,
+          image: `${this.baseUrl}${item.image}`,
+        }
+      })
+    },
+  },
+
+  methods: {
+    // 点击触发预览
+    onView(item) {
+      window.open(item.link)
+    },
+  },
 }
 </script>
 
-<style lang="less" scoped>
-.mp-widget-kibana-v {
+<style lang="scss" scoped>
+::v-deep .mp-widget-kibana-v {
   width: 100%;
   height: 100%;
   padding: 4px;
   .kibana-v-card {
-    /deep/.ant-card-body {
+    width: 100%;
+    ::v-deep .mapgis-ui-card-body {
       padding: 12px;
     }
     .img-box {
@@ -71,8 +77,8 @@ export default class MpKibanaV extends Mixins(WidgetMixin) {
       }
     }
     &:hover {
-      /deep/.ant-card-meta-title {
-        color: @primary-color;
+      .mapgis-ui-card-meta-title {
+        color: $primary-color;
       }
     }
   }

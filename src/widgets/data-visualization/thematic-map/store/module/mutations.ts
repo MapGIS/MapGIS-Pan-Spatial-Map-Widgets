@@ -1,11 +1,15 @@
 import Vue from 'vue'
-import { UUID, Feature } from '@mapgis/web-app-framework'
-import { api, baseConfigInstance } from '../../../../../model'
+import {
+  UUID,
+  Feature,
+  api,
+  baseConfigInstance,
+} from '@mapgis/web-app-framework'
 import _cloneDeep from 'lodash/cloneDeep'
 import _last from 'lodash/last'
 import {
   FeatureFormatType,
-  ConfigType,
+  LayerServiceType,
   ModuleType,
   ISubjectData,
   IBaseConfig,
@@ -32,37 +36,53 @@ export const featureQueryFn:
     layerName,
     layerIndex,
     gdbp,
-    configType,
+    layerServiceType,
     page,
     pageCount,
+    src,
     ...others
   }: IFeatureQueryParams,
   f = FeatureFormatType.geojson
 ) => {
-  const { ip: baseConfigIp, port: baseConfigPort } = baseConfigInstance.config
-  const serverParams = (configType ? configType === ConfigType.doc : !!docName)
-    ? {
-        docName,
-        layerName,
-        layerIdxs: layerIndex,
-      }
-    : { gdbp }
+  if (layerServiceType === LayerServiceType.geojson) {
+    if (src) {
+      const geojson = await Feature.getGeoJsonByUrl(src)
+      return geojson
+    }
+    return null
+  } else if (
+    layerServiceType === LayerServiceType.igsImage ||
+    layerServiceType === LayerServiceType.igsVector
+  ) {
+    const { ip: baseConfigIp, port: baseConfigPort } = baseConfigInstance.config
+    const serverParams = (
+      layerServiceType
+        ? layerServiceType === LayerServiceType.igsImage
+        : !!docName
+    )
+      ? {
+          docName,
+          layerName,
+          layerIdxs: layerIndex,
+        }
+      : { gdbp }
 
-  const dataSource = await Feature.FeatureQuery.query({
-    ip: ip || baseConfigIp,
-    port: port || baseConfigPort,
-    page: page || 0,
-    pageCount: pageCount || 9999,
-    IncludeGeometry: true,
-    f: FeatureFormatType.json,
-    ...serverParams,
-    ...others,
-  })
-  return f === FeatureFormatType.geojson
-    ? dataSource
-      ? Feature.FeatureConvert.featureIGSToFeatureGeoJSON(dataSource)
-      : null
-    : dataSource
+    const dataSource = await Feature.FeatureQuery.query({
+      ip: ip || baseConfigIp,
+      port: port || baseConfigPort,
+      page: page || 0,
+      pageCount: pageCount || 9999,
+      IncludeGeometry: true,
+      f: FeatureFormatType.json,
+      ...serverParams,
+      ...others,
+    })
+    return f === FeatureFormatType.geojson
+      ? dataSource
+        ? Feature.FeatureConvert.featureIGSToFeatureGeoJSON(dataSource)
+        : null
+      : dataSource
+  }
 }
 
 const mutations = {
@@ -112,10 +132,15 @@ const mutations = {
         return
       }
       const { baseIp, basePort } = baseConfig
-      const { ip, port, table, ...others } = subjectData
-      const fields = table ? table.showFields.join(',') : ''
+      const { ip, port, table, field, ...others } = subjectData
+      const showFields = table && table.showFields ? table.showFields : []
+      if (!showFields.includes(field)) {
+        showFields.push(field)
+      }
+      const fields = table ? showFields.join(',') : ''
 
       commit('setLoading', true)
+
       const geojson = await featureQueryFn({
         ip: ip || baseIp,
         port: port || basePort,
@@ -149,15 +174,21 @@ const mutations = {
       if (Array.isArray(config)) {
         // 新版
         const item = config.find((d: any) => d.time === time)
-        const configType = item.docName ? ConfigType.doc : ConfigType.gdbp
+        // 新版新增layerServiceType字段
+        const layerServiceType = item.layerServiceType
+          ? item.layerServiceType
+          : item.docName
+          ? LayerServiceType.igsImage
+          : LayerServiceType.igsVector
         subjectData = {
           ...item,
           subjectType,
-          configType,
+          layerServiceType,
         }
       } else {
         // 旧版
-        const { type: configType = ConfigType.gdbp, data } = config
+        const { type: layerServiceType = LayerServiceType.igsVector, data } =
+          config
         if (data && data.length) {
           const item = data.find((d: any) => d.time === time)
           const subData =
@@ -165,7 +196,7 @@ const mutations = {
           subjectData = {
             ...subData,
             subjectType,
-            configType,
+            layerServiceType,
           }
         }
       }

@@ -1,5 +1,5 @@
 <template>
-  <a-modal
+  <mapgis-ui-modal
     class="marker-edit-wrapper"
     :visible="visible"
     title="标注"
@@ -9,27 +9,27 @@
     @ok="$emit('ok', markerValue)"
   >
     <div class="marker-edit-body">
-      <a-space direction="vertical" style="flex: 1">
-        <a-row>
+      <mapgis-ui-space direction="vertical" style="flex: 1">
+        <mapgis-ui-row>
           <label>名称</label>
-        </a-row>
-        <a-row>
-          <a-input v-model="markerValue.title" />
-        </a-row>
-        <a-row>
+        </mapgis-ui-row>
+        <mapgis-ui-row>
+          <mapgis-ui-input v-model="markerValue.title" />
+        </mapgis-ui-row>
+        <mapgis-ui-row>
           <label>描述</label>
-        </a-row>
-        <a-row>
-          <a-textarea
+        </mapgis-ui-row>
+        <mapgis-ui-row>
+          <mapgis-ui-textarea
             v-model="markerValue.description"
             :auto-size="{ minRows: 2, maxRows: 6 }"
           />
-        </a-row>
-        <a-row>
+        </mapgis-ui-row>
+        <mapgis-ui-row>
           <label>图片</label>
-        </a-row>
-        <a-row>
-          <a-upload
+        </mapgis-ui-row>
+        <mapgis-ui-row>
+          <mapgis-ui-upload
             :multiple="false"
             method="post"
             :withCredentials="true"
@@ -41,86 +41,100 @@
             @change="onFileChange"
           >
             <div v-if="fileList.length < 1">
-              <a-icon type="plus" />
-              <div class="ant-upload-text">
-                上传
-              </div>
+              <mapgis-ui-iconfont type="mapgis-plus" />
+              <div class="ant-upload-text">上传</div>
             </div>
-          </a-upload>
-          <a-modal
+          </mapgis-ui-upload>
+          <mapgis-ui-modal
             :visible="previewVisible"
             :footer="null"
             @cancel="onPreviewCancel"
           >
             <img style="width: 100%" :src="previewImage" />
-          </a-modal>
-        </a-row>
-      </a-space>
+          </mapgis-ui-modal>
+        </mapgis-ui-row>
+      </mapgis-ui-space>
     </div>
-  </a-modal>
+  </mapgis-ui-modal>
 </template>
 
 <script lang="ts">
-import { Component, Mixins, Prop, Watch } from 'vue-property-decorator'
 import { AppMixin, UUID } from '@mapgis/web-app-framework'
 
-@Component({})
-export default class MarkerEditWindow extends Mixins(AppMixin) {
-  @Prop({ type: Object, required: true }) marker!: Record<string, any>
+export default {
+  name: 'MarkerEditWindow',
+  mixins: [AppMixin],
+  props: {
+    marker: {
+      type: Object,
+      required: true,
+    },
+    visible: {
+      type: Boolean,
+      default: false,
+    },
+  },
 
-  @Prop({ type: Boolean, default: false }) visible
-
-  private markerValue = {}
-
-  private previewVisible = false
-
-  private previewImage = ''
-
-  private fileList = []
-
-  @Watch('marker', { immediate: true })
-  markerChange() {
-    this.updateMarkerValue()
-  }
-
-  private onFileChange({ fileList, file }) {
-    this.fileList = fileList
-    if (file.status === 'done') {
-      this.markerValue.picture = file.response.url
+  data() {
+    return {
+      markerValue: {},
+      previewVisible: false,
+      previewImage: '',
+      fileList: [],
     }
-  }
+  },
 
-  private onCancel() {
-    // 还原markerValue
-    this.updateMarkerValue()
-    this.$emit('cancel')
-  }
+  watch: {
+    marker: {
+      immediate: true,
+      handler: 'markerChange',
+    },
+  },
 
-  private onFilePreview(file) {
-    this.previewVisible = true
-    this.previewImage = file.url || `${this.baseUrl}${file.response.url}`
-  }
+  methods: {
+    markerChange() {
+      this.updateMarkerValue()
+    },
 
-  private onPreviewCancel() {
-    this.previewVisible = false
-  }
+    onFileChange({ fileList, file }) {
+      this.fileList = fileList
+      if (file.status === 'done') {
+        this.markerValue.picture = file.response.url
+      }
+    },
 
-  private updateMarkerValue() {
-    this.markerValue = { ...this.marker }
+    onCancel() {
+      // 还原markerValue
+      this.updateMarkerValue()
+      this.$emit('cancel')
+    },
 
-    if (this.markerValue.picture) {
-      this.fileList = [
-        {
-          uid: UUID.uuid(),
-          name: 'image.png',
-          status: 'done',
-          url: `${this.baseUrl}${this.markerValue.picture}`
-        }
-      ]
-    } else {
-      this.fileList = []
-    }
-  }
+    onFilePreview(file) {
+      this.previewVisible = true
+      this.previewImage = file.url || `${this.baseUrl}${file.response.url}`
+    },
+
+    onPreviewCancel() {
+      this.previewVisible = false
+    },
+
+    updateMarkerValue() {
+      this.markerValue = { ...this.marker }
+
+      if (this.markerValue.picture) {
+        this.fileList = [
+          {
+            uid: UUID.uuid(),
+            name: 'image.png',
+            status: 'done',
+            url: `${this.baseUrl}${this.markerValue.picture}`,
+          },
+        ]
+      } else {
+        this.fileList = []
+      }
+    },
+  },
 }
 </script>
 
@@ -134,11 +148,11 @@ export default class MarkerEditWindow extends Mixins(AppMixin) {
 
 <style lang="less">
 .marker-edit-wrapper {
-  .ant-upload-select-picture-card i {
+  .mapgis-ui-upload-select-picture-card i {
     font-size: 32px;
     color: #999;
   }
-  .ant-upload-select-picture-card .ant-upload-text {
+  .mapgis-ui-upload-select-picture-card .mapgis-ui-upload-text {
     margin-top: 8px;
     color: #666;
   }

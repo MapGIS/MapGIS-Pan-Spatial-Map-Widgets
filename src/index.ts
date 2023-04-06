@@ -1,19 +1,8 @@
-export {
-  api,
-  getRequest,
-  ProjectionTransformationUtil,
-  events,
-  eventBus,
-  baseConfigInstance,
-  loadConfigs,
-  markerIconInstance,
-  dataCatalogManagerInstance,
-  DataCatalogManager,
-  DataFlowList,
-  ActiveResultSet,
-  DataStoreCatalog,
-  ProjectorManager
-} from './model'
+import {
+  MpAttributeTable,
+  MpAttributeTableList,
+  MpTreeLayer,
+} from './components'
 
 import {
   MpBufferAnalysis,
@@ -30,13 +19,15 @@ import {
   MpSwipe,
   MpTerrainAnalysis,
   MpTopologyAnalysis,
-  MpVisibilityAnalysis
+  MpVisibilityAnalysis,
+  MpVisualAnalysis,
+  MpExplosionAnalysis,
 } from './widgets/analysis'
 
 import {
   MpAddData,
   MpBasemapManager,
-  MpDataCatalog
+  MpDataCatalog,
 } from './widgets/data-manager'
 
 import {
@@ -54,7 +45,9 @@ import {
   MpThematicMap,
   MpVectorTileCarto,
   MpViewpointManager,
-  MpZoom
+  MpZoom,
+  MpPlotAnimation,
+  MpPlotManager,
 } from './widgets/data-visualization'
 
 import { MpMarkerManager, MpOverlayManager } from './widgets/editing'
@@ -64,7 +57,7 @@ import {
   MpAbout,
   MpFuncWarehouse,
   MpKibanaV,
-  MpMapDataV
+  MpMapDataV,
 } from './widgets/extended'
 
 import { MpComprehensiveQuery, MpFeatureQuery } from './widgets/query'
@@ -72,7 +65,7 @@ import { MpComprehensiveQuery, MpFeatureQuery } from './widgets/query'
 import {
   MpBuildingGrow,
   MpCityGrow,
-  MpPondingSimulation
+  MpPondingSimulation,
 } from './widgets/simulation'
 
 import {
@@ -80,10 +73,14 @@ import {
   MpMeasurement,
   MpOutputImage,
   MpSplitScreen,
-  MpStratifiedHousehold
+  MpStratifiedHousehold,
+  MpModelPick,
 } from './widgets/tool'
 
 const components = [
+  MpAttributeTable,
+  MpAttributeTableList,
+  MpTreeLayer,
   // analysis
   MpBufferAnalysis,
   MpDynamicSectionAnalysis,
@@ -100,6 +97,8 @@ const components = [
   MpTerrainAnalysis,
   MpTopologyAnalysis,
   MpVisibilityAnalysis,
+  MpVisualAnalysis,
+  MpExplosionAnalysis,
   // data-manager
   MpAddData,
   MpBasemapManager,
@@ -120,6 +119,8 @@ const components = [
   MpVectorTileCarto,
   MpViewpointManager,
   MpZoom,
+  MpPlotAnimation,
+  MpPlotManager,
   // editing
   MpMarkerManager,
   MpOverlayManager,
@@ -141,11 +142,15 @@ const components = [
   MpMeasurement,
   MpOutputImage,
   MpSplitScreen,
-  MpStratifiedHousehold
+  MpStratifiedHousehold,
+  MpModelPick,
 ]
 
-const install = Vue => {
-  components.forEach(component => {
+import { thematicMapStore } from './widgets/data-visualization/thematic-map/store'
+
+const install = (Vue) => {
+  Vue.observable(thematicMapStore)
+  components.forEach((component) => {
     Vue.component(
       (component.options && component.options.name) || component.name,
       component
@@ -154,5 +159,5 @@ const install = Vue => {
 }
 
 export default {
-  install
+  install,
 }

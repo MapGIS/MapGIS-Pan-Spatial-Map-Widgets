@@ -33,7 +33,7 @@ class Dep {
       case 'object':
         this.state = {
           ...this.state,
-          ...stateOrFn
+          ...stateOrFn,
         }
         break
       default:

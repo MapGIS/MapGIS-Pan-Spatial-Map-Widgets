@@ -44,74 +44,65 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component } from 'vue-property-decorator'
-import { WidgetMixin } from '@mapgis/web-app-framework'
-import { api, dataCatalogManagerInstance } from '../../../model'
+import {
+  WidgetMixin,
+  api,
+  dataCatalogManagerInstance,
+} from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpMapStory',
-})
-export default class MpMapStory extends Mixins(WidgetMixin) {
-  private dataSource = [
-    {
-      title: '时空演变',
-      description: '',
-      uuid: '100001',
-      map: {
-        type: 'WMTS',
-        baseUrl:
-          'http://t4.tianditu.gov.cn/cta_w/wmts?tk=9c157e9585486c02edf817d2ecbc7752',
-        layer: 'cta',
-        tilingScheme: 'EPSG:3857',
-        tileMatrixSet: 'w',
-        format: 'tiles',
-        vueKey: 'default',
-        vueIndex: 1000213213121,
-      },
-      features: [],
-      chapters: [
+  mixins: [WidgetMixin],
+  data() {
+    return {
+      dataSource: [
         {
-          projectUUID: '100001',
-          uuid: '111',
-          camera: {
-            uuid: '111',
+          title: '时空演变',
+          description: '',
+          uuid: '100001',
+          map: {
+            type: 'WMTS',
+            baseUrl:
+              'http://t4.tianditu.gov.cn/cta_w/wmts?tk=9c157e9585486c02edf817d2ecbc7752',
+            layer: 'cta',
+            tilingScheme: 'EPSG:3857',
+            tileMatrixSet: 'w',
+            format: 'tiles',
+            vueKey: 'default',
+            vueIndex: 1000213213121,
           },
           features: [],
-          title: '章节一',
-          content: '',
-          animationTime: '5000',
+          chapters: [
+            {
+              projectUUID: '100001',
+              uuid: '111',
+              camera: {
+                uuid: '111',
+              },
+              features: [],
+              title: '章节一',
+              content: '',
+              animationTime: '5000',
+            },
+          ],
         },
       ],
-    },
-  ]
-
-  private width = 248
-
-  private height = 0
-
-  private previewHeight = 770
-
-  private previewWidth = 334
-
-  private showPreview = false
-
-  private showMapStory = false
-
-  private enableFullScreen = false
-
-  private enableArrow = false
-
-  private enablePlay = false
-
-  private enableClose = false
-
-  private enablePreview = false
-
-  private enableOneMap = true
-
-  private storyDataSource = {}
-
-  private maps = []
+      width: 248,
+      height: 0,
+      previewHeight: 770,
+      previewWidth: 334,
+      showPreview: false,
+      showMapStory: false,
+      enableFullScreen: false,
+      enableArrow: false,
+      enablePlay: false,
+      enableClose: false,
+      enablePreview: false,
+      enableOneMap: true,
+      storyDataSource: {},
+      maps: [],
+    }
+  },
 
   async mounted() {
     const canvas = document.getElementsByClassName('mapboxgl-canvas')
@@ -129,80 +120,82 @@ export default class MpMapStory extends Mixins(WidgetMixin) {
     // 获取地图数据
     // const dataCatalogTreeData = await dataCatalogManagerInstance.getDataCatalogTreeData()
     // this.maps = this.getMap(dataCatalogTreeData)
-  }
+  },
 
-  getMap(dataCatalogTreeData) {
-    let maps = []
-    for (let i = 0; i < dataCatalogTreeData.length; i++) {
-      const { serverType, children } = dataCatalogTreeData[i]
-      if (serverType) {
-        switch (serverType) {
-          case 7:
-            // WMTS
-            // map = {
-            //   type: "WMTS",
-            //   baseUrl: dataCatalogTreeData[i].serverURL,
-            //   layer: dataCatalogTreeData[i].serverName,
-            //   tilingScheme: "EPSG:4326",
-            //   tileMatrixSet: this.mapCopy.tileMatrixSet,
-            // }
-            break
-          case 10:
-            break
-          case 8:
-            break
-          case 5:
-            break
-          case 4:
-            break
-          case 11:
-            break
-          case 6:
-            break
-          case 28:
-            break
-          default:
-            break
+  methods: {
+    getMap(dataCatalogTreeData) {
+      let maps = []
+      for (let i = 0; i < dataCatalogTreeData.length; i++) {
+        const { serverType, children } = dataCatalogTreeData[i]
+        if (serverType) {
+          switch (serverType) {
+            case 7:
+              // WMTS
+              // map = {
+              //   type: "WMTS",
+              //   baseUrl: dataCatalogTreeData[i].serverURL,
+              //   layer: dataCatalogTreeData[i].serverName,
+              //   tilingScheme: "EPSG:4326",
+              //   tileMatrixSet: this.mapCopy.tileMatrixSet,
+              // }
+              break
+            case 10:
+              break
+            case 8:
+              break
+            case 5:
+              break
+            case 4:
+              break
+            case 11:
+              break
+            case 6:
+              break
+            case 28:
+              break
+            default:
+              break
+          }
+          maps.push(dataCatalogTreeData[i].description)
         }
-        maps.push(dataCatalogTreeData[i].description)
+        if (children && children.length > 0) {
+          maps = maps.concat(this.getMap(children))
+        }
       }
-      if (children && children.length > 0) {
-        maps = maps.concat(this.getMap(children))
+      return maps
+    },
+
+    async save(e) {
+      let config = await api.getWidgetConfig('map-story')
+      if (!config) {
+        config = {}
       }
-    }
-    return maps
-  }
+      config.dataSource = e
+      api.saveWidgetConfig({
+        name: 'map-story',
+        config: config,
+      })
+    },
 
-  async save(e) {
-    let config = await api.getWidgetConfig('map-story')
-    if (!config) {
-      config = {}
-    }
-    config.dataSource = e
-    api.saveWidgetConfig({
-      name: 'map-story',
-      config: config,
-    })
-  }
+    onOpen() {
+      this.showMapStory = true
+    },
 
-  onOpen() {
-    this.showMapStory = true
-  }
+    chapterPreview(dataSource) {
+      this.storyDataSource = dataSource
+      this.showPreview = true
+      this.enableArrow = false
+      this.enablePlay = false
+    },
 
-  chapterPreview(dataSource) {
-    this.storyDataSource = dataSource
-    this.showPreview = true
-    this.enableArrow = false
-    this.enablePlay = false
-  }
-
-  storyPreview(dataSource) {
-    this.storyDataSource = dataSource
-    this.showPreview = true
-    this.enableArrow = true
-    this.enablePlay = true
-    this.$refs.preview.projectPreview()
-  }
+    storyPreview(dataSource) {
+      this.storyDataSource = dataSource
+      this.showPreview = true
+      this.enableArrow = true
+      this.enablePlay = true
+      this.$refs.preview.projectPreview()
+    },
+  },
 }
 </script>
 

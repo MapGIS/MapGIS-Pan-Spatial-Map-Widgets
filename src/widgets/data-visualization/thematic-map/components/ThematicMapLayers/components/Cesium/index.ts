@@ -17,5 +17,5 @@ export default {
   CesiumBaseMapWithGraph,
   CesiumLabel,
   CesiumHexBin,
-  CesiumHeatMap
+  CesiumHeatMap,
 }

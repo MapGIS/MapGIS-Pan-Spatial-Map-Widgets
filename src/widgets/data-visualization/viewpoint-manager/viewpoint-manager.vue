@@ -7,15 +7,17 @@
 </template>
 
 <script lang="ts">
-import { Mixins, Component } from 'vue-property-decorator'
-import { WidgetMixin } from '@mapgis/web-app-framework'
-import { api } from '../../../model'
+import { WidgetMixin, api } from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpViewpointManager',
-})
-export default class MpViewpointManager extends Mixins(WidgetMixin) {
-  private iconfig = null
+  mixins: [WidgetMixin],
+
+  data() {
+    return {
+      iconfig: null,
+    }
+  },
 
   async mounted() {
     let config = await api.getWidgetConfig('viewpoint-manager')
@@ -37,34 +39,36 @@ export default class MpViewpointManager extends Mixins(WidgetMixin) {
     })
 
     this.iconfig = result
-  }
+  },
 
-  private configSave(newConfig) {
-    // console.log("newConfig",JSON.parse(JSON.stringify(newConfig)));
+  methods: {
+    configSave(newConfig) {
+      // console.log("newConfig",JSON.parse(JSON.stringify(newConfig)));
 
-    api.saveWidgetConfig({
-      name: 'viewpoint-manager',
-      config: JSON.parse(JSON.stringify(newConfig)),
-    })
-  }
+      api.saveWidgetConfig({
+        name: 'viewpoint-manager',
+        config: JSON.parse(JSON.stringify(newConfig)),
+      })
+    },
 
-  /**
-   * 微件打开时
-   */
-  onOpen() {
-    this.viewpoint.mount()
-  }
+    /**
+     * 微件打开时
+     */
+    onOpen() {
+      this.viewpoint.mount()
+    },
 
-  /**
-   * 微件关闭时
-   */
-  onClose() {
-    this.viewpoint.unmount()
-  }
+    /**
+     * 微件关闭时
+     */
+    onClose() {
+      this.viewpoint.unmount()
+    },
 
-  loaded(viewpoint) {
-    this.viewpoint = viewpoint
-  }
+    loaded(viewpoint) {
+      this.viewpoint = viewpoint
+    },
+  },
 }
 </script>
 

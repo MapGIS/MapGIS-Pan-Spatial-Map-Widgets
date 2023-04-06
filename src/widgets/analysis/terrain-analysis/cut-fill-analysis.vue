@@ -3,46 +3,43 @@
     :xPaneNum="xPaneNum"
     :yPaneNum="yPaneNum"
     :height="height"
-    :lineColor="lineColor"
+    :cutColor="cutColor"
     :fillColor="fillColor"
     :dataType="dataType"
     @load="load"
   />
 </template>
 <script lang="ts">
-import { Component, Mixins } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpCutFillAnalysis',
-  components: {}
-})
-export default class MpCutFillAnalysis extends Mixins(WidgetMixin) {
-  private xPaneNum = 16
+  mixins: [WidgetMixin],
+  data() {
+    return {
+      xPaneNum: 16,
+      yPaneNum: 16,
+      height: 2000,
+      cutColor: 'rgba(0, 0, 255, 0.5)',
+      fillColor: 'rgba(255,165,0,0.5)',
+      dataType: 2.0,
+      cutFillAnalysis: null,
+    }
+  },
 
-  private yPaneNum = 16
+  methods: {
+    load(cutFillAnalysis) {
+      this.cutFillAnalysis = cutFillAnalysis
+    },
 
-  private height = 2000
+    onActive() {
+      this.cutFillAnalysis.mount()
+    },
 
-  private lineColor = 'rgba(0,255,0,1)'
-
-  private fillColor = 'rgba(0,0,255,0.3)'
-
-  private dataType = 2.0
-
-  private cutFillAnalysis = null
-
-  load(cutFillAnalysis) {
-    this.cutFillAnalysis = cutFillAnalysis
-  }
-
-  onActive() {
-    this.cutFillAnalysis.mount()
-  }
-
-  // 微件失活时
-  onDeActive() {
-    this.cutFillAnalysis.unmount()
-  }
+    // 微件失活时
+    onDeActive() {
+      this.cutFillAnalysis.unmount()
+    },
+  },
 }
 </script>

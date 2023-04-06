@@ -1,7 +1,7 @@
 <template>
   <div>
-    <a-tabs default-active-key="general" size="small">
-      <a-tab-pane key="general" tab="基本信息">
+    <mapgis-ui-tabs default-active-key="general" size="small">
+      <mapgis-ui-tab-pane key="general" tab="基本信息">
         <div class="info-body">
           <div
             v-for="(item, index) in generalInfo"
@@ -12,8 +12,8 @@
             <span>{{ metadata[item] }}</span>
           </div>
         </div>
-      </a-tab-pane>
-      <a-tab-pane key="storage" tab="瓦片存储信息">
+      </mapgis-ui-tab-pane>
+      <mapgis-ui-tab-pane key="storage" tab="瓦片存储信息">
         <div class="info-body">
           <div
             v-for="(storageInfoItem, si) in Object.keys(tileStorageInfo)"
@@ -34,11 +34,11 @@
                 >
                   各级信息：
                 </div>
-                <a-table
+                <mapgis-ui-table
                   bordered
                   size="small"
                   :scroll="{
-                    x: '100%'
+                    x: '100%',
                   }"
                   :pagination="false"
                   :data-source="getDataSource(tileStorageInfo[storageInfoItem])"
@@ -51,38 +51,39 @@
                     }
                   "
                 >
-                </a-table>
+                </mapgis-ui-table>
               </div>
             </template>
           </div>
         </div>
-      </a-tab-pane>
-    </a-tabs>
+      </mapgis-ui-tab-pane>
+    </mapgis-ui-tabs>
   </div>
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Mixins } from 'vue-property-decorator'
 import {
   LayerType,
   IGSMapImageLayer,
   IGSVectorLayer,
   IGSTileLayer,
-  Layer
+  Layer,
 } from '@mapgis/web-app-framework'
 import MetadataInfoMixin from './mixins/metadata-info'
 
-@Component({ name: 'MpMetadataInfoTile', components: {} })
-export default class MpMetadataInfoTile extends Mixins(MetadataInfoMixin) {
-  private get generalInfo() {
-    return Object.keys(this.metadata).filter(item => {
-      return item !== '瓦片存储信息'
-    })
-  }
-
-  private get tileStorageInfo() {
-    return this.metadata['瓦片存储信息'] || {}
-  }
+export default {
+  name: 'MpMetadataInfoTile',
+  mixins: [MetadataInfoMixin],
+  computed: {
+    generalInfo() {
+      return Object.keys(this.metadata).filter((item) => {
+        return item !== '瓦片存储信息'
+      })
+    },
+    tileStorageInfo() {
+      return this.metadata['瓦片存储信息'] || {}
+    },
+  },
 }
 </script>
 

@@ -1,6 +1,6 @@
 <template>
   <div class="coordinate-table-container">
-    <a-table
+    <mapgis-ui-table
       :columns="columns"
       :data-source="data"
       size="small"
@@ -8,18 +8,18 @@
       :pagination="false"
       :scroll="{
         y: 160,
-        x: '100%'
+        x: '100%',
       }"
       rowKey="id"
       bordered
       :customRow="
-        record => ({
+        (record) => ({
           on: {
             // 事件
-            click: event => {
+            click: (event) => {
               rowClick(record)
-            } // 点击行
-          }
+            }, // 点击行
+          },
         })
       "
     >
@@ -32,33 +32,40 @@
         text === '1' ? '点上' : '线上'
       }}</span>
       <span slot="action" slot-scope="text, record, index">
-        <a-button type="link" @click.stop="deleteRow(index, 'dots')">
+        <mapgis-ui-button type="link" @click.stop="deleteRow(index, 'dots')">
           删除
-        </a-button>
+        </mapgis-ui-button>
       </span>
-    </a-table>
+    </mapgis-ui-table>
   </div>
 </template>
 <script lang="ts">
-import { Vue, Prop, Component, Emit } from 'vue-property-decorator'
+export default {
+  name: 'MpCoordinateTable',
+  props: {
+    data: {
+      type: Array,
+    },
+    columns: {
+      type: Array,
+    },
+    showButton: {
+      type: Boolean,
+    },
+    isFullScreen: {
+      type: Boolean,
+    },
+  },
 
-@Component({ name: 'MpCoordinateTable' })
-export default class MpCoordinateTable extends Vue {
-  @Prop(Array) data!: array
+  methods: {
+    rowClick(props) {
+      this.$emit('rowClick', props)
+    },
 
-  @Prop(Array) columns!: array
-
-  @Prop(Boolean) showButton!: boolean
-
-  @Prop(Boolean) isFullScreen!: boolean
-
-  rowClick(props) {
-    this.$emit('rowClick', props)
-  }
-
-  deleteRow(index, type) {
-    this.$emit('deleteRow', index, type)
-  }
+    deleteRow(index, type) {
+      this.$emit('deleteRow', index, type)
+    },
+  },
 }
 </script>
 <style lang="less">

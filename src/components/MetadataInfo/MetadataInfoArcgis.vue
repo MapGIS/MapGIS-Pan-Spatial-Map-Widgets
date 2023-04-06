@@ -1,7 +1,7 @@
 <template>
   <div>
-    <a-tabs default-active-key="general" size="small">
-      <a-tab-pane key="general" tab="基本信息">
+    <mapgis-ui-tabs default-active-key="general" size="small">
+      <mapgis-ui-tab-pane key="general" tab="基本信息">
         <div class="info-body">
           <div
             v-for="(item, index) in generalInfo"
@@ -12,8 +12,8 @@
             <span>{{ metadata[item] }}</span>
           </div>
         </div>
-      </a-tab-pane>
-      <a-tab-pane key="document" tab="文档信息">
+      </mapgis-ui-tab-pane>
+      <mapgis-ui-tab-pane key="document" tab="文档信息">
         <div class="info-body">
           <div
             v-for="(item, index) in documentInfo"
@@ -24,14 +24,12 @@
             <span>{{ metadata.documentInfo[item] }}</span>
           </div>
           <div class="levels">
-            <div class="info-item-title levels-title">
-              图层信息：
-            </div>
-            <a-table
+            <div class="info-item-title levels-title">图层信息：</div>
+            <mapgis-ui-table
               bordered
               size="small"
               :scroll="{
-                x: '100%'
+                x: '100%',
               }"
               :pagination="false"
               :data-source="getDataSource(metadata.layers)"
@@ -42,11 +40,15 @@
                 }
               "
             >
-            </a-table>
+            </mapgis-ui-table>
           </div>
         </div>
-      </a-tab-pane>
-      <a-tab-pane v-if="tileStorageInfo" key="storage" tab="瓦片存储信息">
+      </mapgis-ui-tab-pane>
+      <mapgis-ui-tab-pane
+        v-if="tileStorageInfo"
+        key="storage"
+        tab="瓦片存储信息"
+      >
         <div class="info-body">
           <div
             v-for="(storageInfoItem, si) in Object.keys(tileStorageInfo)"
@@ -67,11 +69,11 @@
                 >
                   各级信息：
                 </div>
-                <a-table
+                <mapgis-ui-table
                   bordered
                   size="small"
                   :scroll="{
-                    x: '100%'
+                    x: '100%',
                   }"
                   :pagination="false"
                   :data-source="getDataSource(tileStorageInfo[storageInfoItem])"
@@ -84,53 +86,56 @@
                     }
                   "
                 >
-                </a-table>
+                </mapgis-ui-table>
               </div>
             </template>
           </div>
         </div>
-      </a-tab-pane>
-    </a-tabs>
+      </mapgis-ui-tab-pane>
+    </mapgis-ui-tabs>
   </div>
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Mixins } from 'vue-property-decorator'
 import {
   LayerType,
   IGSMapImageLayer,
   IGSVectorLayer,
   IGSTileLayer,
-  Layer
+  Layer,
 } from '@mapgis/web-app-framework'
 import MetadataInfoMixin from './mixins/metadata-info'
 
-@Component({ name: 'MpMetadataInfoArcgis', components: {} })
-export default class MpMetadataInfoArcgis extends Mixins(MetadataInfoMixin) {
-  arr = [
-    'documentInfo',
-    'layers',
-    'datumTransformations',
-    'tileInfo',
-    // 'fullExtent',
-    // 'initialExtent',
-    'spatialReference',
-    'tables'
-  ]
-
-  private get generalInfo() {
-    return Object.keys(this.metadata).filter(item => {
-      return !this.arr.includes(item)
-    })
-  }
-
-  private get documentInfo() {
-    return Object.keys(this.metadata.documentInfo)
-  }
-
-  private get tileStorageInfo() {
-    return this.metadata.tileInfo
-  }
+export default {
+  name: 'MpMetadataInfoArcgis',
+  mixins: [MetadataInfoMixin],
+  data() {
+    return {
+      arr: [
+        'documentInfo',
+        'layers',
+        'datumTransformations',
+        'tileInfo',
+        // 'fullExtent',
+        // 'initialExtent',
+        'spatialReference',
+        'tables',
+      ],
+    }
+  },
+  computed: {
+    generalInfo() {
+      return Object.keys(this.metadata).filter((item) => {
+        return !this.arr.includes(item)
+      })
+    },
+    documentInfo() {
+      return Object.keys(this.metadata.documentInfo)
+    },
+    tileStorageInfo() {
+      return this.metadata.tileInfo
+    },
+  },
 }
 </script>
 

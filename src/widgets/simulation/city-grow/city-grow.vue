@@ -1,11 +1,12 @@
 <template>
   <div class="mp-widget-city-grow">
-    <a-row>
-      <label class="mp-widget-label">数据源设置</label>
-    </a-row>
+    <mapgis-ui-row>
+      <!-- <label class='mp-widget-label'>数据源设置</label> -->
+      <mapgis-ui-group-tab title="数据源设置" />
+    </mapgis-ui-row>
     <div>
-      <a-row class="mp-row-style">
-        <a-select
+      <mapgis-ui-row class="mp-row-style">
+        <mapgis-ui-select
           v-model="selectResult"
           :show-search="true"
           :not-found-content="null"
@@ -15,209 +16,196 @@
           @change="onUrlChange"
           @search="handleSearch"
           @blur="handleBlur"
-          style="width: 360px"
+          style="width: 100%"
         >
-          <a-select-option v-for="item in urlOptions" :key="item.baseUrl">
+          <mapgis-ui-select-option
+            v-for="item in urlOptions"
+            :key="item.baseUrl"
+          >
             {{ item.baseUrl }}
-          </a-select-option>
-        </a-select>
-      </a-row>
-      <a-row style="height: 40px">
-        <a-textarea
+          </mapgis-ui-select-option>
+        </mapgis-ui-select>
+      </mapgis-ui-row>
+      <mapgis-ui-row style="height: 40px">
+        <mapgis-ui-textarea
           class="url-example"
           disabled
           :value="`示例 : ${this.urlExample}`"
           auto-size
-        ></a-textarea>
-      </a-row>
-      <a-row>
-        <label class="mp-widget-label">参数设置</label>
-      </a-row>
+        ></mapgis-ui-textarea>
+      </mapgis-ui-row>
+      <mapgis-ui-row>
+        <!-- <label class='mp-widget-label'>参数设置</label> -->
+        <mapgis-ui-group-tab title="参数设置" />
+      </mapgis-ui-row>
       <mapgis-3d-city-grow-options
         v-if="radioVal === 1"
         :cityGrowOptions="cityGrowOptions"
-        style="width: 360px"
         @commitOptions="getCityGrowOptions"
         @saveConfig="saveConfig"
         ref="cityGrowOptions"
       ></mapgis-3d-city-grow-options>
       <mp-window-wrapper :visible="startCityGrow">
-        <template v-slot:default="slotProps">
-          <mp-window
-            title="城市生长"
-            :visible.sync="startCityGrow"
-            :horizontal-offset="28"
-            :vertical-offset="30"
-            :width="playWidth"
-            :height="60"
-            :has-padding="false"
-            anchor="bottom-center"
-            v-bind="slotProps"
-          >
-            <template>
-              <mapgis-3d-city-grow
-                v-if="startCityGrow"
-                :baseUrl="url"
-                :featureStyle="featureStyle"
-                ref="cityGrow"
-                @loaded="load"
-              ></mapgis-3d-city-grow>
-            </template>
-          </mp-window>
-        </template>
+        <mapgis-ui-placement
+          :position="'bottom-left'"
+          v-show="startCityGrow"
+          :offset="[52, 60]"
+          style="right: 0px"
+        >
+          <mapgis-3d-city-grow
+            v-if="startCityGrow"
+            :baseUrl="url"
+            :featureStyle="featureStyle"
+            ref="cityGrow"
+            @loaded="load"
+          ></mapgis-3d-city-grow>
+        </mapgis-ui-placement>
       </mp-window-wrapper>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { Mixins, Component, Watch } from 'vue-property-decorator'
-import { WidgetMixin, UrlUtil } from '@mapgis/web-app-framework'
-import { api } from '../../../model'
+import { WidgetMixin, UrlUtil, api } from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpCityGrow',
-})
-export default class MpCityGrow extends Mixins(WidgetMixin) {
-  private radioVal = 1
+  mixins: [WidgetMixin],
 
-  private selectResult = ''
-
-  private url = ''
-
-  private cityGrowOptions = {}
-
-  private urlExample =
-    'http://<server>:<port>/igs/rest/mrfs/docs/{docName}/{mapIndex}/{layerIndex}'
-
-  private featureStyle = {}
-
-  private startCityGrow = false
-
-  private playWidth = 715
-
-  // 城市生长对象
-  private cityGrow = null
-
-  private handleSearchTag = false
-
-  private urlOptionsArray = [
-    {
-      baseUrl:
-        'http://192.168.21.191:6163/igs/rest/mrfs/docs/shengZhenBaiMo/0/0',
-      startTimeField: 'startTime',
-      endTimeField: 'endTime',
-      heightField: 'height',
-    },
-  ]
-
-  private urlOptions = []
+  data() {
+    return {
+      radioVal: 1,
+      selectResult: '',
+      url: '',
+      cityGrowOptions: {},
+      urlExample:
+        'http://<server>:<port>/igs/rest/mrfs/docs/{docName}/{mapIndex}/{layerIndex}',
+      featureStyle: {},
+      startCityGrow: false,
+      playWidth: 711,
+      // 城市生长对象
+      cityGrow: null,
+      handleSearchTag: false,
+      urlOptionsArray: [
+        {
+          baseUrl:
+            'http://192.168.21.191:6163/igs/rest/mrfs/docs/shengZhenBaiMo/0/0',
+          startTimeField: 'startTime',
+          endTimeField: 'endTime',
+          heightField: 'height',
+        },
+      ],
+      urlOptions: [],
+    }
+  },
 
   async mounted() {
     const config = await api.getWidgetConfig('city-grow')
     this.urlOptions = config || this.urlOptionsArray
-  }
+  },
 
-  load(e) {
-    this.cityGrow = e
-  }
+  methods: {
+    load(e) {
+      this.cityGrow = e
+    },
 
-  onUrlChange(val) {
-    if (val && !this.handleSearchTag) {
-      const mapOption = this.urlOptions.filter((x) => x.baseUrl === val)
+    onUrlChange(val) {
+      if (val && !this.handleSearchTag) {
+        const mapOption = this.urlOptions.filter((x) => x.baseUrl === val)
 
-      this.cityGrowOptions = mapOption[0]
-      this.url = val
-    } else if (val === undefined) {
+        this.cityGrowOptions = mapOption[0]
+        this.url = val
+      } else if (val === undefined) {
+        this.cityGrowOptions = {}
+        this.selectResult = ''
+      }
+    },
+
+    handleBlur(value) {
+      if (value == undefined || value == '') {
+        if (typeof this.cityGrowOptions === 'string') {
+          this.selectResult = this.cityGrowOptions
+        }
+      }
+    },
+
+    handleSearch(value) {
+      if (value !== '') {
+        if (!UrlUtil.isUrlValid(value)) {
+          this.$message.warn('请输入正确的数据地址')
+          return
+        }
+        this.cityGrowOptions = value
+        this.url = value
+        this.handleSearchTag = true
+      } else {
+        this.handleSearchTag = false
+      }
+    },
+
+    getCityGrowOptions(featureStyle) {
+      this.featureStyle = {}
+      this.$nextTick(function () {
+        this.featureStyle = featureStyle
+        this.saveConfig()
+      })
+      this.startCityGrow = true
+    },
+
+    saveConfig() {
+      let findTag = false
+      const config = JSON.parse(JSON.stringify(this.urlOptions))
+      this.featureStyle.baseUrl = this.url
+
+      for (let i = 0; i < this.urlOptions.length; i++) {
+        if (this.urlOptions[i].baseUrl === this.url) {
+          config[i] = this.featureStyle
+          findTag = true
+        }
+      }
+      if (!findTag) {
+        config.push(this.featureStyle)
+      }
+
+      api
+        .saveWidgetConfig({
+          name: 'city-grow',
+          config: config,
+        })
+        .then(() => {
+          console.log('更新城市生长配置成功')
+        })
+        .catch(() => {
+          console.log('更新城市生长配置失败')
+        })
+    },
+
+    onClose() {
+      this.hideCityGrow()
+      if (this.cityGrow) {
+        this.cityGrow.unmount()
+      }
+
       this.cityGrowOptions = {}
+      this.$refs.cityGrowOptions.unmount()
       this.selectResult = ''
-    }
-  }
+    },
 
-  handleBlur(value) {
-    if (value == undefined || value == '') {
-      if (typeof this.cityGrowOptions === 'string') {
-        this.selectResult = this.cityGrowOptions
-      }
-    }
-  }
-
-  handleSearch(value) {
-    if (value !== '') {
-      if (!UrlUtil.isUrlValid(value)) {
-        this.$message.warn('请输入正确的数据地址')
-        return
-      }
-      this.cityGrowOptions = value
-      this.url = value
-      this.handleSearchTag = true
-    } else {
-      this.handleSearchTag = false
-    }
-  }
-
-  getCityGrowOptions(featureStyle) {
-    this.featureStyle = {}
-    this.$nextTick(function () {
-      this.featureStyle = featureStyle
-      this.saveConfig()
-    })
-    this.startCityGrow = true
-  }
-
-  saveConfig() {
-    let findTag = false
-    const config = JSON.parse(JSON.stringify(this.urlOptions))
-    this.featureStyle.baseUrl = this.url
-
-    for (let i = 0; i < this.urlOptions.length; i++) {
-      if (this.urlOptions[i].baseUrl === this.url) {
-        config[i] = this.featureStyle
-        findTag = true
-      }
-    }
-    if (!findTag) {
-      config.push(this.featureStyle)
-    }
-
-    api
-      .saveWidgetConfig({
-        name: 'city-grow',
-        config: config,
-      })
-      .then(() => {
-        console.log('更新城市生长配置成功')
-      })
-      .catch(() => {
-        console.log('更新城市生长配置失败')
-      })
-  }
-
-  onClose() {
-    this.hideCityGrow()
-    if (this.cityGrow) {
-      this.cityGrow.unmount()
-    }
-
-    this.cityGrowOptions = {}
-    this.$refs.cityGrowOptions.unmount()
-    this.selectResult = ''
-  }
-
-  hideCityGrow() {
-    this.startCityGrow = false
-  }
+    hideCityGrow() {
+      this.startCityGrow = false
+    },
+  },
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .mp-widget-city-grow {
-  margin: 0px 5px 5px 5px;
+  // margin: 0px 5px 5px 5px;
 }
 
 .mp-row-style {
-  width: 360px;
-  margin: 8px 0;
+  // width: 360px;
+  margin-bottom: 8px;
 }
 
 .mp-widget-label {
@@ -232,14 +220,14 @@ export default class MpCityGrow extends Mixins(WidgetMixin) {
 
 .url-example {
   padding: 3px 0;
-  color: @text-color-secondary;
   word-break: break-all;
   white-space: break-spaces;
   font-size: 12px;
 
-  &.ant-input {
+  &.mapgis-ui-input {
     border: none;
-    background-color: transparent;
+    color: $text-color-secondary;
+    // background-color: transparent;
     resize: none;
     min-height: 24px;
   }

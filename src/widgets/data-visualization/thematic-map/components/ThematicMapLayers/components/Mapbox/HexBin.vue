@@ -8,17 +8,19 @@
   />
 </template>
 <script lang="ts">
-import { Mixins, Component } from 'vue-property-decorator'
 import BaseMixin from '../../mixins/base'
 
-@Component
-export default class MapboxHexBin extends Mixins(BaseMixin) {
-  get options() {
-    return {
-      draw: 'honeycomb',
-      context: '2d',
-      ...(this.subjectData?.themeStyle || {})
-    }
-  }
+export default {
+  name: 'MapboxHexBin',
+  mixins: [BaseMixin],
+  computed: {
+    options() {
+      return {
+        draw: 'honeycomb',
+        context: '2d',
+        ...(this.subjectData?.themeStyle || {}),
+      }
+    },
+  },
 }
 </script>

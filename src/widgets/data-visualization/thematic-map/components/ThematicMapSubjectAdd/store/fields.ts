@@ -1,4 +1,8 @@
-import { FeatureFormatType, featureQueryFn } from '../../../store'
+import {
+  LayerServiceType,
+  FeatureFormatType,
+  featureQueryFn,
+} from '../../../store'
 
 interface QueryParams {
   ip: string
@@ -8,6 +12,8 @@ interface QueryParams {
   layerName: string
   layerIndex: string
   fields?: string
+  layerServiceType?: string
+  src?: string
 }
 
 interface FieldInfosItem {
@@ -16,8 +22,31 @@ interface FieldInfosItem {
   value: string
 }
 
+const mockData = {
+  type: 'FeatureCollection',
+  dataCount: 2,
+  features: [
+    {
+      type: 'Feature',
+      properties: {
+        fid: 1,
+        AREA: 0,
+      },
+    },
+    {
+      type: 'Feature',
+      properties: {
+        fid: 2,
+        AREA: 1,
+      },
+    },
+  ],
+}
+
 class Fields {
   private isFetched = false
+
+  private src = ''
 
   private fields: FieldInfosItem[] = []
 
@@ -33,19 +62,28 @@ class Fields {
     docName,
     layerName,
     layerIndex,
-    fields
+    layerServiceType,
+    src,
+    fields,
   }: QueryParams) {
     if (!fields) return
-    const geojson = await featureQueryFn({
-      ip,
-      port,
-      gdbp,
-      docName,
-      layerName,
-      layerIndex,
-      fields
-    })
-    return geojson
+    if (layerServiceType === LayerServiceType.igsScene) {
+      // TODO 由于m3d暂未对接简单要素类，这里暂时返回一个默认的json，以便展示分段，方便进行分段设置
+      return mockData
+    } else {
+      const geojson = await featureQueryFn({
+        ip,
+        port,
+        gdbp,
+        docName,
+        layerName,
+        layerIndex,
+        layerServiceType,
+        src,
+        fields,
+      })
+      return geojson
+    }
   }
 
   /**
@@ -54,9 +92,14 @@ class Fields {
    * @returns
    */
   async getFields(subjectConfig) {
-    if (!this.isFetched) {
-      this.fields = await this.fetchFields(subjectConfig)
+    const src = subjectConfig.src || subjectConfig.serverUrl
+    if (!this.isFetched || this.src !== src) {
+      this.fields = await this.fetchFields({
+        src,
+        ...subjectConfig,
+      })
       this.isFetched = true
+      this.src = src
     }
     return this.fields
   }
@@ -72,9 +115,11 @@ class Fields {
     gdbp,
     docName,
     layerName,
-    layerIndex
+    layerIndex,
+    src,
+    layerServiceType,
   }: QueryParams) {
-    const igsJson = await featureQueryFn(
+    const json = await featureQueryFn(
       {
         ip,
         port,
@@ -82,19 +127,32 @@ class Fields {
         docName,
         layerName,
         layerIndex,
+        layerServiceType,
+        src,
         IncludeAttribute: false,
         IncludeGeometry: false,
-        IncludeWebGraphic: false
+        IncludeWebGraphic: false,
       },
       FeatureFormatType.json
     )
-    if (igsJson) {
-      const { FldName, FldType, FldAlias } = igsJson.AttStruct
-      return FldName.map((v: string, i: number) => ({
-        type: FldType[i],
-        alias: FldAlias[i] || v,
-        value: v
-      }))
+    if (json) {
+      if (
+        layerServiceType === LayerServiceType.igsImage ||
+        layerServiceType === LayerServiceType.igsVector
+      ) {
+        const { FldName, FldType, FldAlias } = json.AttStruct
+        return FldName.map((v: string, i: number) => ({
+          type: FldType[i],
+          alias: FldAlias[i] || v,
+          value: v,
+        }))
+      } else if (layerServiceType === LayerServiceType.geojson) {
+        const { properties } = json.features[0]
+        return Object.keys(properties).map((v: string, i: number) => ({
+          alias: v,
+          value: v,
+        }))
+      }
     }
     return []
   }

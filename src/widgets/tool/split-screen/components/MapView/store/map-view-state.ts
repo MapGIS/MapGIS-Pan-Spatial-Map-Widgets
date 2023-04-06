@@ -9,7 +9,7 @@ export enum OperationType {
   ZOOMIN = 'ZOOMIN', // 放大按钮
   ZOOMOUT = 'ZOOMOUT', // 缩小按钮
   RESTORE = 'RESTORE', // 重置按钮
-  CLEAR = 'CLEAR' // 清除按钮
+  CLEAR = 'CLEAR', // 清除按钮
 }
 
 /**
@@ -31,7 +31,7 @@ export class MapViewState {
   isValidRect(rect: Rectangle) {
     if (!CommonUtil.isEmpty(rect)) {
       const boundKeys = ['xmin', 'xmax', 'ymin', 'ymax']
-      const hasBoundKeys = boundKeys.every(v => v in rect)
+      const hasBoundKeys = boundKeys.every((v) => v in rect)
       return hasBoundKeys && rect.xmin <= rect.xmax && rect.ymin <= rect.ymax
     }
     return !0

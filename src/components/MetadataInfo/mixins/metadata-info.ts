@@ -13,7 +13,7 @@ export default class MetadataInfo extends Vue {
         title: tags[i],
         dataIndex: tags[i],
         key: tags[i],
-        width: 180
+        width: 180,
       }
       columns.push(obj)
     }

@@ -4,11 +4,10 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Mixins } from 'vue-property-decorator'
 import { WidgetMixin } from '@mapgis/web-app-framework'
 
-@Component({
-  name: 'MpOutputImage'
-})
-export default class MpOutputImage extends Mixins(WidgetMixin) {}
+export default {
+  name: 'MpOutputImage',
+  mixins: [WidgetMixin],
+}
 </script>

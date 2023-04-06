@@ -1,7 +1,7 @@
 <template>
   <div>
-    <a-tabs default-active-key="general" size="small">
-      <a-tab-pane key="general" tab="基本信息">
+    <mapgis-ui-tabs default-active-key="general" size="small">
+      <mapgis-ui-tab-pane key="general" tab="基本信息">
         <div class="info-body">
           <div
             v-for="(item, index) in generalInfo"
@@ -12,10 +12,10 @@
             <span>{{ metadata[item] }}</span>
           </div>
         </div>
-      </a-tab-pane>
-      <a-tab-pane key="maplist" tab="三维场景">
-        <a-tabs type="card" size="small">
-          <a-tab-pane
+      </mapgis-ui-tab-pane>
+      <mapgis-ui-tab-pane key="maplist" tab="三维场景">
+        <mapgis-ui-tabs type="card" size="small">
+          <mapgis-ui-tab-pane
             v-for="(mapInfo, m) in metadata['三维场景']"
             :key="'三维场景' + m"
             :tab="mapInfo['场景名称']"
@@ -40,14 +40,14 @@
                     >
                       {{ `${mapInfoItem}：` }}
                     </div>
-                    <a-table
+                    <mapgis-ui-table
                       bordered
                       size="small"
                       :pagination="false"
                       :data-source="getDataSource(mapInfo[mapInfoItem])"
                       :columns="getTableColumns(mapInfo[mapInfoItem][0])"
                       :scroll="{
-                        x: '100%'
+                        x: '100%',
                       }"
                       :rowKey="
                         (record, index) => {
@@ -55,36 +55,38 @@
                         }
                       "
                     >
-                    </a-table>
+                    </mapgis-ui-table>
                   </div>
                 </template>
               </div>
             </div>
-          </a-tab-pane>
-        </a-tabs>
-      </a-tab-pane>
-    </a-tabs>
+          </mapgis-ui-tab-pane>
+        </mapgis-ui-tabs>
+      </mapgis-ui-tab-pane>
+    </mapgis-ui-tabs>
   </div>
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Mixins } from 'vue-property-decorator'
 import {
   LayerType,
   IGSMapImageLayer,
   IGSVectorLayer,
   IGSTileLayer,
-  Layer
+  Layer,
 } from '@mapgis/web-app-framework'
 import MetadataInfoMixin from './mixins/metadata-info'
 
-@Component({ name: 'MpMetadataInfoDoc3D', components: {} })
-export default class MpMetadataInfoDoc3D extends Mixins(MetadataInfoMixin) {
-  private get generalInfo() {
-    return Object.keys(this.metadata).filter(item => {
-      return item !== '三维场景'
-    })
-  }
+export default {
+  name: 'MpMetadataInfoDoc3D',
+  mixins: [MetadataInfoMixin],
+  computed: {
+    generalInfo() {
+      return Object.keys(this.metadata).filter((item) => {
+        return item !== '三维场景'
+      })
+    },
+  },
 }
 </script>
 

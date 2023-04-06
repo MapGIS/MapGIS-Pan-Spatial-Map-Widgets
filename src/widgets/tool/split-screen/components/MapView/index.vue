@@ -26,6 +26,7 @@
       :height="mapViewHeight"
       :layer="mapViewLayer"
       :document="mapViewDocument"
+      :isAll3d="isAll3d"
     />
     <!-- 高亮查询的要素 -->
     <feature-highlight
@@ -57,7 +58,6 @@
   </div>
 </template>
 <script lang="ts">
-import { Mixins, Component, Prop, Watch, Inject } from 'vue-property-decorator'
 import { Rectangle } from '@mapgis/webclient-es6-service/common/Rectangle'
 import {
   Document,
@@ -66,7 +66,7 @@ import {
   Rectangle3D,
   Objects,
 } from '@mapgis/web-app-framework'
-import { MpQueryResultTree } from '../../../../../components'
+import MpQueryResultTree from '../../../../../components/QueryResultsTree/QueryResultsTree.vue'
 import MapViewMixin from './mixins/map-view'
 import { OperationType } from './store/map-view-state'
 import MapboxView from './components/MapboxView'
@@ -74,7 +74,8 @@ import CesiumView from './components/CesiumView'
 import Tools from './components/Tools'
 import FeatureHighlight from './components/FeatureHighlight'
 
-@Component({
+export default {
+  name: 'MapView',
   components: {
     Tools,
     MapboxView,
@@ -82,6 +83,8 @@ import FeatureHighlight from './components/FeatureHighlight'
     FeatureHighlight,
     MpQueryResultTree,
   },
+  mixins: [MapViewMixin],
+  inject: ['map', 'mapbox'],
   provide() {
     const self = this
     return {
@@ -93,234 +96,248 @@ import FeatureHighlight from './components/FeatureHighlight'
       },
     }
   },
-})
-export default class MapView extends Mixins(MapViewMixin) {
-  @Inject('map') map: any
 
-  @Inject('mapbox') mapbox: any
+  props: {
+    // 是否全部三维屏
+    isAll3d: {
+      type: Boolean,
+      default: false,
+    },
+    // 获取地图视图的复位范围
+    initBound: {
+      type: Rectangle,
+    },
+    // 需要resize
+    resize: {
+      type: [String, Boolean],
+    },
+    // 当前活动的窗口ID
+    mapViewId: String,
+    // 当前活动的窗口的图层
+    mapViewLayer: {
+      type: Layer,
+      default: () => ({}),
+    },
+  },
+  data() {
+    return {
+      // document
+      mapViewDocument: null,
 
-  // 是否全部三维屏
-  @Prop({ default: false }) readonly isAll3d!: boolean
+      // 地图高度
+      mapViewHeight: 0,
 
-  // 获取地图视图的复位范围
-  @Prop() readonly initBound!: Rectangle
+      // 分屏二维地图
+      ssMap: this.map,
 
-  // 需要resize
-  @Prop() readonly resize!: string | boolean
+      // 分屏二维mapbox
+      ssMapbox: this.mapbox,
 
-  // 当前活动的窗口ID
-  @Prop() mapViewId!: string
+      // 地图是否加载完成
+      isMapLoaded: false,
 
-  // 当前活动的窗口的图层
-  @Prop({ default: () => ({}) }) readonly mapViewLayer!: Layer
+      // 操作按钮类型
+      operationType: OperationType.UNKNOWN,
 
-  // document
-  mapViewDocument: Document | null = null
+      // 结果树弹框开关
+      queryVisible: false,
 
-  // 地图高度
-  mapViewHeight = 0
+      // 结果树中展开的节点的所有子节点
+      queryFeatures: [],
 
-  // 分屏二维地图
-  ssMap: any = this.map
+      // 结果树选中的节点
+      querySelection: [],
+    }
+  },
+  computed: {
+    // 是否是二维图层
+    is2dLayer() {
+      return !(this.mapViewLayer instanceof Layer3D)
+    },
 
-  // 分屏二维mapbox
-  ssMapbox: any = this.mapbox
-
-  // 地图是否加载完成
-  isMapLoaded = false
-
-  // 操作按钮类型
-  operationType: keyof typeof OperationType = OperationType.UNKNOWN
-
-  // 结果树弹框开关
-  queryVisible = false
-
-  // 结果树中展开的节点的所有子节点
-  queryFeatures: Array<Record<string, unknown>> = []
-
-  // 结果树选中的节点
-  querySelection: Array<string> = []
-
-  // 是否是二维图层
-  get is2dLayer() {
-    return !(this.mapViewLayer instanceof Layer3D)
-  }
-
-  // 二维或三维地图组件
-  get mapComponent() {
-    return this.$refs[`${this.is2dLayer ? 'mapboxView' : 'cesiumView'}`]
-  }
-
-  /**
-   * 分屏窗口变化
-   */
-  onResize() {
-    this.$nextTick(() => {
-      if (!this.is2dLayer) {
-        this.mapViewHeight = this.$el.clientHeight - 32
-      } else if (this.ssMap) {
-        this.ssMap.resize()
-      }
-    })
-  }
-
-  /**
-   * 二维地图初始化
-   * @param payload
-   */
-  onMapboxLoaded({ map, mapbox }) {
-    this.ssMap = map
-    this.ssMapbox = mapbox
-    this.ssMap.on('mousemove', () => {
-      this.setActiveMapView(OperationType.MAPDRAG)
-    })
-    this.ssMap.on('move', () => {
-      const { _sw, _ne } = this.ssMap.getBounds()
-      this.setActiveBound({
-        xmin: _sw.lng,
-        ymin: _sw.lat,
-        xmax: _ne.lng,
-        ymax: _ne.lat,
+    // 二维或三维地图组件
+    mapComponent() {
+      return this.$refs[`${this.is2dLayer ? 'mapboxView' : 'cesiumView'}`]
+    },
+  },
+  methods: {
+    /**
+     * 分屏窗口变化
+     */
+    onResize() {
+      this.$nextTick(() => {
+        if (!this.is2dLayer) {
+          this.mapViewHeight = this.$el.clientHeight - 32
+        } else if (this.ssMap) {
+          this.ssMap.resize()
+        }
       })
-    })
-    this.isMapLoaded = true
-    this.zoomTo({ ...this.initBound })
-  }
+    },
 
-  /**
-   * 三维地图初始化
-   */
-  onCesiumLoaded(viewer, sceneController) {
-    this.sceneController = sceneController
-    this.isMapLoaded = true
-    this.zoomTo({ ...this.initBound })
-  }
+    /**
+     * 二维地图初始化
+     * @param payload
+     */
+    onMapboxLoaded({ map, mapbox }) {
+      this.ssMap = map
+      this.ssMapbox = mapbox
+      this.ssMap.on('mousemove', () => {
+        this.setActiveMapView(OperationType.MAPDRAG)
+      })
+      this.ssMap.on('move', () => {
+        const { _sw, _ne } = this.ssMap.getBounds()
+        this.setActiveBound({
+          xmin: _sw.lng,
+          ymin: _sw.lat,
+          xmax: _ne.lng,
+          ymax: _ne.lat,
+        })
+      })
+      this.isMapLoaded = true
+      this.zoomTo({ ...this.initBound })
+    },
 
-  /**
-   * 地图联动变化
-   * @param {object} param 范围
-   */
-  onLinkChanged({ west, east, north, south }) {
-    this.setActiveMapView(OperationType.CESIUMDRAG)
-    this.setActiveBound({
-      xmin: west,
-      xmax: east,
-      ymax: north,
-      ymin: south,
-    })
-  }
+    /**
+     * 三维地图初始化
+     */
+    onCesiumLoaded(viewer, sceneController) {
+      this.sceneController = sceneController
+      this.isMapLoaded = true
+      this.zoomTo({ ...this.initBound })
+      // 当分屏大于2个时，初始缩放级别下，部分瓦片不显示，稍微放大一点正常
+      this.ssMap.setZoom(Math.ceil(this.ssMap.getZoom()))
+    },
 
-  /**
-   * 二三维绘制结束操作
-   * @param {object} geometry 绘制几何
-   * @param {object} rect 绘制经纬度范围
-   */
-  onDrawFinished({
-    geometry,
-    rect,
-  }: {
-    geometry: Rectangle | Rectangle3D
-    rect: Rectangle
-  }) {
-    switch (this.operationType) {
-      case OperationType.QUERY:
-        this.query(geometry)
-        break
-      case OperationType.ZOOMIN:
-      case OperationType.ZOOMOUT:
-        this.setActiveBound(rect)
-        this.zoomTo(rect, this.operationType)
-        break
-      default:
-        break
-    }
-  }
+    /**
+     * 地图联动变化
+     * @param {object} param 范围
+     */
+    onLinkChanged({ west, east, north, south }) {
+      this.setActiveMapView(OperationType.CESIUMDRAG)
+      this.setActiveBound({
+        xmin: west,
+        xmax: east,
+        ymax: north,
+        ymin: south,
+      })
+    },
 
-  /*
-   * 地图操作按钮触发
-   * @param type 按钮类型
-   */
-  onOperationAttached(type: keyof OperationType) {
-    this.operationType = type
-    this.setActiveMapView(type)
-    switch (type) {
-      case OperationType.QUERY:
-        this.mapComponent.openDraw()
-        break
-      case OperationType.ZOOMIN:
-      case OperationType.ZOOMOUT:
-        this.mapComponent.openDraw('draw-rectangle')
-        break
-      case OperationType.RESTORE:
-        this.restore({ ...this.initBound })
-        break
-      case OperationType.CLEAR:
-        this.clear()
-        break
-      default:
-        break
-    }
-  }
-
-  /**
-   * 结果树加载的要素集合
-   * @param {array} loadedKeys 已经加载的父节点key
-   * @param {array} loadedChildNodes 已经加载的所有子节点
-   */
-  onQueryLoaded(
-    loadedKeys: Array<string>,
-    loadedData: Array<Record<string, unknown>>
-  ) {
-    this.queryFeatures = loadedData
-  }
-
-  /**
-   * 结果树选中
-   * @param {array} selectedKeys 选中的要素id集合
-   */
-  onQuerySelected(selectedKeys: Array<string>) {
-    this.querySelection = selectedKeys
-  }
-
-  /**
-   * 清除结果树
-   */
-  onQueryClear() {
-    this.queryFeatures = []
-    this.querySelection = []
-  }
-
-  /**
-   * 监听: 图层变化
-   */
-  @Watch('mapViewLayer.id', { immediate: true })
-  watchMapViewLayer(id: string) {
-    if (id) {
-      if (!this.mapViewDocument) {
-        this.mapViewDocument = new Document()
+    /**
+     * 二三维绘制结束操作
+     * @param {object} geometry 绘制几何
+     * @param {object} rect 绘制经纬度范围
+     */
+    onDrawFinished({
+      geometry,
+      rect,
+    }: {
+      geometry: Rectangle | Rectangle3D
+      rect: Rectangle
+    }) {
+      switch (this.operationType) {
+        case OperationType.QUERY:
+          this.query(geometry)
+          break
+        case OperationType.ZOOMIN:
+        case OperationType.ZOOMOUT:
+          this.setActiveBound(rect)
+          this.zoomTo(rect, this.operationType)
+          break
+        default:
+          break
       }
-      const { defaultMap } = this.mapViewDocument
-      defaultMap.removeAll()
-      defaultMap.add(this.mapViewLayer)
-    }
-  }
+    },
 
-  /**
-   * 监听:  窗口变化
-   */
-  @Watch('resize', { immediate: true })
-  watchResizeOrigin() {
-    this.onResize()
-  }
+    /*
+     * 地图操作按钮触发
+     * @param type 按钮类型
+     */
+    onOperationAttached(type: keyof OperationType) {
+      this.operationType = type
+      this.setActiveMapView(type)
+      switch (type) {
+        case OperationType.QUERY:
+          this.mapComponent.openDraw()
+          break
+        case OperationType.ZOOMIN:
+        case OperationType.ZOOMOUT:
+          this.mapComponent.openDraw('draw-rectangle')
+          break
+        case OperationType.RESTORE:
+          this.restore({ ...this.initBound })
+          break
+        case OperationType.CLEAR:
+          this.clear()
+          break
+        default:
+          break
+      }
+    },
+
+    /**
+     * 结果树加载的要素集合
+     * @param {array} loadedKeys 已经加载的父节点key
+     * @param {array} loadedChildNodes 已经加载的所有子节点
+     */
+    onQueryLoaded(
+      loadedKeys: Array<string>,
+      loadedData: Array<Record<string, unknown>>
+    ) {
+      this.queryFeatures = loadedData
+    },
+
+    /**
+     * 结果树选中
+     * @param {array} selectedKeys 选中的要素id集合
+     */
+    onQuerySelected(selectedKeys: Array<string>) {
+      this.querySelection = selectedKeys
+    },
+
+    /**
+     * 清除结果树
+     */
+    onQueryClear() {
+      this.queryFeatures = []
+      this.querySelection = []
+    },
+  },
+  watch: {
+    /**
+     * 监听: 图层变化
+     */
+    'mapViewLayer.id': {
+      immediate: true,
+      handler(id) {
+        if (id) {
+          if (!this.mapViewDocument) {
+            this.mapViewDocument = new Document()
+          }
+          const { defaultMap } = this.mapViewDocument
+          defaultMap.removeAll()
+          defaultMap.add(this.mapViewLayer)
+        }
+      },
+    },
+    /**
+     * 监听:  窗口变化
+     */
+    resize: {
+      immediate: true,
+      handler() {
+        this.onResize()
+      },
+    },
+  },
 
   mounted() {
     window.onresize = this.onResize
-  }
+  },
 
   beforeDestroy() {
     this.isMapLoaded = false
     this.onOperationAttached('clear')
-  }
+  },
 }
 </script>
 <style lang="less" scoped>

@@ -1,52 +1,52 @@
 <template>
   <div class="mp-attribute-table-column-setting" ref="root">
-    <a-popover
+    <mapgis-ui-popover
       v-model="visible"
       placement="bottomRight"
       trigger="click"
       :get-popup-container="() => $refs.root"
     >
       <div slot="title">
-        <a-checkbox
+        <mapgis-ui-checkbox
           :indeterminate="indeterminate"
           :checked="checkAll"
           @change="onCheckAllChange"
           class="check-all"
         />列展示
-        <a-button
+        <mapgis-ui-button
           @click="resetColumns"
           style="float: right"
           type="link"
           size="small"
-          >重置</a-button
+          >重置</mapgis-ui-button
         >
       </div>
       <div
-        style="overflow-y: auto; max-height: 180px;"
+        style="overflow-y: auto; max-height: 180px"
         class="beauty-scroll"
         slot="content"
       >
-        <a-list
+        <mapgis-ui-list
           style="width: 100%"
           size="small"
           :key="i"
           v-for="(col, i) in columns"
         >
-          <a-list-item class="column-item">
-            <a-checkbox
+          <mapgis-ui-list-item class="column-item">
+            <mapgis-ui-checkbox
               v-model="col.visible"
-              @change="e => onCheckChange(e, col)"
+              @change="(e) => onCheckChange(e, col)"
             />
             <template v-if="col.title"> {{ col.title }}</template>
             <slot
               v-else-if="col.slots && col.slots.title"
               :name="col.slots.title"
             ></slot>
-          </a-list-item>
-        </a-list>
+          </mapgis-ui-list-item>
+        </mapgis-ui-list>
       </div>
-      <mp-toolbar-command title="列配置" icon="setting" />
-    </a-popover>
+      <mapgis-ui-toolbar-command title="列配置" icon="setting" />
+    </mapgis-ui-popover>
   </div>
 </template>
 
@@ -62,7 +62,7 @@ export default {
       indeterminate: false,
       checkAll: true,
       checkedCounts: this.columns.length,
-      backColumns: cloneDeep(this.columns)
+      backColumns: cloneDeep(this.columns),
     }
   },
   watch: {
@@ -75,7 +75,7 @@ export default {
         this.checkedCounts = newVal.length
         this.formatColumns(newVal)
       }
-    }
+    },
   },
   created() {
     this.formatColumns(this.columns)
@@ -105,10 +105,10 @@ export default {
     onCheckAllChange(e) {
       if (e.target.checked) {
         this.checkedCounts = this.columns.length
-        this.columns.forEach(col => (col.visible = true))
+        this.columns.forEach((col) => (col.visible = true))
       } else {
         this.checkedCounts = 0
-        this.columns.forEach(col => (col.visible = false))
+        this.columns.forEach((col) => (col.visible = false))
       }
     },
     formatColumns(columns) {
@@ -120,12 +120,12 @@ export default {
           this.checkedCounts -= 1
         }
       }
-    }
-  }
+    },
+  },
 }
 </script>
 
-<style scoped lang="less">
+<style lang="scss" scoped>
 .mp-attribute-table-column-setting {
   display: inline-block;
   .check-all {
@@ -135,11 +135,11 @@ export default {
   .right {
     transform: rotate(-90deg);
   }
-  .active {
-    color: @primary-color;
-  }
-  .ant-list-item.column-item {
+  .mapgis-ui-list-item.column-item {
     padding: 4px 0;
+  }
+  .active {
+    color: $primary-color;
   }
 }
 </style>

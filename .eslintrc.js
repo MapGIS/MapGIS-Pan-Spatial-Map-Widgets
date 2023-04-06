@@ -81,6 +81,8 @@ module.exports = {
     'no-empty-function': 'off',
     'no-empty': 'off',
     'no-await-in-loop': 'off',
+    'no-undef': 'off',
+    'no-side-effects-in-computed-properties': 'off',
     'func-names': 'off',
     camelcase: 'off',
     radix: 'off',

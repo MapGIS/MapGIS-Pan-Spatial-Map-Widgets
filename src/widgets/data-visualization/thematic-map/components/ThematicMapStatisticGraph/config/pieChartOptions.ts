@@ -7,7 +7,7 @@ export const pieChartOptions = ({ title, x, y }) => {
   const data = x.reduce((result: IPieData[], item: string, i: number) => {
     const pie = {
       name: '',
-      value: 0
+      value: 0,
     }
     pie.name = item
     pie.value = y[i]
@@ -21,16 +21,16 @@ export const pieChartOptions = ({ title, x, y }) => {
       left: 'right',
       textStyle: {
         fontSize: 14,
-        fontFamily: '微软雅黑'
-      }
+        fontFamily: '微软雅黑',
+      },
     },
     tooltip: {
       trigger: 'item',
       textStyle: {
         fontSize: 10,
-        fontFamily: '微软雅黑'
+        fontFamily: '微软雅黑',
       },
-      formatter: '{b} : {c} ({d}%)'
+      formatter: '{b} : {c} ({d}%)',
     },
     series: [
       {
@@ -39,10 +39,10 @@ export const pieChartOptions = ({ title, x, y }) => {
         center: ['50%', '50%'],
         label: {
           show: true,
-          position: 'outside'
+          position: 'outside',
         },
-        data
-      }
-    ]
+        data,
+      },
+    ],
   }
 }

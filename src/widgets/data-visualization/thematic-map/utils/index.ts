@@ -1,5 +1,4 @@
-import { UUID, Feature } from '@mapgis/web-app-framework'
-import { markerIconInstance } from '../../../../model'
+import { UUID, Feature, markerIconInstance } from '@mapgis/web-app-framework'
 
 export interface IMarker {
   img: string

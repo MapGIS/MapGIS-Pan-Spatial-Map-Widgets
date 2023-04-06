@@ -1,48 +1,5 @@
 <template>
   <div class="mp-widget-buffer-analysis">
-    <div id="widgets-ui" v-if="isWidgetOpen">
-      <mapgis-ui-group-tab title="选择数据" id="title-space" />
-      <mapgis-ui-form-model
-        v-bind="{ labelCol: { span: 6 }, wrapperCol: { span: 17 } }"
-        :layout="layout"
-        :labelAlign="'left'"
-      >
-        <mapgis-ui-form-model-item label="选择图层" :colon="false">
-          <mapgis-ui-row>
-            <mapgis-ui-col>
-              <mapgis-ui-select
-                v-model="tDataIndex"
-                @change="tchangeTarget($event)"
-                v-if="!selectLevel"
-              >
-                <mapgis-ui-select-option
-                  v-for="(item, index) in layerArrOption"
-                  :key="index"
-                  :value="index"
-                  >{{ item.title }}</mapgis-ui-select-option
-                >
-              </mapgis-ui-select>
-              <mapgis-ui-select
-                v-model="tDataIndex"
-                @change="tchangeTarget"
-                v-if="selectLevel"
-                disabled
-              >
-                <mapgis-ui-select-option
-                  v-for="(item, index) in layerArrOption"
-                  :key="index"
-                  :value="index"
-                  >{{ item.title }}</mapgis-ui-select-option
-                >
-              </mapgis-ui-select>
-            </mapgis-ui-col>
-          </mapgis-ui-row>
-          <mapgis-ui-checkbox :checked="selectLevel" @change="changeSelectLevel"
-            >只对选择数据进行操作</mapgis-ui-checkbox
-          >
-        </mapgis-ui-form-model-item>
-      </mapgis-ui-form-model>
-    </div>
     <!-- 使用缓冲区分析组件 -->
     <mapgis-3d-analysis-buffer
       :layout="layout"
@@ -54,235 +11,298 @@
       @listenFeature="showFeature(arguments)"
       @listenBufferAdd="showAdd"
       @load="load"
-    ></mapgis-3d-analysis-buffer>
+    >
+      <div id="widgets-ui" slot="selectLayer" v-if="isWidgetOpen">
+        <mapgis-ui-group-tab
+          title="选择图层"
+          id="title-space"
+          :hasBottomMargin="false"
+        />
+        <mapgis-ui-form-model :layout="layout" :labelAlign="'left'">
+          <mapgis-ui-form-model-item :colon="false">
+            <mapgis-ui-row>
+              <mapgis-ui-col>
+                <mapgis-ui-select
+                  v-model="tDataIndex"
+                  @change="tchangeTarget($event)"
+                  v-if="!selectLevel"
+                >
+                  <mapgis-ui-select-option
+                    v-for="(item, index) in layerArrOption"
+                    :key="index"
+                    :value="index"
+                    >{{ item.title }}</mapgis-ui-select-option
+                  >
+                </mapgis-ui-select>
+                <mapgis-ui-select
+                  v-model="tDataIndex"
+                  @change="tchangeTarget"
+                  v-if="selectLevel"
+                  disabled
+                >
+                  <mapgis-ui-select-option
+                    v-for="(item, index) in layerArrOption"
+                    :key="index"
+                    :value="index"
+                    >{{ item.title }}</mapgis-ui-select-option
+                  >
+                </mapgis-ui-select>
+              </mapgis-ui-col>
+            </mapgis-ui-row>
+            <mapgis-ui-checkbox
+              style="line-height: 32px"
+              :checked="selectLevel"
+              @change="changeSelectLevel"
+              >只对选择数据进行操作</mapgis-ui-checkbox
+            >
+          </mapgis-ui-form-model-item>
+        </mapgis-ui-form-model>
+      </div>
+    </mapgis-3d-analysis-buffer>
   </div>
 </template>
 
 <script lang="ts">
-import { Mixins, Component, Watch } from 'vue-property-decorator'
-import { LayerType, WidgetMixin } from '@mapgis/web-app-framework'
+import {
+  LayerType,
+  WidgetMixin,
+  eventBus,
+  events,
+  ActiveResultSet,
+} from '@mapgis/web-app-framework'
 import { Style } from '@mapgis/webclient-es6-service'
-import { eventBus, events, ActiveResultSet } from '../../../model'
 
 const { FillStyle } = Style
 
-@Component({
+export default {
   name: 'MpBufferAnalysis',
-})
-export default class MpBufferAnalysis extends Mixins(WidgetMixin) {
-  private layout = 'horizontal'
-
-  private baseBufferUrl = 'http://localhost:6163/'
-
-  private srcType = 'Layer'
-
-  private srcLayer = ''
-
-  private srcFeature = {}
-
-  private buffer = null
-
-  tDataIndex = null
-
-  isFullScreen = false
-
-  isWidgetOpen = false
-
-  featureStyle = new FillStyle({
-    color: 'rgba(255,0,0,1)',
-    outlineColor: 'rgba(255,0,0,1)',
-    outlineWidth: 3,
-    opacity: 1,
-  })
-
-  selectLevel = false
-
-  private destLayer = ''
-
-  private feature = undefined
-
-  add = false
-
-  finishLayer = false
-
-  finishFeature = false
-
-  changeSelectLevel() {
-    this.selectLevel = !this.selectLevel
-    if (this.selectLevel == false) {
-      this.srcType = 'Layer'
-    } else {
-      this.srcType = 'Feature'
-      if (JSON.stringify(ActiveResultSet.activeResultSet) == '{}') {
-        this.$message.warn('当前选择要素为空，请重新选择')
-        this.selectLevel = true
-        this.changeSelectLevel()
-      } else {
-        this.srcFeature = ActiveResultSet.activeResultSet
-      }
-    }
-  }
-
-  // 监听图层列表，当图层发生变化时动态改变layerArrOption数组
-  @Watch('document.defaultMap', { deep: true, immediate: true })
-  documentChange(val: Array<unknown>) {
-    this.tDataIndex = null
-    this.layerArrOption = []
-    const arr = []
-    val.layers().forEach((data) => {
-      if (data.type === LayerType.IGSVector) {
-        arr.push(data)
-      } else if (data.type === LayerType.IGSMapImage) {
-        arr.push(...data.sublayers)
-      }
-    })
-    if (arr.length > 0) {
-      this.layerArrOption = arr
-      this.tDataIndex = 0
-    }
-    this.tchangeTarget()
-  }
-
-  // 微件窗口模式切换时回调
-  onWindowSize(mode) {
-    this.isFullScreen = mode === 'max'
-  }
-
-  load(buffer) {
-    this.buffer = buffer
-  }
-
-  /**
-   * 打开模块
-   */
-  onOpen() {
-    this.isWidgetOpen = true
-    this.buffer.mount()
-  }
-
-  get tData() {
-    if (this.tDataIndex !== null) {
-      return this.layerArrOption[this.tDataIndex]
-    }
-    return null
-  }
-
-  tchangeTarget(event) {
-    const layerCurrent = this.tData
-    if (layerCurrent != null) {
-      if (layerCurrent.type == 6) {
-        this.baseBufferUrl = layerCurrent.url
-        this.srcLayer = layerCurrent.gdbps
-      } else {
-        this.baseBufferUrl = layerCurrent.layer.url
-        this.srcLayer = layerCurrent.url
-      }
-    }
-  }
-
-  getResultLayer() {
-    const ip = (this.baseBufferUrl || '').split('/')[2].split(':')[0]
-    const port = (this.baseBufferUrl || '').split('/')[2].split(':')[1]
-    const url = `http://${ip}:${port}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
-    const index = url.lastIndexOf('/')
-    const layerName = url.substring(index + 1, url.length)
-    return [url, layerName]
-  }
-
-  /**
-   * 若缓冲区分析生成新图层，将结果显示在地图容器中，并用图层列表管理
-   */
-  addNewLayer() {
-    const resultLayer: Array<string> = this.getResultLayer()
-    const data = {
-      name: 'IGS图层',
-      description: '综合分析_结果图层',
-      data: {
-        type: 'IGSVector',
-        url: resultLayer[0],
-        name: resultLayer[1],
-      },
-    }
-    eventBus.$emit(events.ADD_DATA_EVENT, data)
-  }
-
-  /**
-   * 要素级增加GeoJsonLayer支持
-   */
-  addNewGeoJsonLayer() {
-    const resultFeature = this.feature
-    const highlightStyle = {
-      polygon: new FillStyle({
-        width: 8,
-        color: '#ffff00',
-        opacity: 0.8,
-        outlineColor: '#ff0000',
+  mixins: [WidgetMixin],
+  data() {
+    return {
+      layout: 'vertical',
+      baseBufferUrl: 'http://localhost:6163/',
+      srcType: 'Layer',
+      srcLayer: '',
+      srcFeature: {},
+      buffer: null,
+      tDataIndex: null,
+      isFullScreen: false,
+      isWidgetOpen: false,
+      featureStyle: new FillStyle({
+        color: 'rgba(255,0,0,1)',
+        outlineColor: 'rgba(255,0,0,1)',
+        outlineWidth: 3,
+        opacity: 1,
       }),
+      destLayer: '',
+      feature: undefined,
+      selectLevel: false,
+      add: false,
+      finishLayer: false,
+      finishFeature: false,
     }
-    const data = {
-      name: 'GeoJson图层',
-      description: '综合分析_结果图层',
-      data: {
-        type: 'GeoJson',
-        url: this.destLayer,
-        source: resultFeature,
-        featureStyle: this.featureStyle,
-        name: this.destLayer,
-        highlightStyle: highlightStyle,
-      },
-    }
-    eventBus.$emit(events.ADD_DATA_EVENT, data)
-  }
+  },
 
-  /**
-   * 关闭模块
-   */
-  onClose() {
-    this.isWidgetOpen = false
-    this.reset()
-    this.add = false
-    this.buffer.unmount()
-  }
+  watch: {
+    'document.defaultMap': {
+      handler: 'documentChange',
+      deep: true,
+      immediate: true,
+    },
+  },
+  computed: {
+    tData() {
+      if (this.tDataIndex !== null) {
+        return this.layerArrOption[this.tDataIndex]
+      }
+      return null
+    },
+  },
 
-  reset() {
-    this.isFullScreen = false
-    this.destLayer = ''
-    this.selectLevel = false
-    this.srcType = 'Layer'
-  }
+  methods: {
+    changeSelectLevel() {
+      this.selectLevel = !this.selectLevel
+      if (this.selectLevel == false) {
+        this.srcType = 'Layer'
+      } else {
+        this.srcType = 'Feature'
+        if (JSON.stringify(ActiveResultSet.activeResultSet) == '{}') {
+          this.$message.warn('当前选择要素为空，请重新选择')
+          this.selectLevel = true
+          this.changeSelectLevel()
+        } else {
+          this.srcFeature = ActiveResultSet.activeResultSet
+        }
+      }
+    },
 
-  showLayer(data) {
-    this.finishLayer = true
-    this.destLayer = data
-    if (this.add == true) {
-      this.addNewLayer()
-    }
-  }
+    // 监听图层列表，当图层发生变化时动态改变layerArrOption数组
+    documentChange(val: Array<unknown>) {
+      this.tDataIndex = null
+      this.layerArrOption = []
+      const arr = []
+      val.layers().forEach((data) => {
+        if (data.type === LayerType.IGSVector) {
+          arr.push(data)
+        } else if (data.type === LayerType.IGSMapImage) {
+          arr.push(...data.sublayers)
+        }
+      })
+      if (arr.length > 0) {
+        this.layerArrOption = arr
+        this.tDataIndex = 0
+      }
+      this.tchangeTarget()
+    },
 
-  showFeature(data) {
-    ;[this.feature, this.destLayer, this.featureStyle] = data
-    this.finishFeature = true
-    if (this.add == true) {
-      this.addNewGeoJsonLayer()
-    }
-  }
+    // 微件窗口模式切换时回调
+    onWindowSize(mode) {
+      this.isFullScreen = mode === 'max'
+    },
 
-  showAdd(data) {
-    this.add = data
-  }
+    load(buffer) {
+      this.buffer = buffer
+    },
+
+    /**
+     * 打开模块
+     */
+    onOpen() {
+      this.isWidgetOpen = true
+      this.buffer.mount()
+    },
+
+    tchangeTarget(event) {
+      const layerCurrent = this.tData
+      if (layerCurrent != null) {
+        if (layerCurrent.type == 6) {
+          this.baseBufferUrl = layerCurrent.url
+          this.srcLayer = layerCurrent.gdbps
+        } else {
+          this.baseBufferUrl = layerCurrent.layer.url
+          this.srcLayer = layerCurrent.url
+        }
+      }
+    },
+
+    getResultLayer() {
+      const ip = (this.baseBufferUrl || '').split('/')[2].split(':')[0]
+      const port = (this.baseBufferUrl || '').split('/')[2].split(':')[1]
+      const url = `http://${ip}:${port}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
+      const index = url.lastIndexOf('/')
+      const layerName = url.substring(index + 1, url.length)
+      return [url, layerName]
+    },
+
+    /**
+     * 若缓冲区分析生成新图层，将结果显示在地图容器中，并用图层列表管理
+     */
+    addNewLayer(bufferStyle, renderType) {
+      const resultLayer: Array<string> = this.getResultLayer()
+      const highlightStyle = {
+        polygon: new FillStyle({
+          width: 8,
+          color: '#ffff00',
+          opacity: 0.8,
+          outlineColor: '#ff0000',
+        }),
+      }
+      const data = {
+        name: 'IGS图层',
+        description: '综合分析_结果图层',
+        data: {
+          type: 'IGSVector',
+          url: resultLayer[0],
+          name: resultLayer[1],
+          renderType: renderType,
+          featureStyle: bufferStyle,
+          highlightStyle: highlightStyle,
+        },
+      }
+      eventBus.$emit(events.ADD_DATA_EVENT, data)
+    },
+
+    /**
+     * 要素级增加GeoJsonLayer支持
+     */
+    addNewGeoJsonLayer() {
+      const resultFeature = this.feature
+      const highlightStyle = {
+        polygon: new FillStyle({
+          width: 8,
+          color: '#ffff00',
+          opacity: 0.8,
+          outlineColor: '#ff0000',
+        }),
+      }
+      const data = {
+        name: 'GeoJson图层',
+        description: '综合分析_结果图层',
+        data: {
+          type: 'GeoJson',
+          url: this.destLayer,
+          source: resultFeature,
+          featureStyle: this.featureStyle,
+          name: this.destLayer,
+          highlightStyle: highlightStyle,
+        },
+      }
+      eventBus.$emit(events.ADD_DATA_EVENT, data)
+    },
+
+    /**
+     * 关闭模块
+     */
+    onClose() {
+      this.isWidgetOpen = false
+      this.reset()
+      this.add = false
+      this.buffer.unmount()
+    },
+
+    reset() {
+      this.isFullScreen = false
+      this.destLayer = ''
+      this.selectLevel = false
+      this.srcType = 'Layer'
+    },
+
+    showLayer(data, bufferStyle, renderType) {
+      this.finishLayer = true
+      this.destLayer = data
+      if (this.add == true) {
+        this.addNewLayer(bufferStyle, renderType)
+      }
+    },
+
+    showFeature(data) {
+      ;[this.feature, this.destLayer, this.featureStyle] = data
+      this.finishFeature = true
+      if (this.add == true) {
+        this.addNewGeoJsonLayer()
+      }
+    },
+
+    showAdd(data) {
+      this.add = data
+    },
+  },
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
+.mapgis-ui-form-item {
+  margin-bottom: 0px;
+}
 .mp-widget-buffer-analysis {
-  height: 480px;
-  overflow-y: auto;
-  padding: 10px 10px 10px 15px;
-  margin-left: 5px;
+  // height: 480px;
+  // overflow-y: auto;
+  // padding: 0 8px 0 16px;
+  // margin-left: 5px;
 }
 #widgets-ui {
-  height: 130px;
+  // height: 130px;
   z-index: 100000;
-  margin-bottom: -15px;
+  // margin-bottom: -15px;
 }
 </style>

@@ -21,111 +21,102 @@
     </template>
   </mapgis-3d-projector-manager>
 </template>
+
 <script lang="ts">
-import { Component, Mixins, Watch } from 'vue-property-decorator'
-import { WidgetMixin } from '@mapgis/web-app-framework'
-import { api, ProjectorManager } from '../../../model'
+import { WidgetMixin, api, ProjectorManager } from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpProjectorManager',
-})
-export default class MpProjectorManager extends Mixins(WidgetMixin) {
-  private modelUrl = `${process.env.BASE_URL}CesiumModels/Cesium_Camera.glb`
+  mixins: [WidgetMixin],
 
-  private modelOffset = { headingOffset: -90, pitchOffset: 0, rollOffset: 0 }
-
-  private projectorLayerList = [
-    {
-      id: '123-345-567-789',
-      name: 'test',
-      projectorList: [
+  data() {
+    return {
+      modelUrl: `${process.env.BASE_URL}CesiumModels/Cesium_Camera.glb`,
+      modelOffset: { headingOffset: -90, pitchOffset: 0, rollOffset: 0 },
+      projectorLayerList: [
         {
-          id: '987-765-543-321',
-          name: 'testProjector1',
-          description: '',
-          isProjected: false,
-          params: {
-            projectorType: 'video',
-            imgUrl: '',
-            videoSource: {
-              protocol: 'm3u8',
-              videoUrl:
-                'http://192.168.91.123:10008/record/video1/20211221/out.m3u8',
+          id: '123-345-567-789',
+          name: 'test',
+          projectorList: [
+            {
+              id: '987-765-543-321',
+              name: 'testProjector1',
+              description: '',
+              isProjected: false,
+              params: {
+                projectorType: 'video',
+                imgUrl: '',
+                videoSource: {
+                  protocol: 'm3u8',
+                  videoUrl:
+                    'http://192.168.91.123:10008/record/video1/20211221/out.m3u8',
+                },
+                cameraPosition: {
+                  x: 114.401228136856,
+                  y: 30.467421377675457,
+                  z: 84.94989410478892,
+                },
+                orientation: {
+                  heading: 6.053866507322313,
+                  pitch: -73.6,
+                  roll: 354.1,
+                },
+                hFOV: 34.6,
+                vFOV: 18.9,
+                hintLineVisible: true,
+              },
             },
-            cameraPosition: {
-              x: 114.401228136856,
-              y: 30.467421377675457,
-              z: 84.94989410478892,
-            },
-            orientation: {
-              heading: 6.053866507322313,
-              pitch: -73.6,
-              roll: 354.1,
-            },
-            hFOV: 34.6,
-            vFOV: 18.9,
-            hintLineVisible: true,
-          },
+          ],
         },
       ],
+      ProjectorManagerInstance: ProjectorManager,
+      maxProjected: 10,
+      hideVPInvisible: false,
+      config: {},
+      projectorComponent: null,
+    }
+  },
+
+  computed: {
+    projectorOverlayLayerList: {
+      get() {
+        const projectorOverlayLayerList =
+          this.ProjectorManagerInstance.getProjectorOverlayLayerList()
+        return projectorOverlayLayerList
+      },
+      set(projectorOverlayLayerList) {
+        this.ProjectorManagerInstance.setProjectorOverlayLayerList(
+          projectorOverlayLayerList
+        )
+      },
     },
-  ]
+    currentLayerId() {
+      const layerId = this.ProjectorManagerInstance.getCurrentLayerId()
+      return layerId
+    },
+    currentProjectorId() {
+      const projectorId = this.ProjectorManagerInstance.getCurrentProjectorId()
+      return projectorId
+    },
+  },
 
-  private ProjectorManagerInstance = ProjectorManager
-
-  private maxProjected = 10
-
-  private hideVPInvisible = false
-
-  private get projectorOverlayLayerList() {
-    const projectorOverlayLayerList =
-      this.ProjectorManagerInstance.getProjectorOverlayLayerList()
-    return projectorOverlayLayerList
-  }
-
-  private set projectorOverlayLayerList(projectorOverlayLayerList) {
-    this.ProjectorManagerInstance.setProjectorOverlayLayerList(
-      projectorOverlayLayerList
-    )
-  }
-
-  private get currentLayerId() {
-    const layerId = this.ProjectorManagerInstance.getCurrentLayerId()
-    return layerId
-  }
-
-  private get currentProjectorId() {
-    const projectorId = this.ProjectorManagerInstance.getCurrentProjectorId()
-    return projectorId
-  }
-
-  @Watch('currentLayerId', {
-    deep: true,
-    immediate: true,
-  })
-  changeCurrentLayerId() {
-    console.log(this.currentLayerId)
-  }
-
-  @Watch('currentProjectorId', {
-    deep: true,
-    immediate: true,
-  })
-  changeCurrentProjectorId() {
-    console.log(this.currentProjectorId)
-  }
-
-  @Watch('projectorOverlayLayerList', {
-    deep: true,
-    immediate: true,
-  })
-  changeProjectorOverlayLayerList() {
-    console.log(this.projectorOverlayLayerList)
-  }
-
-  private config
-
-  private projectorComponent = null
+  watch: {
+    currentLayerId: {
+      deep: true,
+      immediate: true,
+      handler: 'changeCurrentLayerId',
+    },
+    currentProjectorId: {
+      deep: true,
+      immediate: true,
+      handler: 'changeCurrentProjectorId',
+    },
+    projectorOverlayLayerList: {
+      deep: true,
+      immediate: true,
+      handler: 'changeProjectorOverlayLayerList',
+    },
+  },
 
   mounted() {
     this.projectorOverlayLayerList =
@@ -137,57 +128,62 @@ export default class MpProjectorManager extends Mixins(WidgetMixin) {
     this.hideVPInvisible =
       (this.widgetInfo.config && this.widgetInfo.config.hideVPInvisible) ||
       false
-  }
+  },
 
-  load(projectorComponent) {
-    this.projectorComponent = projectorComponent
-  }
+  methods: {
+    changeCurrentLayerId() {},
 
-  onActive() {
-    this.projectorComponent.mount()
-  }
+    changeCurrentProjectorId() {},
 
-  // 微件失活时
-  onDeActive() {
-    // 微件失活时自动保存配置到后台
-    this.saveConfig()
-    this.projectorComponent.unmount()
-  }
+    changeProjectorOverlayLayerList() {},
 
-  // 微件关闭时
-  onClose() {
-    // 微件失活时自动保存配置到后台
-    this.saveConfig()
-    this.projectorComponent.unmount()
-  }
+    load(projectorComponent) {
+      this.projectorComponent = projectorComponent
+    },
 
-  imgUpload(e) {
-    console.log(e)
-  }
+    onActive() {
+      this.projectorComponent.mount()
+    },
 
-  updateProjectorOverlayLayerList(layerList) {
-    this.projectorOverlayLayerList = [...layerList]
-  }
+    // 微件失活时
+    onDeActive() {
+      // 微件失活时自动保存配置到后台
+      this.saveConfig()
+      this.projectorComponent.unmount()
+    },
 
-  saveConfig() {
-    console.log(this.projectorOverlayLayerList)
-    const config = {
-      projectorOverlayLayerList: [...this.projectorOverlayLayerList],
-    }
-    api
-      .saveWidgetConfig({
-        name: 'projector-manager',
-        config: JSON.stringify(config),
-      })
-      .then(() => {
-        // this.$message.success('更新projector配置成功')
-        console.log('更新projector配置成功')
-      })
-      .catch(() => {
-        // this.$message.error('更新projector配置失败')
-        console.log('更新projector配置失败')
-      })
-  }
+    // 微件关闭时
+    onClose() {
+      // 微件失活时自动保存配置到后台
+      this.saveConfig()
+      this.projectorComponent.unmount()
+    },
+
+    imgUpload(e) {},
+
+    updateProjectorOverlayLayerList(layerList) {
+      this.projectorOverlayLayerList = [...layerList]
+    },
+
+    saveConfig() {
+      const config = {
+        projectorOverlayLayerList: [...this.projectorOverlayLayerList],
+      }
+      api
+        .saveWidgetConfig({
+          name: 'projector-manager',
+          config: JSON.stringify(config),
+        })
+        .then(() => {
+          // this.$message.success('更新projector配置成功')
+          // console.log('更新projector配置成功')
+        })
+        .catch(() => {
+          // this.$message.error('更新projector配置失败')
+          // console.log('更新projector配置失败')
+        })
+    },
+  },
 }
 </script>
 <style lang="less">

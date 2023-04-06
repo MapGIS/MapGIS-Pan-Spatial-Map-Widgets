@@ -33,5 +33,5 @@ export default Vue.observable<State>({
   subjectConfig: [],
 
   // 联动时的要素fid
-  linkageFid: ''
+  linkageFid: '',
 })

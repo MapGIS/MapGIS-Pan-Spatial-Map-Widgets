@@ -1,39 +1,55 @@
 <template>
-  <div style="height: 210px; width: 280px">
+  <div>
     <mapgis-3d-model-flatten :M3Ds="M3Ds" :heightOffset="heightOffset" />
   </div>
 </template>
 
 <script lang="ts">
-import { Mixins, Component, Watch } from 'vue-property-decorator'
-import { LayerType, WidgetMixin } from '@mapgis/web-app-framework'
-import { dataCatalogManagerInstance, eventBus, events } from '../../../model'
+import {
+  LayerType,
+  WidgetMixin,
+  dataCatalogManagerInstance,
+  eventBus,
+  events,
+} from '@mapgis/web-app-framework'
 
-@Component({
+export default {
   name: 'MpModelFlatten',
-})
-export default class MpOverlayAnalysis extends Mixins(WidgetMixin) {
-  private M3Ds = []
+  mixins: [WidgetMixin],
 
-  private heightOffset = 0
+  data() {
+    return {
+      M3Ds: [],
+      heightOffset: 0,
+    }
+  },
 
-  @Watch('document', { immediate: true, deep: true })
-  getScenes() {
-    if (!this.document) return
-    this.M3Ds = []
-    const vm = this
-    this.document.defaultMap
-      .clone()
-      .getFlatLayers()
-      .forEach((layer, index) => {
-        if (layer.type === 22) {
-          vm.M3Ds.push({
-            key: layer.id,
-            value: layer.title,
-          })
-        }
-      })
-  }
+  watch: {
+    document: {
+      handler: 'getScenes',
+      immediate: true,
+      deep: true,
+    },
+  },
+
+  methods: {
+    getScenes() {
+      if (!this.document) return
+      this.M3Ds = []
+      const vm = this
+      this.document.defaultMap
+        .clone()
+        .getFlatLayers()
+        .forEach((layer, index) => {
+          if (layer.type === 22) {
+            vm.M3Ds.push({
+              key: layer.id,
+              value: layer.title,
+            })
+          }
+        })
+    },
+  },
 }
 </script>
 
