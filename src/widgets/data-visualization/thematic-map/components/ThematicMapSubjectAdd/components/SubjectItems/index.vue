@@ -215,7 +215,6 @@ export default {
      * 新增年度
      */
     add() {
-      debugger
       const node = {
         time: '',
         _checked: false,

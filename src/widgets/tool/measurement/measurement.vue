@@ -47,6 +47,9 @@ export default {
     // 微件失活时
     onDeActive() {
       this.doDeActive = true
+      this.$refs[
+        `${this.is2DMapMode ? 'mapgisMeasure' : 'mapgis3dMeasure'}`
+      ].remove()
       this.map.getCanvas().style.cursor = 'grab'
     },
   },

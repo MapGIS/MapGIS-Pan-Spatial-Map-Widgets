@@ -21,6 +21,7 @@ import {
   MpTopologyAnalysis,
   MpVisibilityAnalysis,
   MpVisualAnalysis,
+  MpExplosionAnalysis,
 } from './widgets/analysis'
 
 import {
@@ -45,6 +46,8 @@ import {
   MpVectorTileCarto,
   MpViewpointManager,
   MpZoom,
+  MpPlotAnimation,
+  MpPlotManager,
 } from './widgets/data-visualization'
 
 import { MpMarkerManager, MpOverlayManager } from './widgets/editing'
@@ -71,6 +74,7 @@ import {
   MpOutputImage,
   MpSplitScreen,
   MpStratifiedHousehold,
+  MpModelPick,
 } from './widgets/tool'
 
 const components = [
@@ -94,6 +98,7 @@ const components = [
   MpTopologyAnalysis,
   MpVisibilityAnalysis,
   MpVisualAnalysis,
+  MpExplosionAnalysis,
   // data-manager
   MpAddData,
   MpBasemapManager,
@@ -114,6 +119,8 @@ const components = [
   MpVectorTileCarto,
   MpViewpointManager,
   MpZoom,
+  MpPlotAnimation,
+  MpPlotManager,
   // editing
   MpMarkerManager,
   MpOverlayManager,
@@ -136,14 +143,12 @@ const components = [
   MpOutputImage,
   MpSplitScreen,
   MpStratifiedHousehold,
+  MpModelPick,
 ]
 
 import { thematicMapStore } from './widgets/data-visualization/thematic-map/store'
 
 const install = (Vue) => {
-  // Vue.use(VueMapbox)
-  // Vue.use(VueCesium)
-  // Vue.use(MapgisUi)
   Vue.observable(thematicMapStore)
   components.forEach((component) => {
     Vue.component(

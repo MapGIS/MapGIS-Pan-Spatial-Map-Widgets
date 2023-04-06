@@ -204,6 +204,8 @@ export default {
       this.sceneController = sceneController
       this.isMapLoaded = true
       this.zoomTo({ ...this.initBound })
+      // 当分屏大于2个时，初始缩放级别下，部分瓦片不显示，稍微放大一点正常
+      this.ssMap.setZoom(Math.ceil(this.ssMap.getZoom()))
     },
 
     /**

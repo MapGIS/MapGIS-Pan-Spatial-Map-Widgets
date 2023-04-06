@@ -351,6 +351,9 @@ export default {
 
       // 存放数据目录勾选key
       checkedNodeKeysCopy: [],
+
+      // 是否是取消扩展图层标识
+      extendLayerRemove: false,
     }
   },
   computed: {
@@ -398,6 +401,8 @@ export default {
     eventBus.$emit(events.DATA_CATALOG_ON_IMPOSE_SERVICE_EVENT)
     eventBus.$on(events.DATA_CATALOG_TAB, this.changeDataCatalog)
     eventBus.$on(events.BOOKMARK_TAB, this.changeBookmark)
+    eventBus.$emit(events.DATA_CATALOG_DATA_INFO, this.widgetConfig)
+    eventBus.$on(events.EXTEND_LAYER_REMOVE, this.changeCheckedKeys)
   },
   watch: {
     checkedNodeKeys: {
@@ -422,6 +427,16 @@ export default {
           ? this.checkedNodeKeys
           : this.getCheckedNodeKeys()
       )
+
+      // 扩展图层在相关的微件中移除，勾选取消即可，此处不做其他处理
+      if (this.extendLayerRemove) {
+        this.extendLayerRemove = !this.extendLayerRemove
+        this.preCheckedNodeKeys = this.isChangeDataCatalog
+          ? JSON.parse(JSON.stringify(this.checkedNodeKeys))
+          : this.getCheckedNodeKeys()
+        return
+      }
+
       let newChecked = []
       let newUnChecked = []
 
@@ -545,6 +560,20 @@ export default {
         const checkedNodeKeys: string[] = this.checkedNodeKeys
         layerConfigNodeList.forEach(async (layerConfigNode): Layer => {
           if (isChecked) {
+            // 如果是扩展图层，直接发送事件
+            if (
+              Object.prototype.hasOwnProperty.call(
+                layerConfigNode,
+                'serverType'
+              ) &&
+              !layerConfigNode.serverType
+            ) {
+              eventBus.$emit(
+                events.DATA_CATALOG_EXTEND_DATA_CHECK,
+                layerConfigNode
+              )
+              return
+            }
             // 如果是选中了节点
             // 1.根据图层节点的配置,生成webclient-store中定义的图层.
             const layer =
@@ -578,6 +607,19 @@ export default {
               }
             }
           } else {
+            if (
+              Object.prototype.hasOwnProperty.call(
+                layerConfigNode,
+                'serverType'
+              ) &&
+              !layerConfigNode.serverType
+            ) {
+              eventBus.$emit(
+                events.DATA_CATALOG_EXTEND_DATA_UNCHECK,
+                layerConfigNode
+              )
+              return
+            }
             // 如果是取消选中了节点
             // 1.通过节点的key,将图层从document中移除。
             doc.defaultMap.remove(
@@ -690,6 +732,15 @@ export default {
       } else {
         this.expandedKeys.push(selectedKeys[0])
       }
+    },
+
+    // 取消扩展图层同步勾选
+    changeCheckedKeys(ids) {
+      this.extendLayerRemove = !this.extendLayerRemove
+      this.dataCatalogManager.checkedLayerConfigIDs =
+        this.dataCatalogManager.checkedLayerConfigIDs.filter(
+          (item) => !ids.includes(item)
+        )
     },
 
     // 筛选所有包含搜索关键字的节点
@@ -824,7 +875,8 @@ export default {
          */
         if (
           item.description.includes('非空间数据') ||
-          (!item.children && !item.serverType)
+          (!item.children &&
+            !Object.prototype.hasOwnProperty.call(item, 'serverType'))
         ) {
           this_.$set(item, 'checkable', false)
         }

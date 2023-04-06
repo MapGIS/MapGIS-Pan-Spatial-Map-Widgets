@@ -46,7 +46,6 @@ export default {
   },
 
   mounted() {
-    debugger
     dep.addSub(this)
   },
 

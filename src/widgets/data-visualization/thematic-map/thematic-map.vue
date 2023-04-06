@@ -1,20 +1,20 @@
 <template>
   <div class="mp-widget-thematic-map" v-if="!flag">
     <!-- 专题图树 -->
-    <mp-group-tab
+    <mapgis-ui-group-tab
       :has-top-margin="false"
       :has-bottom-margin="false"
       size="default"
       title="专题"
     >
-      <mp-toolbar-command-group slot="handle">
-        <mp-toolbar-command
+      <mapgis-ui-toolbar-command-group slot="handle">
+        <mapgis-ui-toolbar-command
           @click="createSubject"
           title="新建专题图"
           icon="plus"
         />
-      </mp-toolbar-command-group>
-    </mp-group-tab>
+      </mapgis-ui-toolbar-command-group>
+    </mapgis-ui-group-tab>
     <mapgis-ui-spin :spinning="loading">
       <mapgis-ui-empty v-if="!thematicMapTree.length" />
       <mapgis-ui-tree
@@ -333,7 +333,6 @@ export default {
     subjectConfig: {
       deep: true,
       handler(nV) {
-        debugger
         this.setLoadingShow()
         this.thematicMapTree = this.normalizeThematicMapTree(_cloneDeep(nV))
         this.setLoadingHide()
@@ -342,7 +341,6 @@ export default {
   },
 
   created() {
-    debugger
     const { subjectConfig } = this.widgetInfo.config
     let { baseConfig } = this.widgetInfo.config
     if (!baseConfig) {

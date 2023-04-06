@@ -90,7 +90,6 @@ const mutations = {
    * 专题图各子功能弹框的开关
    */
   setVisible({ state }, type: ModuleType) {
-    debugger
     if (!state.modules.includes(type)) {
       state.modules = [...state.modules, type]
     }
@@ -250,7 +249,6 @@ const mutations = {
    * 存储专题图总专题配置数据
    */
   setSubjectConfig({ state }, config: Array<ISubjectConfigNode>) {
-    debugger
     state.subjectConfig = config
   },
   /**

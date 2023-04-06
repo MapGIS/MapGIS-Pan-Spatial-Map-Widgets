@@ -10,7 +10,7 @@
       idField="markerId"
     />
     <!-- 聚合标注专题图 -->
-    <mapgis-mapv-layer
+    <!-- <mapgis-mapv-layer
       v-else-if="
         geojson &&
         geojson.features &&
@@ -20,13 +20,47 @@
       :geojson="geojson"
       :options="options"
       count-field="count"
-    />
+    /> -->
+    <mapgis-cluster-layer
+      v-else-if="
+        geojson && geojson.features && !!geojson.features.length && colorCluster
+      "
+      :geojson="geojson"
+      :cluster="clusterOption"
+      :uncluster="uncluster"
+      @change-feature="changeFeature"
+    >
+      <slot name="default" :coordinates="coordinates" :properties="properties">
+        <mapgis-ui-list
+          item-layout="horizontal"
+          :data-source="Object.keys(properties)"
+          size="small"
+          class="table-marker"
+        >
+          <mapgis-ui-list-item
+            slot="renderItem"
+            slot-scope="item"
+            class="table-marker-item"
+          >
+            <div style="width: 130px" :title="item">
+              {{ item }}
+            </div>
+            <div style="width: 170px" :title="properties[item]">
+              {{ properties[item] }}
+            </div>
+          </mapgis-ui-list-item>
+        </mapgis-ui-list>
+      </slot>
+    </mapgis-cluster-layer>
   </div>
 </template>
 
 <script lang="ts">
 import { Style } from '@mapgis/webclient-es6-service'
 import { MapMixin, baseConfigInstance } from '@mapgis/web-app-framework'
+import { Util } from '@mapgis/webclient-vue-ui'
+
+const { ColorUtil } = Util
 
 const { MarkerStyle, LineStyle, PointStyle, FillStyle } = Style
 
@@ -59,7 +93,59 @@ export default {
       default: () => [],
     },
   },
+  data() {
+    return {
+      coordinates: [0, 0],
+      properties: {
+        属性名: '属性值',
+      },
+    }
+  },
   computed: {
+    defaultColor() {
+      debugger
+      const color = ColorUtil.getColorObject('#ffffff', 0.8)
+      return ColorUtil.colorObjectToRgba(color, false)
+    },
+    colors() {
+      const defaultColors = ['#1876d0', 'rgb(255,255,0)', '#bdbd0d']
+      const colors = []
+      for (let i = 0; i < defaultColors.length; i++) {
+        const color = ColorUtil.getColorObject(defaultColors[i], 0.8)
+        colors.push(ColorUtil.colorObjectToRgba(color, false))
+      }
+      return colors
+    },
+    clusterOption() {
+      const { colors } = this
+      return {
+        'circle-color': [
+          'step',
+          ['get', 'point_count'],
+          colors[0],
+          10,
+          colors[1],
+          100,
+          colors[2],
+        ],
+        'circle-radius': ['step', ['get', 'point_count'], 10, 0, 20, 100, 30],
+        'circle-stroke-color': this.defaultColor,
+        'circle-stroke-width': 2,
+      }
+    },
+    uncluster() {
+      const colorCluster = ColorUtil.getColorObject(
+        this.colorCluster || '#ffffff',
+        0.8
+      )
+      const unclusterColor = ColorUtil.colorObjectToRgba(colorCluster, false)
+      return {
+        'circle-color': unclusterColor,
+        'circle-radius': 10,
+        'circle-stroke-width': 1,
+        'circle-stroke-color': this.defaultColor,
+      }
+    },
     layerStyle() {
       return new MarkerStyle({
         symbol: this.defaultMarkerIcon,
@@ -124,6 +210,10 @@ export default {
       highlightStyle.point.radius = +pntSize // 转number
       highlightStyle.polygon.color = regColor
       highlightStyle.polygon.outlineColor = lineColor
+    },
+    changeFeature(val) {
+      this.coordinates = val.coordinates
+      this.properties = val.properties
     },
   },
 }

@@ -1,8 +1,8 @@
 <template>
   <div class="mp-widget-marker-manager">
-    <mp-toolbar>
-      <mp-toolbar-command-group>
-        <mp-toolbar-command
+    <mapgis-ui-toolbar>
+      <mapgis-ui-toolbar-command-group>
+        <mapgis-ui-toolbar-command
           v-for="item in interactiveMarkModes"
           :key="item.title"
           :title="item.title"
@@ -10,7 +10,7 @@
           :active="markMode === item.mode"
           @click="onInteractiveMark(item.mode)"
         />
-        <mp-toolbar-command
+        <mapgis-ui-toolbar-command
           v-for="item in keyboardMarkModes"
           :key="item.title"
           :title="item.title"
@@ -18,11 +18,11 @@
           @click="item.click"
         />
         <mapgis-ui-divider type="vertical" />
-        <mp-toolbar-command
+        <mapgis-ui-toolbar-command
           icon="save"
           title="保存"
           @click="onSaveMarkers"
-        ></mp-toolbar-command>
+        ></mapgis-ui-toolbar-command>
         <mapgis-ui-popover
           placement="bottomLeft"
           arrow-point-at-center
@@ -40,23 +40,26 @@
             </mapgis-ui-list-item>
           </mapgis-ui-list>
 
-          <mp-toolbar-command icon="more" title=""></mp-toolbar-command>
+          <mapgis-ui-toolbar-command
+            icon="more"
+            title=""
+          ></mapgis-ui-toolbar-command>
         </mapgis-ui-popover>
-      </mp-toolbar-command-group>
-    </mp-toolbar>
+      </mapgis-ui-toolbar-command-group>
+    </mapgis-ui-toolbar>
     <div class="marker-container">
-      <mp-group-tab :title="markerTotal">
-        <mp-toolbar slot="handle" :bordered="false">
-          <mp-toolbar-command-group remove-last-command-right-margin>
-            <mp-toolbar-command
+      <mapgis-ui-group-tab :title="markerTotal">
+        <mapgis-ui-toolbar slot="handle" :bordered="false">
+          <mapgis-ui-toolbar-command-group remove-last-command-right-margin>
+            <mapgis-ui-toolbar-command
               icon="close-square"
               title="清除选择"
               @click="onClearSelection"
               :disabled="currentMarkerId === ''"
-            ></mp-toolbar-command>
-          </mp-toolbar-command-group>
-        </mp-toolbar>
-      </mp-group-tab>
+            ></mapgis-ui-toolbar-command>
+          </mapgis-ui-toolbar-command-group>
+        </mapgis-ui-toolbar>
+      </mapgis-ui-group-tab>
       <div
         v-if="markers.length"
         :id="markerListId"
@@ -163,7 +166,7 @@ export default {
   data() {
     return {
       icons: {
-        Point: 'map',
+        Point: 'environment',
         LineString:
           '<svg class="icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="128" height="128"><defs><style/></defs><path d="M883.2 238.933c-53.333 0-98.133 44.8-98.133 98.134 0 19.2 6.4 36.266 14.933 51.2L680.533 507.733c-14.933-10.666-32-14.933-51.2-14.933-27.733 0-53.333 12.8-70.4 29.867l-87.466-51.2v-8.534c0-53.333-44.8-98.133-98.134-98.133s-96 44.8-96 98.133c0 14.934 4.267 27.734 8.534 40.534L192 608c-14.933-8.533-29.867-12.8-46.933-12.8-53.334 0-98.134 44.8-98.134 98.133s44.8 96 98.134 96 98.133-44.8 98.133-98.133c0-21.333-6.4-40.533-19.2-57.6l87.467-96c17.066 14.933 38.4 23.467 61.866 23.467 36.267 0 66.134-19.2 83.2-49.067l78.934 46.933c-4.267 10.667-6.4 19.2-6.4 29.867 0 53.333 44.8 98.133 98.133 98.133s98.133-44.8 98.133-98.133c0-19.2-6.4-36.267-14.933-51.2l119.467-119.467c14.933 10.667 32 14.934 51.2 14.934 53.333 0 98.133-44.8 98.133-98.134s-42.667-96-96-96z"/></svg>',
         Polygon:

@@ -140,7 +140,7 @@
       @map-bound-change="onGetGeometry"
     >
       <template slot="popup" slot-scope="{ properties }">
-        <mp-popup-attribute
+        <mapgis-3d-popup-iot
           :properties="properties"
           :dataStoreIp="dataStoreIp"
           :dataStorePort="dataStorePort"

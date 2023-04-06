@@ -20,7 +20,7 @@
       v-if="selfMarker.fid"
     >
       <template slot="popup" slot-scope="{ properties }">
-        <mp-popup-attribute :properties="properties" />
+        <mapgis-3d-popup-iot :properties="properties" />
       </template>
     </mp-3d-marker-pro>
   </div>
