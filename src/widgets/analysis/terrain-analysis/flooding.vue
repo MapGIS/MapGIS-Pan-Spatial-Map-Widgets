@@ -13,7 +13,7 @@
       :frequency="frequency"
       @load="load"
       @showProgress="showProgress"
-      @clear="clear"
+      @closeProgress="closeProgress"
     />
     <mp-window-wrapper>
       <mp-window
@@ -101,6 +101,7 @@ export default {
       progressData: {},
       currentHeight: undefined,
       isStart: false,
+      timer: undefined,
     }
   },
   computed: {
@@ -146,18 +147,18 @@ export default {
     // 微件失活时
     onDeActive() {
       this.floodAnalysis.unmount()
-      this.closeProgress()
     },
 
     // 清除洪水淹没分析结果
     clear() {
       this.floodAnalysis.remove()
-      this.closeProgress()
     },
     closeProgress() {
       this.progressVisible = false
       this.progressData = {}
       this.currentHeight = undefined
+      clearInterval(this.timer)
+      this.isStart = false
     },
     showProgress(progressData) {
       this.progressData = JSON.parse(JSON.stringify(progressData))
@@ -170,12 +171,12 @@ export default {
       const { startHeightCopy, maxHeightCopy, floodSpeedCopy } =
         this.progressData
       let count = 0
-      const timer = setInterval(() => {
+      this.timer = setInterval(() => {
         this.currentHeight = startHeightCopy + floodSpeedCopy * count
         count++
         if (this.currentHeight >= maxHeightCopy) {
           this.isStart = false
-          clearInterval(timer)
+          clearInterval(this.timer)
         }
       }, 1000)
     },
