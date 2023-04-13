@@ -75,6 +75,7 @@ import {
   MpSplitScreen,
   MpStratifiedHousehold,
   MpModelPick,
+  MpOpacityFactor,
 } from './widgets/tool'
 
 const components = [
@@ -144,6 +145,7 @@ const components = [
   MpSplitScreen,
   MpStratifiedHousehold,
   MpModelPick,
+  MpOpacityFactor,
 ]
 
 import { thematicMapStore } from './widgets/data-visualization/thematic-map/store'
