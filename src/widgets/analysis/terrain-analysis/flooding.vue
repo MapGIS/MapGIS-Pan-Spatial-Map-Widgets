@@ -13,6 +13,7 @@
       :frequency="frequency"
       @load="load"
       @showProgress="showProgress"
+      @clear="clear"
     />
     <mp-window-wrapper>
       <mp-window
@@ -20,10 +21,11 @@
         anchor="bottom-center"
         :width="350"
         :height="60"
+        :verticalOffset="40"
         :shrinkAction="false"
         :fullScreenAction="false"
         :visible="progressVisible"
-        @update:visible="close"
+        @update:visible="clear"
       >
         <mapgis-ui-row type="flex">
           <mapgis-ui-col flex="250px">
@@ -66,7 +68,10 @@
             >(m)</mapgis-ui-col
           >
           <mapgis-ui-col
-            ><mapgis-ui-toolbar-command title="暂停" icon="play-circle"
+            ><mapgis-ui-toolbar-command
+              title="开始"
+              :icon="isStart ? 'pause-circle' : 'play-circle'"
+              @click="start"
           /></mapgis-ui-col>
         </mapgis-ui-row>
       </mp-window>
@@ -95,6 +100,7 @@ export default {
       progressVisible: false,
       progressData: {},
       currentHeight: undefined,
+      isStart: false,
     }
   },
   computed: {
@@ -130,7 +136,6 @@ export default {
     },
 
     load(floodAnalysis) {
-      debugger
       this.floodAnalysis = floodAnalysis
     },
 
@@ -141,26 +146,38 @@ export default {
     // 微件失活时
     onDeActive() {
       this.floodAnalysis.unmount()
+      this.closeProgress()
+    },
+
+    // 清除洪水淹没分析结果
+    clear() {
+      this.floodAnalysis.remove()
+      this.closeProgress()
+    },
+    closeProgress() {
+      this.progressVisible = false
+      this.progressData = {}
+      this.currentHeight = undefined
     },
     showProgress(progressData) {
       this.progressData = JSON.parse(JSON.stringify(progressData))
-      const { startHeightCopy, maxHeightCopy, floodSpeedCopy } = progressData
       this.progressVisible = true
-      let count = 1
+      this.currentHeight = 0
+    },
+    start() {
+      this.floodAnalysis._doAnalysis()
+      this.isStart = true
+      const { startHeightCopy, maxHeightCopy, floodSpeedCopy } =
+        this.progressData
+      let count = 0
       const timer = setInterval(() => {
         this.currentHeight = startHeightCopy + floodSpeedCopy * count
         count++
-        console.log(count)
-
-        if (this.currentHeight > maxHeightCopy) {
+        if (this.currentHeight >= maxHeightCopy) {
+          this.isStart = false
           clearInterval(timer)
         }
       }, 1000)
-    },
-    close(val) {
-      this.progressVisible = val
-      this.progressData = {}
-      this.currentHeight = undefined
     },
   },
 }
@@ -169,7 +186,7 @@ export default {
 <style lang="less" scoped>
 .mp-window-wrapper {
   color: #fff;
-  background-color: rgba(20, 67, 125, 1);
+  // background-color: rgba(20, 67, 125, 1);
   ::v-deep .window-head {
     border-bottom: none;
     height: 30px;
@@ -179,7 +196,7 @@ export default {
     background-color: rgba(203, 203, 203, 1);
   }
   ::v-deep .mapgis-ui-slider-handle {
-    background-color: #1890ff;
+    // background-color: #1890ff;
   }
   ::v-deep .mapgis-ui-toolbar-command {
     line-height: 60px;

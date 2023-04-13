@@ -103,7 +103,6 @@ export default {
   },
   computed: {
     defaultColor() {
-      debugger
       const color = ColorUtil.getColorObject('#ffffff', 0.8)
       return ColorUtil.colorObjectToRgba(color, false)
     },

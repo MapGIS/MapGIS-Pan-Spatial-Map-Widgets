@@ -130,6 +130,7 @@ export default {
 
     // 微件失活时
     onDeActive() {
+      if (this.tab === 'flooding') return
       this.currentAnalysisComponent.onDeActive()
     },
   },
