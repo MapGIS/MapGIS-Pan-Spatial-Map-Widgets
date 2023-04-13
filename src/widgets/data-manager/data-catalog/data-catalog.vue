@@ -403,6 +403,7 @@ export default {
     eventBus.$on(events.BOOKMARK_TAB, this.changeBookmark)
     eventBus.$emit(events.DATA_CATALOG_DATA_INFO, this.widgetConfig)
     eventBus.$on(events.EXTEND_LAYER_REMOVE, this.changeCheckedKeys)
+    eventBus.$on(events.DATA_CATALOG_CHANGE_NODES, this.dataCatalogChangeNodes)
   },
   watch: {
     checkedNodeKeys: {
@@ -743,6 +744,27 @@ export default {
         )
     },
 
+    // 控制数据目录勾选/取消勾选节点
+    dataCatalogChangeNodes(ids, isChecked) {
+      if (isChecked) {
+        // 排除ids中在数据目录中已勾选的id
+        const checkIds = []
+        ids.forEach((id) => {
+          !this.dataCatalogManager.checkedLayerConfigIDs.includes(id) &&
+            checkIds.push(id)
+        })
+        this.dataCatalogManager.checkedLayerConfigIDs = [
+          ...this.dataCatalogManager.checkedLayerConfigIDs,
+          ...checkIds,
+        ]
+      } else {
+        this.dataCatalogManager.checkedLayerConfigIDs =
+          this.dataCatalogManager.checkedLayerConfigIDs.filter(
+            (item) => !ids.includes(item)
+          )
+      }
+    },
+
     // 筛选所有包含搜索关键字的节点
     hasKeyWord(tree: object[], keyword: string) {
       tree.forEach((item: any, index: number) => {
@@ -784,6 +806,8 @@ export default {
         this.hasKeyWord(this.dataCatalogTreeData, keyword)
         this.hasKeywordArr = JSON.parse(JSON.stringify(this.expandedKeys))
         this.getAllKeys(this.dataCatalogTreeData)
+      } else {
+        this.hasKeywordArr = []
       }
       if (this.lastSearchVal === value) {
         if (!this.timer) {
@@ -935,12 +959,17 @@ export default {
         this.showMetaData = false
         const url = item.serverURL
         let getCapabilitiesURL = ''
+        let tempUrl = url
+        if (item.tokenValue && item.tokenValue.length > 0) {
+          const tokenKey = item.tokenKey ? item.tokenKey : 'token'
+          tempUrl += `?${item.tokenKey}=${item.tokenValue}`
+        }
         if (item.serverType === LayerType.OGCWMS) {
           getCapabilitiesURL =
-            Metadata.OGCMetadataQuery.generateWMSGetCapabilitiesURL(url)
+            Metadata.OGCMetadataQuery.generateWMSGetCapabilitiesURL(tempUrl)
         } else if (item.serverType === LayerType.OGCWMTS) {
           getCapabilitiesURL =
-            Metadata.OGCMetadataQuery.generateWMTSGetCapabilitiesURL(url)
+            Metadata.OGCMetadataQuery.generateWMTSGetCapabilitiesURL(tempUrl)
         }
         window.open(getCapabilitiesURL)
       } else {
@@ -1178,7 +1207,7 @@ export default {
       )
       const config = await api.getWidgetConfig('bookmark')
       this.bookmarkData = config
-      const bookmarkData = config[0].children
+      const bookmarkData = config.length > 0 ? config[0].children : []
       const treeData = []
       bookmarkData.forEach((item) => {
         const find = this.allTreeDataConfigs.find(
