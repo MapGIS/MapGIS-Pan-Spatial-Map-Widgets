@@ -80,6 +80,20 @@
               item.title
             }}</span>
           </mapgis-ui-tooltip>
+          <mapgis-ui-iconfont
+            v-if="isParentLayer(item) && !isIGSScene(item)"
+            class="mapgis-ui-iconfont"
+            :disabled="getIndex(item) <= 0"
+            type="mapgis-shang"
+            @click="lower(item)"
+          />
+          <mapgis-ui-iconfont
+            v-if="isParentLayer(item) && !isIGSScene(item)"
+            class="mapgis-ui-iconfont"
+            :disabled="getIndex(item) >= layers.length - 1"
+            type="mapgis-xia"
+            @click="raise(item)"
+          />
           <!---------------------------- 图层的子图层end -------------------------->
           <mapgis-ui-popover
             v-if="showPopover(item)"
@@ -115,7 +129,7 @@
             </template>
             <mapgis-ui-iconfont
               type="mapgis-more"
-              class="more"
+              class="more mapgis-ui-iconfont"
             ></mapgis-ui-iconfont>
           </mapgis-ui-popover>
         </div>
@@ -947,6 +961,48 @@ export default {
       }
     },
 
+    getIndex(item) {
+      if (this.layerDocument && this.layerDocument.defaultMap) {
+        const map = this.layerDocument.defaultMap
+        return map.getIndexByLayerId(item.id)
+      }
+      return 0
+    },
+    /**
+     * 图层上移一位(图层树上节点往下移，即index变大)
+     */
+    raise(item) {
+      if (this.layerDocument && this.layerDocument.defaultMap) {
+        const map = this.layerDocument.defaultMap
+        const beforeLayerId = map.raise(item.id)
+        if (beforeLayerId.length > 0 && this.map.getLayer(item.id)) {
+          if (this.map.getLayer(beforeLayerId)) {
+            this.map.moveLayer(item.id, beforeLayerId)
+          }
+        } else {
+          this.map.moveLayer(item.id)
+        }
+      }
+    },
+    /**
+     * 图层下移一位(图层树上节点往上移，即index变小)
+     */
+    lower(item) {
+      if (this.layerDocument && this.layerDocument.defaultMap) {
+        const map = this.layerDocument.defaultMap
+        const beforeLayerId = map.lower(item.id)
+        if (beforeLayerId.length > 0 && this.map.getLayer(item.id)) {
+          if (this.map.getLayer(beforeLayerId)) {
+            this.map.moveLayer(item.id, beforeLayerId)
+          }
+        }
+      }
+    },
+
+    setIconfontOpacity(item) {
+      return { opacity: this.getIndex(item) > 0 ? 1 : 0.4 }
+    },
+
     updateDataFlowStyle(val: DataFlowLayer) {
       const { key, layerStyle } = val
       const doc = this.layerDocument.clone()
@@ -1221,5 +1277,13 @@ export default {
       }
     }
   }
+}
+.mapgis-ui-iconfont :hover {
+  color: $primary-color;
+}
+
+.mapgis-ui-iconfont[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 </style>
