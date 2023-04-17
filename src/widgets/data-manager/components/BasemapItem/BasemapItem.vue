@@ -3,7 +3,10 @@
     <div class="item-image">
       <img :src="image" />
     </div>
-    <div class="item-name">{{ name }}</div>
+    <div class="item-name">
+      <mapgis-ui-icon :icon="icon" v-if="icon" />
+      {{ name }}
+    </div>
   </div>
 </template>
 
@@ -14,6 +17,7 @@ export default {
     name: String,
     image: String,
     active: Boolean,
+    icon: String,
   },
   methods: {
     onClick() {
