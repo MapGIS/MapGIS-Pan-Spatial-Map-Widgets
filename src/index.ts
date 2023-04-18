@@ -48,6 +48,7 @@ import {
   MpZoom,
   MpPlotAnimation,
   MpPlotManager,
+  MpSceneModePicker,
 } from './widgets/data-visualization'
 
 import { MpMarkerManager, MpOverlayManager } from './widgets/editing'
@@ -122,6 +123,7 @@ const components = [
   MpZoom,
   MpPlotAnimation,
   MpPlotManager,
+  MpSceneModePicker,
   // editing
   MpMarkerManager,
   MpOverlayManager,

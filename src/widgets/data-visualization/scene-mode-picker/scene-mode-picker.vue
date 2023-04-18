@@ -1,0 +1,59 @@
+<template>
+  <div class="mp-widget-scene-mode-picker">
+    <mapgis-ui-tooltip
+      title="场景模式切换"
+      placement="top"
+      :overlay-style="{ zIndex: 1000 }"
+    >
+      <div id="sceneModePickerContainer" v-show="!is2DMapMode"></div>
+    </mapgis-ui-tooltip>
+  </div>
+</template>
+
+<script lang="ts">
+import { WidgetMixin } from '@mapgis/web-app-framework'
+
+export default {
+  name: 'MpSceneModePicker',
+  mixins: [WidgetMixin],
+  computed: {},
+  mounted() {
+    const { viewer, Cesium } = this
+    const sceneModePicker = new Cesium.SceneModePicker(
+      'sceneModePickerContainer',
+      viewer.scene
+    )
+  },
+
+  methods: {},
+}
+</script>
+
+<style lang="less" scoped>
+.mp-widget-scene-mode-picker {
+  white-space: nowrap;
+  ::v-deep span.cesium-sceneModePicker-wrapper {
+    margin: 0px;
+    .cesium-sceneModePicker-selected {
+      border: none;
+      box-shadow: none;
+    }
+    .cesium-button {
+      color: #a3a3a3;
+      fill: #a3a3a3;
+      &:hover {
+        color: @primary-color;
+        fill: @primary-color;
+        background: rgb(48, 51, 54);
+        border: none;
+        box-shadow: none;
+        -webkit-box-shadow: none;
+      }
+      .cesium-svgPath-svg {
+        width: 65%;
+        margin-left: 5px;
+      }
+    }
+  }
+}
+</style>

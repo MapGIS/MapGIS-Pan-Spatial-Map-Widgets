@@ -15,3 +15,4 @@ export { default as MpViewpointManager } from './viewpoint-manager/viewpoint-man
 export { default as MpZoom } from './zoom/zoom.vue'
 export { default as MpPlotAnimation } from './plot/plot-animation.vue'
 export { default as MpPlotManager } from './plot/plot-manager.vue'
+export { default as MpSceneModePicker } from './scene-mode-picker/scene-mode-picker.vue'
