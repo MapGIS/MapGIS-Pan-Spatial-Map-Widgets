@@ -170,7 +170,7 @@ export default {
       this.isStart = true
       const { startHeightCopy, maxHeightCopy, floodSpeedCopy } =
         this.progressData
-      let count = 0
+      let count = 1
       this.timer = setInterval(() => {
         this.currentHeight = startHeightCopy + floodSpeedCopy * count
         count++
