@@ -28,6 +28,7 @@ import {
   MpAddData,
   MpBasemapManager,
   MpDataCatalog,
+  MpTopographyManager,
 } from './widgets/data-manager'
 
 import {
@@ -104,6 +105,7 @@ const components = [
   MpAddData,
   MpBasemapManager,
   MpDataCatalog,
+  MpTopographyManager,
   // data-visualization
   MpBookmark,
   MpLayerList,
