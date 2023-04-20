@@ -1,0 +1,12 @@
+build/
+node_modules/
+src/
+.editorconfig
+.eslintignore
+.eslintrc.js
+.gitignore
+.prettierrc
+babel.config.js
+tsconfig.json
+vue.config.js
+yarn.lock
