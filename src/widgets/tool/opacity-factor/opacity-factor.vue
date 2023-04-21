@@ -45,7 +45,7 @@ export default {
     onChangeOpacityFactor(val, field) {
       if (field === 'imageOpacityFactor') {
         eventBus.$emit(events.IMAGE_OPACITY_FACTOR_CHANGE, val)
-      } else if (field === 'imageOpacityFactor') {
+      } else if (field === 'modelOpacityFactor') {
         eventBus.$emit(events.MODEL_OPACITY_FACTOR_CHANGE, val)
       }
     },

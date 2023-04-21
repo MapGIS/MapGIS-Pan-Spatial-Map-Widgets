@@ -154,12 +154,18 @@ export default {
       for (let i = 0; i < this.layers.length; i++) {
         const layer = this.layers[i]
         if (type === 'model') {
-          if (type !== LayerType.ModelCache && type !== LayerType.IGSScene) {
-            return
+          if (
+            layer.type !== LayerType.ModelCache &&
+            layer.type !== LayerType.IGSScene
+          ) {
+            continue
           }
         } else if (type === 'image') {
-          if (type === LayerType.ModelCache || type === LayerType.IGSScene) {
-            return
+          if (
+            layer.type === LayerType.ModelCache ||
+            layer.type === LayerType.IGSScene
+          ) {
+            continue
           }
         }
         const factor = this.getFactor(layer)
@@ -213,9 +219,9 @@ export default {
     },
     getIconTooltip(item) {
       if (item.isLockOpacity === undefined) {
-        return '锁定'
+        return '解锁'
       }
-      return item.isLockOpacity ? '锁定' : '解锁'
+      return item.isLockOpacity ? '解锁' : '锁定'
     },
     changeLock(item) {
       // 默认为true，即默认锁定，透明度不受透明度系数影响
