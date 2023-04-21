@@ -1,7 +1,7 @@
 <template>
   <div class="mp-attribute-table-list">
     <mapgis-ui-tabs
-      v-if="options.length > 0"
+      v-if="options.length > 0 && options.length <= 9"
       v-model="activeOptionId"
       type="card"
       size="small"
@@ -19,6 +19,22 @@
         />
       </mapgis-ui-tab-pane>
     </mapgis-ui-tabs>
+    <div v-else>
+      <div class="mp-attribute-table-tag">
+        <mapgis-ui-checkable-tag
+          v-for="tag in options"
+          :key="tag.id"
+          :checked="activeOptionId === tag.id"
+        >
+          <span @click="changeCheckTag(tag)">{{ tag.name }}</span>
+        </mapgis-ui-checkable-tag>
+      </div>
+      <component
+        :is="attributeTableComponent"
+        ref="activeTag"
+        :option="currentOption"
+      />
+    </div>
   </div>
 </template>
 
@@ -61,27 +77,37 @@ export default {
         }
       }
     },
+    currentOption() {
+      return this.options.find((item) => item.id === this.activeOptionId)
+    },
   },
   watch: {
     activeOptionId: {
       handler(newVal, oldVal) {
-        // 延迟10毫秒执行
-        setTimeout(() => {
-          if (this.$refs[oldVal] && this.$refs[oldVal][0]) {
-            this.$refs[oldVal][0].deActivateExhibition()
-          }
-          if (this.$refs[newVal] && this.$refs[newVal][0]) {
-            this.$refs[newVal][0].activateExhibition()
-            this.$refs[newVal][0].resizeExhibition()
-          }
-        }, 10)
+        if (this.options.length > 9) {
+          this.$refs.activeTag.deActivateExhibition()
+          this.$refs.activeTag.activateExhibition()
+          this.$refs.activeTag.resizeExhibition()
+        } else {
+          // 延迟10毫秒执行
+          setTimeout(() => {
+            if (this.$refs[oldVal] && this.$refs[oldVal][0]) {
+              this.$refs[oldVal][0].deActivateExhibition()
+            }
+            if (this.$refs[newVal] && this.$refs[newVal][0]) {
+              this.$refs[newVal][0].activateExhibition()
+              this.$refs[newVal][0].resizeExhibition()
+            }
+          }, 10)
+        }
       },
     },
   },
   methods: {
     onResize() {
       if (this.$refs[this.activeOptionId]) {
-        this.$refs[this.activeOptionId][0].resizeExhibition()
+        this.$refs[this.activeOptionId][0] &&
+          this.$refs[this.activeOptionId][0].resizeExhibition()
       }
     },
 
@@ -112,6 +138,10 @@ export default {
         this.$refs[this.activeOptionId][0].closeExhibition()
       }
     },
+    changeCheckTag(tag) {
+      if (tag.id === this.activeOptionId) return
+      this.exhibition.activeOptionId = tag.id
+    },
   },
 }
 </script>
@@ -119,5 +149,11 @@ export default {
 <style lang="less" scoped>
 .mp-attribute-table-list {
   padding-top: 2px;
+  .mp-attribute-table-tag {
+    display: flex;
+    flex-wrap: wrap;
+    max-height: 44px;
+    overflow: auto;
+  }
 }
 </style>

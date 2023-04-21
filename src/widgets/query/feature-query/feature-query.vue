@@ -23,10 +23,17 @@
       <mapgis-ui-toolbar-command-group>
         <mapgis-ui-divider type="vertical" />
         <mapgis-ui-toolbar-command
+          v-if="isShowLayerList"
+          title="图层列表"
+          icon="profile"
+          :active="showLayerList"
+          @click="showLayerListInfo"
+        />
+        <mapgis-ui-toolbar-command
           title="设置"
           icon="setting"
           :active="showSettingPanel"
-          @click="showSettingPanel = !showSettingPanel"
+          @click="showSettingsInfo"
         />
       </mapgis-ui-toolbar-command-group>
     </mapgis-ui-toolbar>
@@ -42,6 +49,17 @@
           />
         </mapgis-ui-form-item>
       </mapgis-ui-setting-form>
+    </div>
+    <div v-show="showLayerList">
+      <!-- <mapgis-ui-layer-select-list :layers="document" width="30%" /> -->
+      <mapgis-ui-layer-check-list
+        :layers="document"
+        @on-check="onCheckLayer"
+        :isSingleCheck="isSingleCheck"
+        :isExpandAll="isExpandAll"
+        :checkedKeys="checkedKeys"
+        :isCheckAll="isCheckAll"
+      />
     </div>
   </div>
 </template>
@@ -94,9 +112,9 @@ enum QueryType {
 export default {
   name: 'MpFeatureQuery',
   mixins: [WidgetMixin, ExhibitionControllerMixin],
-
   data() {
     return {
+      showLayerList: false,
       limitsArray: [0, 0.1, 0.5, 1, 5],
       showSettingPanel: false,
       sliderIndex: 0,
@@ -126,6 +144,17 @@ export default {
         LineString: 'draw-polyline',
         Cube: 'draw-cube',
       },
+      checkedTreeKeys: [],
+      selectedKeys: [],
+      layerListArr: [],
+      showTree: false, // 确保tree保持展开状态
+      isSingleCheck: false,
+      isExpandAll: true,
+      checkedKeys: [],
+      isCheckAll: true,
+      checkList: [],
+      layerKeyRelation: {},
+      checkLayer: [],
     }
   },
   computed: {
@@ -152,6 +181,9 @@ export default {
     },
     drawComponent() {
       return this.is2DMapMode ? this.$refs.draw : this.$refs.draw3d
+    },
+    isShowLayerList() {
+      return this.widgetInfo.config.isShowLayerList || true
     },
   },
 
@@ -239,7 +271,9 @@ export default {
         nearDis /= distanceUnits
       }
 
-      const layers = this.document.defaultMap.layers()
+      const layers = this.isShowLayerList
+        ? this.checkLayer
+        : this.document.defaultMap.layers()
 
       layers.forEach((layer) => {
         if (!this.isCrossWithLayer(layer, shape)) {
@@ -328,7 +362,11 @@ export default {
         exhibition
       )
       if (activeOptionId && activeOptionId !== '') {
-        attributeTableListExhibition.activeOptionId = activeOptionId
+        // 查询图层超过9个换一种展示方式
+        attributeTableListExhibition.activeOptionId =
+          attributeTableListExhibition.options.length > 9
+            ? attributeTableListExhibition.options[0].id
+            : activeOptionId
       }
       this.addExhibition(attributeTableListExhibition)
       /**
@@ -372,13 +410,19 @@ export default {
         options: [],
       }
 
-      const sublayers = layer.allSublayers
+      const sublayers = this.isShowLayerList
+        ? this.getSublayers(layer.id)
+        : layer.allSublayers
 
       let activeOptionId = ''
 
       for (let index = 0; index < sublayers.length; index++) {
         const sublayer = sublayers[index]
-        if (!sublayer.visible && sublayer.sublayers.length > 0) {
+        if (
+          !sublayer.visible &&
+          sublayer.sublayers &&
+          sublayer.sublayers.length > 0
+        ) {
           return
         }
         /**
@@ -849,6 +893,36 @@ export default {
         booleanContains(extentPolygon, geometry) ||
         booleanContains(geometry, extentPolygon)
       )
+    },
+    onCheckLayer(keys, keysInfo) {
+      // 图层与子图层的对应关系
+      this.layerKeyRelation = {}
+      this.checkList = keysInfo
+      this.checkLayer = []
+      keysInfo.forEach((item) => {
+        if (this.layerKeyRelation[item.layer.id]) {
+          this.layerKeyRelation[item.layer.id].push(item.key)
+        } else {
+          this.layerKeyRelation[item.layer.id] = []
+          this.layerKeyRelation[item.layer.id].push(item.key)
+          this.checkLayer.push(item.layer)
+        }
+      })
+    },
+    getSublayers(id) {
+      const relationKeys = this.layerKeyRelation[id]
+      const checkList = this.checkList.filter((item) =>
+        relationKeys.includes(item.key)
+      )
+      return checkList
+    },
+    showLayerListInfo() {
+      this.showLayerList = !this.showLayerList
+      this.showSettingPanel = false
+    },
+    showSettingsInfo() {
+      this.showSettingPanel = !this.showSettingPanel
+      this.showLayerList = false
     },
   },
 }
