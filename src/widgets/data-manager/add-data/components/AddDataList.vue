@@ -31,7 +31,7 @@
           :data-source="categoryDataList"
           :pagination="pagination"
           :row-selection="{
-            columnWidth: 20,
+            columnWidth: 40,
             selectedRowKeys: selectedRowKeys,
             onChange: onSelectChange,
           }"
@@ -433,24 +433,12 @@ export default {
       }
     }
 
-    ::v-deep .mapgis-ui-table-expand-icon-th,
-    ::v-deep .mapgis-ui-table-row-expand-icon-cell {
-      width: 20px;
-      min-width: 20px;
+    ::v-deep .mapgis-ui-table-thead > tr:first-child > th:first-child {
+      border-right: 0;
+      width: 0;
     }
-    ::v-deep .mapgis-ui-table-pagination.mapgis-ui-pagination {
-      margin: 8px 0 0 0;
-      ::v-deep .mapgis-ui-pagination-item-active {
-        background: none !important;
-      }
-      .mapgis-ui-pagination-options-size-changer.mapgis-ui-select {
-        margin-right: 0;
-      }
-    }
-    ::v-deep .mapgis-ui-empty {
-      .mapgis-ui-empty-image {
-        height: 100% !important;
-      }
+    ::v-deep .mapgis-ui-table-thead > tr:first-child > th:last-child {
+      border-right: 0;
     }
   }
 }

@@ -302,6 +302,13 @@ export default {
   watch: {
     getDataFLowList: {
       deep: true,
+      handler() {
+        this.clearSelection()
+        this.removeMarkers()
+        this.tableData = []
+        this.tableColumns = []
+        this.query()
+      },
     },
     optionVal: {
       deep: true,
@@ -310,7 +317,7 @@ export default {
         this.clearSelection()
         this.removeMarkers()
         this.tableData = []
-        // this.tableColumns = []
+        this.tableColumns = []
         this.query()
       },
     },
@@ -763,21 +770,5 @@ export default {
       cursor: pointer;
     }
   }
-}
-::v-deep
-  .mapgis-ui-table-fixed-header
-  > .mapgis-ui-table-content
-  > .mapgis-ui-table-scroll
-  > .mapgis-ui-table-body {
-  background: transparent;
-}
-
-::v-deep .mapgis-ui-table-fixed-left table,
-.mapgis-ui-table-fixed-right table {
-  background: transparent;
-}
-
-::v-deep .mapgis-ui-btn {
-  background: transparent;
 }
 </style>
