@@ -43,7 +43,8 @@ export default {
     }
   },
   mounted() {
-    const { isShow } = { ...this.widgetInfo.config }
+    // 配置文件无isShow属性时默认设置为true
+    const { isShow = true } = { ...this.widgetInfo.config }
     // 不开启显示时不加载底图并将底图选中全部置为false
     if (!isShow) {
       this.basemaps.forEach((basemap) => {
