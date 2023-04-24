@@ -73,6 +73,7 @@ export default {
       },
       cameraView: null,
       mapBounds: null,
+      isFirstChange: 0,
     }
   },
 
@@ -95,6 +96,11 @@ export default {
       } else if (this.map && !this.mapBounds) {
         this.mapBounds = this.map.getBounds()
       }
+      // 第一次切换二三维模式时手动将位置缩放到索引底图范围
+      if (this.isFirstChange <= 1) {
+        this.isFirstChange++
+        this.onRestore()
+      }
     },
 
     async onRestore() {
@@ -102,43 +108,68 @@ export default {
         // mapbox如果有旋转，恢复到平面模式
         this.map.resetNorthPitch({ duration: 100 })
       }
-      /**
-       * 修改说明：重置范围使用索引底图的范围
-       * 修改人：龚跃健
-       * 修改日期：2021/12/23
-       */
-      const config = await api.getWidgetConfig('basemap-manager')
-      // 获取地图底图
-      const baseMap = config.baseMapList.find(
-        (item) => item.guid === config.indexBaseMapGUID
-      )
-      if (baseMap && baseMap.children && baseMap.children.length > 0) {
-        // 如果索引底图下有多个图层，默认只缩放到第一个图层的范围
-        const layer = baseMap.children[0]
-        const mapLayer = DataCatalogManager.generateLayerByConfig(
-          this.formatLayer(layer)
-        )
-        await mapLayer.load()
-        this.fitBounds(mapLayer)
+      const { initPositionMode } = baseConfigInstance.config
+      const { Cesium, map, vueCesium, viewer } = this
+      switch (initPositionMode) {
+        // 根据范围重置
+        case 'initExtent':
+          const { xmin, ymin, xmax, ymax } = baseConfigInstance.config
+          const bound = { xmin, ymin, xmax, ymax }
+          const mapParams = { Cesium, map, vueCesium, viewer }
+          if (this.is2DMapMode) {
+            setTimeout(() => {
+              FitBound.fitBound2D(bound, mapParams)
+            }, 300)
+          } else {
+            FitBound.fitBound3D(bound, mapParams)
+          }
+          break
+        // 根据位置重置
+        case 'initPosition':
+          const {
+            center,
+            initZoom: zoom,
+            initAltitude: cameraHeight,
+          } = baseConfigInstance.config
+          const x = center.split(',')[0]
+          const y = center.split(',')[1]
+          if (this.is2DMapMode) {
+            setTimeout(() => {
+              this.map.flyTo({
+                center: [x, y],
+                zoom,
+              })
+            }, 300)
+          } else {
+            const center = new Cesium.Cartesian3.fromDegrees(x, y, cameraHeight)
+            viewer.camera.flyTo({
+              destination: center,
+            })
+          }
+          break
+        case 'basemapExtent':
+        default:
+          /**
+           * 修改说明：重置范围使用索引底图的范围
+           * 修改人：龚跃健
+           * 修改日期：2021/12/23
+           */
+          const config = await api.getWidgetConfig('basemap-manager')
+          // 获取地图底图
+          const baseMap = config.baseMapList.find(
+            (item) => item.guid === config.indexBaseMapGUID
+          )
+          if (baseMap && baseMap.children && baseMap.children.length > 0) {
+            // 如果索引底图下有多个图层，默认只缩放到第一个图层的范围
+            const layer = baseMap.children[0]
+            const mapLayer = DataCatalogManager.generateLayerByConfig(
+              this.formatLayer(layer)
+            )
+            await mapLayer.load()
+            this.fitBounds(mapLayer)
+          }
+          break
       }
-      // const { xmin, ymin, xmax, ymax } = baseConfigInstance.config
-      // if (!this.is2DMapMode) {
-      //   const destination = this.Cesium.Rectangle.fromDegrees(
-      //     Number(xmin),
-      //     Number(ymin),
-      //     Number(xmax),
-      //     Number(ymax)
-      //   )
-      //   this.viewer.camera.flyTo({
-      //     destination
-      //   })
-      // } else if (this.map) {
-      //   this.map.setPitch(0)
-      //   this.map.fitBounds([
-      //     [Number(xmin), Number(ymin)],
-      //     [Number(xmax), Number(ymax)]
-      //   ])
-      // }
     },
 
     formatLayer(layer) {

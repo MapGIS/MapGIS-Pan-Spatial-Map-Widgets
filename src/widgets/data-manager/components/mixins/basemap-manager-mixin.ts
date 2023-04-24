@@ -16,6 +16,10 @@ export default {
   computed: {
     isShow: {
       get() {
+        // 配置文件未更新时兼容旧版，默认显示为true
+        if (this.widgetInfo.config.isShow === undefined) {
+          this.$set(this.widgetInfo.config, 'isShow', true)
+        }
         return this.widgetInfo.config.isShow
       },
       set(val) {
@@ -64,14 +68,14 @@ export default {
       if (!val) this.clearBasemap()
     },
     fitBounds(item) {
-      const { Cesium, map, webGlobe, CesiumZondy } = this
+      const { Cesium, map, vueCesium, viewer } = this
       const isOutOfRange = FitBound.fitBoundByLayer(
         item,
         {
           Cesium,
           map,
-          webGlobe,
-          CesiumZondy,
+          viewer,
+          vueCesium,
         },
         this.is2DMapMode === true
       )
