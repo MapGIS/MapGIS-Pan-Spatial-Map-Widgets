@@ -283,7 +283,7 @@ export default {
     /**
      * 获取结果集查询参数
      */
-    getExhibition(layer, titleType) {
+    getExhibition(layer, titleType, queryType) {
       const parent = layer.layer
       let exhibition: Record<string, any> | null = null
       const arr: Array<Record<string, any>> = [
@@ -324,6 +324,7 @@ export default {
                 gdbp: layer.url,
                 serverName: docName,
                 serverUrl: parent.url,
+                f: queryType ? queryType : '',
               },
             }
           },
@@ -354,6 +355,7 @@ export default {
                 DNSName,
                 serverType: igsVectorLayer.type,
                 gdbp: igsVectorLayer.gdbps,
+                f: queryType ? queryType : '',
               },
             }
           },
@@ -371,6 +373,7 @@ export default {
                 serverType: parent.type,
                 layerIndex: layer.id,
                 serverUrl: parent.url,
+                f: queryType ? queryType : '',
               },
             }
           },
@@ -394,6 +397,7 @@ export default {
                   port: Number(port || baseConfigInstance.config.port),
                   serverType: parent.type,
                   gdbp: layerConfig.bindData.gdbps,
+                  f: queryType ? queryType : '',
                 },
               }
             }
@@ -409,6 +413,7 @@ export default {
                 id: layer.id,
                 name: layer.title,
                 serverType: layer.type,
+                f: queryType ? queryType : '',
               },
             }
           },
