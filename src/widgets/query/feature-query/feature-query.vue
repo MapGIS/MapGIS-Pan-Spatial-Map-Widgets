@@ -1,6 +1,11 @@
 <template>
   <div class="mp-widget-feature-query">
-    <mp-draw-pro ref="draw" @start="onDrawStart" @finished="onDrawFinished" />
+    <mp-draw-pro
+      ref="draw"
+      :clearDrawMode="clearDrawMode"
+      @start="onDrawStart"
+      @finished="onDrawFinished"
+    />
     <mp-3d-draw-pro
       ref="draw3d"
       @start="onDrawStart"
@@ -51,15 +56,18 @@
       </mapgis-ui-setting-form>
     </div>
     <div v-show="showLayerList">
-      <!-- <mapgis-ui-layer-select-list :layers="document" width="30%" /> -->
       <mapgis-ui-layer-check-list
-        :layers="document"
+        :layers="operateLayerData"
         @on-check="onCheckLayer"
         :isSingleCheck="isSingleCheck"
         :isExpandAll="isExpandAll"
         :checkedKeys="checkedKeys"
         :isCheckAll="isCheckAll"
       />
+      <!-- <mapgis-ui-layer-select-list
+        :layers="operateLayerData"
+        @on-select="onCheckLayer"
+      /> -->
     </div>
   </div>
 </template>
@@ -155,6 +163,7 @@ export default {
       checkList: [],
       layerKeyRelation: {},
       checkLayer: [],
+      operateLayerData: [],
     }
   },
   computed: {
@@ -183,7 +192,10 @@ export default {
       return this.is2DMapMode ? this.$refs.draw : this.$refs.draw3d
     },
     isShowLayerList() {
-      return this.widgetInfo.config.isShowLayerList || true
+      return this.widgetInfo.config.isShowLayerList
+    },
+    clearDrawMode() {
+      return this.widgetInfo.config.clearDrawMode
     },
   },
 
@@ -191,6 +203,12 @@ export default {
   watch: {
     mapRender() {
       this.onClearDraw()
+    },
+    'document.defaultMap': {
+      deep: true,
+      handler() {
+        this.dealwithLayers()
+      },
     },
   },
 
@@ -224,7 +242,7 @@ export default {
 
     // 微件失活时
     onDeActive() {
-      this.onClearDraw()
+      this.clearDrawMode && this.onClearDraw()
       this.doDeActive = true
       this.map.getCanvas().style.cursor = 'grab'
     },
@@ -314,9 +332,13 @@ export default {
         options: [],
       }
       let activeOptionId = ''
-      const {
-        activeScene: { sublayers },
-      } = layer
+      const sublayers = this.isShowLayerList
+        ? this.getSublayers(layer.id)
+        : layer.activeScene?.sublayers
+
+      // const {
+      //   activeScene: { sublayers },
+      // } = layer
       const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
         layer.id
       )
@@ -546,7 +568,9 @@ export default {
       }
       let activeOptionId = ''
 
-      const sublayers = layer.allSublayers
+      const sublayers = this.isShowLayerList
+        ? this.getSublayers(layer.id)
+        : layer.allSublayers
       for (let index = 0; index < sublayers.length; index++) {
         const sublayer = sublayers[index]
         if (!sublayer.visible) {
@@ -923,6 +947,27 @@ export default {
     showSettingsInfo() {
       this.showSettingPanel = !this.showSettingPanel
       this.showLayerList = false
+    },
+    dealwithLayers() {
+      const layers = this.document.clone().defaultMap.layers()
+      layers.forEach((item) => {
+        if (item.type === LayerType.IGSScene) {
+          item.sublayers = item.activeScene?.sublayers
+        } else if (item.type === LayerType.IGSVector) {
+          item.sublayers = item.currentStyle.layers.map((row) => ({
+            ...row,
+            visible:
+              row.layout === undefined ||
+              row.layout.visibility === undefined ||
+              row.layout.visibility === 'visible',
+            id: row.id,
+            title: row.description || row.id,
+          }))
+        } else if (item.type === LayerType.ArcGISMapImage) {
+          item.sublayers = item.allSublayers
+        }
+      })
+      this.operateLayerData = layers
     },
   },
 }

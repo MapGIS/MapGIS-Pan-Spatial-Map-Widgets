@@ -14,7 +14,7 @@ import {
 } from '@mapgis/web-app-framework'
 import moment from 'moment'
 
-const { GFeature, FeatureQuery, ArcGISFeatureQuery } = Feature
+const { GFeature, FeatureQuery, ArcGISFeatureQuery, FeatureConvert } = Feature
 
 const { IAttributeTableOption, IAttributeTableExhibition } = Exhibition
 
@@ -197,8 +197,16 @@ export default {
     ) {
       this.rowKey = this.setRowKey()
       this.currentTableParams = { ...this.optionVal }
-      const { ip, port, serverName, serverType, serverUrl, layerIndex, gdbp } =
-        this.optionVal
+      const {
+        ip,
+        port,
+        serverName,
+        serverType,
+        serverUrl,
+        layerIndex,
+        gdbp,
+        f,
+      } = this.optionVal
       const { current, pageSize } = this.pagination
       let geojson
       const queryWhere = where || this.optionVal.where
@@ -222,7 +230,7 @@ export default {
           geojson = await FeatureQuery.query({
             ip,
             port: port.toString(),
-            f: 'geojson',
+            f: f ? f : 'geojson',
             where: queryWhere,
             geometry: queryGeometry,
             isDataStoreQuery,
@@ -234,6 +242,10 @@ export default {
             layerIdxs: layerIndex,
             coordPrecision: 8,
           })
+          // json格式数据转成geojson格式
+          if (f === 'json') {
+            geojson = FeatureConvert.featureIGSToFeatureGeoJSON(geojson)
+          }
           if (val === '1') {
             this.attrTableToJsonData = geojson.features
             return
