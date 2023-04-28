@@ -8,6 +8,7 @@
     />
     <mp-3d-draw-pro
       ref="draw3d"
+      :clearDrawMode="clearDrawMode"
       @start="onDrawStart"
       @finished="onDrawFinished"
     >
