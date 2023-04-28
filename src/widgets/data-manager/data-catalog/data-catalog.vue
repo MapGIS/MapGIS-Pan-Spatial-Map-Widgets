@@ -22,7 +22,72 @@
         </mapgis-ui-menu>
       </mapgis-ui-dropdown>
     </div>
+
     <div class="tree-container beauty-scroll">
+      <div
+        class="tree-tabs-list-content"
+        v-show="
+          isClassify && isChangeDataCatalog && dataCatalogTabData.length > 0
+        "
+      >
+        <mapgis-ui-ant-icon
+          v-if="showTabsIcon"
+          type="left"
+          :style="{ cursor: isPreClick ? 'not-allowed' : 'pointer' }"
+          @click="goback"
+        />
+        <div
+          id="tree-tabs-list"
+          class="tree-tabs-list"
+          @mousewheel="divMousewheel"
+        >
+          <span
+            v-for="item in dataCatalogTabData"
+            :id="item.guid"
+            :key="item.guid"
+            :class="{ 'active': activeTreeTab === item.guid }"
+            @click="treeTabChange(item.guid)"
+            >{{ item.name }}</span
+          >
+        </div>
+
+        <a-popover placement="rightTop" overlay-class-name="tabs-detail-list">
+          <template slot="content">
+            <div
+              v-for="item in dataCatalogTabData"
+              class="tabs-detail-info"
+              :key="item.guid"
+              :class="{ 'active': activeTreeTab === item.guid }"
+              @click="srcollToSelect(item)"
+            >
+              {{ item.name }}
+            </div>
+          </template>
+          <mapgis-ui-ant-icon
+            v-if="showTabsIcon"
+            type="right"
+            :style="{ cursor: isSuffixClick ? 'not-allowed' : 'pointer' }"
+            @click="goforward"
+          />
+        </a-popover>
+      </div>
+      <!-- <div class="tree-tabs-list">
+        <mapgis-ui-tabs
+          v-show="
+            showType === 'tabs' &&
+            isChangeDataCatalog &&
+            dataCatalogTabData.length > 0
+          "
+          v-model="activeTreeTab"
+          @change="treeTabChange"
+        >
+          <mapgis-ui-tab-pane
+            v-for="item in dataCatalogTabData"
+            :key="item.guid"
+            :tab="item.name"
+          />
+        </mapgis-ui-tabs>
+      </div> -->
       <mapgis-ui-tree
         checkable
         block-node
@@ -35,7 +100,12 @@
         @expand="onExpand"
         @select="onSelect"
       >
-        <span slot="custom" slot-scope="item" class="tree-item-handle">
+        <span
+          slot="custom"
+          slot-scope="item"
+          class="tree-item-handle"
+          :class="[checkedNodeKeys.includes(item.guid) ? 'check-light' : '']"
+        >
           <img
             v-if="widgetInfo.config.iconConfig[nodeLevel(item)]"
             :src="baseUrl + widgetInfo.config.iconConfig[nodeLevel(item)]"
@@ -250,6 +320,7 @@
 <script lang="ts">
 import {
   WidgetMixin,
+  AppMixin,
   Document,
   Map,
   LayerType,
@@ -262,14 +333,16 @@ import {
   api,
   eventBus,
   events,
+  DataFlowList,
 } from '@mapgis/web-app-framework'
 
 import MpMetadataInfo from '../../../components/MetadataInfo/MetadataInfo.vue'
 import NonSpatial from './non-spatial.vue'
+import * as turf from '@turf/turf'
 
 export default {
   name: 'MpDataCatalog',
-  mixins: [WidgetMixin],
+  mixins: [WidgetMixin, AppMixin],
   components: {
     MpMetadataInfo,
     NonSpatial,
@@ -354,6 +427,22 @@ export default {
 
       // 是否是取消扩展图层标识
       extendLayerRemove: false,
+      // 数据目录tab展示页
+      dataCatalogTabData: [],
+      // dataCatalogTreeData备份供tab切换使用
+      dataCatalogTreeDataCopy: [],
+      // 当前选中tab
+      activeTreeTab: '',
+      // 当前选中的key
+      activeKey: '',
+      showTabsIcon: true,
+      isPreClick: true,
+      isSuffixClick: false,
+      // 记录每个tabs中勾选的key
+      activeTreeTabRelation: {},
+      setKeys: false,
+      // 滚动距离
+      scrollLeft: 0,
     }
   },
   computed: {
@@ -368,6 +457,9 @@ export default {
       return function (node) {
         return node.pos.split('-').length - 1
       }
+    },
+    isClassify() {
+      return this.widgetInfo.config.isClassify || true
     },
   },
   created() {
@@ -394,6 +486,25 @@ export default {
     )
     this.dataCatalogTreeData = treeData
     this.allTreeDataConfigs = allTreeDataConfigs
+    if (this.isClassify) {
+      this.dataCatalogTreeDataCopy = treeData
+      this.dataCatalogTabData = this.getTabsData(treeData)
+      this.activeTreeTab =
+        this.dataCatalogTabData.length > 0
+          ? this.dataCatalogTabData[0].guid
+          : ''
+      this.activeTreeTab && this.treeTabChange(this.activeTreeTab)
+    }
+
+    // 监听tree-tabs-list，当面板宽度超过scrollWidth取消前后处的箭头
+    const targetNode = document.getElementById('tree-tabs-list')
+    this.observeTab = new ResizeObserver(() => {
+      if (targetNode != null) {
+        // 控制前后处箭头的显隐
+        this.showTabsIcon = targetNode.scrollWidth > targetNode.clientWidth
+        this.computedIconClick(targetNode)
+      }
+    }).observe(targetNode)
 
     eventBus.$on(events.OPEN_DATA_BOOKMARK_EVENT, this.bookMarkClick)
     eventBus.$on(events.IMPOSE_SERVICE_PREVIEW_EVENT, this.imposeService)
@@ -421,11 +532,16 @@ export default {
   },
   methods: {
     onCheckedNodeKeysChenged() {
+      // 列表展示赋值key不需要再次处理
+      if (this.setKeys) {
+        this.setKeys = !this.setKeys
+        return
+      }
       // 兼容收藏夹tab页中的勾选
       eventBus.$emit(
         events.DATA_SELECTION_KEYS_CHANGE_EVENT,
         this.isChangeDataCatalog
-          ? this.checkedNodeKeys
+          ? this.getDataCatalogCheckedNodeKeys()
           : this.getCheckedNodeKeys()
       )
 
@@ -433,7 +549,7 @@ export default {
       if (this.extendLayerRemove) {
         this.extendLayerRemove = !this.extendLayerRemove
         this.preCheckedNodeKeys = this.isChangeDataCatalog
-          ? JSON.parse(JSON.stringify(this.checkedNodeKeys))
+          ? this.getDataCatalogCheckedNodeKeys()
           : this.getCheckedNodeKeys()
         return
       }
@@ -441,7 +557,7 @@ export default {
       let newChecked = []
       let newUnChecked = []
 
-      if (this.isChangeDataCatalog) {
+      if (this.isChangeDataCatalog && !this.isClassify) {
         if (this.preCheckedNodeKeys.length === 0) {
           newChecked = this.checkedNodeKeys
         } else if (this.checkedNodeKeys.length === 0) {
@@ -490,6 +606,36 @@ export default {
         ) {
           this.dataCatalogManager.checkedLayerConfigIDs = checkedLayerConfigIDs
         }
+      } else if (this.isChangeDataCatalog && this.isClassify) {
+        const allCheckedKeys = this.getDataCatalogCheckedNodeKeys()
+        if (this.preCheckedNodeKeys.length === 0) {
+          newChecked = this.checkedNodeKeys
+        } else if (allCheckedKeys.length === 0) {
+          newUnChecked = this.preCheckedNodeKeys
+        } else {
+          // 计算哪些是新选中的,哪些时新取消选中的。
+
+          // 查找新选中的(在之前的选中中没有,在当前的选中中有)
+          newChecked = allCheckedKeys.filter(
+            (item) => !this.preCheckedNodeKeys.includes(item)
+          )
+
+          // 查找新取消选中的(在之前的选中中有,在当前的选中中没有)\
+          newUnChecked = this.preCheckedNodeKeys.filter(
+            (item) => !allCheckedKeys.includes(item)
+          )
+        }
+
+        // 如果两者不相等则重新赋值
+        if (
+          this.dataCatalogManager.checkedLayerConfigIDs.toString() !==
+          allCheckedKeys.toString()
+        ) {
+          this.dataCatalogManager.checkedLayerConfigIDs = allCheckedKeys
+        }
+        // 给this.checkedNodeKeys赋值
+        this.checkedNodeKeys = allCheckedKeys
+        this.setKeys = true
       } else {
         // 收藏夹页面操作逻辑
         newChecked = this.checkedNodeKeys.filter(
@@ -524,7 +670,7 @@ export default {
       // 修改说明：原有代码赋址属于浅拷贝，指向同一内存地址，checkedNodeKeys变化时preCheckedNodeKeys也会变化，这样preCheckedNodeKeys就无法记录上一次勾选的checkedNodeKeys。
       // 修改人：何龙 2021年04月21日
       this.preCheckedNodeKeys = this.isChangeDataCatalog
-        ? JSON.parse(JSON.stringify(this.checkedNodeKeys))
+        ? this.getDataCatalogCheckedNodeKeys()
         : this.getCheckedNodeKeys()
     },
     onCheckedLayerConfigIDsChanged() {
@@ -538,7 +684,10 @@ export default {
     },
     getCheckedLayerConfigIDs() {
       const checkedLayerConfigIDs = []
-      this.checkedNodeKeys.forEach((key) => {
+      const allCheck = this.isClassify
+        ? this.getDataCatalogCheckedNodeKeys()
+        : this.checkedNodeKeys
+      allCheck.forEach((key) => {
         const layerConfig = this.dataCatalogManager.getLayerConfigByID(key)
 
         if (layerConfig) checkedLayerConfigIDs.push(key)
@@ -733,6 +882,52 @@ export default {
       } else {
         this.expandedKeys.push(selectedKeys[0])
       }
+      // 图层跳转逻辑
+      if (
+        this.dataCatalogManager.checkedLayerConfigIDs.includes(selectedKeys[0])
+      ) {
+        const layer = this.document.defaultMap.findLayerById(selectedKeys[0])
+
+        this.fitBounds(layer, this.getDataFlowExtent(layer))
+      }
+    },
+    fitBounds(item, layeExtent) {
+      const { Cesium, map, viewer, vueCesium } = this
+      const isOutOfRange = FitBound.fitBoundByLayer(
+        item,
+        {
+          Cesium,
+          map,
+          viewer,
+          vueCesium,
+        },
+        this.is2DMapMode === true,
+        layeExtent
+      )
+      if (isOutOfRange) {
+        this.$message.error('地图范围有误，已调整为经纬度最大范围')
+      }
+    },
+    getDataFlowExtent(layerItem) {
+      if (layerItem.type === LayerType.DataFlow) {
+        const dataList = DataFlowList.getDataFlowById(layerItem.id)
+        const lineArr = dataList.map((item) => {
+          const {
+            geometry: { coordinates },
+          } = item
+          return coordinates
+        })
+        const line = turf.lineString(lineArr)
+        const [xmin, ymin, xmax, ymax] = turf.bbox(line)
+        return {
+          xmin,
+          ymin,
+          xmax,
+          ymax,
+        }
+      }
+
+      return undefined
     },
 
     // 取消扩展图层同步勾选
@@ -853,6 +1048,11 @@ export default {
       )
       this.dataCatalogTreeData = treeData
       this.allTreeDataConfigs = allTreeDataConfigs
+      if (this.isClassify) {
+        this.dataCatalogTreeDataCopy = treeData
+        this.dataCatalogTabData = this.getTabsData(treeData)
+        this.activeTreeTab && this.treeTabChange(this.activeTreeTab)
+      }
     },
 
     // 收藏按钮
@@ -1189,7 +1389,6 @@ export default {
       return { leafTotal, leafChecked }
     },
     changeDataCatalog() {
-      this.isChangeDataCatalog = true
       this.expandedKeys = []
       if (
         JSON.stringify(this.checkedNodeKeys) !==
@@ -1197,9 +1396,22 @@ export default {
       ) {
         this.checkedNodeKeys = this.getCheckedNodeKeys()
       }
-      this.refreshTree()
+      this.changeShowDataCatalogTree()
     },
-
+    changeShowDataCatalogTree() {
+      this.isChangeDataCatalog = true
+      this.dataCatalogTabData = this.getTabsData(this.dataCatalogTreeDataCopy)
+      if (this.isClassify) {
+        const activeTreeTab = this.dataCatalogTreeDataCopy[0]?.guid
+        this.activeTreeTab
+          ? this.treeTabChange(this.activeTreeTab)
+          : this.treeTabChange(activeTreeTab)
+      } else {
+        this.dataCatalogTreeData = [...this.dataCatalogTreeDataCopy]
+      }
+      // this.dataCatalogTabData = this.getTabsData(this.dataCatalogTreeDataCopy)
+      this.scrollTargetPosition()
+    },
     async changeBookmark() {
       this.isChangeDataCatalog = false
       this.checkedNodeKeysCopy = JSON.parse(
@@ -1256,6 +1468,131 @@ export default {
           this.$message.error('配置文件更新失败')
         })
     },
+    getTabsData(treeData) {
+      const tabsData = []
+      const tab = {
+        name: '其他',
+        guid: 'ungrouped-data',
+        children: [],
+      }
+      treeData.forEach((item) => {
+        item.children ? tabsData.push(item) : tab.children.push(item)
+      })
+      tabsData.push(tab)
+      return tabsData
+    },
+    treeTabChange(val) {
+      this.activeTreeTab = val
+      this.dataCatalogTreeData = this.dataCatalogTabData.find(
+        (item) => item.guid === val
+      )?.children
+    },
+    divMousewheel(event) {
+      // 获取滚动方向
+      const detail = event.wheelDelta || event.detail
+      // 定义滚动方向，其实也可以在赋值的时候写
+      const moveForwardStep = 1
+      const moveBackStep = -1
+      // 定义滚动距离
+      let step = 0
+      // 判断滚动方向,这里的100可以改，代表滚动幅度，也就是说滚动幅度是自定义的
+      if (detail < 0) step = moveForwardStep * 50
+      else step = moveBackStep * 50
+
+      // 对需要滚动的元素进行滚动操作
+      if (
+        event.currentTarget.scrollLeft + step >=
+        event.currentTarget.scrollWidth
+      ) {
+        event.currentTarget.scrollLeft = event.currentTarget.scrollWidth
+      } else if (event.currentTarget.scrollLeft + step <= 0) {
+        event.currentTarget.scrollLeft = 0
+      } else {
+        event.currentTarget.scrollLeft += step
+      }
+      this.scrollLeft = event.currentTarget.scrollLeft
+      this.computedIconClick(event.currentTarget)
+    },
+    computedIconClick(targetNode) {
+      // 控制前置箭头是否可以点击
+      this.isPreClick = targetNode.scrollLeft === 0
+      // 控制后置箭头是否可以点击
+      this.isSuffixClick =
+        targetNode.scrollWidth - targetNode.offsetWidth ===
+        targetNode.scrollLeft
+    },
+    goback() {
+      const targetNode = document.getElementById('tree-tabs-list')
+      // 定义滚动距离
+      const step = 50
+      if (targetNode.scrollLeft - step <= 0) {
+        targetNode.scrollLeft = 0
+      } else {
+        targetNode.scrollLeft -= step
+      }
+      this.scrollLeft = targetNode.scrollLeft
+      this.computedIconClick(targetNode)
+    },
+    goforward() {
+      const targetNode = document.getElementById('tree-tabs-list')
+      // 定义滚动距离
+      const step = 50
+      if (targetNode.scrollLeft + step >= targetNode.scrollWidth) {
+        targetNode.scrollLeft = targetNode.scrollWidth
+      } else {
+        targetNode.scrollLeft += step
+      }
+      this.scrollLeft = targetNode.scrollLeft
+      this.computedIconClick(targetNode)
+    },
+    getDataCatalogCheckedNodeKeys() {
+      if (!this.isClassify) {
+        return [...this.checkedNodeKeys]
+      } else {
+        this.activeTreeTabRelation[this.activeTreeTab] = [
+          ...this.checkedNodeKeys,
+        ]
+        // 将其他tab页的勾选全部放到一起
+        let allCheck = []
+        Object.keys(this.activeTreeTabRelation).forEach((item) => {
+          allCheck = [
+            ...new Set([...allCheck, ...this.activeTreeTabRelation[item]]),
+          ]
+        })
+        return allCheck
+      }
+    },
+    scrollTargetPosition() {
+      // this.$nextTick在收藏夹切换回数据目录时会失效
+      // this.$nextTick(() => {
+      //   if (this.scrollLeft !== 0) {
+      //     const targetNode = document.getElementById('tree-tabs-list')
+      //     if (targetNode) targetNode.scrollLeft = this.scrollLeft
+      //   }
+      // })
+      setTimeout(() => {
+        if (this.scrollLeft !== 0) {
+          this.reComputed()
+        }
+      }, 500)
+    },
+    onActive() {
+      this.scrollTargetPosition()
+    },
+    reComputed() {
+      const targetNode = document.getElementById('tree-tabs-list')
+      if (targetNode) targetNode.scrollLeft = this.scrollLeft
+      this.computedIconClick(targetNode)
+    },
+    srcollToSelect(data) {
+      if (this.activeTreeTab === data.guid) return
+      this.treeTabChange(data.guid)
+      const targetNode = document.getElementById(data.guid)
+      const scrollNode = document.getElementById('tree-tabs-list')
+      const scrollWidth = targetNode ? targetNode.offsetLeft - 20 : 0
+      this.scrollLeft = scrollWidth
+      this.reComputed()
+    },
   },
 }
 </script>
@@ -1298,9 +1635,111 @@ export default {
         white-space: nowrap;
       }
     }
+    .check-light {
+      background: var(--primary-2);
+    }
+    ::v-deep .mapgis-ui-tree li .mapgis-ui-tree-node-content-wrapper {
+      padding: 0;
+    }
+  }
+  .tree-tabs-list-content {
+    position: relative;
+    display: flex;
+    > i {
+      margin-top: 8px;
+      line-height: 24px;
+    }
+    > i:hover {
+      color: var(--primary-5);
+    }
+    .tree-tabs-list {
+      display: flex;
+      justify-content: space-between;
+      /* 设置超出滚动 */
+      overflow-x: auto;
+      padding-top: 8px;
+      margin: 0 8px;
+      > span {
+        display: inline-block;
+        margin-right: 5px;
+        /* 超出滚动的关键，没有它元素会自动缩小，不会滚动 */
+        flex-shrink: 0;
+        cursor: pointer;
+        margin-right: 8px;
+        user-select: none;
+        background: var(--background-light);
+        padding: 0 8px;
+        border-radius: 3px;
+      }
+      .active {
+        font-weight: 500;
+        color: var(--primary-5);
+      }
+      .active:hover {
+        color: var(--primary-5);
+      }
+      > span:hover {
+        color: var(--primary-3);
+      }
+      > span:last-child {
+        margin-right: 0;
+      }
+    }
+  }
+  .tree-tabs-list {
+    ::v-deep .mapgis-ui-tabs-bar {
+      border-bottom-color: transparent;
+      margin: 0;
+    }
+    ::v-deep .mapgis-ui-tabs-ink-bar {
+      visibility: hidden;
+    }
+    ::v-deep .mapgis-ui-tabs .mapgis-ui-tabs-nav .mapgis-ui-tabs-tab {
+      padding: 15px 4px;
+    }
+    display: flex;
+    justify-content: space-between;
+    /* 设置超出滚动 */
+    overflow-x: auto;
+
+    > span {
+      display: inline-block;
+      margin-right: 5px;
+      /* 超出滚动的关键，没有它元素会自动缩小，不会滚动 */
+      flex-shrink: 0;
+      cursor: pointer;
+      margin-right: 16px;
+      :hover {
+        color: var(--primary-5);
+      }
+      .active {
+        font-weight: 500;
+      }
+    }
+  }
+  .tree-tabs-list::-webkit-scrollbar {
+    /* 隐藏滚动条 */
+    display: none;
   }
 }
-
+.tabs-detail-list {
+  .tabs-detail-info {
+    padding: 5px 5px;
+    cursor: pointer;
+  }
+  .tabs-detail-info:hover {
+    color: var(--primary-3);
+  }
+  .active {
+    font-weight: 500;
+    color: var(--primary-5);
+    background: var(--background);
+    border-radius: 3px;
+  }
+  .active:hover {
+    color: var(--primary-5);
+  }
+}
 .mapgis-ui-dropdown-trigger.anticon-more {
   display: flex;
   flex-direction: column;
@@ -1316,5 +1755,13 @@ export default {
 .total-text {
   font-size: xx-small;
   color: gray;
+}
+</style>
+<style lang="less">
+.tabs-detail-list {
+  .mapgis-ui-popover-inner-content {
+    max-height: 600px;
+    overflow: auto;
+  }
 }
 </style>
