@@ -18,6 +18,7 @@ export default {
     return {
       setting: {
         speed: 10,
+        elevationType: 'addition',
         exHeight: 1,
         heading: 90,
         pitch: 0,
