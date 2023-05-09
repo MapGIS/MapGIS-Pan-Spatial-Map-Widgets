@@ -476,6 +476,11 @@ export default {
     console.log(this.dataCatalogManager, 'this.dataCatalogManager')
     console.log(this.widgetInfo.config, 'this.widgetInfo.config')
 
+    // 使用新的app.json中的规范，判断this.application.data是否有且有值就替换this.widgetInfo.config.treeConfig.treeData
+    if (this.application.data && this.application.data.length > 0) {
+      this.widgetInfo.config.treeConfig.treeData = this.application.data
+    }
+
     this.dataCatalogManager.init(this.widgetInfo.config)
     this.dataCatalogTreeData =
       await this.dataCatalogManager.getDataCatalogTreeData(true)
