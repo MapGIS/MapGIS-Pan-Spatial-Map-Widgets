@@ -170,7 +170,7 @@ export default {
       api
         .saveWidgetConfig({
           name: 'city-grow',
-          config: config,
+          config: JSON.stringify(config),
         })
         .then(() => {
           console.log('更新城市生长配置成功')

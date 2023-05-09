@@ -173,7 +173,7 @@ export default {
       config.dataSource = e
       api.saveWidgetConfig({
         name: 'map-story',
-        config: config,
+        config: JSON.stringify(config),
       })
     },
 

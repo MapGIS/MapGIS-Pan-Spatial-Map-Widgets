@@ -47,7 +47,7 @@ export default {
 
       api.saveWidgetConfig({
         name: 'viewpoint-manager',
-        config: JSON.parse(JSON.stringify(newConfig)),
+        config: JSON.stringify(newConfig),
       })
     },
 

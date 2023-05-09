@@ -96,7 +96,7 @@ export default {
       config.dataSource = e
       api.saveWidgetConfig({
         name: 'overlay-manager',
-        config: config,
+        config: JSON.stringify(config),
       })
     },
   },
