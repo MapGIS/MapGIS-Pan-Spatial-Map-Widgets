@@ -251,6 +251,7 @@ export default {
       return [
         {
           title: '名称',
+          width: '30%',
           dataIndex: 'name',
           sorter: (a, b) => a.name < b.name,
           ellipsis: true,
@@ -272,6 +273,7 @@ export default {
         {
           title: '类型',
           dataIndex: 'type',
+          width: '40%',
           sorter: (a, b) =>
             this.typeDescription(a.type) < this.typeDescription(b.type),
           ellipsis: true,
@@ -281,7 +283,7 @@ export default {
         },
         {
           title: '操作',
-          width: '20%',
+          width: '30%',
           dataIndex: 'operation',
           scopedSlots: { customRender: 'operation' },
         },
@@ -569,6 +571,9 @@ export default {
       .data-content-toolbar {
         flex-direction: row-reverse;
       }
+    }
+    .editable-row-operations a {
+      margin-right: 8px;
     }
 
     ::v-deep .mapgis-ui-table-thead > tr:first-child > th:first-child {
