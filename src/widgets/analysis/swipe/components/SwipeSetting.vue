@@ -25,9 +25,7 @@
     <mapgis-ui-form-item label="类型">
       <mapgis-ui-radio-group :value="direction" @change="onDirectionChange">
         <mapgis-ui-radio value="vertical"> 垂直 </mapgis-ui-radio>
-        <mapgis-ui-radio value="horizontal" v-show="swipe.is2DMapMode">
-          水平
-        </mapgis-ui-radio>
+        <mapgis-ui-radio value="horizontal"> 水平 </mapgis-ui-radio>
       </mapgis-ui-radio-group>
     </mapgis-ui-form-item>
   </mapgis-ui-setting-form>
@@ -45,7 +43,7 @@ export default {
   computed: {
     // 卷帘方向
     direction() {
-      return this.swipe.is2DMapMode ? this.swipe.direction : 'vertical'
+      return this.swipe.direction || 'vertical'
     },
     // 卷帘方向变化，同步更改图层选择框的标题
     directionLayerTitle(): {

@@ -100,7 +100,14 @@ export default {
       const _layers = this.document.defaultMap
         .clone()
         .getFlatLayers()
-        .filter((v) => !!v.isVisible)
+        .filter((v) => {
+          // 目录树节点上extend中roll可设置图层是否参与卷帘，默认为true
+          let roll = true
+          if (v.extend && v.extend.roll !== undefined) {
+            roll = v.extend.roll
+          }
+          return !!v.isVisible && roll
+        })
       if (_layers && _layers.length > 1) {
         success(_layers)
         this.onForceRefreshCesiumCompare()

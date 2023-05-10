@@ -5,6 +5,7 @@
       v-if="showCompare && refreshFlag()"
       :before-layers="beforeLayers"
       :after-layers="afterLayers"
+      :orientation="direction"
     />
     <!-- 空数据提示 -->
     <mapgis-ui-empty
@@ -31,6 +32,10 @@ export default {
     },
   },
   computed: {
+    // 卷帘方向
+    direction() {
+      return this.swipe.direction || 'vertical'
+    },
     // 上级(左侧)图层列表
     beforeLayers() {
       return this.getLayerIds(this.swipe.aboveLayer)
