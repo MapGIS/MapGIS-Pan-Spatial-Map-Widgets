@@ -206,9 +206,9 @@ export default {
       this.showSymbol = false
       const newConfig = this.plot && this.plot.toJSON()
       // console.log('plotConfig',newConfig)
-      api.saveConfig({
+      api.saveWidgetConfig({
         name: 'plot',
-        config: JSON.parse(JSON.stringify(newConfig)),
+        config: JSON.stringify(newConfig),
       })
     },
 

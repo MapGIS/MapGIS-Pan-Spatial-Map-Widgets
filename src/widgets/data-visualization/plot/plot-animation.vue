@@ -231,7 +231,7 @@ export default {
     saveConfig(newConfig) {
       api.saveWidgetConfig({
         name: 'plot-animation',
-        config: JSON.parse(JSON.stringify(newConfig)),
+        config: JSON.stringify(newConfig),
       })
     },
 
