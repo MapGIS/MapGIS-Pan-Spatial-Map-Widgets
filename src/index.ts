@@ -78,6 +78,7 @@ import {
   MpStratifiedHousehold,
   MpModelPick,
   MpOpacityFactor,
+  MpModelStretch,
 } from './widgets/tool'
 
 const components = [
@@ -150,6 +151,7 @@ const components = [
   MpStratifiedHousehold,
   MpModelPick,
   MpOpacityFactor,
+  MpModelStretch,
 ]
 
 import { thematicMapStore } from './widgets/data-visualization/thematic-map/store'

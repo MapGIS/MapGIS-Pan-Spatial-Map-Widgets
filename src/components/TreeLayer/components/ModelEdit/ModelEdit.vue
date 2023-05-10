@@ -15,7 +15,7 @@
           style="width: 100%"
         />
       </mapgis-ui-form-item>
-      <mapgis-ui-form-item label="维度">
+      <mapgis-ui-form-item label="纬度">
         <mapgis-ui-input-number
           v-model="coordinate.latitude"
           :min="0"

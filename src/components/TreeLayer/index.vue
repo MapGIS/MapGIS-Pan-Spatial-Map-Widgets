@@ -209,6 +209,7 @@ import MpCustomQuery from '../CustomQuery/CustomQuery.vue'
 import MpUnifyModify from './components/UnifyModify/UnifyModify.vue'
 import layerTypeUtil from './mixin/layer-type-util'
 import RightPopover from './components/RightPopover/index.vue'
+import ModelStretchUtil from '../ModelStretch/mixin/ModelStretchUtil.js'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
@@ -220,7 +221,13 @@ export default {
     MpUnifyModify, //eslint-disable-line
     RightPopover,
   },
-  mixins: [MapMixin, AppMixin, ExhibitionControllerMixin, layerTypeUtil],
+  mixins: [
+    MapMixin,
+    AppMixin,
+    ExhibitionControllerMixin,
+    layerTypeUtil,
+    ModelStretchUtil,
+  ],
   inject: ['vueCesium'],
   props: {
     widgetRouters: {
@@ -258,6 +265,13 @@ export default {
       modelEditLayer: {},
       // 图层是否保持编辑样式
       modelSave: false,
+      // m3dSetObj: {
+      //   longitude: undefined,
+      //   latitude: undefined,
+      //   height: undefined,
+      //   zmax: undefined,
+      //   zmin: undefined,
+      // },
     }
   },
   computed: {
@@ -385,11 +399,11 @@ export default {
       this.viewer
     )
     // 存放模型编辑对象
-    this.modelEditControlList = new Object()
+    window.modelEditControlList = new Object()
   },
   mounted() {
     this.$root.$on(events.SCENE_LOADEN_ON_MAP, this.sceneLoadedCallback)
-    eventBus.$on(events.MODEL_PICK, this.updateM3DPopupEnabled)
+    eventBus.$on(events.MODEL_PICK, this.updateM3DEnablePopupEnable)
   },
   methods: {
     /**
@@ -776,6 +790,7 @@ export default {
     changeM3DProps(item) {
       this.currentLayerInfo = item.dataRef
       this.clickPopover(item, false)
+      this.changeLayer(item)
       this.openPage({
         title: '属性编辑',
         name: 'MpChangeM3DProps',
@@ -787,13 +802,79 @@ export default {
         listeners: {
           'update:layer': (val) => {
             this.updateM3DProps(val, false)
+            this.changeLayer(val)
           },
           'update:luminanceAtZenith': (val) => {
             this.updateM3DProps(val, true)
           },
+          'update:scaleZ': (val) => {
+            this.changeScaleZ(val.scaleZ, val.offset)
+          },
+          'update:enableModelStretch': (val) => {
+            if (!val) {
+              this.updateModelReset()
+            }
+          },
         },
       })
     },
+
+    // changeLayer(layer) {
+    //   if (!layer) return
+
+    //   const { vueKey, Cesium, viewer, vueCesium } = this
+    //   const { id } = layer
+    //   const g3dLayer = this.getG3dLayer(id)
+    //   const m3dSet = g3dLayer.getM3DLayers()[0]
+    //   const initTransform = m3dSet._transform
+    //   // 模型的自身坐标系原点
+    //   const cartographic = Cesium.Cartographic.fromCartesian(
+    //     new Cesium.Cartesian3(
+    //       initTransform[12],
+    //       initTransform[13],
+    //       initTransform[14]
+    //     )
+    //   )
+    //   const longitude = Cesium.Math.toDegrees(cartographic.longitude)
+    //   const latitude = Cesium.Math.toDegrees(cartographic.latitude)
+    //   const height = cartographic.height // 模型高度
+    //   const zmin = m3dSet._root.boundingVolume.minimumHeight
+    //   // const zmax = 4.5
+    //   const zmax = m3dSet._root.boundingVolume.maximumHeight
+    //   this.m3dSetObj = { longitude, latitude, height, zmax, zmin }
+    //   if (window.modelEditControlList && window.modelEditControlList[id]) {
+    //     window.transformEditor = window.modelEditControlList[id]
+    //   } else {
+    //     window.transformEditor = new Cesium.ModelTransformTool(g3dLayer)
+    //     window.transformEditor.initModelEditor(viewer)
+    //     window.modelEditControlList[id] = window.transformEditor
+    //   }
+    // },
+    // getG3dLayer(id) {
+    //   const { vueKey, viewer, vueCesium } = this
+    //   let layerId = id
+    //   if (id.includes(':')) {
+    //     layerId = id.split(':')[0]
+    //   }
+    //   const sceneLayer = vueCesium.G3DManager.findSource(
+    //     vueKey || 'default',
+    //     layerId
+    //   )
+    //   const { m3ds, g3dLayerIndex } = sceneLayer.options
+    //   const g3dLayer = viewer.scene.layers.getLayer(g3dLayerIndex)
+    //   return g3dLayer
+    // },
+    // changeScaleZ(scaleZ, offset) {
+    //   if (window.transformEditor) {
+    //     window.transformEditor.setScala(1, 1, scaleZ)
+    //     const { longitude, latitude, height, zmax, zmin } = this.m3dSetObj
+    //     // 计算顶部到原点距离
+    //     const originToTop = zmax + offset - height
+    //     // 计算向下平移的距离,记得最后加上负号
+    //     const downHeight = originToTop * scaleZ + height
+    //     window.transformEditor.setTranslation(longitude, latitude, -downHeight)
+    //   }
+    // },
 
     /**
      * 打开wmts切换激活图层页面
@@ -821,20 +902,14 @@ export default {
     modelEdit(item) {
       // if (this.modelEditId !== item.id) this.modelEditId = item.id
       this.modelEditLayer = item
-      if (this.modelEditControlList[item.id]) {
-        this.transformEditor = this.modelEditControlList[item.id]
+      if (window.modelEditControlList[item.id]) {
+        window.transformEditor = window.modelEditControlList[item.id]
       } else {
-        const { Cesium, viewer, vueCesium } = this
-        const { vueKey } = this
-        const layer = vueCesium.G3DManager.findSource(
-          vueKey || 'default',
-          item.id
-        )
-        const { m3ds, g3dLayerIndex } = layer.options
-        const g3dLayer = viewer.scene.layers.getLayer(g3dLayerIndex)
-        this.transformEditor = new Cesium.ModelTransformTool(g3dLayer)
-        this.transformEditor.initModelEditor(viewer)
-        this.modelEditControlList[item.id] = this.transformEditor
+        const { Cesium, viewer } = this
+        const g3dLayer = this.getG3dLayer(item.id)
+        window.transformEditor = new Cesium.ModelTransformTool(g3dLayer)
+        window.transformEditor.initModelEditor(viewer)
+        window.modelEditControlList[item.id] = window.transformEditor
       }
 
       this.openPage({
@@ -856,7 +931,7 @@ export default {
       switch (type) {
         case 'reset':
           // 重置模型
-          this.updateModelReset(val)
+          this.updateModelReset()
           break
         case 'deactivate':
           // 取消图形化编辑
@@ -899,45 +974,48 @@ export default {
       }
     },
 
-    updateModelReset(layerItem) {
-      this.updateModelDeactivate()
-      this.transformEditor.reset()
-    },
+    // updateModelReset() {
+    //   if (!window.transformEditor) {
+    //     return
+    //   }
+    //   this.updateModelDeactivate()
+    //   window.transformEditor.reset()
+    // },
 
-    updateModelDeactivate() {
-      this.transformEditor.deactivate()
-    },
+    // updateModelDeactivate() {
+    //   window.transformEditor.deactivate()
+    // },
 
     updateModelZoom() {
-      this.transformEditor.activeScaleEditor({
+      window.transformEditor.activeScaleEditor({
         singleScale: false,
       })
     },
 
     updateModelZoomSingle() {
-      this.transformEditor.activeScaleEditor({
+      window.transformEditor.activeScaleEditor({
         singleScale: true,
       })
     },
 
     updateModelRotate() {
-      this.transformEditor.activeRotationEditor()
+      window.transformEditor.activeRotationEditor()
     },
 
     updateModelMove() {
-      this.transformEditor.activeTranslationEditor()
+      window.transformEditor.activeTranslationEditor()
     },
 
     updateModelZoomTo(zoom) {
-      this.transformEditor.setScala(zoom.xScale, zoom.yScale, zoom.zScale)
+      window.transformEditor.setScala(zoom.xScale, zoom.yScale, zoom.zScale)
     },
 
     updateModelRotateTo(rotate) {
-      this.transformEditor.setRotation(rotate.degree, rotate.axis)
+      window.transformEditor.setRotation(rotate.degree, rotate.axis)
     },
 
     updateModelMoveTo(move) {
-      this.transformEditor.setTranslation(
+      window.transformEditor.setTranslation(
         move.longitude,
         move.latitude,
         move.height
@@ -1014,20 +1092,16 @@ export default {
     },
 
     updateM3DProps(val, onlyUpdateLuminanceAtZenith) {
-      let popupEnabled
-      const {
-        key,
-        maximumScreenSpaceError,
-        layer,
-        id,
-        modelSwitchEnabled,
-        luminanceAtZenith,
-      } = val
+      let enablePopup
+      let enableModelSwitch
+      const { key, maximumScreenSpaceError, layer, id, luminanceAtZenith } = val
       const { viewer, Cesium } = this
       if (layer) {
-        popupEnabled = layer.popupEnabled
+        enablePopup = layer.enablePopup
+        enableModelSwitch = layer.enableModelSwitch
       } else {
-        popupEnabled = val.popupEnabled
+        enablePopup = val.enablePopup
+        enableModelSwitch = val.enableModelSwitch
       }
       const indexArr: Array<string> = key.split('-')
       const doc = this.layerDocument.clone()
@@ -1039,7 +1113,18 @@ export default {
           const sublayer = sublayers[secondIndex]
           sublayer.maximumScreenSpaceError = maximumScreenSpaceError
           sublayer.luminanceAtZenith = luminanceAtZenith
-          sublayer.layer.popupEnabled = popupEnabled
+          sublayer.layer.enablePopup = enablePopup
+          let sublayerLayerProperty = sublayer.layer.layerProperty
+          if (sublayerLayerProperty == undefined) {
+            sublayerLayerProperty = {}
+          }
+          sublayer.layer.layerProperty = {
+            ...sublayerLayerProperty,
+            enablePopup,
+            enableModelSwitch,
+            maximumScreenSpaceError,
+            luminanceAtZenith,
+          }
           const m3d = this.sceneController.findSource(id)
           m3d.maximumScreenSpaceError = maximumScreenSpaceError
           // m3d.enablePopup = enablePopup
@@ -1055,10 +1140,21 @@ export default {
           }
         } else {
           const MC = layers[firstIndex]
-          MC.popupEnabled = popupEnabled
-          MC.modelSwitchEnabled = modelSwitchEnabled
+          MC.enablePopup = enablePopup
+          MC.enableModelSwitch = enableModelSwitch
           MC.maximumScreenSpaceError = maximumScreenSpaceError
           MC.luminanceAtZenith = luminanceAtZenith
+          let { layerProperty } = MC
+          if (layerProperty == undefined) {
+            layerProperty = {}
+          }
+          MC.layerProperty = {
+            ...layerProperty,
+            enablePopup,
+            enableModelSwitch,
+            maximumScreenSpaceError,
+            luminanceAtZenith,
+          }
           const m3d = this.sceneController.findM3DIgsSource(MC.id)
           m3d.maximumScreenSpaceError = maximumScreenSpaceError
           m3d.luminanceAtZenith = luminanceAtZenith
@@ -1087,12 +1183,12 @@ export default {
         !this.pickArr.includes(item) && addArr.push(item)
       })
       if (delArr.length > 0 || addArr.length > 0) {
-        this.updateM3DPopupEnabled(true)
+        this.updateM3DEnablePopupEnable(true)
       }
     },
 
     // 模型拾取微件统一开启/关闭拾取
-    updateM3DPopupEnabled(isOpenPick) {
+    updateM3DEnablePopupEnable(isOpenPick) {
       this.isOpenPick = isOpenPick
       if (isOpenPick) {
         this.dealLayers()
@@ -1104,11 +1200,11 @@ export default {
       layers.forEach((layer) => {
         // ModelCache类型图层
         if (this.isModelCacheLayer(layer)) {
-          layer.popupEnabled = isOpenPick
+          layer.enablePopup = isOpenPick
         } else {
           const { sublayers } = layer.activeScene
           sublayers.forEach((sub) => {
-            sub.layer.popupEnabled = isOpenPick
+            sub.layer.enablePopup = isOpenPick
           })
         }
       })
@@ -1220,7 +1316,7 @@ export default {
   },
   beforeDestroy() {
     eventBus.$off(events.MODEL_PICK)
-    this.modelEditControlList = undefined
+    window.modelEditControlList = undefined
   },
 }
 </script>
