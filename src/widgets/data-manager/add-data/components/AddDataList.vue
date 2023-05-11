@@ -113,6 +113,22 @@
                 <template v-else>{{ fragment }}</template>
               </template>
             </span>
+
+            <!-- 编辑时 -->
+            <mapgis-ui-input
+              v-if="record.editable"
+              size="small"
+              style="margin: -5px 0"
+              :value="text"
+              @change="
+                (e) =>
+                  handleChangeData(
+                    e.target.value,
+                    record.editableKey,
+                    column.key
+                  )
+              "
+            />
             <template v-else>
               <span :title="text">{{ text }}</span>
             </template>
@@ -120,9 +136,14 @@
           <template slot="expandedRowRender" slot-scope="record">
             <div class="data-content">
               <mapgis-ui-textarea
+                id="url"
                 class="data-url"
-                disabled
                 :value="record.url"
+                :disabled="editingKey !== record.editableKey"
+                @change="
+                  (e) =>
+                    handleChangeData(e.target.value, record.editableKey, 'url')
+                "
                 auto-size
               ></mapgis-ui-textarea>
               <mapgis-ui-toolbar class="data-content-toolbar">
@@ -144,6 +165,23 @@
             <span :title="typeDescription(text)">{{
               typeDescription(text)
             }}</span>
+          </template>
+          <!-- 编辑栏 -->
+          <template slot="operation" slot-scope="text, record">
+            <div class="editable-row-operations">
+              <span v-if="record.editable">
+                <a @click="() => handleSaveData(record.editableKey)">保存</a>
+                <a @click="() => handleCancelEdit(record.editableKey)">取消</a>
+              </span>
+              <span v-else>
+                <!-- 当editingkey有值的时候，说明有行正在编辑，其他行的编辑就变为不可用状态 -->
+                <a
+                  :disabled="editingKey !== ''"
+                  @click="() => handleEditData(record.editableKey)"
+                  >编辑</a
+                >
+              </span>
+            </div>
           </template>
           <!-- <mapgis-ui-empty class="mapgis-ui-empty-normal" :image="simpleImage" /> -->
         </mapgis-ui-table>
@@ -195,6 +233,13 @@ export default {
       selectedRowKeys: [],
       preSelectedRowKeys: [],
       addCategoryVisible: false,
+
+      count: 0,
+      // 正在编辑的当前行的key，它的作用是保持只有当前选中行是开启编辑状态，其他行的编辑按钮不可用
+      editingKey: '',
+      // 缓存数据，主要用于编辑后取消数据更新
+      cacheData: [],
+      category: [],
     }
   },
 
@@ -206,6 +251,7 @@ export default {
       return [
         {
           title: '名称',
+          width: '30%',
           dataIndex: 'name',
           sorter: (a, b) => a.name < b.name,
           ellipsis: true,
@@ -227,12 +273,19 @@ export default {
         {
           title: '类型',
           dataIndex: 'type',
+          width: '40%',
           sorter: (a, b) =>
             this.typeDescription(a.type) < this.typeDescription(b.type),
           ellipsis: true,
           scopedSlots: { customRender: 'customRenderType' },
           filters: this.dataTypes,
           onFilter: (value, record) => record.type.indexOf(value) === 0,
+        },
+        {
+          title: '操作',
+          width: '30%',
+          dataIndex: 'operation',
+          scopedSlots: { customRender: 'operation' },
         },
       ]
     },
@@ -254,6 +307,16 @@ export default {
         this.changeCategory()
       },
     },
+    categoryDataList: {
+      handler(next) {
+        this.count = 0
+        next.forEach((item) => {
+          item.editableKey = this.count++
+        })
+        this.cacheData = JSON.parse(JSON.stringify(next))
+      },
+      immediate: true,
+    },
   },
 
   beforeCreate() {
@@ -262,6 +325,9 @@ export default {
 
   methods: {
     changeCategory() {
+      // 检查是否有编辑状态的数据
+      const flag = this.checkCategoryDatalistSave()
+      if (!flag) return
       this.queryData()
     },
 
@@ -353,7 +419,7 @@ export default {
         // 需要从文档中移除
         this.removeLayer(dataItem)
       }
-
+      this.editingKey = ''
       const index = this.categoryDataList.findIndex(
         (item) => item.id == dataItem.id
       )
@@ -395,6 +461,80 @@ export default {
     removeLayer(dataItem) {
       this.$emit('remove-layer', dataItem)
     },
+
+    // 开启编辑
+    handleEditData(key) {
+      // 这个key就是当前选中行的editablekey
+      // categoryDataList就是当前选中分类中所包含的数据列表，从列表中找到当前选中行（也就是选中要编辑的数据），给他添加一个editable的属性，并且属性值为true，表明要开始编辑该行，editable这个属性的作用是控制在编辑状态下开启的输入框等显示
+      this.categoryDataList.forEach((item) => {
+        if (item.editableKey === key) {
+          this.$set(item, 'editable', true)
+        }
+      })
+      this.editingKey = key
+    },
+    handleChangeData(value, key, column) {
+      this.categoryDataList.forEach((item) => {
+        if (item.editableKey === key) {
+          item[column] = value
+        }
+      })
+    },
+    // 取消编辑
+    handleCancelEdit(key) {
+      // 清空正在编辑的值，表明没有行正在参与编辑，使所有行的编辑状态恢复正常
+      this.editingKey = ''
+      // 删除开启编辑状态时当前行设置的编辑状态（true），editable属性会控制名称栏编辑状态下显示的input输入框
+      this.categoryDataList.forEach((item) => {
+        if (item.editableKey === key) {
+          this.$set(item, 'editable', false)
+        }
+      })
+      this.cacheData.forEach((item) => {
+        if (item.editableKey === key) {
+          this.$set(item, 'editable', false)
+        }
+      })
+      // 取消后数据恢复
+      this.categoryDataList = JSON.parse(JSON.stringify(this.cacheData))
+    },
+    // 保存编辑
+    handleSaveData(key) {
+      const flag = this.checkSave()
+      if (!flag) return
+
+      this.editingKey = ''
+      this.categoryDataList.forEach((item) => {
+        if (item.editableKey === key) {
+          this.$set(item, 'editable', false)
+        }
+      })
+      this.cacheData = JSON.parse(JSON.stringify(this.categoryDataList))
+    },
+    // 检查列表是否可保存
+    checkSave() {
+      let result = true
+      this.categoryDataList.forEach((item) => {
+        if (item.editable && item.editable === true) {
+          if (item.name === '' || item.url === '') {
+            result = false
+            this.$message.error('名称、服务地址不能为空！')
+          }
+        }
+      })
+      return result
+    },
+    /* 验证当前底图项下的数据列表是否全部保存 */
+    checkCategoryDatalistSave() {
+      let result = true
+      this.categoryDataList.forEach((item) => {
+        if (item.editable && item.editable === true) {
+          result = false
+          this.$message.error('请保存目录树中编辑状态的数据！')
+        }
+      })
+      return result
+    },
   },
 }
 </script>
@@ -431,6 +571,9 @@ export default {
       .data-content-toolbar {
         flex-direction: row-reverse;
       }
+    }
+    .editable-row-operations a {
+      margin-right: 8px;
     }
 
     ::v-deep .mapgis-ui-table-thead > tr:first-child > th:first-child {

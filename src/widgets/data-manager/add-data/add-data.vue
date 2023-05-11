@@ -124,6 +124,12 @@ export default {
           value: 'IGSVector',
           example: 'http://<server>:<port>/igs/rest/mrms/layers?gdbps={gdbps}',
         },
+        {
+          text: 'GeoJson 服务',
+          value: 'GeoJson',
+          example:
+            'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson',
+        },
       ],
       isZoomLayer: false,
       dataCatalogManager: dataCatalogManagerInstance,
@@ -223,6 +229,10 @@ export default {
 
     onAddData({ name, description, data, isZoom = false }) {
       this.isZoomLayer = isZoom
+
+      // 检查是否有编辑状态的数据
+      const flag = this.$refs.refAddDataList.checkCategoryDatalistSave()
+      if (!flag) return
 
       const isRepeat = this.isRepeatedService(data)
 
