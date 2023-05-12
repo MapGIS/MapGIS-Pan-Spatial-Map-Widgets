@@ -546,14 +546,13 @@ export default {
         ]
         this.color = 'rgba(39,194,76,1)'
       }
-      const { ip, port, docName } = this.layerSelect._parseUrl(
+      const { domain, docName } = this.layerSelect._parseUrl(
         this.layerSelect.url
       )
 
       const opt = {
         flowID: workFlowId,
-        ip,
-        port,
+        domain,
         isAsy: false,
         param,
       }
@@ -568,20 +567,18 @@ export default {
     },
 
     getStatus(guid) {
-      const { ip, port, docName } = this.layerSelect._parseUrl(
+      const { domain, docName } = this.layerSelect._parseUrl(
         this.layerSelect.url
       )
       Analysis.WorkflowAnalysis.getWorkflowStatus({
         id: guid,
-        ip,
-        port,
+        domain,
       }).then((status) => {
         if (status === 'Succeeded') {
           this.tab = 'analysisRes'
           Analysis.WorkflowAnalysis.getWorkflowResult({
             id: guid,
-            ip,
-            port,
+            domain,
           }).then((res) => {
             this.showLoading = false
             this.dealWithExecuteRes(res)

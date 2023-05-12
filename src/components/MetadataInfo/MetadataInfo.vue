@@ -139,39 +139,39 @@ export default {
               } else {
                 res = this.currentLayer._parseUrl(this.currentLayer.url)
               }
-              const { ip, port, docName } = res
-              option = { ip, port, docName, globe: true }
+              const { domain, docName } = res
+              option = { domain, docName, globe: true }
               break
             }
             case LayerType.IGSMapImage: {
               if (this.currentLayer.layer) {
                 const { id } = this.currentLayer
-                const { ip, port, docName } = this.currentLayer.layer._parseUrl(
+                const { domain, docName } = this.currentLayer.layer._parseUrl(
                   this.currentLayer.layer.url
                 )
-                option = { ip, port, docName, layerIdxs: id || '' }
+                option = { domain, docName, layerIdxs: id || '' }
               } else {
-                const { ip, port, docName } = this.currentLayer._parseUrl(
+                const { domain, docName } = this.currentLayer._parseUrl(
                   this.currentLayer.url
                 )
-                option = { ip, port, docName }
+                option = { domain, docName }
               }
 
               break
             }
             case LayerType.IGSTile: {
-              const { ip, port, tileName } = this.currentLayer._parseUrl(
+              const { domain, tileName } = this.currentLayer._parseUrl(
                 this.currentLayer.url
               )
-              option = { ip, port, tileName }
+              option = { domain, tileName }
               break
             }
             case LayerType.IGSVector: {
               const { gdbps } = this.currentLayer
-              const { ip, port } = this.currentLayer._parseUrl(
+              const { domain } = this.currentLayer._parseUrl(
                 this.currentLayer.url
               )
-              option = { ip, port, gdbp: gdbps }
+              option = { domain, gdbp: gdbps }
               break
             }
             case LayerType.ArcGISMapImage:
@@ -219,6 +219,12 @@ export default {
           ) {
             return
           }
+          const { serverURL } = this.currentConfig
+          let domain
+          if (!!serverURL && serverURL.length > 0) {
+            const url = new URL(serverURL)
+            domain = url.origin
+          }
           let option: Metadata.MetadataQueryParam = {}
           const defaultIp = baseConfigInstance.config.ip
           const defaultPort = baseConfigInstance.config.port
@@ -229,14 +235,14 @@ export default {
               const ip = this.currentConfig.ip || defaultIp
               const port = this.currentConfig.port || defaultPort
 
-              option = { ip, port, docName: serverName, globe: true }
+              option = { domain, ip, port, docName: serverName, globe: true }
               break
             }
             case LayerType.IGSMapImage: {
               const serverName = this.currentConfig.serverName
               const ip = this.currentConfig.ip || defaultIp
               const port = this.currentConfig.port || defaultPort
-              option = { ip, port, docName: serverName }
+              option = { domain, ip, port, docName: serverName }
 
               break
             }
@@ -244,24 +250,22 @@ export default {
               const serverName = this.currentConfig.serverName
               const ip = this.currentConfig.ip || defaultIp
               const port = this.currentConfig.port || defaultPort
-              option = { ip, port, tileName: serverName }
+              option = { domain, ip, port, tileName: serverName }
               break
             }
             case LayerType.IGSVector: {
               const gdbps = this.currentConfig.gdbps
               const ip = this.currentConfig.ip || defaultIp
               const port = this.currentConfig.port || defaultPort
-              option = { ip, port, gdbp: gdbps }
+              option = { domain, ip, port, gdbp: gdbps }
               break
             }
             case LayerType.ArcGISMapImage:
             case LayerType.ArcGISTile: {
-              const serverURL = this.currentConfig.serverURL
               option = { url: serverURL }
               break
             }
             case LayerType.VectorTile: {
-              const serverURL = this.currentConfig.serverURL
               option = { url: serverURL }
               break
             }

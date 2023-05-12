@@ -266,15 +266,15 @@ export default {
       return false
     },
 
-    getIpPort({ isDataStoreQuery, ip, port }) {
+    getIpPort({ isDataStoreQuery }) {
       const ipPortObj = isDataStoreQuery
         ? {
             ip: baseConfigInstance.config.DataStoreIp,
             port: Number(baseConfigInstance.config.DataStorePort),
           }
         : {
-            ip: ip || baseConfigInstance.config.ip,
-            port: Number(port || baseConfigInstance.config.port),
+            ip: baseConfigInstance.config.ip,
+            port: Number(baseConfigInstance.config.port),
           }
 
       return ipPortObj
@@ -290,7 +290,7 @@ export default {
         {
           type: parent && this.isIgsDocLayer(parent),
           setValue: () => {
-            const { ip, port, docName } = parent._parseUrl(parent.url)
+            const { domain, docName } = parent._parseUrl(parent.url)
             // const {
             //   isDataStoreQuery,
             //   DNSName
@@ -306,7 +306,7 @@ export default {
              */
             const isDataStoreQuery = false
             const DNSName = undefined
-            const ipPortObj = this.getIpPort({ isDataStoreQuery, ip, port })
+            const ipPortObj = this.getIpPort({ isDataStoreQuery })
             exhibition = {
               id: `${parent.title} ${layer.title} ${layer.id}`,
               name: `${layer.title} ${titleType}`,
@@ -316,15 +316,14 @@ export default {
                 name: layer.title,
                 isDataStoreQuery,
                 DNSName,
-                // ip: ip || baseConfigInstance.config.ip,
-                // port: Number(port || baseConfigInstance.config.port),
+                domain,
                 ...ipPortObj,
                 serverType: parent.type,
                 layerIndex: layer.id,
                 gdbp: layer.url,
                 serverName: docName,
                 serverUrl: parent.url,
-                f: queryType ? queryType : '',
+                f: queryType || '',
               },
             }
           },
@@ -333,7 +332,7 @@ export default {
           type: this.isIgsVectorLayer(layer),
           setValue: () => {
             const igsVectorLayer = layer.dataRef
-            const { ip, port, docName } = igsVectorLayer._parseUrl(layer.url)
+            const { domain, docName } = igsVectorLayer._parseUrl(layer.url)
             // const { isDataStoreQuery, DNSName } =
             //   await FeatureQuery.isDataStoreQuery({
             //     ip,
@@ -342,12 +341,13 @@ export default {
             //   })
             const isDataStoreQuery = false
             const DNSName = undefined
-            const ipPortObj = this.getIpPort({ isDataStoreQuery, ip, port })
+            const ipPortObj = this.getIpPort({ isDataStoreQuery })
             exhibition = {
               id: `${igsVectorLayer.title} ${igsVectorLayer.id}`,
               name: `${igsVectorLayer.title} ${titleType}`,
               option: {
                 id: igsVectorLayer.id,
+                domain,
                 // ip: ip || baseConfigInstance.config.ip,
                 // port: Number(port || baseConfigInstance.config.port),
                 ...ipPortObj,
@@ -355,7 +355,7 @@ export default {
                 DNSName,
                 serverType: igsVectorLayer.type,
                 gdbp: igsVectorLayer.gdbps,
-                f: queryType ? queryType : '',
+                f: queryType || '',
               },
             }
           },
@@ -373,7 +373,7 @@ export default {
                 serverType: parent.type,
                 layerIndex: layer.id,
                 serverUrl: parent.url,
-                f: queryType ? queryType : '',
+                f: queryType || '',
               },
             }
           },
@@ -382,7 +382,7 @@ export default {
           type: this.isIGSScene(layer),
           setValue: () => {
             const sceneLayer = layer.dataRef
-            const { ip, port, docName } = parent._parseUrl(parent.url)
+            const { domain, docName } = parent._parseUrl(parent.url)
             const { id, name, title } = sceneLayer
             const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
               parent.id
@@ -393,11 +393,12 @@ export default {
                 name: `${title} ${titleType}`,
                 option: {
                   id: `${id}`,
-                  ip: ip || baseConfigInstance.config.ip,
-                  port: Number(port || baseConfigInstance.config.port),
+                  domain,
+                  ip: baseConfigInstance.config.ip,
+                  port: Number(baseConfigInstance.config.port),
                   serverType: parent.type,
                   gdbp: layerConfig.bindData.gdbps,
-                  f: queryType ? queryType : '',
+                  f: queryType || '',
                 },
               }
             }
@@ -413,7 +414,7 @@ export default {
                 id: layer.id,
                 name: layer.title,
                 serverType: layer.type,
-                f: queryType ? queryType : '',
+                f: queryType || '',
               },
             }
           },

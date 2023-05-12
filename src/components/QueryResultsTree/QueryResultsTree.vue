@@ -177,18 +177,20 @@ export default {
     // 根据图层url格式化图层的ip,port,docName等信息
     layerParams() {
       const { ip: baseIp, port: basePort } = baseConfigInstance.config
-      let _ip = baseIp
-      let _port = basePort
+      const _ip = baseIp
+      const _port = basePort
+      let _domain
 
       if (typeof this.layer._parseUrl === 'function') {
-        const { ip, port, docName } = this.layer._parseUrl(this.layer.url)
-        _ip = ip
-        _port = port
+        const { domain, docName } = this.layer._parseUrl(this.layer.url)
+        _domain = domain
         this.layer.docName = docName //eslint-disable-line
       }
 
       this.layer.ip = _ip //eslint-disable-line
       this.layer.port = _port //eslint-disable-line
+      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+      this.layer.domain = _domain
 
       return this.layer
     },
@@ -198,10 +200,11 @@ export default {
      * 获取IGSMapImage图层信息
      * @param {object}
      */
-    async getIGSMapImageLayerInfo({ ip, port, docName }: ILayerParams) {
+    async getIGSMapImageLayerInfo({ ip, port, domain, docName }: ILayerParams) {
       const docInfo = await DocumentCatalog.getDocInfo({
         ip,
         port,
+        domain,
         serverName: docName,
       })
       if (docInfo && docInfo.MapInfos.length > this.mapIndex) {
@@ -233,7 +236,13 @@ export default {
      * 获取IGSTile图层信息
      * @param {object}
      */
-    async getIGSTileLayerInfo({ ip, port, id, serverName }: ILayerParams) {
+    async getIGSTileLayerInfo({
+      ip,
+      port,
+      domain,
+      id,
+      serverName,
+    }: ILayerParams) {
       const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(id)
       const docName =
         layerConfig && layerConfig.bindData
@@ -242,6 +251,7 @@ export default {
       const res = await this.getIGSMapImageLayerInfo({
         ip,
         port,
+        domain,
         docName,
       })
       return res
@@ -485,10 +495,11 @@ export default {
       pageSize,
       needTotal,
     }) {
-      const { ip, port, type, docName, gdbps, url } = this.layerParams
+      const { ip, port, domain, type, docName, gdbps, url } = this.layerParams
       const queryOptions = {
         ip,
         port,
+        domain,
         page: currentPage - 1,
         pageCount: pageSize,
         geometry: this.geometry,

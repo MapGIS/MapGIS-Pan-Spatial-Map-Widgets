@@ -324,7 +324,7 @@ export default {
       if (!layer.isVisible) {
         return
       }
-      const { ip, port, docName } = layer._parseUrl(layer.url)
+      const { domain, docName } = layer._parseUrl(layer.url)
 
       const exhibition: IAttributeTableListExhibition = {
         id: `${layer.id}`,
@@ -352,8 +352,9 @@ export default {
           exhibition.options.push({
             id: item.id,
             name: item.title || item.name,
-            ip: ip || baseConfigInstance.config.ip,
-            port: Number(port || baseConfigInstance.config.port),
+            ip: baseConfigInstance.config.ip,
+            port: Number(baseConfigInstance.config.port),
+            domain,
             serverType: layer.type,
             gdbp: layerConfig.bindData.gdbps,
             geometry: geometry,
@@ -406,15 +407,15 @@ export default {
       this.openExhibitionPanel()
     },
 
-    getIpPort({ isDataStoreQuery, ip, port }) {
+    getIpPort({ isDataStoreQuery }) {
       const ipPortObj = isDataStoreQuery
         ? {
             ip: baseConfigInstance.config.DataStoreIp,
             port: Number(baseConfigInstance.config.DataStorePort),
           }
         : {
-            ip: ip || baseConfigInstance.config.ip,
-            port: Number(port || baseConfigInstance.config.port),
+            ip: baseConfigInstance.config.ip,
+            port: Number(baseConfigInstance.config.port),
           }
 
       return ipPortObj
@@ -424,7 +425,7 @@ export default {
       if (!layer.isVisible) {
         return
       }
-      const { ip, port, docName } = layer._parseUrl(layer.url)
+      const { domain, docName } = layer._parseUrl(layer.url)
 
       const exhibition: IAttributeTableListExhibition = {
         id: `${layer.id}`,
@@ -457,14 +458,13 @@ export default {
         const DNSName = undefined
         const ipPortObj = this.getIpPort({
           isDataStoreQuery,
-          ip: ip || baseConfigInstance.config.ip,
-          port: Number(port || baseConfigInstance.config.port),
         })
         exhibition.options.push({
           id: sublayer.id,
           name: sublayer.title,
           DNSName,
           isDataStoreQuery,
+          domain,
           ...ipPortObj,
           serverType: layer.type,
           gdbp: sublayer.url,
@@ -490,13 +490,11 @@ export default {
       if (!layer.isVisible) {
         return
       }
-      const { ip, port, docName } = layer._parseUrl(layer.url)
+      const { domain, docName } = layer._parseUrl(layer.url)
       const isDataStoreQuery = false
       const DNSName = undefined
       const ipPortObj = this.getIpPort({
         isDataStoreQuery,
-        ip: ip || baseConfigInstance.config.ip,
-        port: Number(port || baseConfigInstance.config.port),
       })
 
       const exhibition: IAttributeTableListExhibition = {
@@ -507,6 +505,7 @@ export default {
             id: layer.id,
             DNSName,
             isDataStoreQuery,
+            domain,
             ...ipPortObj,
             serverType: layer.type,
             gdbp: layer.gdbps,

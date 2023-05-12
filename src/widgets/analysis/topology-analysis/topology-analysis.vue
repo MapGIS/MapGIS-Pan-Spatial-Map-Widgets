@@ -300,7 +300,7 @@ export default {
       if (!layer.isVisible) {
         return
       }
-      const { ip, port, docName } = layer._parseUrl(layer.url)
+      const { domain, docName } = layer._parseUrl(layer.url)
 
       const arr = []
       const sublayers = layer.allSublayers
@@ -314,8 +314,9 @@ export default {
         arr.push({
           id: sublayer.id,
           name: sublayer.title,
-          ip: ip || baseConfigInstance.config.ip,
-          port: Number(port || baseConfigInstance.config.port),
+          domain,
+          ip: baseConfigInstance.config.ip,
+          port: Number(baseConfigInstance.config.port),
           serverType: layer.type,
           layerIndex: sublayer.id,
           serverName: docName,
@@ -336,12 +337,13 @@ export default {
       if (!layer.isVisible) {
         return
       }
-      const { ip, port, docName } = layer._parseUrl(layer.url)
+      const { domain, docName } = layer._parseUrl(layer.url)
 
       const arr = [
         {
-          ip: ip || baseConfigInstance.config.ip,
-          port: Number(port || baseConfigInstance.config.port),
+          ip: baseConfigInstance.config.ip,
+          port: Number(baseConfigInstance.config.port),
+          domain,
           serverType: layer.type,
           gdbp: layer.gdbps,
           geometry: geometry,

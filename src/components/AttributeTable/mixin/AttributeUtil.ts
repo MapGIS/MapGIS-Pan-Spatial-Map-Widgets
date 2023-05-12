@@ -207,6 +207,11 @@ export default {
         gdbp,
         f,
       } = this.optionVal
+      let domain
+      if (!!serverUrl && serverUrl.length > 0) {
+        const url = new URL(serverUrl)
+        domain = url.origin
+      }
       const { current, pageSize } = this.pagination
       let geojson
       const queryWhere = where || this.optionVal.where
@@ -230,7 +235,8 @@ export default {
           geojson = await FeatureQuery.query({
             ip,
             port: port.toString(),
-            f: f ? f : 'geojson',
+            domain,
+            f: f || 'geojson',
             where: queryWhere,
             geometry: queryGeometry,
             isDataStoreQuery,
@@ -339,6 +345,7 @@ export default {
             {
               ip,
               port: port.toString(),
+              domain,
               where: queryWhere,
               geometry: queryGeometry,
               page: current - 1,
@@ -357,6 +364,7 @@ export default {
               {
                 ip,
                 port: port.toString(),
+                domain,
                 where: queryWhere,
                 geometry: queryGeometry,
                 page: 0,
@@ -418,6 +426,7 @@ export default {
           const datastoreParams = {
             ip,
             port: port.toString(),
+            domain,
             where: queryWhere,
             geometry: queryGeometry,
             page: current,
@@ -605,11 +614,18 @@ export default {
     },
     // IGSMapImage、IGSVector图层获取总页数
     async queryCount(geometry?: Record<string, any>, where?: string) {
-      const { ip, port, isDataStoreQuery, serverName } = this.optionVal
+      const { ip, port, isDataStoreQuery, serverName, serverUrl } =
+        this.optionVal
+      let domain
+      if (!!serverUrl && serverUrl.length > 0) {
+        const url = new URL(serverUrl)
+        domain = url.origin
+      }
       const { layerIndex, gdbp } = this.optionVal
       const featureSet = await FeatureQuery.query({
         ip,
         port: port.toString(),
+        domain,
         f: 'json',
         IncludeAttribute: false,
         IncludeGeometry: false,
