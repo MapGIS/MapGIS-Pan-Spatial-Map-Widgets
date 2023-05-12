@@ -30,32 +30,33 @@ export default {
         showInfo: true,
         modelUrl: '',
       },
-      models: [
+      sceneRoaming: null,
+    }
+  },
+  computed: {
+    paths() {
+      return this.widgetInfo.config
+    },
+    models() {
+      return [
         {
           label: '人',
-          value: `${process.env.VUE_APP_PUBLIC_PATH}CesiumModels/Cesium_Man.glb`,
+          value: `${this.application.publicPath}CesiumModels/Cesium_Man.glb`,
         },
         {
           label: '卡车',
-          value: `${process.env.VUE_APP_PUBLIC_PATH}CesiumModels/CesiumMilkTruck.glb`,
+          value: `${this.application.publicPath}CesiumModels/CesiumMilkTruck.glb`,
         },
         {
           label: '飞机',
-          value: `${process.env.VUE_APP_PUBLIC_PATH}CesiumModels/Cesium_Air.gltf`,
+          value: `${this.application.publicPath}CesiumModels/Cesium_Air.gltf`,
         },
         {
           label: '无',
           value: '',
         },
-      ],
-      sceneRoaming: null,
+      ]
     }
-  },
-
-  computed: {
-    paths() {
-      return this.widgetInfo.config
-    },
   },
 
   methods: {

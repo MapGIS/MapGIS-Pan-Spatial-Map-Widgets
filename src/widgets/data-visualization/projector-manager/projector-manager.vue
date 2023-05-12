@@ -31,7 +31,6 @@ export default {
 
   data() {
     return {
-      modelUrl: `${process.env.BASE_URL}CesiumModels/Cesium_Camera.glb`,
       modelOffset: { headingOffset: -90, pitchOffset: 0, rollOffset: 0 },
       projectorLayerList: [
         {
@@ -78,6 +77,9 @@ export default {
   },
 
   computed: {
+    modelUrl() {
+      return `${this.application.publicPath}CesiumModels/Cesium_Camera.glb`
+    },
     projectorOverlayLayerList: {
       get() {
         const projectorOverlayLayerList =
