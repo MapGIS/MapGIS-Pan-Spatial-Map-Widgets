@@ -98,11 +98,17 @@ export default {
           geometry,
           gdbp,
         } = this.params
+        let domain
+        if (!!serverUrl && serverUrl.length > 0) {
+          const url = new URL(serverUrl)
+          domain = url.origin
+        }
         if (serverType === LayerType.IGSMapImage) {
           const options = {
             f: 'json',
             ip,
             port,
+            domain,
             geometry,
             page: this.page - 1,
             pageCount: 10,
@@ -118,6 +124,7 @@ export default {
             f: 'json',
             ip,
             port,
+            domain,
             geometry,
             page: this.page - 1,
             pageCount: 10,

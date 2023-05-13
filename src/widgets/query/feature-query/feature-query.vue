@@ -527,6 +527,7 @@ export default {
       const {
         ip,
         port,
+        domain,
         isDataStoreQuery,
         serverName,
         layerIndex,
@@ -537,6 +538,7 @@ export default {
         {
           ip,
           port: port.toString(),
+          domain,
           f: 'json',
           IncludeAttribute: false,
           IncludeGeometry: false,
