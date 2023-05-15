@@ -29,6 +29,7 @@ import {
   MpBasemapManager,
   MpDataCatalog,
   MpTopographyManager,
+  MpFavorites,
 } from './widgets/data-manager'
 
 import {
@@ -152,6 +153,7 @@ const components = [
   MpModelPick,
   MpOpacityFactor,
   MpModelStretch,
+  MpFavorites,
 ]
 
 import { thematicMapStore } from './widgets/data-visualization/thematic-map/store'
