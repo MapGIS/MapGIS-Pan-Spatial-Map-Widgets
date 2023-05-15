@@ -142,7 +142,7 @@ export default {
         QueryType.Point,
         QueryType.Polygon,
         QueryType.LineString,
-        // QueryType.Rectangle,
+        QueryType.Rectangle,
         QueryType.Cube,
       ],
       queryTypes2DrawModes: {

@@ -99,6 +99,7 @@
         :selectedKeys="selectedKeys"
         @expand="onExpand"
         @select="onSelect"
+        @check="onCheck"
       >
         <span
           slot="custom"
@@ -334,8 +335,9 @@ import {
   eventBus,
   events,
   DataFlowList,
+  LayerAutoResetManager,
+  DataCatalogCheckController,
 } from '@mapgis/web-app-framework'
-
 import MpMetadataInfo from '../../../components/MetadataInfo/MetadataInfo.vue'
 import NonSpatial from './non-spatial.vue'
 import * as turf from '@turf/turf'
@@ -439,10 +441,17 @@ export default {
       isPreClick: true,
       isSuffixClick: false,
       // 记录每个tabs中勾选的key
-      activeTreeTabRelation: {},
+      activeTreeTabRelRelation: {},
       setKeys: false,
       // 滚动距离
       scrollLeft: 0,
+      // 列表模式下tab与勾选节点的对应关系
+      bookMarkRelationForTab: {},
+      // 默认模式下勾选节点数组
+      // bookMarkRelationForDefault: [],
+      // checkData: [],
+      preCheckedKeysDel: [],
+      layerAutoResetManager: LayerAutoResetManager,
     }
   },
   computed: {
@@ -459,7 +468,10 @@ export default {
       }
     },
     isClassify() {
-      return this.widgetInfo.config.isClassify || true
+      return this.widgetInfo.config.isClassify
+    },
+    checkKeys() {
+      return this.dataCatalogManager.checkedLayerConfigIDs
     },
   },
   created() {
@@ -515,11 +527,12 @@ export default {
     eventBus.$on(events.IMPOSE_SERVICE_PREVIEW_EVENT, this.imposeService)
     this.$root.$on(events.SCENE_LOADEN_ON_MAP, this.sceneLoadedCallback)
     eventBus.$emit(events.DATA_CATALOG_ON_IMPOSE_SERVICE_EVENT)
-    eventBus.$on(events.DATA_CATALOG_TAB, this.changeDataCatalog)
-    eventBus.$on(events.BOOKMARK_TAB, this.changeBookmark)
+    // eventBus.$on(events.DATA_CATALOG_TAB, this.changeDataCatalog)
+    // eventBus.$on(events.BOOKMARK_TAB, this.changeBookmark)
     eventBus.$emit(events.DATA_CATALOG_DATA_INFO, this.widgetConfig)
     eventBus.$on(events.EXTEND_LAYER_REMOVE, this.changeCheckedKeys)
     eventBus.$on(events.DATA_CATALOG_CHANGE_NODES, this.dataCatalogChangeNodes)
+    eventBus.$on(events.DATA_CARALOG_CHECK_NODES, this.dataCatalogCheckNodes)
   },
   watch: {
     checkedNodeKeys: {
@@ -528,7 +541,7 @@ export default {
         this.onCheckedNodeKeysChenged()
       },
     },
-    checkedLayerConfigIDs: {
+    'dataCatalogManager.checkedLayerConfigIDs': {
       deep: false,
       handler() {
         this.onCheckedLayerConfigIDsChanged()
@@ -536,6 +549,28 @@ export default {
     },
   },
   methods: {
+    dataCatalogCheckNodes(keys, checkKeysRelation) {
+      this.checkedNodeKeys = []
+      if (this.isClassify) {
+        this.activeTreeTabRelRelation = checkKeysRelation
+      }
+      this.layerAutoResetManager.setUnAutoResetArr(keys)
+      this.checkedNodeKeys = keys
+    },
+    getCurrentData() {
+      let currentData = []
+      if (this.isClassify) {
+        Object.keys(this.bookMarkRelationForTab).forEach((key) => {
+          const parent = this.dataCatalogTabData.find(
+            (item) => item.guid === key
+          )
+          currentData.push(parent)
+        })
+      } else {
+        currentData = this.dataCatalogTreeData
+      }
+      return currentData
+    },
     onCheckedNodeKeysChenged() {
       // 列表展示赋值key不需要再次处理
       if (this.setKeys) {
@@ -686,6 +721,7 @@ export default {
       ) {
         this.checkedNodeKeys = this.dataCatalogManager.checkedLayerConfigIDs
       }
+      DataCatalogCheckController.setCheckKeys(this.checkedNodeKeys)
     },
     getCheckedLayerConfigIDs() {
       const checkedLayerConfigIDs = []
@@ -754,6 +790,8 @@ export default {
                 } else {
                   this.$message.error(`图层:${layer.title}加载失败`)
                   checkedNodeKeys.splice(layer.id)
+                  this.activeTreeTabRelRelation[this.activeTreeTab] =
+                    checkedNodeKeys
                 }
                 if (!this.is3DLayer(layer)) {
                   // 图层加载完毕，恢复checkbox可选状态
@@ -875,6 +913,28 @@ export default {
     // 目录树展开/收起节点时触发
     onExpand(expandedKeys) {
       this.expandedKeys = expandedKeys
+    },
+
+    onCheck(checkedKeys, info) {
+      this.layerAutoResetManager.setUnAutoResetArr([])
+      if (this.isClassify) {
+        const preCheckedKeys = this.activeTreeTabRelRelation[this.activeTreeTab]
+        if (preCheckedKeys) {
+          this.preCheckedKeysDel = preCheckedKeys.filter(
+            (item) => !checkedKeys.includes(item)
+          )
+          this.preCheckedKeysAdd = checkedKeys.filter(
+            (item) => !preCheckedKeys.includes(item)
+          )
+        }
+        // this.activeTreeTabRelation[this.activeTreeTab] = checkedKeys
+        this.activeTreeTabRelRelation[this.activeTreeTab] = checkedKeys
+        this.bookMarkRelationForTab[this.activeTreeTab] = info.checkedNodes
+      } else {
+        // this.bookMarkRelationForDefault = info.checkedNodes
+      }
+      // this.checkData = this.getCurrentData()
+      DataCatalogCheckController.setCheckData(this.getCurrentData())
     },
 
     // 选中目录树节点触发展开/收起
@@ -1393,30 +1453,6 @@ export default {
       // console.log(item)
       return { leafTotal, leafChecked }
     },
-    changeDataCatalog() {
-      this.expandedKeys = []
-      if (
-        JSON.stringify(this.checkedNodeKeys) !==
-        JSON.stringify(this.checkedNodeKeysCopy)
-      ) {
-        this.checkedNodeKeys = this.getCheckedNodeKeys()
-      }
-      this.changeShowDataCatalogTree()
-    },
-    changeShowDataCatalogTree() {
-      this.isChangeDataCatalog = true
-      this.dataCatalogTabData = this.getTabsData(this.dataCatalogTreeDataCopy)
-      if (this.isClassify) {
-        const activeTreeTab = this.dataCatalogTreeDataCopy[0]?.guid
-        this.activeTreeTab
-          ? this.treeTabChange(this.activeTreeTab)
-          : this.treeTabChange(activeTreeTab)
-      } else {
-        this.dataCatalogTreeData = [...this.dataCatalogTreeDataCopy]
-      }
-      // this.dataCatalogTabData = this.getTabsData(this.dataCatalogTreeDataCopy)
-      this.scrollTargetPosition()
-    },
     async changeBookmark() {
       this.isChangeDataCatalog = false
       this.checkedNodeKeysCopy = JSON.parse(
@@ -1554,16 +1590,19 @@ export default {
       if (!this.isClassify) {
         return [...this.checkedNodeKeys]
       } else {
-        this.activeTreeTabRelation[this.activeTreeTab] = [
-          ...this.checkedNodeKeys,
-        ]
+        // this.activeTreeTabRelation[this.activeTreeTab] = [
+        //   ...this.checkedNodeKeys,
+        // ]
         // 将其他tab页的勾选全部放到一起
         let allCheck = []
-        Object.keys(this.activeTreeTabRelation).forEach((item) => {
+        Object.keys(this.activeTreeTabRelRelation).forEach((item) => {
           allCheck = [
-            ...new Set([...allCheck, ...this.activeTreeTabRelation[item]]),
+            ...new Set([...allCheck, ...this.activeTreeTabRelRelation[item]]),
           ]
         })
+        // allCheck = allCheck.filter(
+        //   (item) => !this.preCheckedKeysDel.includes(item)
+        // )
         return allCheck
       }
     },
@@ -1765,7 +1804,7 @@ export default {
 <style lang="less">
 .tabs-detail-list {
   .mapgis-ui-popover-inner-content {
-    max-height: 600px;
+    max-height: 60vh;
     overflow: auto;
   }
 }
