@@ -5,6 +5,7 @@
     :checkKeys="checkKeys"
     :checkData="checkData"
     :showType="showType"
+    :baseUrl="baseUrl"
     @addData="onAddData"
     @editData="onEditData"
     @deleteData="onDeleteData"
@@ -22,7 +23,9 @@ import {
   DataCatalogCheckController,
   eventBus,
   events,
+  api,
 } from '@mapgis/web-app-framework'
+import axios from 'axios'
 
 export default {
   name: 'MpFavorites',
@@ -44,12 +47,24 @@ export default {
     showType() {
       return this.widgetInfo.config.showType
     },
+    baseUrl() {
+      return window._CONFIG.domainURL
+    },
+    imagesUploadApi() {
+      return `${this.baseUrl}/psmap/rest/manager/file/upload`
+    },
   },
   mounted() {
+    if (!this.widgetInfo.config.data) {
+      this.$set(this.widgetInfo.config, 'data', [])
+    }
+    if (!this.widgetInfo.config.showType) {
+      this.$set(this.widgetInfo.config, 'showType', 'image')
+    }
     this.dataList = JSON.parse(JSON.stringify(this.widgetInfo.config.data))
   },
   methods: {
-    onAddData(data) {
+    async onAddData(data) {
       /**
         const data = {
         // 唯一id
@@ -70,10 +85,12 @@ export default {
         options: {},
       }
        */
-
-      data.id = UUID.uuid()
+      const id = UUID.uuid()
+      const imageObj = this.base64ToFile(this.getImage(), id)
+      const fileInfo = await this.uploadImage(imageObj)
+      data.id = id
       data.is2DMapMode = this.is2DMapMode
-      data.image = this.getPng()
+      data.image = fileInfo.data.url
       if (this.is2DMapMode) {
         const mapBoundArray = this.map.getBounds().toArray()
         const mapBound = {
@@ -96,14 +113,17 @@ export default {
       }
       this.dataList.push(data)
       // 调用接口存数据
+      this.saveData()
     },
     onEditData(name, index) {
       this.dataList[index].name = name
       // 调用接口存数据
+      this.saveData()
     },
     onDeleteData(id) {
       this.dataList = this.dataList.filter((item) => item.id !== id)
       // 调用接口存数据
+      this.saveData()
     },
     onShowData(item) {
       const { Cesium, map, vueCesium, viewer } = this
@@ -137,12 +157,12 @@ export default {
         })
       }
     },
-    getPng() {
+    getImage() {
       const { Cesium, viewer, map } = this
       const reImg = new Cesium.ReImg()
       const dataUrl = this.getDataUrl()
       const img = reImg.outputProcessor(dataUrl).toImg()
-      return img.src
+      return img
     },
     getDataUrl() {
       const { viewer, map } = this
@@ -152,11 +172,28 @@ export default {
         return viewer.canvas.toDataURL('image/jpeg', 0.2)
       }
     },
-    saveData() {
+    // 图片转文件对象
+    base64ToFile(urlData, id) {
+      const arr = urlData.src.split(',')
+      const mime = arr[0].match(/:(.*?);/)[1]
+      const bytes = window.atob(arr[1])
+      let n = bytes.length
+      const ia = new Uint8Array(n)
+      while (n--) {
+        ia[n] = bytes.charCodeAt(n)
+      }
+      return new File([ia], `${id}.jpeg`, { type: mime })
+    },
+    async saveData() {
+      const originConfig = await api.getWidgetConfig('favorites')
+      originConfig.data = this.dataList
+      if (!originConfig.showType) {
+        originConfig.showType = this.showType
+      }
       api
         .saveWidgetConfig({
           name: 'favorites',
-          config: JSON.stringify(this.dataList),
+          config: JSON.stringify(originConfig),
         })
         .catch(() => {
           this.$message.config({
@@ -166,6 +203,25 @@ export default {
           })
           this.$message.error('保存信息失败')
         })
+    },
+    uploadImage(image) {
+      const file = new FormData()
+      file.append('file', image)
+      return new Promise((resolve, reject) => {
+        axios
+          .post(this.imagesUploadApi, file, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              'Authorization': JSON.parse(localStorage.getItem('access_token')),
+            },
+          })
+          .then((res) => {
+            resolve(res.data)
+          })
+          .catch((Error) => {
+            reject(Error)
+          })
+      })
     },
   },
 }
