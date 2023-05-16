@@ -145,7 +145,9 @@ export default {
     creatFeature(flieName: string, featureSet: any, featureType: string) {
       const { projectionName } = baseConfigInstance.config // 获取目标参考系
       const { username, password } = this.exportConfig
-      const getFeatureUrl = `http://${this.exportConfig.ip}:${this.exportConfig.port}/onemap/featureSet/export?path=${flieName}&srsName=${projectionName}&type=${featureType}&f=json&user=${username}&password=${password}`
+      const protocol = window.location.protocol
+      const domain = `${protocol}//${this.exportConfig.ip}:${this.exportConfig.port}`
+      const getFeatureUrl = `${domain}/onemap/featureSet/export?path=${flieName}&srsName=${projectionName}&type=${featureType}&f=json&user=${username}&password=${password}`
 
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const self = this
@@ -157,7 +159,7 @@ export default {
           if (data.indexOf('"') > -1) {
             result = data.replaceAll('"', '')
           }
-          const url = `http://${this.exportConfig.ip}:9999/open/download?path=${result}&user=${username}&password=${password}`
+          const url = `${protocol}//${this.exportConfig.ip}:9999/open/download?path=${result}&user=${username}&password=${password}`
 
           // eslint-disable-next-line no-restricted-globals
           location.href = url // 下载文件至本地

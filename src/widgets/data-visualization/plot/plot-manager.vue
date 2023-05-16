@@ -176,11 +176,11 @@ export default {
     const config = await api.getWidgetConfig('plot-manager')
     this.font = config.fontUrl
     // this.base = config.baseUrl
-
+    const protocol = window.location.protocol
     const ip = config.ip || this.defaultIp
     const port = config.port || this.defaultPort
     if (ip && ip !== '' && port && port !== '') {
-      this.symbolBaseUrl = `http://${ip}:${port}/`
+      this.symbolBaseUrl = `${protocol}//${ip}:${port}/`
     }
 
     this.svgBaseUrl = `${this.symbolBaseUrl}igs/rest/services/${config.serviceName}/PlotServer/symbolLibs/${config.libId}/symbols/`

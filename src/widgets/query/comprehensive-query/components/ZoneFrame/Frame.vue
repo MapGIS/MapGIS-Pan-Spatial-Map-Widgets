@@ -133,10 +133,12 @@ export default {
       try {
         const { scale, pageNumber, pageSize, keyword } = this
         // 通过sheetConfig内的ip、port、name去获取地图范围，构造成[xMin, yMin, xMax, yMax]，用于查询图幅号
+        const protocol = window.location.protocol
+        const domain = `${protocol}//${this.frameConfig.ip}:${this.frameConfig.port}`
         const {
           data: { xMin, yMin, xMax, yMax },
         } = await axios.get(
-          `http://${this.frameConfig.ip}:${this.frameConfig.port}/igs/rest/mrms/info/${this.frameConfig.name}`
+          `${domain}/igs/rest/mrms/info/${this.frameConfig.name}`
         )
 
         const { content, totalElements } = await api.getFrameNoList(

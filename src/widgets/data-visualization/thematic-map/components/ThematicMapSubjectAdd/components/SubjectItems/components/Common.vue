@@ -302,15 +302,21 @@ export default {
         docName,
         serverURL,
       } = node
-      let serverUri = `http://${ip}:${port}/igs/rest/mrms/`
+      let domain
+      if (!!serverURL && serverURL.length > 0) {
+        const url = new URL(serverURL)
+        domain = url.origin
+      } else {
+        const protocol = window.location.protocol
+        domain = `${protocol}//${ip}:${port}`
+      }
+      let serverUri = `${domain}/igs/rest/mrms/`
       switch (serverType) {
         case LayerType.IGSMapImage:
-          serverUri = `http://${ip}:${port}/igs/rest/mrms/docs/${docName}?layerName=${layerName}&layerIndex=${layerIndex}`
+          serverUri = `${domain}/igs/rest/mrms/docs/${docName}?layerName=${layerName}&layerIndex=${layerIndex}`
           break
         case LayerType.IGSVector:
-          serverUri = `http://${ip}:${port}/igs/rest/mrms/layers?gdbp=${
-            gdbp || gdbps
-          }`
+          serverUri = `${domain}/igs/rest/mrms/layers?gdbp=${gdbp || gdbps}`
           break
         case LayerType.GeoJson:
           serverUri = serverURL

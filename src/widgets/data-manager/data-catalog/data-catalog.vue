@@ -1373,18 +1373,18 @@ export default {
         )
         let url = ''
         let type = ''
-
+        const protocol = window.location.protocol
         switch (serviceType) {
           case LayerType.IGSTile:
-            url = `http://${params.ip}:${params.port}/igs/rest/mrms/tile/${params.name}`
+            url = `${protocol}//${params.ip}:${params.port}/igs/rest/mrms/tile/${params.name}`
             type = 'IGSTile'
             break
           case LayerType.IGSMapImage:
-            url = `http://${params.ip}:${params.port}/igs/rest/mrms/docs/${params.name}`
+            url = `${protocol}//${params.ip}:${params.port}/igs/rest/mrms/docs/${params.name}`
             type = 'IGSMapImage'
             break
           case LayerType.IGSScene:
-            url = `http://${params.ip}:${params.port}/igs/rest/g3d/${params.name}`
+            url = `${protocol}//${params.ip}:${params.port}/igs/rest/g3d/${params.name}`
             type = 'IGSScene'
             break
           case LayerType.OGCWMTS:

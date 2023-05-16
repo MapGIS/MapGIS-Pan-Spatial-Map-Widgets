@@ -188,7 +188,9 @@ export default {
     getResultLayer() {
       const ip = (this.baseBufferUrl || '').split('/')[2].split(':')[0]
       const port = (this.baseBufferUrl || '').split('/')[2].split(':')[1]
-      const url = `http://${ip}:${port}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
+      const protocol = window.location.protocol
+      const domain = `${protocol}//${ip}:${port}`
+      const url = `${domain}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
       const index = url.lastIndexOf('/')
       const layerName = url.substring(index + 1, url.length)
       return [url, layerName]

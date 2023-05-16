@@ -257,6 +257,11 @@ export default {
           tokenKey,
           token,
         } = layer
+        let protocol = window.location.protocol
+        if (!!serverUrl && serverUrl.length > 0) {
+          const tempUrl = new URL(serverUrl)
+          protocol = tempUrl.protocol
+        }
         const newLayer = { name: layerName, url: serverUrl }
         // 类型映射表
         let map: Record<string, string>
@@ -276,7 +281,7 @@ export default {
               }
               const type = map[layerType] || layerType
               const tilematrixSet = projection.includes('EPSG:4326') ? 'c' : 'w'
-              newLayer.url = `http://t${Math.round(
+              newLayer.url = `${protocol}//t${Math.round(
                 Math.random() * 7
               )}.tianditu.gov.cn/${type}_${tilematrixSet}/wmts`
             }
@@ -298,7 +303,7 @@ export default {
                 'Zondy.Enum.Map.ArcGISLayerType.TopoUS2D': 'NGS_Topo_US_2D',
               }
               const type = map[layerType] || layerType
-              newLayer.url = `http://services.arcgisonline.com/ArcGIS/rest/services/${type}/MapServer`
+              newLayer.url = `${protocol}//services.arcgisonline.com/ArcGIS/rest/services/${type}/MapServer`
             }
             break
           case 'WMS':
@@ -310,19 +315,19 @@ export default {
           case 'tile':
             newLayer.type = 'IGSTile'
             if (!serverUrl) {
-              newLayer.url = `http://${serverip}:${serverport}/igs/rest/mrms/tile/${layerName}`
+              newLayer.url = `${protocol}//${serverip}:${serverport}/igs/rest/mrms/tile/${layerName}`
             }
             break
           case 'doc':
             newLayer.type = 'IGSMapImage'
             if (!serverUrl) {
-              newLayer.url = `http://${serverip}:${serverport}/igs/rest/mrms/docs/${layerName}`
+              newLayer.url = `${protocol}//${serverip}:${serverport}/igs/rest/mrms/docs/${layerName}`
             }
             break
           case 'layer':
             newLayer.type = 'IGSVector'
             if (!serverUrl) {
-              newLayer.url = `http://${serverip}:${serverport}/igs/rest/mrms/layers?gdbps=${layerName}`
+              newLayer.url = `${protocol}//${serverip}:${serverport}/igs/rest/mrms/layers?gdbps=${layerName}`
             }
             break
           default:

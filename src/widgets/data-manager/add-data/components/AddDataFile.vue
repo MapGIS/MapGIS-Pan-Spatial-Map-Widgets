@@ -39,7 +39,7 @@
       <mapgis-ui-row>
         <mapgis-ui-upload-dragger
           name="file"
-          :action="`http://${config.igsIp}:${config.igsPort}/igs/rest/resource/upload`"
+          :action="`${domain}/igs/rest/resource/upload`"
           :accept="accept"
           @change="handleChange"
         >
@@ -130,6 +130,13 @@ export default {
       }
     },
   },
+  computed: {
+    domain() {
+      const protocol = window.location.protocol
+      const domain = `${protocol}//${this.config.igsIp}:${this.config.igsPort}`
+      return domain
+    },
+  },
 
   created() {
     this.fileDataType = this.fileDataTypes.length ? this.fileDataTypes[0] : null
@@ -178,7 +185,7 @@ export default {
           path = info.file.response.data[0].path
         }
 
-        this.file = `http://${this.config.igsIp}:${this.config.igsPort}/igs/rest/mrms/layers?gdbps=${path}`
+        this.file = `${this.domain}/igs/rest/mrms/layers?gdbps=${path}`
 
         console.log(this.file)
       }
