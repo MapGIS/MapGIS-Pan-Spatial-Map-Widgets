@@ -59,6 +59,7 @@ import {
 import AddDataList from './components/AddDataList.vue'
 import AddDataUrl from './components/AddDataUrl.vue'
 import AddDataFile from './components/AddDataFile.vue'
+import axios from 'axios'
 
 export default {
   name: 'MpAddData',
@@ -220,6 +221,7 @@ export default {
     this.loaded = true
 
     eventBus.$on(events.ADD_DATA_EVENT, this.onAddData)
+    eventBus.$on(events.DELETE_DATA_EVENT, this.onDeleteData)
   },
 
   methods: {
@@ -263,6 +265,43 @@ export default {
       // 跳转到数据列表
       this.tab = 'list'
       this.$refs.refAddDataList.selectData(name, data)
+    },
+
+    onDeleteData({ name, description, data }) {
+      const categoryDataList = this.dataList.find(
+        (category) => category.name === name
+      )
+
+      if (!categoryDataList || !categoryDataList.children) {
+        return
+      }
+
+      const { children } = categoryDataList
+      for (let i = 0; i < children.length; i++) {
+        const item = children[i]
+        if (item.srcLayer && item.srcLayer === data.srcLayer) {
+          this.onRemoveLayer(item)
+          this.deleteGdbp(item.url)
+          children.splice(i, 1)
+        }
+      }
+    },
+
+    deleteGdbp(url) {
+      // http://localhost:8089/igs/rest/services/system/ResourceServer/datasources/{datasource}/gdbs/{gdb}/sfcls/{name}
+      // http://${ip}:${port}/igs/rest/mrms/layers?gdbps=${this.destLayer}
+      // gdbp://MapGisLocal/专题图数据/sfcls/省级行政区xbuffer1
+      const domain = url.split('/igs/rest')[0]
+      const gdbp = url.split('gdbps=')[1]
+      const strs = gdbp.split('/sfcls/')
+      const name = strs[1]
+      const subStrs = strs[0].split('/')
+      const datasource = subStrs[2]
+      const gdb = subStrs[3]
+      const deletUrl = `${domain}/igs/rest/services/system/ResourceServer/datasources/${datasource}/gdbs/${gdb}/sfcls/${name}`
+      axios.get(deletUrl).then((res) => {
+        console.log(res.data)
+      })
     },
 
     onSaveData() {

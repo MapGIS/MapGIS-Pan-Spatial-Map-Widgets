@@ -1,53 +1,17 @@
 <template>
-  <mapgis-ui-modal
-    class="marker-export-wrapper"
+  <mapgis-ui-export-file-modal
     :visible="visible"
     title="导出标注"
-    :width="360"
-    :mask="false"
+    :exportFileTypes="exportFileTypes"
+    :exportFileName="exportOptions.exportFileName"
+    :exportFileType="exportOptions.exportFileType"
     @cancel="onExportCancel"
     @ok="onExportOk"
-  >
-    <template slot="footer">
-      <mapgis-ui-button key="cancel" @click="onExportCancel">
-        取消
-      </mapgis-ui-button>
-      <mapgis-ui-button key="ok" type="primary" @click="onExportOk">
-        确定
-      </mapgis-ui-button>
-    </template>
-    <div class="marker-export-body">
-      <mapgis-ui-space direction="vertical" style="flex: 1">
-        <mapgis-ui-row>
-          <label>文件名称</label>
-        </mapgis-ui-row>
-        <mapgis-ui-row>
-          <mapgis-ui-input v-model="exportOptions.exportFileName">
-          </mapgis-ui-input>
-        </mapgis-ui-row>
-        <mapgis-ui-row>
-          <label>导出格式</label>
-        </mapgis-ui-row>
-        <mapgis-ui-row>
-          <mapgis-ui-select
-            v-model="exportOptions.exportFileType"
-            style="width: 100%"
-          >
-            <mapgis-ui-select-option
-              v-for="item in exportFileTypes"
-              :key="item"
-            >
-              {{ item }}
-            </mapgis-ui-select-option>
-          </mapgis-ui-select>
-        </mapgis-ui-row>
-      </mapgis-ui-space>
-    </div>
-  </mapgis-ui-modal>
+  ></mapgis-ui-export-file-modal>
 </template>
 
 <script lang="ts">
-import { baseConfigInstance } from '@mapgis/web-app-framework'
+import { baseConfigInstance, Feature } from '@mapgis/web-app-framework'
 import axios from 'axios'
 import * as Zondy from '@mapgis/webclient-es6-service'
 import XLSX from 'xlsx'
@@ -85,7 +49,9 @@ export default {
       this.$emit('finished')
     },
     // 确认按钮回调函数
-    onExportOk() {
+    onExportOk(val) {
+      this.exportOptions.exportFileName = val.fileName
+      this.exportOptions.exportFileType = val.fileType
       if (this.markers.length) {
         if (this.exportOptions.exportFileName !== '') {
           const exportedMarkers = this.markers.map((marker) => {
@@ -142,12 +108,12 @@ export default {
     },
 
     // 发送请求创建简单要素类 --> 发送请求将简单要素类保存
-    creatFeature(flieName: string, featureSet: any, featureType: string) {
+    creatFeature(fileName: string, featureSet: any, featureType: string) {
       const { projectionName } = baseConfigInstance.config // 获取目标参考系
       const { username, password } = this.exportConfig
       const protocol = window.location.protocol
       const domain = `${protocol}//${this.exportConfig.ip}:${this.exportConfig.port}`
-      const getFeatureUrl = `${domain}/onemap/featureSet/export?path=${flieName}&srsName=${projectionName}&type=${featureType}&f=json&user=${username}&password=${password}`
+      const getFeatureUrl = `${domain}/onemap/featureSet/export?path=${fileName}&srsName=${projectionName}&type=${featureType}&f=json&user=${username}&password=${password}`
 
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const self = this
@@ -170,13 +136,13 @@ export default {
               shpOr6xOption.setOption.featureSet2.SFEleArray.length > 0
             ) {
               // 有线要素
-              const flieNameItem =
+              const fileNameItem =
                 shpOr6xOption.fileType === 'shp'
-                  ? `${shpOr6xOption.flieName}_线.shp`
-                  : `${shpOr6xOption.flieName}_线.wl`
+                  ? `${shpOr6xOption.fileName}_线.shp`
+                  : `${shpOr6xOption.fileName}_线.wl`
               shpOr6xOption.featureType = '线'
               self.creatFeature(
-                flieNameItem,
+                fileNameItem,
                 shpOr6xOption.setOption.featureSet2,
                 'Lin'
               )
@@ -186,14 +152,14 @@ export default {
               shpOr6xOption.setOption.featureSet3.SFEleArray.length > 0
             ) {
               // 有区要素
-              const flieNameItem =
+              const fileNameItem =
                 shpOr6xOption.fileType === 'shp'
-                  ? `${shpOr6xOption.flieName}_区.shp`
-                  : `${shpOr6xOption.flieName}_区.wp`
+                  ? `${shpOr6xOption.fileName}_区.shp`
+                  : `${shpOr6xOption.fileName}_区.wp`
               shpOr6xOption.featureType = '区'
               setTimeout(() => {
                 self.creatFeature(
-                  flieNameItem,
+                  fileNameItem,
                   shpOr6xOption.setOption.featureSet3,
                   'Reg'
                 )
@@ -208,54 +174,83 @@ export default {
     },
 
     // 导出形式为shp文件或6x
-    ouputToShpOr6x(flieName: string, exportedMarkers, fileType: string) {
+    ouputToShpOr6x(fileName: string, exportedMarkers, fileType: string) {
       if (!this.exportConfig) {
         this.$message.success('请先设置配置数据')
         return
       }
       const setOption = this.markers2Features(exportedMarkers) // 获取结果集对象
-      let flieNameItem: string
+      let fileNameItem: string
+      let exportFormat: string
+      const { projectionName } = baseConfigInstance.config // 获取目标参考系
       if (setOption.featureSet1.SFEleArray.length > 0) {
         // 有点要素
         this.shpOr6xOption = {
           setOption,
           featureType: '点',
-          flieName,
+          fileName,
           fileType,
         }
-        flieNameItem =
-          fileType === 'shp' ? `${flieName}_点.shp` : `${flieName}_点.wt`
-        this.creatFeature(flieNameItem, setOption.featureSet1, 'Pnt')
-      } else if (
-        setOption.featureSet2.SFEleArray.length > 0 &&
-        setOption.featureSet1.SFEleArray.length === 0
-      ) {
-        // 无点要素
+        fileNameItem =
+          fileType === 'shp' ? `${fileName}_点.zip` : `${fileName}_点.wt`
+        exportFormat = fileType === 'shp' ? 'shp' : 'wp'
+        // this.creatFeature(fileNameItem, setOption.featureSet1, 'Pnt')
+        Feature.ExportFeature.downloadFile(
+          fileNameItem,
+          setOption.featureSet1,
+          'Pnt',
+          exportFormat,
+          projectionName,
+          this.exportConfig.ip,
+          this.exportConfig.port
+        )
+      }
+      if (setOption.featureSet2.SFEleArray.length > 0) {
         this.shpOr6xOption = {
           setOption,
           featureType: '线',
-          flieName,
+          fileName,
           fileType,
         }
-        flieNameItem =
-          fileType === 'shp' ? `${flieName}_线.shp` : `${flieName}_线.wl`
-        this.creatFeature(flieNameItem, setOption.featureSet2, 'Lin')
-      } else {
-        // 无 点线
+        fileNameItem =
+          fileType === 'shp' ? `${fileName}_线.zip` : `${fileName}_线.wl`
+        exportFormat = fileType === 'shp' ? 'shp' : 'wl'
+        // this.creatFeature(fileNameItem, setOption.featureSet2, 'Lin')
+        Feature.ExportFeature.downloadFile(
+          fileNameItem,
+          setOption.featureSet2,
+          'Lin',
+          exportFormat,
+          projectionName,
+          this.exportConfig.ip,
+          this.exportConfig.port
+        )
+      }
+      if (setOption.featureSet3.SFEleArray.length > 0) {
         this.shpOr6xOption = {
           setOption,
           featureType: '区',
-          flieName,
+          fileName,
           fileType,
         }
-        flieNameItem =
-          fileType === 'shp' ? `${flieName}_区.shp` : `${flieName}_区.wp`
-        this.creatFeature(flieNameItem, setOption.featureSet3, 'Reg')
+        fileNameItem =
+          fileType === 'shp' ? `${fileName}_区.zip` : `${fileName}_区.wp`
+        exportFormat = fileType === 'shp' ? 'shp' : 'wp'
+        // this.creatFeature(fileNameItem, setOption.featureSet3, 'Reg')
+        Feature.ExportFeature.downloadFile(
+          fileNameItem,
+          setOption.featureSet3,
+          'Reg',
+          exportFormat,
+          projectionName,
+          this.exportConfig.ip,
+          this.exportConfig.port
+        )
       }
     },
 
     // 导出格式为Excel
-    ouputToExcel(flieName: string, exportedMarkers) {
+    ouputToExcel(fileName: string, exportedMarkers) {
       exportedMarkers = exportedMarkers.map((item) => {
         return {
           ...item,
@@ -273,7 +268,7 @@ export default {
       const a = document.createElement('a')
       a.style.display = 'none'
       a.href = blob
-      a.download = `${flieName}.xlsx`
+      a.download = `${fileName}.xlsx`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)

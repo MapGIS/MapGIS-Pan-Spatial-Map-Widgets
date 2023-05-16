@@ -11,6 +11,8 @@
       @listenFeature="showFeature(arguments)"
       @listenBufferAdd="showAdd"
       @load="load"
+      @exportResult="exportResult"
+      @deleteResult="deleteResult"
     >
       <div id="widgets-ui" slot="selectLayer" v-if="isWidgetOpen">
         <mapgis-ui-group-tab
@@ -59,6 +61,14 @@
         </mapgis-ui-form-model>
       </div>
     </mapgis-3d-analysis-buffer>
+    <mp-export-layer
+      :visible="visible"
+      :gdbp="destLayer"
+      :ip="ip"
+      :port="port"
+      :exportConfig="exportConfig"
+      @finished="visible = false"
+    ></mp-export-layer>
   </div>
 </template>
 
@@ -68,15 +78,18 @@ import {
   WidgetMixin,
   eventBus,
   events,
+  baseConfigInstance,
   ActiveResultSet,
 } from '@mapgis/web-app-framework'
 import { Style } from '@mapgis/webclient-es6-service'
+import MpExportLayer from '../../../components/ExportLayer/export-layer.vue'
 
 const { FillStyle } = Style
 
 export default {
   name: 'MpBufferAnalysis',
   mixins: [WidgetMixin],
+  components: { MpExportLayer },
   data() {
     return {
       layout: 'vertical',
@@ -100,6 +113,8 @@ export default {
       add: false,
       finishLayer: false,
       finishFeature: false,
+      visible: false,
+      resultData: {},
     }
   },
 
@@ -116,6 +131,20 @@ export default {
         return this.layerArrOption[this.tDataIndex]
       }
       return null
+    },
+    exportConfig() {
+      return this.widgetInfo.config
+        ? this.widgetInfo.config.exportConfig
+        : {
+            ip: baseConfigInstance.config.ip,
+            port: baseConfigInstance.config.port,
+          }
+    },
+    ip() {
+      return (this.baseBufferUrl || '').split('/')[2].split(':')[0]
+    },
+    port() {
+      return (this.baseBufferUrl || '').split('/')[2].split(':')[1]
     },
   },
 
@@ -186,8 +215,7 @@ export default {
     },
 
     getResultLayer() {
-      const ip = (this.baseBufferUrl || '').split('/')[2].split(':')[0]
-      const port = (this.baseBufferUrl || '').split('/')[2].split(':')[1]
+      const { ip, port } = this
       const protocol = window.location.protocol
       const domain = `${protocol}//${ip}:${port}`
       const url = `${domain}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
@@ -209,11 +237,13 @@ export default {
           outlineColor: '#ff0000',
         }),
       }
-      const data = {
+      this.resultData = {
         name: 'IGS图层',
         description: '综合分析_结果图层',
         data: {
           type: 'IGSVector',
+          description: '缓冲区分析',
+          srcLayer: this.srcLayer,
           url: resultLayer[0],
           name: resultLayer[1],
           renderType: renderType,
@@ -221,7 +251,7 @@ export default {
           highlightStyle: highlightStyle,
         },
       }
-      eventBus.$emit(events.ADD_DATA_EVENT, data)
+      eventBus.$emit(events.ADD_DATA_EVENT, this.resultData)
     },
 
     /**
@@ -287,6 +317,14 @@ export default {
 
     showAdd(data) {
       this.add = data
+    },
+    exportResult() {
+      if (this.destLayer && this.destLayer.length > 0) {
+        this.visible = true
+      }
+    },
+    deleteResult() {
+      eventBus.$emit(events.DELETE_DATA_EVENT, this.resultData)
     },
   },
 }
