@@ -105,7 +105,9 @@
           slot="custom"
           slot-scope="item"
           class="tree-item-handle"
-          :class="[checkedNodeKeys.includes(item.guid) ? 'check-light' : '']"
+          :class="[
+            lastCheck === item.guid && !item.children ? 'check-light' : '',
+          ]"
         >
           <img
             v-if="widgetInfo.config.iconConfig[nodeLevel(item)]"
@@ -473,6 +475,11 @@ export default {
     checkKeys() {
       return this.dataCatalogManager.checkedLayerConfigIDs
     },
+    lastCheck() {
+      return this.dataCatalogManager.checkedLayerConfigIDs[
+        this.dataCatalogManager.checkedLayerConfigIDs.length - 1
+      ]
+    },
   },
   created() {
     this.$message.config({
@@ -819,7 +826,11 @@ export default {
               doc.defaultMap.findLayerById(layerConfigNode.guid)
             )
           }
-          eventBus.$emit(events.DATA_SELECTION_CHANGE_EVENT)
+          eventBus.$emit(
+            events.DATA_SELECTION_CHANGE_EVENT,
+            layerConfigNode,
+            isChecked
+          )
         })
       }
     },
@@ -1514,6 +1525,7 @@ export default {
       const tab = {
         name: '其他',
         guid: 'ungrouped-data',
+        dataId: 'ungrouped-data',
         children: [],
       }
       treeData.forEach((item) => {
