@@ -14,11 +14,15 @@
 
 <script lang="ts">
 import { Mixins, Component, Watch, Prop, Emit } from 'vue-property-decorator'
-import { LayerType, WidgetMixin, Feature } from '@mapgis/web-app-framework'
-import { baseConfigInstance } from '@mapgis/pan-spatial-map-common'
+import {
+  LayerType,
+  WidgetMixin,
+  Feature,
+  baseConfigInstance,
+} from '@mapgis/web-app-framework'
 
 @Component({
-  name: 'MpExportLayer'
+  name: 'MpExportLayer',
 })
 export default class MpExportLayer extends Mixins(WidgetMixin) {
   @Emit('finished')
@@ -39,9 +43,9 @@ export default class MpExportLayer extends Mixins(WidgetMixin) {
         ip: baseConfigInstance.config.ip,
         port: baseConfigInstance.config.port,
         username: 'admin',
-        password: 'sa.mapgis'
+        password: 'sa.mapgis',
       }
-    }
+    },
   })
   exportConfig
 
@@ -56,7 +60,7 @@ export default class MpExportLayer extends Mixins(WidgetMixin) {
   // 表单数据
   private exportOptions = {
     exportFileName: '',
-    exportFileType: 'shp格式'
+    exportFileType: 'shp格式',
   }
 
   // 导出格式下拉项配置
