@@ -33,7 +33,7 @@ export default {
 
   computed: {
     uploadUrl() {
-      return `${this.baseUrl}/api/local-storage/pictures`
+      return `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`
     },
   },
 

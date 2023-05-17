@@ -35,7 +35,7 @@
             <mapgis-ui-textarea v-model="item.value" autoSize allowClear>
             </mapgis-ui-textarea>
             <mapgis-ui-upload-image
-              :uploadUrl="`${baseUrl}/api/local-storage/pictures`"
+              :uploadUrl="`${baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`"
               :showUploadList="false"
               @image-url="(val) => updateImgUrl(val, item)"
             ></mapgis-ui-upload-image>

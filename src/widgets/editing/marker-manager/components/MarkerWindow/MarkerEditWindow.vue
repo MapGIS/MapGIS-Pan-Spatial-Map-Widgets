@@ -34,7 +34,7 @@
             method="post"
             :withCredentials="true"
             accept=".jpg, image/*"
-            :action="baseUrl + '/api/local-storage/pictures'"
+            :action="baseUrl + '/psmap/rest/services/system/ResourceServer/files/pictures'"
             list-type="picture-card"
             :file-list="fileList"
             @preview="onFilePreview"

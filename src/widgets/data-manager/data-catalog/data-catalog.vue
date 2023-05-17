@@ -491,7 +491,7 @@ export default {
     this.widgetConfig = this.widgetInfo.config
   },
   async mounted() {
-    this.uploadUrl = `${this.baseUrl}/api/local-storage/pictures`
+    this.uploadUrl = `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`
     console.log(this.dataCatalogManager, 'this.dataCatalogManager')
     console.log(this.widgetInfo.config, 'this.widgetInfo.config')
 

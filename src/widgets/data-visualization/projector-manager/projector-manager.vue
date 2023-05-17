@@ -14,7 +14,7 @@
   >
     <template slot="imgUpload" slot-scope="{ click }">
       <mapgis-ui-upload-image
-        :uploadUrl="`${baseUrl}/api/local-storage/pictures`"
+        :uploadUrl="`${baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`"
         :showUploadList="false"
         :click="click"
       ></mapgis-ui-upload-image>
