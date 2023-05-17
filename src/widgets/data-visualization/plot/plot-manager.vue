@@ -1,5 +1,5 @@
 <template>
-  <div style="max-height: 530px" v-if="is2DMapMode">
+  <div style="max-height: 530px" v-if="is2DMapMode && dataLoaded">
     <mapgis-ui-row :gutter="8" class="plot-edit-toolbar">
       <mapgis-ui-col :span="12">
         <mapgis-ui-switch-panel
@@ -154,6 +154,8 @@ export default {
       firstOpen: true,
 
       plot: undefined,
+
+      dataLoaded: false,
     }
   },
 
@@ -172,32 +174,34 @@ export default {
   //       }
   //     })
   // }
-  async created() {
-    const config = await api.getWidgetConfig('plot-manager')
-    this.font = config.fontUrl
-    // this.base = config.baseUrl
-    const protocol = window.location.protocol
-    const ip = config.ip || this.defaultIp
-    const port = config.port || this.defaultPort
-    if (ip && ip !== '' && port && port !== '') {
-      this.symbolBaseUrl = `${protocol}//${ip}:${port}/`
-    }
-
-    this.svgBaseUrl = `${this.symbolBaseUrl}igs/rest/services/${config.serviceName}/PlotServer/symbolLibs/${config.libId}/symbols/`
-
-    this.symbolUrl = await api.getSymbolLibsById(
-      ip,
-      port,
-      config.serviceName,
-      config.libId
-    )
-
-    // this.symbolUrl = config.symbolUrl
-
+  created() {
     this.$root.$on(events.PLOT_LAYER_LOADED, this.handleLoad.bind(this))
   },
   methods: {
-    onOpen() {
+    async onOpen() {
+      // 确保打开面板的时候才请求数据，避免在未使用组件时，请求数据时无法请求到数据出现报错问题
+      if (!this.dataLoaded || (this.data && this.data !== '')) {
+        // 请求脚本列表，得到脚本数组
+        const config = await api.getWidgetConfig('plot-manager')
+        this.font = config.fontUrl
+        // this.base = config.baseUrl
+        const protocol = window.location.protocol
+        const ip = config.ip || this.defaultIp
+        const port = config.port || this.defaultPort
+        if (ip && ip !== '' && port && port !== '') {
+          this.symbolBaseUrl = `${protocol}//${ip}:${port}/`
+        }
+
+        this.svgBaseUrl = `${this.symbolBaseUrl}igs/rest/services/${config.serviceName}/PlotServer/symbolLibs/${config.libId}/symbols/`
+
+        this.symbolUrl = await api.getSymbolLibsById(
+          ip,
+          port,
+          config.serviceName,
+          config.libId
+        )
+        this.dataLoaded = true
+      }
       this.showSymbol = true
       this.plot && this.plot.setPick()
     },

@@ -110,19 +110,13 @@ export default {
       }
       const { initPositionMode } = baseConfigInstance.config
       const { Cesium, map, vueCesium, viewer } = this
+      const mapParams = { Cesium, map, vueCesium, viewer }
       switch (initPositionMode) {
         // 根据范围重置
         case 'initExtent':
           const { xmin, ymin, xmax, ymax } = baseConfigInstance.config
           const bound = { xmin, ymin, xmax, ymax }
-          const mapParams = { Cesium, map, vueCesium, viewer }
-          if (this.is2DMapMode) {
-            setTimeout(() => {
-              FitBound.fitBound2D(bound, mapParams)
-            }, 300)
-          } else {
-            FitBound.fitBound3D(bound, mapParams)
-          }
+          this.initFitBound(bound, mapParams)
           break
         // 根据位置重置
         case 'initPosition':
@@ -167,8 +161,24 @@ export default {
             )
             await mapLayer.load()
             this.fitBounds(mapLayer)
+          } else {
+            // 默认中国范围，与cesium的goHome()范围保持一致
+            this.initFitBound(
+              { xmin: 73, ymin: 3, xmax: 135, ymax: 53 },
+              mapParams
+            )
           }
           break
+      }
+    },
+
+    initFitBound(bound, mapParams) {
+      if (this.is2DMapMode) {
+        setTimeout(() => {
+          FitBound.fitBound2D(bound, mapParams)
+        }, 300)
+      } else {
+        FitBound.fitBound3D(bound, mapParams)
       }
     },
 

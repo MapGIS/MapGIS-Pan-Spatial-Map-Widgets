@@ -154,10 +154,16 @@ export default {
           }
     },
     ip() {
-      return (this.baseBufferUrl || '').split('/')[2].split(':')[0]
+      if (!!this.baseBufferUrl && this.baseBufferUrl.length > 0) {
+        return this.baseBufferUrl.split('/')[2].split(':')[0]
+      }
+      return ''
     },
     port() {
-      return (this.baseBufferUrl || '').split('/')[2].split(':')[1]
+      if (!!this.baseBufferUrl && this.baseBufferUrl.length > 0) {
+        return this.baseBufferUrl.split('/')[2].split(':')[1]
+      }
+      return ''
     },
   },
 
