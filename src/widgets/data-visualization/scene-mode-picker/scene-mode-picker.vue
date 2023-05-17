@@ -29,7 +29,7 @@ export default {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .mp-widget-scene-mode-picker {
   white-space: nowrap;
   ::v-deep span.cesium-sceneModePicker-wrapper {
@@ -39,12 +39,13 @@ export default {
       box-shadow: none;
     }
     .cesium-button {
-      color: #a3a3a3;
-      fill: #a3a3a3;
+      fill: $text-color;
+      background: $btn-theme-bg;
+      border: none;
       &:hover {
-        color: @primary-color;
-        fill: @primary-color;
-        background: rgb(48, 51, 54);
+        color: $primary-color;
+        fill: $primary-color;
+        // background: rgb(48, 51, 54);
         border: none;
         box-shadow: none;
         -webkit-box-shadow: none;
