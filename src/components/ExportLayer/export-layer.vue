@@ -53,7 +53,7 @@ export default {
     gdbp: {
       deep: true,
       immediate: true,
-      async handler() {
+      handler() {
         if (this.gdbp && this.gdbp.length > 0) {
           const srcs = this.gdbp.split('/')
           this.exportOptions.exportFileName = srcs[srcs.length - 1]
