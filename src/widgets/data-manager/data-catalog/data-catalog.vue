@@ -1653,7 +1653,7 @@ export default {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .mp-widget-data-catalog {
   height: 100%;
   display: flex;
@@ -1692,7 +1692,7 @@ export default {
       }
     }
     .check-light {
-      background: var(--primary-2);
+      background: $primary-2;
     }
     ::v-deep .mapgis-ui-tree li .mapgis-ui-tree-node-content-wrapper {
       padding: 0;
@@ -1706,7 +1706,7 @@ export default {
       line-height: 24px;
     }
     > i:hover {
-      color: var(--primary-5);
+      color: $primary-5;
     }
     .tree-tabs-list {
       display: flex;
@@ -1723,19 +1723,19 @@ export default {
         cursor: pointer;
         margin-right: 8px;
         user-select: none;
-        background: var(--background-light);
+        background: $background-color-light;
         padding: 0 8px;
         border-radius: 3px;
       }
       .active {
         font-weight: 500;
-        color: var(--primary-5);
+        color: $primary-5;
       }
       .active:hover {
-        color: var(--primary-5);
+        color: $primary-5;
       }
       > span:hover {
-        color: var(--primary-3);
+        color: $primary-3;
       }
       > span:last-child {
         margin-right: 0;
@@ -1766,7 +1766,7 @@ export default {
       cursor: pointer;
       margin-right: 16px;
       :hover {
-        color: var(--primary-5);
+        color: $primary-5;
       }
       .active {
         font-weight: 500;
@@ -1784,16 +1784,16 @@ export default {
     cursor: pointer;
   }
   .tabs-detail-info:hover {
-    color: var(--primary-3);
+    color: $primary-3;
   }
   .active {
     font-weight: 500;
-    color: var(--primary-5);
-    background: var(--background);
+    color: $primary-5;
+    background: $background-color-light;
     border-radius: 3px;
   }
   .active:hover {
-    color: var(--primary-5);
+    color: $primary-5;
   }
 }
 .mapgis-ui-dropdown-trigger.anticon-more {
@@ -1813,7 +1813,7 @@ export default {
   color: gray;
 }
 </style>
-<style lang="less">
+<style lang="scss">
 .tabs-detail-list {
   .mapgis-ui-popover-inner-content {
     max-height: 60vh;
