@@ -106,7 +106,7 @@
           slot-scope="item"
           class="tree-item-handle"
           :class="[
-            lastCheck === item.guid && !item.children ? 'check-light' : '',
+            lastSelect === item.guid && !item.children ? 'check-light' : '',
           ]"
         >
           <img
@@ -339,6 +339,7 @@ import {
   DataFlowList,
   LayerAutoResetManager,
   DataCatalogCheckController,
+  DataCatalogCheckControl,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../../../components/MetadataInfo/MetadataInfo.vue'
 import NonSpatial from './non-spatial.vue'
@@ -454,6 +455,8 @@ export default {
       // checkData: [],
       preCheckedKeysDel: [],
       layerAutoResetManager: LayerAutoResetManager,
+      extendLayerRemoveIds: [],
+      lastSelect: '',
     }
   },
   computed: {
@@ -475,11 +478,11 @@ export default {
     checkKeys() {
       return this.dataCatalogManager.checkedLayerConfigIDs
     },
-    lastCheck() {
-      return this.dataCatalogManager.checkedLayerConfigIDs[
-        this.dataCatalogManager.checkedLayerConfigIDs.length - 1
-      ]
-    },
+    // lastCheck() {
+    //   return this.dataCatalogManager.checkedLayerConfigIDs[
+    //     this.dataCatalogManager.checkedLayerConfigIDs.length - 1
+    //   ]
+    // },
   },
   created() {
     this.$message.config({
@@ -520,6 +523,11 @@ export default {
       this.activeTreeTab && this.treeTabChange(this.activeTreeTab)
     }
 
+    // 初始化加载图层
+    this.initLoadKeys()
+    // 初始化存储点击跳转图层
+    this.initLocationKeys()
+
     // 监听tree-tabs-list，当面板宽度超过scrollWidth取消前后处的箭头
     const targetNode = document.getElementById('tree-tabs-list')
     this.observeTab = new ResizeObserver(() => {
@@ -556,6 +564,16 @@ export default {
     },
   },
   methods: {
+    initLoadKeys() {
+      const allLayerNodes = this.dataCatalogManager.getAllLayerConfigItems()
+      const dataCatalogControl = new DataCatalogCheckControl()
+      const initKeys = dataCatalogControl.getInitLoadLayerKeys(allLayerNodes)
+      this.dataCatalogChangeNodes(initKeys, true)
+    },
+    initLocationKeys() {
+      const allLayerNodes = this.dataCatalogManager.getAllLayerConfigItems()
+      this.layerAutoResetManager.dealLocationArr(allLayerNodes)
+    },
     dataCatalogCheckNodes(keys, checkKeysRelation) {
       this.checkedNodeKeys = []
       if (this.isClassify) {
@@ -567,11 +585,16 @@ export default {
     getCurrentData() {
       let currentData = []
       if (this.isClassify) {
-        Object.keys(this.bookMarkRelationForTab).forEach((key) => {
-          const parent = this.dataCatalogTabData.find(
-            (item) => item.guid === key
-          )
-          currentData.push(parent)
+        Object.keys(this.activeTreeTabRelRelation).forEach((key) => {
+          if (
+            this.activeTreeTabRelRelation[key] &&
+            this.activeTreeTabRelRelation[key].length > 0
+          ) {
+            const parent = this.dataCatalogTabData.find(
+              (item) => item.guid === key
+            )
+            currentData.push(parent)
+          }
         })
       } else {
         currentData = this.dataCatalogTreeData
@@ -584,20 +607,13 @@ export default {
         this.setKeys = !this.setKeys
         return
       }
-      // 兼容收藏夹tab页中的勾选
-      eventBus.$emit(
-        events.DATA_SELECTION_KEYS_CHANGE_EVENT,
-        this.isChangeDataCatalog
-          ? this.getDataCatalogCheckedNodeKeys()
-          : this.getCheckedNodeKeys()
-      )
 
       // 扩展图层在相关的微件中移除，勾选取消即可，此处不做其他处理
       if (this.extendLayerRemove) {
         this.extendLayerRemove = !this.extendLayerRemove
-        this.preCheckedNodeKeys = this.isChangeDataCatalog
-          ? this.getDataCatalogCheckedNodeKeys()
-          : this.getCheckedNodeKeys()
+        this.preCheckedNodeKeys = [...this.checkedNodeKeys]
+        this.filterRemoveKeys(this.extendLayerRemoveIds)
+        this.extendLayerRemoveIds = []
         return
       }
 
@@ -667,7 +683,7 @@ export default {
             (item) => !this.preCheckedNodeKeys.includes(item)
           )
 
-          // 查找新取消选中的(在之前的选中中有,在当前的选中中没有)\
+          // 查找新取消选中的(在之前的选中中有,在当前的选中中没有)
           newUnChecked = this.preCheckedNodeKeys.filter(
             (item) => !allCheckedKeys.includes(item)
           )
@@ -683,29 +699,6 @@ export default {
         // 给this.checkedNodeKeys赋值
         this.checkedNodeKeys = allCheckedKeys
         this.setKeys = true
-      } else {
-        // 收藏夹页面操作逻辑
-        newChecked = this.checkedNodeKeys.filter(
-          (item) => !this.checkedNodeKeysCopy.includes(item)
-        )
-        // 获取收藏夹所有guid
-        const bookmarkKeys = this.dataCatalogTreeData.map((item) => item.guid)
-        const unChecked = this.checkedNodeKeysCopy.filter(
-          (item) => !this.checkedNodeKeys.includes(item)
-        )
-        newUnChecked = bookmarkKeys.filter((item) => unChecked.includes(item))
-        // 更新checkedNodeKeysCopy
-        this.checkedNodeKeysCopy = [...this.checkedNodeKeysCopy, ...newChecked]
-        this.checkedNodeKeysCopy = this.checkedNodeKeysCopy.filter(
-          (item) => !newUnChecked.includes(item)
-        )
-        if (
-          this.dataCatalogManager.checkedLayerConfigIDs.toString() !==
-          this.getCheckedNodeKeys().toString()
-        ) {
-          this.dataCatalogManager.checkedLayerConfigIDs =
-            this.getCheckedNodeKeys()
-        }
       }
 
       // 将新取消选中的图层从document中移除
@@ -716,9 +709,7 @@ export default {
 
       // 修改说明：原有代码赋址属于浅拷贝，指向同一内存地址，checkedNodeKeys变化时preCheckedNodeKeys也会变化，这样preCheckedNodeKeys就无法记录上一次勾选的checkedNodeKeys。
       // 修改人：何龙 2021年04月21日
-      this.preCheckedNodeKeys = this.isChangeDataCatalog
-        ? this.getDataCatalogCheckedNodeKeys()
-        : this.getCheckedNodeKeys()
+      this.preCheckedNodeKeys = this.getDataCatalogCheckedNodeKeys()
     },
     onCheckedLayerConfigIDsChanged() {
       // 如果两者不相等则重新赋值
@@ -777,6 +768,7 @@ export default {
             const layer =
               DataCatalogManager.generateLayerByConfig(layerConfigNode)
             layer.description = this.setDescription(layer)
+
             // 2.将图层添加到全局的document中。
             if (layer) {
               const recordCheckLayer = this.disableTreeNodeCheckBox(layer.id)
@@ -791,6 +783,18 @@ export default {
                 if (layer.loadStatus === LoadStatus.loaded) {
                   if (this.is3DLayer(layer) && this.is2DMapMode === true) {
                     this.switchMapMode()
+                  }
+
+                  // 二维图层如果配置了extend中的location为true则在加载后要执行缩放至操作，三维图层的跳转逻辑则在WebScenePro组件中通过autoReset控制是否跳转
+                  if (!this.is3DLayer(layer)) {
+                    const autoResetArr =
+                      this.layerAutoResetManager.getInitLayerAutoResetArr()
+                    if (autoResetArr.includes(layer.id)) {
+                      !this.is2DMapMode && this.switchMapMode()
+                      setTimeout(() => {
+                        this.fitBounds(layer, this.getDataFlowExtent(layer))
+                      }, 1000)
+                    }
                   }
 
                   doc.defaultMap.add(layer)
@@ -930,21 +934,8 @@ export default {
       this.layerAutoResetManager.setUnAutoResetArr([])
       if (this.isClassify) {
         const preCheckedKeys = this.activeTreeTabRelRelation[this.activeTreeTab]
-        if (preCheckedKeys) {
-          this.preCheckedKeysDel = preCheckedKeys.filter(
-            (item) => !checkedKeys.includes(item)
-          )
-          this.preCheckedKeysAdd = checkedKeys.filter(
-            (item) => !preCheckedKeys.includes(item)
-          )
-        }
-        // this.activeTreeTabRelation[this.activeTreeTab] = checkedKeys
         this.activeTreeTabRelRelation[this.activeTreeTab] = checkedKeys
-        this.bookMarkRelationForTab[this.activeTreeTab] = info.checkedNodes
-      } else {
-        // this.bookMarkRelationForDefault = info.checkedNodes
       }
-      // this.checkData = this.getCurrentData()
       DataCatalogCheckController.setCheckData(this.getCurrentData())
     },
 
@@ -963,8 +954,19 @@ export default {
         this.dataCatalogManager.checkedLayerConfigIDs.includes(selectedKeys[0])
       ) {
         const layer = this.document.defaultMap.findLayerById(selectedKeys[0])
+        if (layer) {
+          this.lastSelect = selectedKeys[0]
+          if (!this.is3DLayer(layer)) {
+            !this.is2DMapMode && this.switchMapMode()
+          }
 
-        this.fitBounds(layer, this.getDataFlowExtent(layer))
+          if (this.is3DLayer(layer)) {
+            this.is2DMapMode && this.switchMapMode()
+          }
+          setTimeout(() => {
+            this.fitBounds(layer, this.getDataFlowExtent(layer))
+          }, 1000)
+        }
       }
     },
     fitBounds(item, layeExtent) {
@@ -1009,14 +1011,48 @@ export default {
     // 取消扩展图层同步勾选
     changeCheckedKeys(ids) {
       this.extendLayerRemove = !this.extendLayerRemove
+      this.extendLayerRemoveIds = ids
       this.dataCatalogManager.checkedLayerConfigIDs =
         this.dataCatalogManager.checkedLayerConfigIDs.filter(
           (item) => !ids.includes(item)
         )
+      this.isClassify
+        ? this.dataCatalogChangeNodesForClassify(ids, false)
+        : this.dataCatalogChangeNodesForNormal(ids, false)
+      DataCatalogCheckController.setCheckData(this.getCurrentData())
     },
 
     // 控制数据目录勾选/取消勾选节点
     dataCatalogChangeNodes(ids, isChecked) {
+      this.isClassify
+        ? this.dataCatalogChangeNodesForClassify(ids, isChecked)
+        : this.dataCatalogChangeNodesForNormal(ids, isChecked)
+      this.checkedNodeKeys = isChecked
+        ? [
+            ...new Set([
+              ...this.dataCatalogManager.checkedLayerConfigIDs,
+              ...ids,
+            ]),
+          ]
+        : this.dataCatalogManager.checkedLayerConfigIDs.filter(
+            (item) => !ids.includes(item)
+          )
+      DataCatalogCheckController.setCheckData(this.getCurrentData())
+    },
+
+    dataCatalogChangeNodesForClassify(ids, isChecked) {
+      const allTreeNodes = this.dataCatalogManager.getAllConfigItems()
+      const dataCatalogControl = new DataCatalogCheckControl()
+      const treeData = dataCatalogControl.getDataCatalogRelation(
+        ids,
+        allTreeNodes
+      )
+      treeData.forEach((item) => {
+        this.operateTabRelRelation(item, isChecked)
+      })
+    },
+
+    dataCatalogChangeNodesForNormal(ids, isChecked) {
       if (isChecked) {
         // 排除ids中在数据目录中已勾选的id
         const checkIds = []
@@ -1033,6 +1069,37 @@ export default {
           this.dataCatalogManager.checkedLayerConfigIDs.filter(
             (item) => !ids.includes(item)
           )
+      }
+    },
+
+    operateTabRelRelation(data, isAdd) {
+      const parent = data.find((item) => !item.parentId)
+      const child = []
+      data.forEach((item) => {
+        if (item.parentId) {
+          child.push(item.guid)
+        }
+      })
+      let currentCheckKeys
+      const relationKey = data.length > 1 ? parent.guid : 'ungrouped-data'
+      if (data.length > 1) {
+        currentCheckKeys = this.activeTreeTabRelRelation[parent.guid] || []
+      } else {
+        currentCheckKeys = this.activeTreeTabRelRelation['ungrouped-data'] || []
+        data.forEach((item) => {
+          child.push(item.guid)
+        })
+      }
+      if (isAdd) {
+        const newCheckKeys = [...new Set([...currentCheckKeys, ...child])]
+        this.activeTreeTabRelRelation[relationKey] = newCheckKeys
+      } else {
+        if (currentCheckKeys.length > 0) {
+          const newCheckKeys = currentCheckKeys.filter(
+            (item) => !child.includes(item)
+          )
+          this.activeTreeTabRelRelation[relationKey] = newCheckKeys
+        }
       }
     },
 
@@ -1602,9 +1669,6 @@ export default {
       if (!this.isClassify) {
         return [...this.checkedNodeKeys]
       } else {
-        // this.activeTreeTabRelation[this.activeTreeTab] = [
-        //   ...this.checkedNodeKeys,
-        // ]
         // 将其他tab页的勾选全部放到一起
         let allCheck = []
         Object.keys(this.activeTreeTabRelRelation).forEach((item) => {
@@ -1612,11 +1676,16 @@ export default {
             ...new Set([...allCheck, ...this.activeTreeTabRelRelation[item]]),
           ]
         })
-        // allCheck = allCheck.filter(
-        //   (item) => !this.preCheckedKeysDel.includes(item)
-        // )
         return allCheck
       }
+    },
+    filterRemoveKeys(ids) {
+      Object.keys(this.activeTreeTabRelRelation).forEach((item) => {
+        const keys = this.activeTreeTabRelRelation[item]
+        this.activeTreeTabRelRelation[item] = keys.filter(
+          (key) => !ids.includes(key)
+        )
+      })
     },
     scrollTargetPosition() {
       // this.$nextTick在收藏夹切换回数据目录时会失效
