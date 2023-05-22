@@ -52,6 +52,7 @@ export default {
     },
     imagesUploadApi() {
       return `${this.baseUrl}/psmap/rest/manager/file/upload`
+      // return `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`
     },
   },
   mounted() {
