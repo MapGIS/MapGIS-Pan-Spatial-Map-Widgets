@@ -339,7 +339,6 @@ import {
   DataFlowList,
   LayerAutoResetManager,
   DataCatalogCheckController,
-  DataCatalogCheckControl,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../../../components/MetadataInfo/MetadataInfo.vue'
 import NonSpatial from './non-spatial.vue'
@@ -566,8 +565,8 @@ export default {
   methods: {
     initLoadKeys() {
       const allLayerNodes = this.dataCatalogManager.getAllLayerConfigItems()
-      const dataCatalogControl = new DataCatalogCheckControl()
-      const initKeys = dataCatalogControl.getInitLoadLayerKeys(allLayerNodes)
+      const initKeys =
+        DataCatalogCheckController.getInitLoadLayerKeys(allLayerNodes)
       this.dataCatalogChangeNodes(initKeys, true)
     },
     initLocationKeys() {
@@ -789,7 +788,13 @@ export default {
                   if (!this.is3DLayer(layer)) {
                     const autoResetArr =
                       this.layerAutoResetManager.getInitLayerAutoResetArr()
-                    if (autoResetArr.includes(layer.id)) {
+
+                    const unAntoResetArr =
+                      this.layerAutoResetManager.getUnAutoResetArr()
+                    if (
+                      autoResetArr.includes(layer.id) &&
+                      !unAntoResetArr.includes(layer.id)
+                    ) {
                       !this.is2DMapMode && this.switchMapMode()
                       setTimeout(() => {
                         this.fitBounds(layer, this.getDataFlowExtent(layer))
@@ -1042,8 +1047,7 @@ export default {
 
     dataCatalogChangeNodesForClassify(ids, isChecked) {
       const allTreeNodes = this.dataCatalogManager.getAllConfigItems()
-      const dataCatalogControl = new DataCatalogCheckControl()
-      const treeData = dataCatalogControl.getDataCatalogRelation(
+      const treeData = DataCatalogCheckController.getDataCatalogRelation(
         ids,
         allTreeNodes
       )
