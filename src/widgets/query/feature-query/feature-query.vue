@@ -219,6 +219,7 @@ export default {
       checkLayer: [],
       operateLayerData: [],
       currentId: '',
+      isDrawStart: false,
     }
   },
   computed: {
@@ -439,12 +440,15 @@ export default {
     },
 
     // 'start'响应事件(开始绘制)
-    onDrawStart() {},
+    onDrawStart() {
+      this.isDrawStart = true
+    },
 
     // 'finished'响应事件(结束绘制)
     onDrawFinished({ mode, feature, shape, center }) {
-      if (shape) {
+      if (shape && this.isDrawStart) {
         this.queryLayers(shape)
+        this.isDrawStart = false
       }
 
       this.queryType = ''

@@ -42,6 +42,7 @@ import {
   LayerType,
   events,
   eventBus,
+  api,
 } from '@mapgis/web-app-framework'
 
 export default {
@@ -103,6 +104,11 @@ export default {
     setOpacity(val, item) {
       const factor = this.getFactor(item)
       item.opacity = Number((100 - val) / 100) * factor
+      if (item.layerProperty) {
+        item.layerProperty.alpha = Number(100 - val)
+        // const { dataId, layerProperty } = item
+        // api.updateData({ dataId, layerProperty })
+      }
       if (item.type === LayerType.VectorTile) {
         // 矢量瓦片不支持改整体的透明度，遍历layers，设置每个layer的透明度
         const { layers } = item.styleList[0]

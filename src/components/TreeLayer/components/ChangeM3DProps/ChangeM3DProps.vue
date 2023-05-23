@@ -118,19 +118,6 @@ export default {
             layerProperty.scaleZ !== undefined ? layerProperty.scaleZ : 1
           this.offset =
             layerProperty.offset !== undefined ? layerProperty.offset : -2
-
-          // layerProperty = {
-          //   enableModelStretch: false,
-          //   enableModelSwitch: false,
-          //   enablePopup: false,
-          //   luminanceAtZenith: 2,
-          //   maximumScreenSpaceError: 16,
-          //   offset: -2,
-          //   opacity: 100,
-          //   scaleX: 1,
-          //   scaleY: 1,
-          //   scaleZ: 1,
-          // }
         }
         this.enablePopup = enablePopup !== undefined ? enablePopup : false
         this.enableModelSwitch =
@@ -141,7 +128,6 @@ export default {
       }
     },
     submit() {
-      console.log(this.layer)
       if (this.layer.maximumScreenSpaceError !== undefined) {
         this.layer.maximumScreenSpaceError = this.maximumScreenSpaceError
       }
@@ -155,11 +141,26 @@ export default {
         this.layer.enablePopup = this.enablePopup
         this.layer.enableModelSwitch = this.enableModelSwitch
       }
+      const layer = this.layer.layer ? this.layer.layer : this.layer
+      if (layer !== undefined) {
+        const { layerProperty } = layer
+        if (layerProperty !== undefined) {
+          layerProperty.maximumScreenSpaceError = this.maximumScreenSpaceError
+          layerProperty.luminanceAtZenith = this.luminanceAtZenith
+          layerProperty.enablePopup = this.enablePopup
+          layerProperty.enableModelSwitch = this.enableModelSwitch
+          layerProperty.scaleZ = this.scaleZ
+          layerProperty.offset = this.offset
+        }
+      }
       this.$emit('update:layer', this.layer)
     },
 
     luminanceAtZenithChange() {
       this.layer.luminanceAtZenith = this.luminanceAtZenith
+      if (this.layer.layerProperty !== undefined) {
+        this.layer.layerProperty.luminanceAtZenith = this.luminanceAtZenith
+      }
       this.$emit('update:luminanceAtZenith', this.layer)
     },
   },

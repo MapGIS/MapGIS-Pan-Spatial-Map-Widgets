@@ -302,7 +302,10 @@ export default {
   watch: {
     getDataFLowList: {
       deep: true,
-      handler() {
+      handler(newVal, oldVal) {
+        if (!newVal || !newVal.length) {
+          return
+        }
         this.clearSelection()
         this.removeMarkers()
         this.tableData = []
