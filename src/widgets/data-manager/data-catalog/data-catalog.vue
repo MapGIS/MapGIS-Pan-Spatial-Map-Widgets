@@ -1047,8 +1047,7 @@ export default {
 
     dataCatalogChangeNodesForClassify(ids, isChecked) {
       const allTreeNodes = this.dataCatalogManager.getAllConfigItems()
-      const dataCatalogControl = new DataCatalogCheckControl()
-      const treeData = dataCatalogControl.getDataCatalogRelation(
+      const treeData = DataCatalogCheckController.getDataCatalogRelation(
         ids,
         allTreeNodes
       )
