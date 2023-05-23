@@ -247,6 +247,7 @@ export default {
             docName: serverName,
             layerIdxs: layerIndex,
             coordPrecision: 8,
+            requestType: 'POST',
           })
           // json格式数据转成geojson格式
           if (f === 'json') {
