@@ -70,6 +70,34 @@
         @on-select="onCheckLayer"
       /> -->
     </div>
+    <mp-geo-json-input-draw
+      :is2DMapMode="is2DMapMode"
+      v-show="queryType === 'MyInputString'"
+      @close="queryType = ''"
+      @draw-shape="onDrawShape"
+      @draw-shape-3d="onDrawShape3D"
+    />
+    <mp-polygon-input-draw
+      :is2DMapMode="is2DMapMode"
+      v-show="queryType === 'MyInputPolygon'"
+      @close="queryType = ''"
+      @draw-shape="onDrawShape"
+      @draw-shape-3d="onDrawShape3D"
+    />
+    <mp-upload-file-draw
+      :is2DMapMode="is2DMapMode"
+      v-show="queryType === 'MyUpload'"
+      @close="queryType = ''"
+      @draw-shape="onDrawShape"
+      @draw-shape-3d="onDrawShape3D"
+    />
+    <mp-region-draw
+      v-show="queryType === 'MyRegion'"
+      :is2DMapMode="is2DMapMode"
+      @draw-shape="onDrawShape"
+      @draw-shape-3d="onDrawShape3D"
+      @close="queryType = ''"
+    ></mp-region-draw>
   </div>
 </template>
 
@@ -91,17 +119,23 @@ import {
   dataCatalogManagerInstance,
   ActiveResultSet,
   DataStoreCatalog,
+  Overlay,
 } from '@mapgis/web-app-framework'
 import * as Zondy from '@mapgis/webclient-es6-service'
 import {
   lineString,
   polygon,
   point,
+  multiPolygon,
   booleanCrosses,
   booleanPointInPolygon,
   booleanDisjoint,
   booleanContains,
 } from '@turf/turf'
+import MpGeoJsonInputDraw from './MpGeoJsonInputDraw.vue'
+import MpPolygonInputDraw from './MpPolygonInputDraw.vue'
+import MpUploadFileDraw from './MpUploadFileDraw.vue'
+import MpRegionDraw from './MpRegionDraw.vue'
 
 const { IAttributeTableListExhibition, AttributeTableListExhibition } =
   Exhibition
@@ -116,11 +150,22 @@ enum QueryType {
   LineString = 'LineString',
   PickModel = 'PickModel',
   Cube = 'Cube',
+  MultiPolygon = 'MultiPolygon',
+  MyInputString = 'MyInputString',
+  MyInputPolygon = 'MyInputPolygon',
+  MyUpload = 'MyUpload',
+  MyRegion = 'MyRegion',
 }
 
 export default {
   name: 'MpFeatureQuery',
   mixins: [WidgetMixin, ExhibitionControllerMixin],
+  components: {
+    MpGeoJsonInputDraw,
+    MpPolygonInputDraw,
+    MpUploadFileDraw,
+    MpRegionDraw,
+  },
   data() {
     return {
       showLayerList: false,
@@ -137,6 +182,10 @@ export default {
         QueryType.Rectangle,
         QueryType.Polygon,
         QueryType.LineString,
+        QueryType.MyInputString,
+        QueryType.MyInputPolygon,
+        QueryType.MyUpload,
+        QueryType.MyRegion,
       ],
       defaultQueryTypes3d: [
         QueryType.Point,
@@ -144,6 +193,10 @@ export default {
         QueryType.LineString,
         QueryType.Rectangle,
         QueryType.Cube,
+        QueryType.MyInputString,
+        QueryType.MyInputPolygon,
+        QueryType.MyUpload,
+        QueryType.MyRegion,
       ],
       queryTypes2DrawModes: {
         Point: 'draw-point',
@@ -165,6 +218,7 @@ export default {
       layerKeyRelation: {},
       checkLayer: [],
       operateLayerData: [],
+      currentId: '',
     }
   },
   computed: {
@@ -211,6 +265,20 @@ export default {
         this.dealwithLayers()
       },
     },
+    currentId(newVal, oldVal) {
+      if (oldVal) {
+        if (this.map.getLayer(`${oldVal}fill`)) {
+          this.map.removeLayer(`${oldVal}fill`)
+        }
+        if (this.map.getLayer(`${oldVal}line`)) {
+          this.map.removeLayer(`${oldVal}line`)
+        }
+        if (this.map.getSource(oldVal)) {
+          this.map.removeSource(oldVal)
+        }
+        this.sceneOverlays.removeEntityByName(oldVal)
+      }
+    },
   },
 
   created() {
@@ -224,9 +292,112 @@ export default {
       this.vueCesium,
       this.viewer
     )
+    this.sceneOverlays = Overlay.SceneOverlays.getInstance(
+      this.Cesium,
+      this.vueCesium,
+      this.viewer
+    )
   },
 
   methods: {
+    onDrawShape3D(shapeInfo) {
+      this.currentId = shapeInfo.id
+      const fillColor = new this.Cesium.Color.fromCssColorString('#ff0000')
+      const { xmin, ymin, xmax, ymax } =
+        Feature.getGeoJSONFeatureBound(shapeInfo)
+      const { type, coordinates } = shapeInfo.geometry
+      if (type === 'LineString') {
+        // 将查询类型置为LineString
+        this.queryType = 'LineString'
+        this.sceneOverlays.addLine(
+          shapeInfo.id,
+          coordinates.join(',').split(',').map(Number),
+          3,
+          fillColor
+        )
+      } else {
+        this.sceneOverlays.addPolygon(
+          shapeInfo.id,
+          coordinates.join(',').split(',').map(Number),
+          fillColor
+        )
+      }
+      this.viewer.camera.flyTo({
+        destination: this.Cesium.Rectangle.fromDegrees(xmin, ymin, xmax, ymax),
+      })
+      this.doQuery({ type, coordinates })
+    },
+    onDrawShape(shapeInfo) {
+      this.currentId = shapeInfo.id
+      this.map.addSource(shapeInfo.id, {
+        type: 'geojson',
+        data: shapeInfo.geometry,
+      })
+      const { coordinates, type } = shapeInfo.geometry
+      if (type === 'MultiPolygon' || type === 'Polygon') {
+        this.map.addLayer({
+          id: `${shapeInfo.id}fill`,
+          type: 'fill',
+          source: shapeInfo.id,
+          paint: {
+            'fill-color': '#1890ff',
+            'fill-outline-color': '#1890ff',
+            'fill-opacity': 0.3,
+          },
+        })
+      }
+
+      this.map.addLayer({
+        id: `${shapeInfo.id}line`,
+        type: 'line',
+        source: shapeInfo.id,
+        paint: {
+          'line-color': '#1890ff',
+          'line-width': 3,
+        },
+      })
+      const { xmin, ymin, xmax, ymax } =
+        Feature.getGeoJSONFeatureBound(shapeInfo)
+      this.map.fitBounds(
+        [
+          [xmin, ymin],
+          [xmax, ymax],
+        ],
+        {
+          padding: { top: 100, bottom: 100, left: 200, right: 200 },
+        }
+      )
+      this.doQuery({ type, coordinates })
+    },
+    doQuery(obj) {
+      const { type, coordinates } = obj
+      let shape
+      switch (type) {
+        case QueryType.MultiPolygon:
+          shape = coordinates
+          break
+        case QueryType.Polygon:
+          shape = coordinates[0].map((item) => {
+            return {
+              x: item[0],
+              y: item[1],
+            }
+          })
+          break
+        case QueryType.LineString:
+          shape = coordinates.map((item) => {
+            return {
+              x: item[0],
+              y: item[1],
+            }
+          })
+          break
+        default:
+          return
+      }
+      this.queryType = type
+      this.queryLayers(shape)
+    },
     // 微件激活时
     onActive() {
       this.map.getCanvas().style.cursor = this.widgetInfo.config.cursorType
@@ -250,6 +421,11 @@ export default {
 
     // 打开绘制，点击图标激活对应类型的绘制功能
     onOpenDraw(type) {
+      this.drawComponent && this.drawComponent.closeDraw()
+      // this.sceneOverlays.removeAllEntities()
+      if (this.currentId) {
+        this.currentId = '' // 清空当前id用于清除页面已绘制图形
+      }
       this.queryType = type
       this.drawComponent &&
         this.drawComponent.openDraw(this.queryTypes2DrawModes[type])
@@ -257,6 +433,7 @@ export default {
 
     // 移除绘制
     onClearDraw() {
+      this.currentId = ''
       this.queryType = ''
       this.drawComponent && this.drawComponent.closeDraw()
     },
@@ -550,6 +727,7 @@ export default {
           docName: serverName,
           layerIdxs: layerIndex,
           rtnLabel: false,
+          requestType: 'POST',
         },
         false,
         isScence
@@ -722,6 +900,9 @@ export default {
             const { xmin, ymin, xmax, ymax } = shape
             geometry = new Zondy.Common.Rectangle(xmin, ymin, xmax, ymax)
           }
+          break
+        case QueryType.MultiPolygon:
+          geometry = new Zondy.Common.MultiPolygon(shape)
           break
         default:
           break
@@ -909,6 +1090,9 @@ export default {
               [xmin, ymin],
             ],
           ])
+          break
+        case QueryType.MultiPolygon:
+          geometry = multiPolygon(shape)
           break
         default:
           return false
