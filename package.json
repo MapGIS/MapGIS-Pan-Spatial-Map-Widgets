@@ -21,7 +21,8 @@
     "json2csv": "^5.0.6",
     "vue": "2.6.14",
     "vue-color": "^2.8.1",
-    "vue-property-decorator": "^8.3.0"
+    "vue-property-decorator": "^8.3.0",
+    "vue-json-editor": "^1.4.3"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^2.17.0",
