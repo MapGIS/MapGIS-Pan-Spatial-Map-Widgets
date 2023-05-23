@@ -51,8 +51,8 @@ export default {
       return window._CONFIG.domainURL
     },
     imagesUploadApi() {
-      return `${this.baseUrl}/psmap/rest/manager/file/upload`
-      // return `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`
+      // return `${this.baseUrl}/psmap/rest/manager/file/upload`
+      return `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`
     },
   },
   mounted() {
@@ -131,31 +131,41 @@ export default {
       if (this.is2DMapMode !== item.is2DMapMode) {
         this.switchMapMode()
       }
-      // 发送勾选数据目录节点消息
-      eventBus.$emit(
-        events.DATA_CARALOG_CHECK_NODES,
-        JSON.parse(JSON.stringify(item.checkKeys)),
-        JSON.parse(JSON.stringify(item.checkKeysRelation))
-      )
+
       if (item.is2DMapMode) {
         const mapParams = { Cesium, map, vueCesium, viewer }
         setTimeout(() => {
           FitBound.fitBound2D(item.options.mapBound, mapParams)
+          // 发送勾选数据目录节点消息
+          eventBus.$emit(
+            events.DATA_CARALOG_CHECK_NODES,
+            JSON.parse(JSON.stringify(item.checkKeys)),
+            JSON.parse(JSON.stringify(item.checkKeysRelation))
+          )
         }, 300)
       } else {
         const { roll, pitch, heading, position } = item.options.mapBound
-        viewer.camera.flyTo({
-          destination: new Cesium.Cartesian3(
-            position.x,
-            position.y,
-            position.z
-          ),
-          orientation: {
-            heading,
-            pitch,
-            roll,
-          },
-        })
+        console.log(item.options.mapBound)
+        setTimeout(() => {
+          viewer.camera.flyTo({
+            destination: new Cesium.Cartesian3(
+              position.x,
+              position.y,
+              position.z
+            ),
+            orientation: {
+              heading,
+              pitch,
+              roll,
+            },
+          })
+          // 发送勾选数据目录节点消息
+          eventBus.$emit(
+            events.DATA_CARALOG_CHECK_NODES,
+            JSON.parse(JSON.stringify(item.checkKeys)),
+            JSON.parse(JSON.stringify(item.checkKeysRelation))
+          )
+        }, 1000)
       }
     },
     getImage() {
@@ -217,7 +227,7 @@ export default {
             },
           })
           .then((res) => {
-            resolve(res.data)
+            resolve(res)
           })
           .catch((Error) => {
             reject(Error)
