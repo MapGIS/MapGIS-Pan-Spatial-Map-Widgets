@@ -22,8 +22,12 @@
           :icon="type.icon"
           :active="queryType === type.id"
           @click="onOpenDraw(type.id)"
-        >
-        </mapgis-ui-toolbar-command>
+        />
+        <mapgis-ui-toolbar-command
+          title="删除"
+          icon="delete"
+          @click="onClearDraw"
+        />
       </mapgis-ui-toolbar-command-group>
       <mapgis-ui-toolbar-space />
       <mapgis-ui-toolbar-command-group>
@@ -251,7 +255,10 @@ export default {
       return this.widgetInfo.config.isShowLayerList
     },
     clearDrawMode() {
-      return this.widgetInfo.config.clearDrawMode
+      return this.widgetInfo.config.clearDrawMode || true
+    },
+    isContinuous() {
+      return this.widgetInfo.config.isContinuous || true
     },
   },
 
@@ -449,9 +456,22 @@ export default {
       if (shape && this.isDrawStart) {
         this.queryLayers(shape)
         this.isDrawStart = false
+        if (this.isContinuous) {
+          setTimeout(() => {
+            this.drawComponent && this.drawComponent.closeDraw()
+            if (this.currentId) {
+              this.currentId = '' // 清空当前id用于清除页面已绘制图形
+            }
+            this.drawComponent &&
+              this.drawComponent.openDraw(
+                this.queryTypes2DrawModes[this.queryType]
+              )
+          }, 1000)
+        }
       }
-
-      this.queryType = ''
+      if (this.isContinuous) {
+        this.queryType = ''
+      }
     },
 
     queryLayers(shape: Record<string, number>) {
