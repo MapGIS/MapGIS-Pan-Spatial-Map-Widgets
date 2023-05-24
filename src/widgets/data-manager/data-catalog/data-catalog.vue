@@ -720,8 +720,8 @@ export default {
       }
       DataCatalogCheckController.setCheckKeys(this.checkedNodeKeys)
     },
-    getCheckedLayerConfigIDs() {
-      const checkedLayerConfigIDs = []
+    getCheckedLayerConfigIDs(id) {
+      let checkedLayerConfigIDs = []
       const allCheck = this.isClassify
         ? this.getDataCatalogCheckedNodeKeys()
         : this.checkedNodeKeys
@@ -731,6 +731,11 @@ export default {
         if (layerConfig) checkedLayerConfigIDs.push(key)
       })
 
+      if (id) {
+        checkedLayerConfigIDs = checkedLayerConfigIDs.filter(
+          (item) => item !== id
+        )
+      }
       return checkedLayerConfigIDs
     },
     modifyDocument(nodekeys, isChecked) {
@@ -785,7 +790,7 @@ export default {
                   }
 
                   // 二维图层如果配置了extend中的location为true则在加载后要执行缩放至操作，三维图层的跳转逻辑则在WebScenePro组件中通过autoReset控制是否跳转
-                  if (!this.is3DLayer(layer)) {
+                  if (!this.is3DLayer(layer) && this.is2DMapMode) {
                     const autoResetArr =
                       this.layerAutoResetManager.getInitLayerAutoResetArr()
 
@@ -795,7 +800,6 @@ export default {
                       autoResetArr.includes(layer.id) &&
                       !unAntoResetArr.includes(layer.id)
                     ) {
-                      !this.is2DMapMode && this.switchMapMode()
                       setTimeout(() => {
                         this.fitBounds(layer, this.getDataFlowExtent(layer))
                       }, 1000)
@@ -805,9 +809,9 @@ export default {
                   doc.defaultMap.add(layer)
                 } else {
                   this.$message.error(`图层:${layer.title}加载失败`)
-                  checkedNodeKeys.splice(layer.id)
-                  this.activeTreeTabRelRelation[this.activeTreeTab] =
-                    checkedNodeKeys
+                  // checkedNodeKeys.splice(layer.id)
+                  this.checkedNodeKeys = this.getCheckedLayerConfigIDs(layer.id)
+                  this.filterCheckNodeKeys()
                 }
                 if (!this.is3DLayer(layer)) {
                   // 图层加载完毕，恢复checkbox可选状态
@@ -841,6 +845,20 @@ export default {
             isChecked
           )
         })
+      }
+    },
+
+    filterCheckNodeKeys() {
+      if (this.isClassify) {
+        if (this.checkedNodeKeys.length === 0) {
+          this.activeTreeTabRelRelation = {}
+        } else {
+          Object.keys(this.activeTreeTabRelRelation).forEach((key) => {
+            this.activeTreeTabRelRelation[key] = this.activeTreeTabRelRelation[
+              key
+            ].filter((item) => this.checkedNodeKeys.includes(item))
+          })
+        }
       }
     },
 
@@ -961,9 +979,9 @@ export default {
         const layer = this.document.defaultMap.findLayerById(selectedKeys[0])
         if (layer) {
           this.lastSelect = selectedKeys[0]
-          if (!this.is3DLayer(layer)) {
-            !this.is2DMapMode && this.switchMapMode()
-          }
+          // if (!this.is3DLayer(layer)) {
+          //   !this.is2DMapMode && this.switchMapMode()
+          // }
 
           if (this.is3DLayer(layer)) {
             this.is2DMapMode && this.switchMapMode()
