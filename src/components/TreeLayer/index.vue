@@ -797,9 +797,10 @@ export default {
           'update:layer': (val) => {
             this.updateM3DProps(val, false)
             this.changeLayer(val)
-            // const layer = val.layer ? val.layer : val
-            // const { dataId, layerProperty } = layer
-            // api.updateData({ dataId, layerProperty })
+            debugger
+            const layer = val.layer ? val.layer : val
+            const { dataId, layerProperty } = layer
+            api.updateData({ dataId, layerProperty })
           },
           'update:luminanceAtZenith': (val) => {
             this.updateM3DProps(val, true)
