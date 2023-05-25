@@ -1,11 +1,18 @@
 <template>
-  <mapgis-3d-scene-setting
-    @loaded="loaded"
-    :initialStatebar="initialStatebar"
-    :initParams="config"
-    ref="sceneSetting"
-  >
-  </mapgis-3d-scene-setting>
+  <div>
+    <mapgis-3d-scene-setting
+      @loaded="loaded"
+      :initialStatebar="initialStatebar"
+      :initParams="config"
+      ref="sceneSetting"
+    >
+    </mapgis-3d-scene-setting>
+    <mapgis-ui-setting-footer>
+      <mapgis-ui-button @click="syncToServer" type="primary" class="full-width">
+        同步到服务器
+      </mapgis-ui-button>
+    </mapgis-ui-setting-footer>
+  </div>
 </template>
 
 <script lang="ts">
@@ -24,7 +31,11 @@ export default {
 
   computed: {
     config() {
-      return this.widgetInfo.config
+      let { config } = this.widgetInfo
+      if (window.localStorage.sceneSetting) {
+        config = JSON.parse(window.localStorage.sceneSetting)
+      }
+      return config
     },
   },
 
@@ -41,19 +52,36 @@ export default {
      */
     onClose() {
       this.setting.unmount()
-      this.saveConfig()
+      this.syncToLocalStorage()
     },
 
     // 微件失活时
     onDeActive() {
-      this.saveConfig()
+      this.syncToLocalStorage()
     },
 
     loaded(setting) {
       this.setting = setting
     },
 
-    saveConfig() {
+    syncToServer() {
+      const self = this
+      this.$confirm({
+        title: '提示',
+        content: '是否将配置同步到服务器?',
+        onOk() {
+          self.saveConfig()
+        },
+        onCancel() {},
+      })
+    },
+
+    syncToLocalStorage() {
+      const config = this.getConfig()
+      window.localStorage.sceneSetting = JSON.stringify(config)
+    },
+
+    getConfig() {
       const {
         initBasicSetting,
         initCameraSetting,
@@ -68,6 +96,11 @@ export default {
         weatherSetting: initWeatherSetting,
         effectSetting: initEffectSetting,
       }
+      return config
+    },
+
+    saveConfig() {
+      const config = this.getConfig()
       console.log(config)
       api
         .saveWidgetConfig({
@@ -87,4 +120,8 @@ export default {
 }
 </script>
 
-<style lang="less" scoped></style>
+<style lang="less" scoped>
+.full-width {
+  width: 100%;
+}
+</style>
