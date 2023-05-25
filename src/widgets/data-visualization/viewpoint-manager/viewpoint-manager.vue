@@ -14,32 +14,36 @@ export default {
   mixins: [WidgetMixin],
 
   data() {
-    return {
-      iconfig: null,
-    }
+    return {}
   },
 
-  async mounted() {
-    let config = await api.getWidgetConfig('viewpoint-manager')
-    if (!config || !(config instanceof Array)) {
-      config = []
-    }
-
-    const result = config.map((item) => {
-      return {
-        name: item.name,
-        image:
-          item.image.substr(0, 8) == '/upload/'
-            ? `${this.baseUrl}${item.image}`
-            : item.image,
-        destination: item.destination,
-        orientation: item.orientation,
-        duration: item.duration,
-      }
-    })
-
-    this.iconfig = result
+  computed: {
+    iconfig() {
+      return this.widget.config
+    },
   },
+
+  // async mounted() {
+  //   let config = await api.getWidgetConfig('viewpoint-manager')
+  //   if (!config || !(config instanceof Array)) {
+  //     config = []
+  //   }
+
+  //   const result = config.map((item) => {
+  //     return {
+  //       name: item.name,
+  //       image:
+  //         item.image.substr(0, 8) == '/upload/'
+  //           ? `${this.baseUrl}${item.image}`
+  //           : item.image,
+  //       destination: item.destination,
+  //       orientation: item.orientation,
+  //       duration: item.duration,
+  //     }
+  //   })
+
+  //   this.iconfig = result
+  // },
 
   methods: {
     configSave(newConfig) {
