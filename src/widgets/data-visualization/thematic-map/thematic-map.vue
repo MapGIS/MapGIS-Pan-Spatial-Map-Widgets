@@ -313,7 +313,9 @@ export default {
      * 专题图面板打开
      * fixme 未对接服务，取store里缓存的配置
      */
-    onOpen() {
+    onOpen() {},
+
+    onActive() {
       if (this.flag) {
         this.setSubjectConfig(this.subjectConfig)
         this.setModulesShow(ModuleType.TOOLS)
