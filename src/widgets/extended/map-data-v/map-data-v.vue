@@ -25,7 +25,7 @@ export default {
   },
 
   methods: {
-    onOpen() {
+    onActive() {
       const el = this.$refs.mapDataV
       if (!DomUtil.inFullScreen(el)) {
         this.$message.warn('对不起，您的浏览器不支持全屏模式')

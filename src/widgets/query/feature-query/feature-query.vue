@@ -255,10 +255,10 @@ export default {
       return this.widgetInfo.config.isShowLayerList
     },
     clearDrawMode() {
-      return this.widgetInfo.config.clearDrawMode || true
+      return this.widgetInfo.config.clearDrawMode
     },
     isContinuous() {
-      return this.widgetInfo.config.isContinuous || true
+      return this.widgetInfo.config.isContinuous
     },
   },
 
