@@ -22,8 +22,8 @@
       <div class="query-section panel-container">
         <mapgis-ui-tabs v-model="locationType" size="small" type="card">
           <mapgis-ui-tab-pane
-            v-for="(item, index) in locationTypes"
-            :key="index"
+            v-for="item in locationTypes"
+            :key="item"
             :tab="tab(item)"
           >
             <zone
