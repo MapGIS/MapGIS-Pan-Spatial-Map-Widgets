@@ -785,7 +785,13 @@ export default {
               } finally {
                 // 2.2判断图层是否载成功。如果成功则将图层添加到documet中。否则，给出提示，并将数据目录树中对应的节点设为未选中状态。
                 if (layer.loadStatus === LoadStatus.loaded) {
-                  if (this.is3DLayer(layer) && this.is2DMapMode === true) {
+                  const unAntoResetArr =
+                    this.layerAutoResetManager.getUnAutoResetArr()
+                  if (
+                    this.is3DLayer(layer) &&
+                    this.is2DMapMode === true &&
+                    !unAntoResetArr.includes(layer.id)
+                  ) {
                     this.switchMapMode()
                   }
 
@@ -794,8 +800,6 @@ export default {
                     const autoResetArr =
                       this.layerAutoResetManager.getInitLayerAutoResetArr()
 
-                    const unAntoResetArr =
-                      this.layerAutoResetManager.getUnAutoResetArr()
                     if (
                       autoResetArr.includes(layer.id) &&
                       !unAntoResetArr.includes(layer.id)
