@@ -472,7 +472,7 @@ export default {
       }
     },
     isClassify() {
-      return this.widgetInfo.config.isClassify
+      return this.widgetInfo.config.otherConfig.isClassify
     },
     checkKeys() {
       return this.dataCatalogManager.checkedLayerConfigIDs
@@ -719,6 +719,7 @@ export default {
         this.checkedNodeKeys = this.dataCatalogManager.checkedLayerConfigIDs
       }
       DataCatalogCheckController.setCheckKeys(this.checkedNodeKeys)
+      DataCatalogCheckController.setCheckData(this.getCurrentData())
     },
     getCheckedLayerConfigIDs(id) {
       let checkedLayerConfigIDs = []
@@ -796,7 +797,7 @@ export default {
                   }
 
                   // 二维图层如果配置了extend中的location为true则在加载后要执行缩放至操作，三维图层的跳转逻辑则在WebScenePro组件中通过autoReset控制是否跳转
-                  if (!this.is3DLayer(layer) && this.is2DMapMode) {
+                  if (!this.is3DLayer(layer)) {
                     const autoResetArr =
                       this.layerAutoResetManager.getInitLayerAutoResetArr()
 
@@ -963,7 +964,6 @@ export default {
         const preCheckedKeys = this.activeTreeTabRelRelation[this.activeTreeTab]
         this.activeTreeTabRelRelation[this.activeTreeTab] = checkedKeys
       }
-      DataCatalogCheckController.setCheckData(this.getCurrentData())
     },
 
     // 选中目录树节点触发展开/收起
