@@ -14,6 +14,7 @@
         </ul>
         <mp-tree-layer
           v-show="tab === 'tree'"
+          ref="layerListTree"
           :widgetInfo="widgetInfo"
           :widgetRouters="widgetRouters"
           :layerDocument.sync="document"
@@ -35,6 +36,9 @@ import {
   AppMixin,
   api,
   dataCatalogManagerInstance,
+  DataCatalogCheckController,
+  eventBus,
+  events,
 } from '@mapgis/web-app-framework'
 import { MapgisUiEmpty } from '@mapgis/webclient-vue-ui'
 import { MpTreeLayer } from '../../../components'
@@ -81,6 +85,13 @@ export default {
   },
   created() {
     console.log(this.$root, 'layerlist', this)
+    eventBus.$on(events.GET_LAYER_LIST_INFO, this.getLayerList)
+  },
+  methods: {
+    getLayerList() {
+      const data = this.$refs.layerListTree.getCurrentData()
+      DataCatalogCheckController.setCheckLayerConfig(data)
+    },
   },
 }
 </script>

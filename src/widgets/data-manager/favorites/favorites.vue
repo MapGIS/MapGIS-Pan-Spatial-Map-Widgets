@@ -44,6 +44,9 @@ export default {
     checkData() {
       return this.dataCatalogCheckController.getCheckData()
     },
+    layerConfig() {
+      return this.dataCatalogCheckController.getCheckLayerConfig()
+    },
     showType() {
       return this.widgetInfo.config.showType
     },
@@ -86,12 +89,15 @@ export default {
         options: {},
       }
        */
+      // 获取图层列表此时的配置信息
+      eventBus.$emit(events.GET_LAYER_LIST_INFO)
       const id = UUID.uuid()
       const imageObj = this.base64ToFile(this.getImage(), id)
       const fileInfo = await this.uploadImage(imageObj)
       data.id = id
       data.is2DMapMode = this.is2DMapMode
       data.image = fileInfo.data.url
+      data.options.layerConfig = this.layerConfig
       if (this.is2DMapMode) {
         const mapBoundArray = this.map.getBounds().toArray()
         const mapBound = {
@@ -132,17 +138,20 @@ export default {
         this.switchMapMode()
       }
 
+      this.dataCatalogCheckController.setCurrentCheckLayerConfig(
+        item.options.layerConfig
+      )
       if (item.is2DMapMode) {
         const mapParams = { Cesium, map, vueCesium, viewer }
         setTimeout(() => {
           FitBound.fitBound2D(item.options.mapBound, mapParams)
           // 发送勾选数据目录节点消息
           eventBus.$emit(
-            events.DATA_CARALOG_CHECK_NODES,
+            events.DATA_CATALOG_CHECK_NODES,
             JSON.parse(JSON.stringify(item.checkKeys)),
             JSON.parse(JSON.stringify(item.checkKeysRelation))
           )
-        }, 300)
+        }, 1000)
       } else {
         const { roll, pitch, heading, position } = item.options.mapBound
         console.log(item.options.mapBound)
@@ -161,12 +170,13 @@ export default {
           })
           // 发送勾选数据目录节点消息
           eventBus.$emit(
-            events.DATA_CARALOG_CHECK_NODES,
+            events.DATA_CATALOG_CHECK_NODES,
             JSON.parse(JSON.stringify(item.checkKeys)),
             JSON.parse(JSON.stringify(item.checkKeysRelation))
           )
         }, 1000)
       }
+      eventBus.$emit(events.ECHO_LAYER_LIST_INFO, item.options.layerConfig)
     },
     getImage() {
       const { Cesium, viewer, map } = this
