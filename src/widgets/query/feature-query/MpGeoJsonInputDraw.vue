@@ -19,6 +19,23 @@
       <span class="icon-guanbi" title="关闭" @click="$emit('close')">
         <mapgis-ui-ant-icon type="close"></mapgis-ui-ant-icon>
       </span>
+      <mapgis-ui-popover v-model="showTips" trigger="click">
+        <a slot="content" @click="choose" v-if="!showJson">
+          <div>
+            <div>文本数据格式:</div>
+            <div v-for="(item, index) in sample.split('\n')" :key="index">
+              {{ item }}
+            </div>
+            <div>支持封闭与非封闭数据</div>
+            <div>仅支持MultiPolygon数据</div>
+          </div>
+        </a>
+        <div v-else slot="content">类型为MultiPolygon的geojson数据</div>
+        <mapgis-ui-ant-icon
+          type="question-circle"
+          class="question-circle"
+        ></mapgis-ui-ant-icon>
+      </mapgis-ui-popover>
     </p>
     <div class="content">
       <json-editor
@@ -50,7 +67,7 @@
             type="delete"
             class="icon-btn"
             title="清空"
-            @click=";(jsonData = {}), removeGeomtry()"
+            @click="removeGeomtry"
           ></mapgis-ui-ant-icon>
         </span>
       </div>
@@ -87,7 +104,6 @@ export default {
   data() {
     return {
       container: null,
-
       jsonData: {
         type: 'MultiPolygon',
         coordinates: [
@@ -103,17 +119,30 @@ export default {
         ],
       },
       showJson: false,
-      textarea: `1,1,115.33,25.55
-1,2,116.43,26.66
-1,3,117.53,27.77
-1,4,120.63,28.88
-2,1,112.33,27.55
-2,2,113.43,26.66
-2,3,114.53,25.77
-2,4,119.63,24.88`,
+      textarea: '',
+      showTips: false,
+      sample: `1,1,109.2041,30.0881
+1,2,115.0268,30.0881
+1,3,115.02685,32.7872
+1,4,109.2041,32.7872
+2,1,118.0278,30.0881
+2,2,121.0475,30.0881
+2,3,121.0475,32.7872
+2,4,118.0278,30.0881`,
     }
   },
   methods: {
+    removeGeomtry() {
+      if (this.showJson) {
+        this.jsonData = {}
+      } else {
+        this.textarea = ''
+      }
+    },
+    choose() {
+      this.textarea = this.sample
+      this.showTips = false
+    },
     submitJson() {
       const shapeInfo = {
         type: this.name,
@@ -194,15 +223,25 @@ export default {
   .header {
     padding: 12px;
     font-size: 14px;
-    border-bottom: 1px solid #3d59a3;
+    border-bottom: 1px solid $primary-color;
     height: 44px;
     margin-top: -44px;
     margin-bottom: 0;
     box-sizing: border-box;
+    .question-circle {
+      float: right;
+      font-size: 14px;
+      margin: 5px 30px 0 0;
+      &:hover {
+        cursor: pointer;
+        color: $primary-color;
+      }
+    }
     .icon-guanbi {
       float: right;
       &:hover {
         cursor: pointer;
+        color: $primary-color;
       }
     }
     .active {

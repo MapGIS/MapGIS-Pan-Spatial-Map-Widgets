@@ -10,6 +10,8 @@
       <mp-region-location
         ref="regionLocation"
         class="region-location"
+        :baseUrl="baseUrl"
+        :regionsUrl="regionsUrl"
         @update:visible="$emit('close')"
         @select="selectArea"
       >
@@ -30,6 +32,12 @@ export default {
     name: {
       type: String,
       default: 'region',
+    },
+    baseUrl: {
+      type: String,
+    },
+    regionsUrl: {
+      type: String,
     },
   },
 

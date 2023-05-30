@@ -67,27 +67,6 @@ export default {
     }
   },
   methods: {
-    handleChange(info) {
-      let that = this
-      const status = info.file.status
-      if (status !== 'uploading') {
-        console.log(info.file, info.fileList)
-      }
-      if (status === 'done') {
-        that.fileList = info.fileList
-        that.fileList.forEach((item, index) => {
-          if (item.uid !== info.file.uid) {
-            that.fileList.splice(index, 1)
-          }
-        })
-        that.onSuccess(info.file.response, info.file, info.fileList)
-      } else if (status === 'error') {
-        // message.error(`${info.file.name} file upload failed.`);
-      } else if (status === 'removed') {
-        // message.error(`${info.file.name} file upload failed.`);
-        this.clear()
-      }
-    },
     //上传成功
     onSuccess(response, file, fileList) {
       let shapeInfo = {

@@ -26,13 +26,12 @@
                 size="small"
                 style="margin: 1px"
                 v-model="inputTxt"
-                clearable
               >
-                <i
-                  v-if="!inputTxt"
+                <mapgis-ui-ant-icon
+                  type="search"
                   slot="suffix"
                   class="mapgis-ui-input__icon mapgis-ui-icon-search"
-                ></i>
+                ></mapgis-ui-ant-icon>
               </mapgis-ui-input>
             </mapgis-ui-col>
             <mapgis-ui-col :span="12" style="text-align: right">
@@ -138,7 +137,7 @@
 </template>
 
 <script>
-import countrynation from './regions/countrynation.json'
+import axios from 'axios'
 
 export default {
   props: {
@@ -146,6 +145,13 @@ export default {
     visible: {
       type: Boolean,
       default: true,
+    },
+    baseUrl: {
+      type: String,
+    },
+    regionsUrl: {
+      type: String,
+      default: '/file/default/countrynation.json',
     },
   },
   data() {
@@ -164,6 +170,7 @@ export default {
       // 字母列表
       backupLetterList: [],
       letterList: [],
+      timer: null,
     }
   },
   methods: {
@@ -254,7 +261,7 @@ export default {
     // 初始化字母列表
     initLetterList() {
       /* eslint-disable*/
-      const allRegions = countrynation.children
+      const allRegions = this.regionsList
       const areas = []
       // eslint-disable-next-line
       for (let region in allRegions) {
@@ -284,11 +291,10 @@ export default {
       this.letterList = JSON.parse(JSON.stringify(list))
       this.backupLetterList = JSON.parse(JSON.stringify(list))
     },
-    initAll() {
-      this.regionsList = countrynation.children
-      this.backupRegionsList = JSON.parse(
-        JSON.stringify(countrynation.children)
-      )
+    async initAll() {
+      const res = await axios.get(this.baseUrl + this.regionsUrl)
+      this.regionsList = res.data.children
+      this.backupRegionsList = JSON.parse(JSON.stringify(res.data.children))
       this.initLetterList()
     },
   },
@@ -297,7 +303,10 @@ export default {
   },
   watch: {
     inputTxt(val) {
-      this.inputSearch()
+      clearTimeout(this.timer)
+      this.timer = setTimeout(() => {
+        this.inputSearch()
+      }, 300)
     },
   },
   mounted() {
@@ -319,7 +328,7 @@ export default {
     .title {
       letter-spacing: 1px;
       font-family: MicrosoftYaHeiUI-Bold;
-      color: #ffffff;
+      color: $text-color;
     }
     i {
       cursor: pointer;
@@ -384,7 +393,10 @@ export default {
 <style lang="scss">
 .gm-region-location__main {
   .gdSerachInput .mapgis-ui-input__inner {
-    border-color: #b0cdfd;
+    border-color: $text-color;
+  }
+  .mapgis-ui-icon-search {
+    color: $text-color;
   }
 }
 .city_all_first {
