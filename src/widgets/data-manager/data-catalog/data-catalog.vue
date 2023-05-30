@@ -19,6 +19,9 @@
           <mapgis-ui-menu-item key="1" @click="bookMarksCheck"
             >收藏</mapgis-ui-menu-item
           >
+          <mapgis-ui-menu-item key="2" @click="resizeCheck"
+            >重置</mapgis-ui-menu-item
+          >
         </mapgis-ui-menu>
       </mapgis-ui-dropdown>
     </div>
@@ -546,7 +549,9 @@ export default {
     eventBus.$emit(events.DATA_CATALOG_DATA_INFO, this.widgetConfig)
     eventBus.$on(events.EXTEND_LAYER_REMOVE, this.changeCheckedKeys)
     eventBus.$on(events.DATA_CATALOG_CHANGE_NODES, this.dataCatalogChangeNodes)
-    eventBus.$on(events.DATA_CARALOG_CHECK_NODES, this.dataCatalogCheckNodes)
+    eventBus.$on(events.DATA_CATALOG_CHECK_NODES, this.dataCatalogCheckNodes)
+    window.dataCatalogCheckNodes = (ids, isChecked) =>
+      this.dataCatalogCheckNodes(ids, isChecked)
   },
   watch: {
     checkedNodeKeys: {
@@ -574,6 +579,14 @@ export default {
       this.layerAutoResetManager.dealLocationArr(allLayerNodes)
     },
     dataCatalogCheckNodes(keys, checkKeysRelation) {
+      if (this.checkedNodeKeys && this.checkedNodeKeys.length > 0) {
+        this.dataCatalogCheckNode([], {})
+      }
+      this.$nextTick(() => {
+        this.dataCatalogCheckNode(keys, checkKeysRelation)
+      })
+    },
+    dataCatalogCheckNode(keys, checkKeysRelation) {
       this.checkedNodeKeys = []
       if (this.isClassify) {
         this.activeTreeTabRelRelation = checkKeysRelation
@@ -786,6 +799,10 @@ export default {
               } finally {
                 // 2.2判断图层是否载成功。如果成功则将图层添加到documet中。否则，给出提示，并将数据目录树中对应的节点设为未选中状态。
                 if (layer.loadStatus === LoadStatus.loaded) {
+                  DataCatalogCheckController.dealLayers(
+                    layer,
+                    this.is3DLayer(layer)
+                  )
                   const unAntoResetArr =
                     this.layerAutoResetManager.getUnAutoResetArr()
                   if (
@@ -810,7 +827,6 @@ export default {
                       }, 1000)
                     }
                   }
-
                   doc.defaultMap.add(layer)
                 } else {
                   this.$message.error(`图层:${layer.title}加载失败`)
@@ -1232,6 +1248,11 @@ export default {
         this.checkedNodeKeys,
         this.dataCatalogTreeData
       )
+    },
+
+    resizeCheck() {
+      this.dataCatalogCheckNode([], {})
+      DataCatalogCheckController.setCurrentCheckLayerConfig(null)
     },
 
     onClick(item) {

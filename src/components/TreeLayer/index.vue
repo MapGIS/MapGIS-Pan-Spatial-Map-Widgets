@@ -266,6 +266,7 @@ export default {
       modelEditLayer: {},
       // 图层是否保持编辑样式
       modelSave: false,
+      layerConfig: null,
     }
   },
   computed: {
@@ -349,7 +350,13 @@ export default {
             }
           }
           this.layers = layers
+
           this.ticked = arr
+
+          const expandedKeys = this.getExpandedKeys()
+          // this.expandedKeys = [
+          //   ...new Set([...expandedKeys, ...this.expandedKeys]),
+          // ]
 
           // 当开启了模型拾取统一开关新增或者删除模型时的逻辑
           if (this.isOpenPick) {
@@ -398,6 +405,7 @@ export default {
   mounted() {
     this.$root.$on(events.SCENE_LOADEN_ON_MAP, this.sceneLoadedCallback)
     eventBus.$on(events.MODEL_PICK, this.updateM3DEnablePopupEnable)
+    eventBus.$on(events.ECHO_LAYER_LIST_INFO, this.echoLayerList)
   },
   methods: {
     /**
@@ -797,7 +805,6 @@ export default {
           'update:layer': (val) => {
             this.updateM3DProps(val, false)
             this.changeLayer(val)
-            debugger
             const layer = val.layer ? val.layer : val
             const { dataId, layerProperty } = layer
             api.updateData({ dataId, layerProperty })
@@ -1241,6 +1248,94 @@ export default {
 
     onCloseCustomQuery() {
       this.showCustomQuery = false
+    },
+    getCurrentData() {
+      const checkLayerConfig = {}
+      const layerInfo = {}
+      const expandedKeys = this.expandedKeys
+      const checkNodeKeys = this.ticked
+      const relation = {}
+      this.layers.forEach((layer) => {
+        relation[layer.id] = layer.key
+        this.getLayerProperty(layer, layerInfo)
+      })
+      return {
+        expandedKeys,
+        checkNodeKeys,
+        relation,
+        layerInfo,
+        ...checkLayerConfig,
+      }
+    },
+    getLayerProperty(layer, config) {
+      config[layer.id] = {
+        layerProperty: layer.layerProperty || null,
+        opacity: layer.opacity,
+        isVisible: layer.isVisible,
+        visible: layer.visible,
+      }
+      const sublayerArr = []
+      if (layer.sublayers && layer.sublayers.length > 0) {
+        this.getSublayers(layer.sublayers, sublayerArr)
+      }
+      config[layer.id].sublayers = sublayerArr
+    },
+    getSublayers(layer, sublayerArr) {
+      if (layer && layer.length > 0) {
+        layer.forEach((item) => {
+          const sublayer = {
+            geomType: item.geomType,
+            id: item.id,
+            key: item.key,
+            sysLibraryGuid: item.sysLibraryGuid,
+            maximumScreenSpaceError: item.maximumScreenSpaceError,
+            title: item.title,
+            url: item.url,
+            visible: item.visible,
+            visiblePopover: item.visiblePopover,
+          }
+          sublayerArr.push(sublayer)
+          const nextSubLayers = item.sublayers
+          if (nextSubLayers && nextSubLayers.length > 0) {
+            this.getSublayers(nextSubLayers, sublayerArr)
+          }
+        })
+      }
+    },
+    echoLayerList(layerConfig) {
+      this.layerConfig = layerConfig
+      this.expandedKeys = []
+    },
+    getExpandedKeys(item) {
+      const { layerInfo, relation, checkNodeKeys, expandedKeys } =
+        this.layerConfig
+
+      const newRelation = {}
+      const newExpandedKeys = []
+      const checkRelation = {}
+      Object.keys(relation).forEach((id) => {
+        const index = this.layers.findIndex((item) => item.id === id)
+        if (index !== -1) {
+          newRelation[id] = index
+          checkRelation[relation[id]] = index
+          expandedKeys.includes(id) && newExpandedKeys.push(index)
+        }
+      })
+
+      const newCheckNodeKeys = []
+      checkNodeKeys.forEach((item) => {
+        const splitArr = item.split('-')
+        if (checkRelation[splitArr[0]] !== undefined) {
+          newCheckNodeKeys.push(checkRelation[splitArr[0]])
+        }
+      })
+
+      // const layerConfig = {
+      //   expandedKeys: newExpandedKeys,
+      //   ticked: newCheckNodeKeys,
+      // }
+
+      return expandedKeys
     },
   },
   beforeDestroy() {
