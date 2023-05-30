@@ -277,7 +277,7 @@ export default {
       let xTemp = this.coordDecimal[0]
       let yTemp = this.coordDecimal[1]
 
-      if (this.crs !== this.defaultCrs) {
+      if (this.crs && this.crs !== this.defaultCrs) {
         // 底图和用户选择的坐标系不一样
         const { data } = await ProjectionTransformationUtil.projectPoints(
           [[Number(xTemp), Number(yTemp)]],
@@ -345,7 +345,7 @@ export default {
 
       let x = lng.toString()
       let y = lat.toString()
-      if (this.crs !== this.defaultCrs) {
+      if (this.crs && this.crs !== this.defaultCrs) {
         // 底图和用户选择的坐标系不一样
         const { data } = await ProjectionTransformationUtil.projectPoints(
           [[lng, lat]],
