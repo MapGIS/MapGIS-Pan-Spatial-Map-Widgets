@@ -138,10 +138,10 @@ import {
   booleanDisjoint,
   booleanContains,
 } from '@turf/turf'
-import MpGeoJsonInputDraw from './MpGeoJsonInputDraw.vue'
-import MpPolygonInputDraw from './MpPolygonInputDraw.vue'
-import MpUploadFileDraw from './MpUploadFileDraw.vue'
-import MpRegionDraw from './MpRegionDraw.vue'
+import MpGeoJsonInputDraw from './components/MpGeoJsonInputDraw/MpGeoJsonInputDraw.vue'
+import MpPolygonInputDraw from './components/MpPolygonInputDraw/MpPolygonInputDraw.vue'
+import MpUploadFileDraw from './components/MpUploadFileDraw/MpUploadFileDraw.vue'
+import MpRegionDraw from './components/MpRegionDraw/MpRegionDraw.vue'
 
 const { IAttributeTableListExhibition, AttributeTableListExhibition } =
   Exhibition
