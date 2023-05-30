@@ -353,7 +353,7 @@ export default {
 
           this.ticked = arr
 
-          const expandedKeys = this.getExpandedKeys()
+          // const expandedKeys = this.getExpandedKeys()
           // this.expandedKeys = [
           //   ...new Set([...expandedKeys, ...this.expandedKeys]),
           // ]
