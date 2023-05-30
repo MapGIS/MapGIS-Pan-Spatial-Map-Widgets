@@ -98,6 +98,8 @@
     <mp-region-draw
       v-show="queryType === 'MyRegion'"
       :is2DMapMode="is2DMapMode"
+      :baseUrl="baseUrl"
+      :regionsUrl="widget.config.regions"
       @draw-shape="onDrawShape"
       @draw-shape-3d="onDrawShape3D"
       @close="queryType = ''"
@@ -136,10 +138,10 @@ import {
   booleanDisjoint,
   booleanContains,
 } from '@turf/turf'
-import MpGeoJsonInputDraw from './MpGeoJsonInputDraw.vue'
-import MpPolygonInputDraw from './MpPolygonInputDraw.vue'
-import MpUploadFileDraw from './MpUploadFileDraw.vue'
-import MpRegionDraw from './MpRegionDraw.vue'
+import MpGeoJsonInputDraw from './components/MpGeoJsonInputDraw/MpGeoJsonInputDraw.vue'
+import MpPolygonInputDraw from './components/MpPolygonInputDraw/MpPolygonInputDraw.vue'
+import MpUploadFileDraw from './components/MpUploadFileDraw/MpUploadFileDraw.vue'
+import MpRegionDraw from './components/MpRegionDraw/MpRegionDraw.vue'
 
 const { IAttributeTableListExhibition, AttributeTableListExhibition } =
   Exhibition
@@ -324,11 +326,13 @@ export default {
           fillColor
         )
       } else {
-        this.sceneOverlays.addPolygon(
-          shapeInfo.id,
-          coordinates.join(',').split(',').map(Number),
-          fillColor
-        )
+        coordinates.forEach((coordinate) => {
+          this.sceneOverlays.addPolygon(
+            shapeInfo.id,
+            coordinate.join(',').split(',').map(Number),
+            fillColor
+          )
+        })
       }
       this.viewer.camera.flyTo({
         destination: this.Cesium.Rectangle.fromDegrees(xmin, ymin, xmax, ymax),
