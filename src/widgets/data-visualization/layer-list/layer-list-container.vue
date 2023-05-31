@@ -84,7 +84,6 @@ export default {
     this.simpleImage = MapgisUiEmpty.PRESENTED_IMAGE_SIMPLE
   },
   created() {
-    console.log(this.$root, 'layerlist', this)
     eventBus.$on(events.GET_LAYER_LIST_INFO, this.getLayerList)
   },
   methods: {

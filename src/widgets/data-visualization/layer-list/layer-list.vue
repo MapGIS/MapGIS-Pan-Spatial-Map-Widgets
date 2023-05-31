@@ -26,8 +26,6 @@ export default {
   },
 
   created() {
-    console.log(this.widgetInfo)
-
     this.widgetRouters = [
       {
         title: '图层树',
@@ -46,7 +44,6 @@ export default {
   //   this.$nextTick(() => {
   //     this.mode = mode
   //     const layerListEl = document.getElementById('layerListEl')
-  //     console.log(mode)
   //     if (layerListEl) {
   //       layerListEl.style.width = `${
   //         mode === 'max' ? this.$el.clientWidth : 300

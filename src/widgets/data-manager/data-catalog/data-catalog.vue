@@ -497,8 +497,6 @@ export default {
   },
   async mounted() {
     this.uploadUrl = `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`
-    console.log(this.dataCatalogManager, 'this.dataCatalogManager')
-    console.log(this.widgetInfo.config, 'this.widgetInfo.config')
 
     // 使用新的app.json中的规范，判断this.application.data是否有且有值就替换this.widgetInfo.config.treeConfig.treeData
     if (this.application.data && this.application.data.length > 0) {

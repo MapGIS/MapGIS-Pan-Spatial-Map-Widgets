@@ -55,7 +55,6 @@ export default {
   },
 
   created() {
-    console.log(this.$root, 'this.legend', this)
   },
   methods: {
     async onOpen() {

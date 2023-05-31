@@ -36,10 +36,8 @@ export default {
     },
   },
   beforeCreate() {
-    console.log('MpMapModePicker beforeCreate run')
   },
   created() {
-    console.log('MpMapModePicker created run')
     this.sceneController = Objects.SceneController.getInstance(
       this.Cesium,
       this.vueCesium,
@@ -47,8 +45,6 @@ export default {
     )
   },
   beforeMount() {
-    console.log('MpMapModePicker beforeMount run')
-    console.log(this.$globalValue)
   },
   /**
    * 修改说明：地图初始显示模式与baseconfig里的配置保持一致，默认显示二维
@@ -56,7 +52,6 @@ export default {
    * 修改时间：2022/1/24
    */
   mounted() {
-    console.log('MpMapModePicker mounted run')
     const initMode = baseConfigInstance.config.initMode
     if (!initMode || initMode === 'map') {
       if (!this.is2DMapMode) {
