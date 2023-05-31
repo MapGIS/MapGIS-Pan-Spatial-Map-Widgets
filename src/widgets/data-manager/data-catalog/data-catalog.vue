@@ -325,6 +325,7 @@
 
 <script lang="ts">
 import {
+  AppManager,
   WidgetMixin,
   AppMixin,
   Document,
@@ -503,7 +504,12 @@ export default {
       this.widgetInfo.config.treeConfig.treeData = this.application.data
     }
 
+    console.log(this.widgetInfo.config, 'data-catalog config')
+
     this.dataCatalogManager.init(this.widgetInfo.config)
+
+    console.log(this.dataCatalogManager, 'this.dataCatalogManager-1')
+
     this.dataCatalogTreeData =
       await this.dataCatalogManager.getDataCatalogTreeData(true)
     const _allTreeDataConfigs = []
@@ -522,6 +528,8 @@ export default {
           : ''
       this.activeTreeTab && this.treeTabChange(this.activeTreeTab)
     }
+
+    console.log(this.dataCatalogManager, 'this.dataCatalogManager-2')
 
     // 初始化加载图层
     this.initLoadKeys()
@@ -548,8 +556,6 @@ export default {
     eventBus.$on(events.EXTEND_LAYER_REMOVE, this.changeCheckedKeys)
     eventBus.$on(events.DATA_CATALOG_CHANGE_NODES, this.dataCatalogChangeNodes)
     eventBus.$on(events.DATA_CATALOG_CHECK_NODES, this.dataCatalogCheckNodes)
-    window.dataCatalogCheckNodes = (ids, isChecked) =>
-      this.dataCatalogCheckNodes(ids, isChecked)
   },
   watch: {
     checkedNodeKeys: {
@@ -1221,7 +1227,22 @@ export default {
     // 刷新按钮
     async refreshTree() {
       const config = await api.getWidgetConfig('data-catalog')
+      const appConfig = await AppManager.getInstance().getRequest()({
+        url: this.application.appConfigPath,
+        method: 'get'
+      })
+
+      // 使用新的app.json中的规范，判断this.application.data是否有且有值就替换this.widgetInfo.config.treeConfig.treeData
+      if (appConfig.data && appConfig.data.length > 0) {
+        config.treeConfig.treeData = appConfig.data
+      }
+
+      console.log(config, 'refresh data-catalog config')
+
       this.dataCatalogManager.init(config)
+
+      console.log(this.dataCatalogManager, 'this.dataCatalogManager-1')
+      
       this.dataCatalogTreeData =
         await this.dataCatalogManager.getDataCatalogTreeData(true)
       const _allTreeDataConfigs = []
