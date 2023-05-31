@@ -129,14 +129,14 @@ export default {
     },
     uploadFile(param) {
       return axios.post(
-        `http://${this.ip}:${this.port}/igs/rest/services/system/ResourceServer/files`,
+        `${window.location.protocol}://${this.ip}:${this.port}/igs/rest/services/system/ResourceServer/files`,
         param,
         { headers: { 'Content-type': 'multipart/form-data' } }
       )
     },
     featureQuery(path) {
       return axios.get(
-        `http://${this.ip}:${this.port}/igs/rest/services/system/ResourceServer/tempData/features/query?f=json&url=${path}`
+        `${window.location.protocol}://${this.ip}:${this.port}/igs/rest/services/system/ResourceServer/tempData/features/query?f=json&url=${path}`
       )
     },
     clear() {
@@ -152,8 +152,6 @@ export default {
   beforeDestroy() {},
 }
 </script>
-
-<style></style>
 
 <style lang="scss" scoped>
 .gm-tool-content {

@@ -47,6 +47,7 @@ export default {
   data() {
     return {
       basemapNames: [],
+      basemapNamesCopy: [],
       isInitMapRange: false, // 是否已初始化地图范围,只有初次进入程序，才会初始化地图范围
     }
   },
@@ -65,7 +66,15 @@ export default {
       this.basemapNames = []
     },
     isShowChange(val) {
-      if (!val) this.clearBasemap()
+      if (!val) {
+        this.basemapNamesCopy = [...this.basemapNames]
+        this.clearBasemap()
+      } else {
+        this.basemapNames = [...this.basemapNamesCopy]
+        this.basemapNames.forEach((name) => {
+          this.renderMaps(name)
+        })
+      }
     },
     fitBounds(item) {
       const { Cesium, map, vueCesium, viewer } = this
