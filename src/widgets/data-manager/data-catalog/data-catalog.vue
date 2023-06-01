@@ -504,11 +504,7 @@ export default {
       this.widgetInfo.config.treeConfig.treeData = this.application.data
     }
 
-    console.log(this.widgetInfo.config, 'data-catalog config')
-
     this.dataCatalogManager.init(this.widgetInfo.config)
-
-    console.log(this.dataCatalogManager, 'this.dataCatalogManager-1')
 
     this.dataCatalogTreeData =
       await this.dataCatalogManager.getDataCatalogTreeData(true)
@@ -528,8 +524,6 @@ export default {
           : ''
       this.activeTreeTab && this.treeTabChange(this.activeTreeTab)
     }
-
-    console.log(this.dataCatalogManager, 'this.dataCatalogManager-2')
 
     // 初始化加载图层
     this.initLoadKeys()
@@ -1229,7 +1223,7 @@ export default {
       const config = await api.getWidgetConfig('data-catalog')
       const appConfig = await AppManager.getInstance().getRequest()({
         url: this.application.appConfigPath,
-        method: 'get'
+        method: 'get',
       })
 
       // 使用新的app.json中的规范，判断this.application.data是否有且有值就替换this.widgetInfo.config.treeConfig.treeData
@@ -1237,12 +1231,8 @@ export default {
         config.treeConfig.treeData = appConfig.data
       }
 
-      console.log(config, 'refresh data-catalog config')
-
       this.dataCatalogManager.init(config)
 
-      console.log(this.dataCatalogManager, 'this.dataCatalogManager-1')
-      
       this.dataCatalogTreeData =
         await this.dataCatalogManager.getDataCatalogTreeData(true)
       const _allTreeDataConfigs = []
@@ -1462,7 +1452,6 @@ export default {
 
     // 监听服务叠加事件
     imposeService(params) {
-      console.log(params, 'params')
       this.imposeNode = {}
       const { Cesium, map, viewer, vueCesium } = this
       let node = {}
@@ -1594,7 +1583,6 @@ export default {
           leafChecked += childrenStatus.leafChecked
         }
       }
-      // console.log(item)
       return { leafTotal, leafChecked }
     },
     async changeBookmark() {
