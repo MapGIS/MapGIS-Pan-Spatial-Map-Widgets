@@ -130,10 +130,6 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.mp-widget-legend {
-  margin-bottom: 8px;
-}
-
 .contain-img {
   width: 246px;
   height: 246px;
