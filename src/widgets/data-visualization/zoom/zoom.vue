@@ -73,7 +73,6 @@ export default {
       },
       cameraView: null,
       mapBounds: null,
-      isFirstChange: 0,
     }
   },
 
@@ -95,11 +94,6 @@ export default {
         }
       } else if (this.map && !this.mapBounds) {
         this.mapBounds = this.map.getBounds()
-      }
-      // 第一次切换二三维模式时手动将位置缩放到索引底图范围
-      if (this.isFirstChange <= 1) {
-        this.isFirstChange++
-        this.onRestore()
       }
     },
 
