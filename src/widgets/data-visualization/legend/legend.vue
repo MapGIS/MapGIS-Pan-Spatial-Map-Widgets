@@ -68,7 +68,7 @@ export default {
       if (appConfig.data && appConfig.data.length > 0) {
         config.treeConfig.treeData = appConfig.data
       }
-      dataCatalogManagerInstance.init(treeConfig)
+      dataCatalogManagerInstance.init(config)
       this.treeData = await dataCatalogManagerInstance.getDataCatalogTreeData()
       eventBus.$on(events.UPLOAD_LEGEND_SUCCESS_EVENT, this.onGetConfig)
       eventBus.$on(
