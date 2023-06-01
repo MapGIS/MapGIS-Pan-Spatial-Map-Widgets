@@ -29,7 +29,9 @@
 
 <script lang="ts">
 import {
+  AppManager,
   WidgetMixin,
+  AppMixin,
   dataCatalogManagerInstance,
   api,
   eventBus,
@@ -38,7 +40,7 @@ import {
 
 export default {
   name: 'MpLegend',
-  mixins: [WidgetMixin],
+  mixins: [WidgetMixin, AppMixin],
   data() {
     return {
       // 图例微件的显隐
@@ -54,12 +56,19 @@ export default {
     }
   },
 
-  created() {
-  },
+  created() {},
   methods: {
     async onOpen() {
-      const treeConfig = await api.getWidgetConfig('data-catalog')
-      dataCatalogManagerInstance.init(treeConfig)
+      const config = await api.getWidgetConfig('data-catalog')
+      const appConfig = await AppManager.getInstance().getRequest()({
+        url: this.application.appConfigPath,
+        method: 'get',
+      })
+      // 使用新的app.json中的规范，判断this.application.data是否有且有值就替换this.widgetInfo.config.treeConfig.treeData
+      if (appConfig.data && appConfig.data.length > 0) {
+        config.treeConfig.treeData = appConfig.data
+      }
+      dataCatalogManagerInstance.init(config)
       this.treeData = await dataCatalogManagerInstance.getDataCatalogTreeData()
       eventBus.$on(events.UPLOAD_LEGEND_SUCCESS_EVENT, this.onGetConfig)
       eventBus.$on(
