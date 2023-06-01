@@ -200,9 +200,9 @@ export default {
      * 点击关闭的回调函数
      */
     onClose() {
-      this.$refs.zone && this.$refs.zone.clear()
-      this.$refs.coordinate && this.$refs.coordinate.clear()
-      this.$refs['map-sheet'] && this.$refs['map-sheet'].clear()
+      this.$refs.zone && this.$refs.zone[0].clear()
+      this.$refs.coordinate && this.$refs.coordinate[0].clear()
+      this.$refs['map-sheet'] && this.$refs['map-sheet'][0].clear()
       this.closePopup()
       this.analysisManager = null
       if (this.sceneController) {
