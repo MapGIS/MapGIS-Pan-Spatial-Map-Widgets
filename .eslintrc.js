@@ -153,5 +153,7 @@ module.exports = {
     '@typescript-eslint/indent': 'off',
     '@typescript-eslint/camelcase': 'off',
     '@typescript-eslint/unbound-method': 'off',
+
+    'vue/no-side-effects-in-computed-properties': 'off'
   },
 }

@@ -102,7 +102,7 @@ export default {
 
       list: [],
 
-      pageNumber: 1,
+      pageNum: 0,
 
       pageSize: 20,
 
@@ -131,7 +131,7 @@ export default {
     async onSearch() {
       this.loading = true
       try {
-        const { scale, pageNumber, pageSize, keyword } = this
+        const { scale, pageNum, pageSize, keyword } = this
         // 通过sheetConfig内的ip、port、name去获取地图范围，构造成[xMin, yMin, xMax, yMax]，用于查询图幅号
         const protocol = window.location.protocol
         const domain = `${protocol}//${this.frameConfig.ip}:${this.frameConfig.port}`
@@ -141,7 +141,7 @@ export default {
           `${domain}/igs/rest/mrms/info/${this.frameConfig.name}`
         )
 
-        const { content, totalElements } = await api.getFrameNoList(
+        const { rows, total } = await api.getFrameNoList(
           this.frameConfig.ip,
           this.frameConfig.port,
           this.frameConfig.gdbp,
@@ -150,14 +150,14 @@ export default {
           xMax,
           yMax,
           scale,
-          pageNumber - 1,
+          pageNum,
           pageSize,
           keyword,
           baseConfigInstance.config.projectionName,
           baseConfigInstance.config.projectionName
         )
-        this.list = content || []
-        this.total = totalElements || 0
+        this.list = rows || []
+        this.total = total || 0
       } catch (error) {
         this.list = []
         this.total = 0
@@ -219,9 +219,9 @@ export default {
           total: this.total,
           pageSize: this.pageSize,
           showSizeChanger: true,
-          current: this.pageNumber,
+          current: this.pageNum,
           onChange: (page) => {
-            this.pageNumber = page
+            this.pageNum = page
             this.onSearch()
           },
           onShowSizeChange: (current, size) => {
@@ -243,7 +243,7 @@ export default {
       handler() {
         this.list = []
         this.total = 0
-        this.pageNumber = 1
+        this.pageNum = 0
         this.pageSize = 20
         this.onSearch()
       },
