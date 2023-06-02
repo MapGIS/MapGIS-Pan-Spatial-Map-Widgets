@@ -816,8 +816,10 @@ export default {
             this.changeScaleZ(val.scaleZ, val.offset)
           },
           'update:enableModelStretch': (val) => {
-            if (!val) {
+            if (!val.enableModelStretch) {
               this.updateModelReset()
+            } else {
+              this.changeScaleZ(val.scaleZ, val.offset)
             }
           },
         },

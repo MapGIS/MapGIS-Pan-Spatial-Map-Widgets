@@ -65,7 +65,7 @@ export default {
   props: ['layer'],
   data() {
     return {
-      maximumScreenSpaceError: this.layer.maximumScreenSpaceError,
+      maximumScreenSpaceError: 16,
       enableModelSwitch: false,
       enablePopup: false,
       luminanceAtZenith: 10,
@@ -88,7 +88,11 @@ export default {
     },
     enableModelStretch: {
       handler(val) {
-        this.$emit('update:enableModelStretch', val)
+        this.$emit('update:enableModelStretch', {
+          enableModelStretch: val,
+          scaleZ: this.scaleZ,
+          offset: this.offset,
+        })
       },
       deep: true,
     },
@@ -96,10 +100,18 @@ export default {
   methods: {
     init() {
       const layer = this.layer.layer ? this.layer.layer : this.layer
-      if (layer !== undefined) {
+      if (layer) {
         const { layerProperty } = layer
-        let { enablePopup, enableModelSwitch, luminanceAtZenith } = layer
-        if (layerProperty !== undefined) {
+        let {
+          enablePopup,
+          enableModelSwitch,
+          luminanceAtZenith,
+          maximumScreenSpaceError,
+        } = layer
+        if (layerProperty) {
+          if (layerProperty.maximumScreenSpaceError !== undefined) {
+            maximumScreenSpaceError = layerProperty.maximumScreenSpaceError
+          }
           if (layerProperty.enablePopup !== undefined) {
             enablePopup = layerProperty.enablePopup
           }
@@ -119,12 +131,21 @@ export default {
           this.offset =
             layerProperty.offset !== undefined ? layerProperty.offset : -2
         }
+        this.maximumScreenSpaceError =
+          maximumScreenSpaceError !== undefined ? maximumScreenSpaceError : 16
         this.enablePopup = enablePopup !== undefined ? enablePopup : false
         this.enableModelSwitch =
           enableModelSwitch !== undefined ? enableModelSwitch : false
 
         this.luminanceAtZenith =
           luminanceAtZenith !== undefined ? luminanceAtZenith : 10
+
+        if (this.enableModelStretch) {
+          this.$emit('update:scaleZ', {
+            scaleZ: this.scaleZ,
+            offset: this.offset,
+          })
+        }
       }
     },
     submit() {
@@ -142,13 +163,14 @@ export default {
         this.layer.enableModelSwitch = this.enableModelSwitch
       }
       const layer = this.layer.layer ? this.layer.layer : this.layer
-      if (layer !== undefined) {
+      if (layer) {
         const { layerProperty } = layer
-        if (layerProperty !== undefined) {
+        if (layerProperty) {
           layerProperty.maximumScreenSpaceError = this.maximumScreenSpaceError
           layerProperty.luminanceAtZenith = this.luminanceAtZenith
           layerProperty.enablePopup = this.enablePopup
           layerProperty.enableModelSwitch = this.enableModelSwitch
+          layerProperty.enableModelStretch = this.enableModelStretch
           layerProperty.scaleZ = this.scaleZ
           layerProperty.offset = this.offset
         }

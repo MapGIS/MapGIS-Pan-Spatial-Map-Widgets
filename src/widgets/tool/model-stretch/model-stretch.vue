@@ -22,27 +22,6 @@
       :scaleZ.sync="scaleZ"
       :offset.sync="offset"
     />
-    <!-- <mapgis-ui-switch-panel
-      size="default"
-      label="地质体拉伸"
-      v-model="enableModelStretch"
-    >
-      <mapgis-ui-input-number-panel
-        v-model="scaleZ"
-        size="large"
-        :step="0.5"
-        :slider="true"
-        :range="[1, 100]"
-        label="拉伸级别"
-      />
-      <mapgis-ui-form-item label="偏移量">
-        <mapgis-ui-input-number-addon
-          v-model.number="offset"
-          :step="0.5"
-          addon-after="米"
-        />
-      </mapgis-ui-form-item>
-    </mapgis-ui-switch-panel> -->
   </div>
 </template>
 <script lang="ts">
@@ -78,13 +57,6 @@ export default {
       enableModelStretch: false,
       scaleZ: 1,
       isActive: false,
-      // m3dSetObj: {
-      //   longitude: undefined,
-      //   latitude: undefined,
-      //   height: undefined,
-      //   zmax: undefined,
-      //   zmin: undefined,
-      // },
       offset: -2,
     }
   },
@@ -96,10 +68,11 @@ export default {
     },
     layer: {
       handler() {
-        if (!this.active) {
+        if (!this.isActive) {
           return
         }
-        this.changeLayer(this.layer)
+        this.updateModelReset()
+        this.updateLayer()
       },
       deep: true,
       immediate: true,
@@ -114,6 +87,8 @@ export default {
       handler(val) {
         if (!val) {
           this.updateModelReset()
+        } else {
+          this.changeScaleZ(this.scaleZ, this.offset)
         }
       },
       deep: true,
@@ -150,86 +125,32 @@ export default {
       if (layers.length > 0) {
         this.layer = layers[layers.length - 1]
       } else {
-        this.layer = layers
         this.layer = null
       }
     },
-    /**
-     * 切换三维数据
-     */
-    // changeLayer() {
-    //   if (!this.isActive || !this.layer) return
-
-    //   const { vueKey, Cesium, viewer, vueCesium, layer } = this
-    //   const { id } = layer
-    //   const g3dLayer = this.getG3dLayer()
-    //   const m3dSet = g3dLayer.getM3DLayers()[0]
-    //   // m3dSet.debugShowBoundingVolume = true
-    //   // const center = window.transformEditor._centers[0]
-    //   const initTransform = m3dSet._transform
-    //   // 模型的自身坐标系原点
-    //   const cartographic = Cesium.Cartographic.fromCartesian(
-    //     new Cesium.Cartesian3(
-    //       initTransform[12],
-    //       initTransform[13],
-    //       initTransform[14]
-    //     )
-    //   )
-    //   const longitude = Cesium.Math.toDegrees(cartographic.longitude)
-    //   const latitude = Cesium.Math.toDegrees(cartographic.latitude)
-    //   const height = cartographic.height // 模型高度
-    //   const zmin = m3dSet._root.boundingVolume.minimumHeight
-    //   // const zmax = 4.5
-    //   const zmax = m3dSet._root.boundingVolume.maximumHeight
-    //   this.m3dSetObj = { longitude, latitude, height, zmax, zmin }
-    //   if (window.modelEditControlList && window.modelEditControlList[id]) {
-    //     window.transformEditor = window.modelEditControlList[id]
-    //   } else {
-    //     window.transformEditor = new Cesium.ModelTransformTool(g3dLayer)
-    //     window.transformEditor.initModelEditor(viewer)
-    //     window.modelEditControlList[id] = window.transformEditor
-    //   }
-    // },
-    // getG3dLayer() {
-    //   const { vueKey, viewer, vueCesium, layer } = this
-    //   const { id } = layer
-    //   const sceneLayer = vueCesium.G3DManager.findSource(
-    //     vueKey || 'default',
-    //     id
-    //   )
-    //   const { m3ds, g3dLayerIndex } = sceneLayer.options
-    //   const g3dLayer = viewer.scene.layers.getLayer(g3dLayerIndex)
-    //   return g3dLayer
-    // },
-    // changeScaleZ() {
-    //   if (window.transformEditor) {
-    //     window.transformEditor.setScala(1, 1, this.scaleZ)
-    //     const { longitude, latitude, height, zmax, zmin } = this.m3dSetObj
-    //     // 计算顶部到原点距离
-    //     const originToTop = zmax + this.offset - height
-    //     // 计算向下平移的距离,记得最后加上负号
-    //     const downHeight = originToTop * this.scaleZ + height
-    //     // const m3dSetHeight = zmax - height
-    //     // const downHeight = m3dSetHeight * (this.scaleZ - 1)
-    //     window.transformEditor.setTranslation(longitude, latitude, -downHeight)
-    //   }
-    // },
+    updateLayer() {
+      const { layerProperty } = this.layer
+      if (layerProperty) {
+        this.enableModelStretch =
+          layerProperty.enableModelStretch !== undefined
+            ? layerProperty.enableModelStretch
+            : false
+        this.scaleZ =
+          layerProperty.scaleZ !== undefined ? layerProperty.scaleZ : 1
+        this.offset =
+          layerProperty.offset !== undefined ? layerProperty.offset : -2
+      }
+      this.changeLayer(this.layer)
+    },
     onActive() {
       this.isActive = true
     },
-    // updateModelReset() {
-    //   if (!window.transformEditor) {
-    //     return
-    //   }
-    //   window.transformEditor.deactivate()
-    //   window.transformEditor.reset()
-    // },
     /**
      * 打开模块
      */
     onOpen() {
       this.isActive = true
-      this.changeLayer(this.layer)
+      this.updateLayer()
     },
     /**
      * 关闭模块
