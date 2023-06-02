@@ -70,6 +70,7 @@ export default {
         title: '提示',
         content: '是否将配置同步到服务器?',
         onOk() {
+          self.syncToLocalStorage()
           self.saveConfig()
         },
         onCancel() {},
