@@ -1262,6 +1262,7 @@ export default {
     resizeCheck() {
       this.dataCatalogCheckNode([], {})
       DataCatalogCheckController.setCurrentCheckLayerConfig(null)
+      DataCatalogCheckController.setCurrentLayerChangeConfig([])
     },
 
     onClick(item) {

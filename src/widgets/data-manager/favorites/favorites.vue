@@ -141,6 +141,7 @@ export default {
       this.dataCatalogCheckController.setCurrentCheckLayerConfig(
         item.options.layerConfig
       )
+      this.dataCatalogCheckController.setCurrentLayerChangeConfig([])
       if (item.is2DMapMode) {
         const mapParams = { Cesium, map, vueCesium, viewer }
         setTimeout(() => {
