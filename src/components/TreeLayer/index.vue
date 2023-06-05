@@ -204,6 +204,7 @@ import {
   events,
   eventBus,
   api,
+  DataCatalogCheckController,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../MetadataInfo/MetadataInfo.vue'
 import MpCustomQuery from '../CustomQuery/CustomQuery.vue'
@@ -353,6 +354,10 @@ export default {
 
           this.ticked = arr
 
+          setTimeout(() => {
+            this.setLayerEditConfig()
+          }, 3000)
+
           // const expandedKeys = this.getExpandedKeys()
           // this.expandedKeys = [
           //   ...new Set([...expandedKeys, ...this.expandedKeys]),
@@ -408,6 +413,22 @@ export default {
     eventBus.$on(events.ECHO_LAYER_LIST_INFO, this.echoLayerList)
   },
   methods: {
+    setLayerEditConfig() {
+      const layerEditConfig =
+        DataCatalogCheckController.getCurrentLayerChangeConfig()
+
+      if (layerEditConfig && layerEditConfig.length > 0) {
+        layerEditConfig.forEach((item) => {
+          const sublayer = this.sceneController.findSource(item.id)
+          if (
+            sublayer.maximumScreenSpaceError.toString() !==
+            item.maximumScreenSpaceError.toString()
+          ) {
+            sublayer.maximumScreenSpaceError = item.maximumScreenSpaceError
+          }
+        })
+      }
+    },
     /**
      * 当正在编辑图层被取消的时候，复位图层树路由
      */
@@ -803,6 +824,7 @@ export default {
         },
         listeners: {
           'update:layer': (val) => {
+            DataCatalogCheckController.setCurrentLayerChangeConfig([])
             this.updateM3DProps(val, false)
             this.changeLayer(val)
             const layer = val.layer ? val.layer : val
