@@ -160,8 +160,7 @@ export default {
                 ? JSON.parse(ele.DefaultValue)
                 : ele.DefaultValue
           }
-          ele.Direction = this.DirectionMap[ele.Direction]
-          ele.DataType = this.DataTypeMap[ele.DataType]
+          if (ele.DataType === 'BOOL') ele.DataType = 'BOOLEAN'
           for (const key in ele) {
             // 首字母小写
             const newKey = key.slice(0, 1).toLowerCase() + key.slice(1)
