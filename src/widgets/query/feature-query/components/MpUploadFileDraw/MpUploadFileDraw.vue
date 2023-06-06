@@ -129,14 +129,14 @@ export default {
     },
     uploadFile(param) {
       return axios.post(
-        `${window.location.protocol}://${this.ip}:${this.port}/igs/rest/services/system/ResourceServer/files`,
+        `${window.location.protocol}//${this.ip}:${this.port}/igs/rest/services/system/ResourceServer/files`,
         param,
         { headers: { 'Content-type': 'multipart/form-data' } }
       )
     },
     featureQuery(path) {
       return axios.get(
-        `${window.location.protocol}://${this.ip}:${this.port}/igs/rest/services/system/ResourceServer/tempData/features/query?f=json&url=${path}`
+        `${window.location.protocol}//${this.ip}:${this.port}/igs/rest/services/system/ResourceServer/tempData/features/query?f=json&url=${path}`
       )
     },
     clear() {

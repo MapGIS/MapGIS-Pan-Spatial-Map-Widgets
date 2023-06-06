@@ -637,6 +637,7 @@ export default {
         gdbp,
         docName: serverName,
         layerIdxs: layerIndex,
+        requestType: 'POST',
       })
       return featureSet
     },
