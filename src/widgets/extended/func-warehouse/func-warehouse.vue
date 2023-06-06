@@ -286,6 +286,9 @@ export default {
     }
   }
 }
+::v-deep .mapgis-ui-table-fixed-right {
+  background-color: var(--background) !important;
+}
 .mapgis-ui-form-item {
   margin-bottom: 0;
 }
