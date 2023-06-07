@@ -154,14 +154,14 @@ export default {
           }
     },
     ip() {
-      if (!!this.baseBufferUrl && this.baseBufferUrl.length > 0) {
-        return this.baseBufferUrl.split('/')[2].split(':')[0]
+      if (!!this.baseOverlayUrl && this.baseOverlayUrl.length > 0) {
+        return this.baseOverlayUrl.split('/')[2].split(':')[0]
       }
       return ''
     },
     port() {
-      if (!!this.baseBufferUrl && this.baseBufferUrl.length > 0) {
-        return this.baseBufferUrl.split('/')[2].split(':')[1]
+      if (!!this.baseOverlayUrl && this.baseOverlayUrl.length > 0) {
+        return this.baseOverlayUrl.split('/')[2].split(':')[1]
       }
       return ''
     },
