@@ -13,7 +13,6 @@ export default {
   computed: {},
   methods: {
     changeLayer(layer) {
-      debugger
       if (!layer) return
 
       const { vueKey, Cesium, viewer, vueCesium } = this
@@ -59,7 +58,6 @@ export default {
       return g3dLayer
     },
     changeScaleZ(scaleZ, offset) {
-      debugger
       if (window.transformEditor) {
         window.transformEditor.setScala(1, 1, scaleZ)
         const { longitude, latitude, height, zmax, zmin } = this.m3dSetObj

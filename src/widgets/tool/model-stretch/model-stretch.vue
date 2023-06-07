@@ -22,6 +22,11 @@
       :scaleZ.sync="scaleZ"
       :offset.sync="offset"
     />
+    <mapgis-ui-setting-footer>
+      <mapgis-ui-button @click="syncToServer" type="primary" class="full-width">
+        同步到服务器
+      </mapgis-ui-button>
+    </mapgis-ui-setting-footer>
   </div>
 </template>
 <script lang="ts">
@@ -31,6 +36,7 @@ import {
   IGSSceneSublayerType,
   LoadStatus,
   Objects,
+  api,
 } from '@mapgis/web-app-framework'
 
 import MpModelStretchUi from '../../../components/ModelStretch/ModelStretchUi.vue'
@@ -66,7 +72,7 @@ export default {
       immediate: true,
       deep: true,
     },
-    layer: {
+    'layer.id': {
       handler() {
         if (!this.isActive) {
           return
@@ -80,6 +86,7 @@ export default {
     scaleZ: {
       handler() {
         this.changeScaleZ(this.scaleZ, this.offset)
+        this.updateLayerProperty()
       },
       deep: true,
     },
@@ -90,6 +97,7 @@ export default {
         } else {
           this.changeScaleZ(this.scaleZ, this.offset)
         }
+        this.updateLayerProperty()
       },
       deep: true,
     },
@@ -129,6 +137,9 @@ export default {
       }
     },
     updateLayer() {
+      this.enableModelStretch = false
+      this.scaleZ = 1
+      this.offset = -2
       const { layerProperty } = this.layer
       if (layerProperty) {
         this.enableModelStretch =
@@ -141,6 +152,24 @@ export default {
           layerProperty.offset !== undefined ? layerProperty.offset : -2
       }
       this.changeLayer(this.layer)
+    },
+    updateLayerProperty() {
+      const { enableModelStretch, scaleZ, offset } = this
+      const { layerProperty } = this.layer
+      if (layerProperty) {
+        this.layer.layerProperty = {
+          ...layerProperty,
+          enableModelStretch,
+          scaleZ,
+          offset,
+        }
+      } else {
+        this.layer.layerProperty = {
+          enableModelStretch,
+          scaleZ,
+          offset,
+        }
+      }
     },
     onActive() {
       this.isActive = true
@@ -160,6 +189,25 @@ export default {
       window.modelEditControlList = undefined
       this.updateModelReset()
     },
+    syncToServer() {
+      const self = this
+      this.$confirm({
+        title: '提示',
+        content: '是否将设置同步到服务器?',
+        onOk() {
+          const { dataId, layerProperty } = self.layer
+          if (dataId !== undefined || dataId !== null) {
+            api.updateData({ dataId, layerProperty })
+          }
+        },
+        onCancel() {},
+      })
+    },
   },
 }
 </script>
+<style lang="less" scoped>
+.full-width {
+  width: 100%;
+}
+</style>
