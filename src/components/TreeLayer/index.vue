@@ -564,7 +564,6 @@ export default {
     },
 
     tickedChange(val: Array<string>, e) {
-      debugger
       const includeHanlfCheckArrNew = val.concat(e.halfCheckedKeys)
       const includeHanlfCheckArrOld = this.ticked.concat(this.parentKeys)
       const doc = this.layerDocument.clone()

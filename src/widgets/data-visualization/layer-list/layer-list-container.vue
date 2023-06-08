@@ -25,6 +25,7 @@
           v-show="tab === 'opacity'"
           ref="layerOpacity"
           :layers="document.defaultMap.layers()"
+          @restore-set-opacity="restoreSetOpacity"
         />
       </div>
       <!-- 主要是空白时候的图片可能不显示的情况 -->
@@ -96,7 +97,11 @@ export default {
     },
     setOpacitys() {
       const layers = DataCatalogCheckController.getCurrentLayerNoChildList()
-      this.$refs.layerOpacity.setLayerOpacitys(layers)
+      layers.length > 0 &&
+        this.$refs.layerOpacity.setLayerOpacitys(layers, true)
+    },
+    restoreSetOpacity() {
+      DataCatalogCheckController.setCurrentLayerNoChildList([])
     },
   },
 }

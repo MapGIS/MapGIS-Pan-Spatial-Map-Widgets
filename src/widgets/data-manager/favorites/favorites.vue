@@ -141,6 +141,9 @@ export default {
       this.dataCatalogCheckController.setCurrentCheckLayerConfig(
         item.options.layerConfig
       )
+      this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig(
+        item.options.sceneSettingConfig
+      )
       this.dataCatalogCheckController.setCurrentLayerChangeConfig([])
       this.dataCatalogCheckController.setCurrentLayerNoChildList([])
       if (item.is2DMapMode) {
