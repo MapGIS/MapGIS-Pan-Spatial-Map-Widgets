@@ -196,7 +196,7 @@ export default {
     },
     // port
     port() {
-      return this.widgetInfo.config.port || baseConfigInstance.config.ip
+      return this.widgetInfo.config.port || baseConfigInstance.config.port
     },
   },
 
