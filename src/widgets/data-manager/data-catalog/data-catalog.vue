@@ -1263,6 +1263,7 @@ export default {
       this.dataCatalogCheckNode([], {})
       DataCatalogCheckController.setCurrentCheckLayerConfig(null)
       DataCatalogCheckController.setCurrentLayerChangeConfig([])
+      DataCatalogCheckController.setCurrentLayerNoChildList([])
     },
 
     onClick(item) {

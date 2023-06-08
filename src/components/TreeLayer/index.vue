@@ -421,13 +421,15 @@ export default {
         layerEditConfig.forEach((item) => {
           const sublayer = this.sceneController.findSource(item.id)
           if (
+            sublayer &&
             sublayer.maximumScreenSpaceError.toString() !==
-            item.maximumScreenSpaceError.toString()
+              item.maximumScreenSpaceError.toString()
           ) {
             sublayer.maximumScreenSpaceError = item.maximumScreenSpaceError
           }
         })
       }
+      this.$emit('set-opacitys')
     },
     /**
      * 当正在编辑图层被取消的时候，复位图层树路由
@@ -562,6 +564,7 @@ export default {
     },
 
     tickedChange(val: Array<string>, e) {
+      debugger
       const includeHanlfCheckArrNew = val.concat(e.halfCheckedKeys)
       const includeHanlfCheckArrOld = this.ticked.concat(this.parentKeys)
       const doc = this.layerDocument.clone()

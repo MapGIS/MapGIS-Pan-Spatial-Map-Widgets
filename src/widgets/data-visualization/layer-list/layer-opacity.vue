@@ -72,8 +72,13 @@ export default {
       this.modelOpacityFactor = val
       this.opacityFactorChanged('model')
     })
+
+    window.testa = (val) => this.testa(val)
   },
   methods: {
+    testa(val) {
+      this.setOpacity(val, this.layers[0])
+    },
     /**
      * 获取slider控件的值，这里的值是基于没有乘以透明度系数值计算的
      */
@@ -247,6 +252,17 @@ export default {
         item.opacityFactor = factor
       }
       this.$forceUpdate()
+    },
+    setLayerOpacitys(layers) {
+      layers.forEach((layer) => {
+        const current = this.layers.find((item) => item.id === layer.layerId)
+        if (current) {
+          const opacity = 100 - layer.opacity * 100 + 0.001
+          setTimeout(() => {
+            this.setOpacity(opacity, current)
+          }, 1000)
+        }
+      })
     },
   },
 }

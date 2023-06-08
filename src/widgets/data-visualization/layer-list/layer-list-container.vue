@@ -18,10 +18,12 @@
           :widgetInfo="widgetInfo"
           :widgetRouters="widgetRouters"
           :layerDocument.sync="document"
+          @set-opacitys="setOpacitys"
         >
         </mp-tree-layer>
         <layer-opacity
           v-show="tab === 'opacity'"
+          ref="layerOpacity"
           :layers="document.defaultMap.layers()"
         />
       </div>
@@ -67,6 +69,7 @@ export default {
         { key: 'tree', label: '图层树' },
         { key: 'opacity', label: '透明度' },
       ],
+      setOpacityList: [],
     }
   },
   computed: {
@@ -90,6 +93,10 @@ export default {
     getLayerList() {
       const data = this.$refs.layerListTree.getCurrentData()
       DataCatalogCheckController.setCheckLayerConfig(data)
+    },
+    setOpacitys() {
+      const layers = DataCatalogCheckController.getCurrentLayerNoChildList()
+      this.$refs.layerOpacity.setLayerOpacitys(layers)
     },
   },
 }
