@@ -580,9 +580,10 @@ export default {
       if (this.checkedNodeKeys && this.checkedNodeKeys.length > 0) {
         this.dataCatalogCheckNode([], {})
       }
-      this.$nextTick(() => {
+
+      setTimeout(() => {
         this.dataCatalogCheckNode(keys, checkKeysRelation)
-      })
+      }, 1000)
     },
     dataCatalogCheckNode(keys, checkKeysRelation) {
       this.checkedNodeKeys = []
@@ -763,82 +764,27 @@ export default {
         // 选中节点中保含有图层节点
         const doc: Document = this.document
         const checkedNodeKeys: string[] = this.checkedNodeKeys
-        layerConfigNodeList.forEach(async (layerConfigNode): Layer => {
-          if (isChecked) {
-            // 如果是扩展图层，直接发送事件
-            if (
-              Object.prototype.hasOwnProperty.call(
-                layerConfigNode,
-                'serverType'
-              ) &&
-              !layerConfigNode.serverType
-            ) {
-              eventBus.$emit(
-                events.DATA_CATALOG_EXTEND_DATA_CHECK,
-                layerConfigNode
-              )
-              return
-            }
-            // 如果是选中了节点
-            // 1.根据图层节点的配置,生成webclient-store中定义的图层.
-            const layer =
-              DataCatalogManager.generateLayerByConfig(layerConfigNode)
-            layer.description = this.setDescription(layer)
 
-            // 2.将图层添加到全局的document中。
-            if (layer) {
-              const recordCheckLayer = this.disableTreeNodeCheckBox(layer.id)
-              // 2.1加载图层
-              try {
-                if (layer.loadStatus === LoadStatus.notLoaded) {
-                  await layer.load()
-                }
-              } catch (error) {
-              } finally {
-                // 2.2判断图层是否载成功。如果成功则将图层添加到documet中。否则，给出提示，并将数据目录树中对应的节点设为未选中状态。
-                if (layer.loadStatus === LoadStatus.loaded) {
-                  DataCatalogCheckController.dealLayers(
-                    layer,
-                    this.is3DLayer(layer)
-                  )
-                  const unAntoResetArr =
-                    this.layerAutoResetManager.getUnAutoResetArr()
-                  if (
-                    this.is3DLayer(layer) &&
-                    this.is2DMapMode === true &&
-                    !unAntoResetArr.includes(layer.id)
-                  ) {
-                    this.switchMapMode()
-                  }
-
-                  // 二维图层如果配置了extend中的location为true则在加载后要执行缩放至操作，三维图层的跳转逻辑则在WebScenePro组件中通过autoReset控制是否跳转
-                  if (!this.is3DLayer(layer)) {
-                    const autoResetArr =
-                      this.layerAutoResetManager.getInitLayerAutoResetArr()
-
-                    if (
-                      autoResetArr.includes(layer.id) &&
-                      !unAntoResetArr.includes(layer.id)
-                    ) {
-                      setTimeout(() => {
-                        this.fitBounds(layer, this.getDataFlowExtent(layer))
-                      }, 1000)
-                    }
-                  }
-                  doc.defaultMap.add(layer)
-                } else {
-                  this.$message.error(`图层:${layer.title}加载失败`)
-                  // checkedNodeKeys.splice(layer.id)
-                  this.checkedNodeKeys = this.getCheckedLayerConfigIDs(layer.id)
-                  this.filterCheckNodeKeys()
-                }
-                if (!this.is3DLayer(layer)) {
-                  // 图层加载完毕，恢复checkbox可选状态
-                  this.setCheckBoxEnable(recordCheckLayer, false)
-                }
-              }
-            }
-          } else {
+        if (isChecked) {
+          // 获取到所有图层对象
+          const promiseAll = []
+          for (let i = 0; i < layerConfigNodeList.length; i++) {
+            const layerConfigNode = layerConfigNodeList[i]
+            promiseAll.push(this.generateLayer(layerConfigNode))
+          }
+          Promise.all(promiseAll).then((result) => {
+            const appendLayer = []
+            // 调整图层顺序
+            layerConfigNodeList.forEach((item) => {
+              const sortLayer = result.find((layer) => layer.id === item.guid)
+              sortLayer && appendLayer.push(sortLayer)
+            })
+            appendLayer.forEach((item) => {
+              doc.defaultMap.add(item)
+            })
+          })
+        } else {
+          layerConfigNodeList.forEach((layerConfigNode) => {
             if (
               Object.prototype.hasOwnProperty.call(
                 layerConfigNode,
@@ -857,16 +803,182 @@ export default {
             doc.defaultMap.remove(
               doc.defaultMap.findLayerById(layerConfigNode.guid)
             )
-          }
-          eventBus.$emit(
-            events.DATA_SELECTION_CHANGE_EVENT,
-            layerConfigNode,
-            isChecked
-          )
+          })
+        }
+
+        layerConfigNodeList.forEach((item) => {
+          eventBus.$emit(events.DATA_SELECTION_CHANGE_EVENT, item, isChecked)
         })
+
+        // layerConfigNodeList.forEach(async (layerConfigNode): Layer => {
+        //   if (isChecked) {
+        //     // 如果是扩展图层，直接发送事件
+        //     if (
+        //       Object.prototype.hasOwnProperty.call(
+        //         layerConfigNode,
+        //         'serverType'
+        //       ) &&
+        //       !layerConfigNode.serverType
+        //     ) {
+        //       eventBus.$emit(
+        //         events.DATA_CATALOG_EXTEND_DATA_CHECK,
+        //         layerConfigNode
+        //       )
+        //       return
+        //     }
+        //     // 如果是选中了节点
+        //     // 1.根据图层节点的配置,生成webclient-store中定义的图层.
+        //     const layer =
+        //       DataCatalogManager.generateLayerByConfig(layerConfigNode)
+        //     layer.description = this.setDescription(layer)
+
+        //     // 2.将图层添加到全局的document中。
+        //     if (layer) {
+        //       const recordCheckLayer = this.disableTreeNodeCheckBox(layer.id)
+        //       // 2.1加载图层
+        //       try {
+        //         if (layer.loadStatus === LoadStatus.notLoaded) {
+        //           await layer.load()
+        //         }
+        //       } catch (error) {
+        //       } finally {
+        //         // 2.2判断图层是否载成功。如果成功则将图层添加到documet中。否则，给出提示，并将数据目录树中对应的节点设为未选中状态。
+        //         if (layer.loadStatus === LoadStatus.loaded) {
+        //           DataCatalogCheckController.dealLayers(
+        //             layer,
+        //             this.is3DLayer(layer)
+        //           )
+        //           const unAntoResetArr =
+        //             this.layerAutoResetManager.getUnAutoResetArr()
+        //           if (
+        //             this.is3DLayer(layer) &&
+        //             this.is2DMapMode === true &&
+        //             !unAntoResetArr.includes(layer.id)
+        //           ) {
+        //             this.switchMapMode()
+        //           }
+
+        //           // 二维图层如果配置了extend中的location为true则在加载后要执行缩放至操作，三维图层的跳转逻辑则在WebScenePro组件中通过autoReset控制是否跳转
+        //           if (!this.is3DLayer(layer)) {
+        //             const autoResetArr =
+        //               this.layerAutoResetManager.getInitLayerAutoResetArr()
+
+        //             if (
+        //               autoResetArr.includes(layer.id) &&
+        //               !unAntoResetArr.includes(layer.id)
+        //             ) {
+        //               setTimeout(() => {
+        //                 this.fitBounds(layer, this.getDataFlowExtent(layer))
+        //               }, 1000)
+        //             }
+        //           }
+        //           doc.defaultMap.add(layer)
+        //         } else {
+        //           this.$message.error(`图层:${layer.title}加载失败`)
+        //           // checkedNodeKeys.splice(layer.id)
+        //           this.checkedNodeKeys = this.getCheckedLayerConfigIDs(layer.id)
+        //           this.filterCheckNodeKeys()
+        //         }
+        //         if (!this.is3DLayer(layer)) {
+        //           // 图层加载完毕，恢复checkbox可选状态
+        //           this.setCheckBoxEnable(recordCheckLayer, false)
+        //         }
+        //       }
+        //     }
+        //   } else {
+        //     if (
+        //       Object.prototype.hasOwnProperty.call(
+        //         layerConfigNode,
+        //         'serverType'
+        //       ) &&
+        //       !layerConfigNode.serverType
+        //     ) {
+        //       eventBus.$emit(
+        //         events.DATA_CATALOG_EXTEND_DATA_UNCHECK,
+        //         layerConfigNode
+        //       )
+        //       return
+        //     }
+        //     // 如果是取消选中了节点
+        //     // 1.通过节点的key,将图层从document中移除。
+        //     doc.defaultMap.remove(
+        //       doc.defaultMap.findLayerById(layerConfigNode.guid)
+        //     )
+        //   }
+        //   eventBus.$emit(
+        //     events.DATA_SELECTION_CHANGE_EVENT,
+        //     layerConfigNode,
+        //     isChecked
+        //   )
+        // })
       }
     },
+    async generateLayer(layerConfigNode) {
+      // 如果是扩展图层，直接发送事件
+      if (
+        Object.prototype.hasOwnProperty.call(layerConfigNode, 'serverType') &&
+        !layerConfigNode.serverType
+      ) {
+        eventBus.$emit(events.DATA_CATALOG_EXTEND_DATA_CHECK, layerConfigNode)
+        return
+      }
+      // 如果是选中了节点
+      // 1.根据图层节点的配置,生成webclient-store中定义的图层.
+      const layer = DataCatalogManager.generateLayerByConfig(layerConfigNode)
+      layer.description = this.setDescription(layer)
 
+      // 2.将图层添加到全局的document中。
+      if (layer) {
+        const recordCheckLayer = this.disableTreeNodeCheckBox(layer.id)
+        // 2.1加载图层
+        try {
+          if (layer.loadStatus === LoadStatus.notLoaded) {
+            await layer.load()
+          }
+        } catch (error) {
+        } finally {
+          // 2.2判断图层是否载成功。如果成功则将图层添加到documet中。否则，给出提示，并将数据目录树中对应的节点设为未选中状态。
+          if (layer.loadStatus === LoadStatus.loaded) {
+            DataCatalogCheckController.dealLayers(layer, this.is3DLayer(layer))
+            const unAntoResetArr =
+              this.layerAutoResetManager.getUnAutoResetArr()
+            if (
+              this.is3DLayer(layer) &&
+              this.is2DMapMode === true &&
+              !unAntoResetArr.includes(layer.id)
+            ) {
+              this.switchMapMode()
+            }
+
+            // 二维图层如果配置了extend中的location为true则在加载后要执行缩放至操作，三维图层的跳转逻辑则在WebScenePro组件中通过autoReset控制是否跳转
+            if (!this.is3DLayer(layer)) {
+              const autoResetArr =
+                this.layerAutoResetManager.getInitLayerAutoResetArr()
+
+              if (
+                autoResetArr.includes(layer.id) &&
+                !unAntoResetArr.includes(layer.id)
+              ) {
+                setTimeout(() => {
+                  this.fitBounds(layer, this.getDataFlowExtent(layer))
+                }, 1000)
+              }
+            }
+            // loadAllLayer.push(layer)
+          } else {
+            this.$message.error(`图层:${layer.title}加载失败`)
+            // checkedNodeKeys.splice(layer.id)
+            this.checkedNodeKeys = this.getCheckedLayerConfigIDs(layer.id)
+            this.filterCheckNodeKeys()
+          }
+          if (!this.is3DLayer(layer)) {
+            // 图层加载完毕，恢复checkbox可选状态
+            this.setCheckBoxEnable(recordCheckLayer, false)
+          }
+        }
+        return layer.loadStatus === LoadStatus.loaded ? layer : null
+      }
+    },
     filterCheckNodeKeys() {
       if (this.isClassify) {
         if (this.checkedNodeKeys.length === 0) {
