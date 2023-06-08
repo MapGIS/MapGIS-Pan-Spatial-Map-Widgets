@@ -54,42 +54,35 @@
               <mapgis-ui-col :span="5">
                 <mapgis-ui-button
                   @click="
-                    city = region.properties.name
-                    changeArea(
-                      region.properties.center,
-                      region.geometry.coordinates
-                    )
+                    city = region.name
+                    changeArea(region.name)
                   "
                   style="text-align: center; padding: 0 5px; width: 70px"
                   class="city_all_first"
                   type="text"
                 >
-                  {{ region.properties.name }}
+                  {{ region.name }}
                 </mapgis-ui-button>
               </mapgis-ui-col>
               <mapgis-ui-col :span="19">
                 <div
                   style="float: left; margin: 0 2px 2px 0"
-                  v-for="item in region.child.features"
-                  :key="item.properties.adcode"
+                  v-for="(item, index) in region.city"
+                  :key="index"
                 >
                   <mapgis-ui-button
                     @click="
-                      city = region.properties.name + ' ' + item.properties.name
-                      changeArea(
-                        item.properties.center,
-                        item.geometry.coordinates
-                      )
+                      city = region.name + ' ' + item.name
+                      changeArea(item.name)
                     "
                     type="text"
                     :class="
-                      city ==
-                      region.properties.name + ' ' + item.properties.name
+                      city == region.name + ' ' + item.name
                         ? 'city_active'
                         : 'area_all'
                     "
                   >
-                    {{ item.properties.name }}
+                    {{ item.name }}
                   </mapgis-ui-button>
                 </div>
               </mapgis-ui-col>
@@ -111,21 +104,16 @@
               <mapgis-ui-col :span="18">
                 <mapgis-ui-button
                   style="float: left; margin: 0 2px 2px 0"
-                  :key="item.properties.adcode"
+                  :key="index"
                   @click="
-                    city = item.properties.name
-                    changeArea(
-                      item.properties.center,
-                      item.geometry.coordinates
-                    )
+                    city = item.name
+                    changeArea(item.name)
                   "
                   type="text"
-                  v-for="item in area"
-                  :class="
-                    city == item.properties.name ? 'city_active' : 'area_all'
-                  "
+                  v-for="(item, index) in area"
+                  :class="city == item.name ? 'city_active' : 'area_all'"
                 >
-                  {{ item.properties.name }}
+                  {{ item.name }}
                 </mapgis-ui-button>
               </mapgis-ui-col>
             </mapgis-ui-row>
@@ -165,10 +153,8 @@ export default {
       // 背景图对象
       // tabBackImg: tabBackImg,
       // 行政区列表
-      backupRegionsList: [], // 备份
       regionsList: [],
       // 字母列表
-      backupLetterList: [],
       letterList: [],
       timer: null,
     }
@@ -199,7 +185,6 @@ export default {
         const backupLetterList = JSON.parse(
           JSON.stringify(this.backupLetterList)
         )
-        console.log('this.backupLetterList111', this.backupLetterList)
         // 行政区
         if (this.regionSearch) {
           const list = []
@@ -209,17 +194,19 @@ export default {
             // eslint-disable-next-line
             for (let i in regions) {
               const region = regions[i]
-              // 二级
-              const newFeatures = region.child.features.filter((f) => {
-                return f.properties.name.indexOf(this.inputTxt) >= 0
-              })
-              region.child.features = newFeatures
-              // 一级
-              if (
-                region.properties.name.indexOf(this.inputTxt) >= 0 ||
-                newFeatures.length > 0
-              ) {
-                list.push(region)
+              if (region.city && region.city.length > 0) {
+                // 二级
+                const newFeatures = region.city.filter((f) => {
+                  return f.name.indexOf(this.inputTxt) >= 0
+                })
+                region.city = newFeatures
+                // 一级
+                if (
+                  region.name.indexOf(this.inputTxt) >= 0 ||
+                  newFeatures.length > 0
+                ) {
+                  list.push(region)
+                }
               }
             }
           }
@@ -235,7 +222,7 @@ export default {
             for (let i in regions) {
               const region = { ...regions[i] }
               // 一级
-              if (region.properties.name.indexOf(this.inputTxt) >= 0) {
+              if (region.name.indexOf(this.inputTxt) >= 0) {
                 if (!list[j]) {
                   list[j] = []
                 }
@@ -252,7 +239,13 @@ export default {
       this.$emit('update:visible', false)
       this.$emit('close')
     },
-    changeArea(center, borders) {
+    changeArea(name) {
+      const {
+        center,
+        geometry: { coordinates: borders },
+      } = this.geometryMapAll.filter((geometryMap) => {
+        return geometryMap[name]
+      })[0][name]
       this.$emit('select', { center, borders, city: this.city })
     },
     clear() {
@@ -267,25 +260,24 @@ export default {
       for (let region in allRegions) {
         areas.push(allRegions[region])
         // eslint-disable-next-line
-        if (allRegions[region]['child'].length > 0)
-          if (allRegions[region]['child'].features.length > 1)
-            for (let area in allRegions[region]['child'].features) // eslint-disable-line
-              areas.push(allRegions[region]['child'].features[area]) // eslint-disable-line
+        if (allRegions[region]['city'] && allRegions[region]['city'].length > 1)
+          for (let area in allRegions[region]['city']) // eslint-disable-line
+            areas.push(allRegions[region]['city'][area]) // eslint-disable-line
       }
       // 调整顺序
       areas.sort((x, y) => {
-        return x.properties.pinyin > y.properties.pinyin ? 1 : -1
+        return x.pinyin > y.pinyin ? 1 : -1
       })
       let list = {}
 
       areas.map((item) => {
         // 拼音首字母
-        let pinyin = item.properties.pinyin[0]
+        let pinyin = item.pinyin[0]
         // 如果没有先赋值
         if (!list[pinyin]) {
           list[pinyin] = []
         }
-        list[item.properties.pinyin[0]].push(item)
+        list[item.pinyin[0]].push(item)
       })
       // 字母排序
       this.letterList = JSON.parse(JSON.stringify(list))
@@ -293,9 +285,42 @@ export default {
     },
     async initAll() {
       const res = await axios.get(this.baseUrl + this.regionsUrl)
-      this.regionsList = res.data.children
-      this.backupRegionsList = JSON.parse(JSON.stringify(res.data.children))
+      this.formatRegionList(res.data.children)
+      this.backupRegionsList = JSON.parse(JSON.stringify(this.regionsList))
       this.initLetterList()
+    },
+    // 处理获取到的数据，regionsList只保留name,pinyin字段;将geometry扁平化存入到geometryMapAll数组当中
+    formatRegionList(list) {
+      this.geometryMapAll = []
+      list.forEach((item) => {
+        const province = {}
+        province.city = []
+        if (item.properties) {
+          province.name = item.properties.name
+          province.pinyin = item.properties.pinyin
+          const geometryMap = {}
+          geometryMap[item.properties.name] = {
+            geometry: item.geometry,
+            center: item.properties.center,
+          }
+          this.geometryMapAll.push(geometryMap)
+        }
+        if (item.child && item.child.features) {
+          item.child.features.forEach((feature) => {
+            province.city.push({
+              name: feature.properties.name,
+              pinyin: feature.properties.pinyin,
+            })
+            const geometryMap = {}
+            geometryMap[feature.properties.name] = {
+              geometry: feature.geometry,
+              center: feature.properties.center,
+            }
+            this.geometryMapAll.push(geometryMap)
+          })
+        }
+        this.regionsList.push(province)
+      })
     },
   },
   destroyed() {
