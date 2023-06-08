@@ -157,13 +157,20 @@ export default {
       if (!!this.baseOverlayUrl && this.baseOverlayUrl.length > 0) {
         return this.baseOverlayUrl.split('/')[2].split(':')[0]
       }
-      return ''
+      return baseConfigInstance.config.ip
     },
     port() {
       if (!!this.baseOverlayUrl && this.baseOverlayUrl.length > 0) {
         return this.baseOverlayUrl.split('/')[2].split(':')[1]
       }
-      return ''
+      return baseConfigInstance.config.port
+    },
+    domain() {
+      if (!!this.baseOverlayUrl && this.baseOverlayUrl.length > 0) {
+        const url = new URL(this.baseOverlayUrl)
+        return url.origin
+      }
+      return `${window.location.protocol}//${baseConfigInstance.config.ip}${baseConfigInstance.config.port}`
     },
   },
 
@@ -262,10 +269,7 @@ export default {
     },
 
     addNewLayer() {
-      const { ip, port } = this
-      const protocol = window.location.protocol
-      const domain = `${protocol}//${ip}:${port}`
-      const url = `${domain}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
+      const url = `${this.domain}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
       const index = url.lastIndexOf('/')
       const layerName = url.substring(index + 1, url.length)
       this.resultData = {
