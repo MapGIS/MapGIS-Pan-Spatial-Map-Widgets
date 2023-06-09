@@ -1,3 +1,5 @@
+import { LayerType } from '@mapgis/web-app-framework'
+
 export default {
   data() {
     return {
@@ -12,9 +14,24 @@ export default {
   },
   computed: {},
   methods: {
+    isIGSScene(layerObj) {
+      const layer = layerObj.layer ? layerObj.layer : layerObj
+      if (layer.type === LayerType.IGSScene) {
+        if (layer.activeScene) {
+          const { type } = layer.activeScene.sublayers[0]
+          if (type === IGSSceneSublayerType.modelCache) {
+            // 模型拉伸只支持模型
+            return true
+          }
+        }
+      }
+      return false
+    },
     changeLayer(layer) {
       if (!layer) return
-
+      if (!this.isIGSScene(layer)) {
+        return
+      }
       const { vueKey, Cesium, viewer, vueCesium } = this
       const { id } = layer
       const g3dLayer = this.getG3dLayer(id)

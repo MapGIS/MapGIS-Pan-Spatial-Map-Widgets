@@ -27,6 +27,7 @@
         @change="luminanceAtZenithChange"
       />
       <mapgis-ui-switch-panel
+        v-if="isIGSScene"
         size="default"
         label="模型拉伸"
         v-model="enableModelStretch"
@@ -57,7 +58,7 @@
 </template>
 
 <script lang="ts">
-import { LayerType } from '@mapgis/web-app-framework'
+import { LayerType, IGSSceneSublayerType } from '@mapgis/web-app-framework'
 import UnifyModifyVue from '../UnifyModify/UnifyModify.vue'
 
 export default {
@@ -73,6 +74,25 @@ export default {
       scaleZ: 1,
       offset: -2,
     }
+  },
+  computed: {
+    /**
+     * 判断是否是三维图层
+     * @returns boolean
+     */
+    isIGSScene() {
+      const layer = this.layer.layer ? this.layer.layer : this.layer
+      if (layer.type === LayerType.IGSScene) {
+        if (layer.activeScene) {
+          const { type } = layer.activeScene.sublayers[0]
+          if (type === IGSSceneSublayerType.modelCache) {
+            // 模型拉伸只支持模型
+            return true
+          }
+        }
+      }
+      return false
+    },
   },
   watch: {
     layer: {
