@@ -21,11 +21,7 @@ export default {
 
   data() {
     return {
-      entityBarrierArray: [],
-      entityCoordinateArray: [],
       entityHighResultIndex: undefined,
-      entityPointResultArray: [],
-      entityLineResultArray: [],
       markerEntity: null,
       circleColor: {
         'circle-radius': 5, // 半径
@@ -59,6 +55,11 @@ export default {
   },
 
   mounted() {
+    // 这几个数据不要放data上，不然球会卡死
+    this.entityBarrierArray = []
+    this.entityCoordinateArray = []
+    this.entityPointResultArray = []
+    this.entityLineResultArray = []
     this.sceneOverlays = Overlay.SceneOverlays.getInstance(
       this.Cesium,
       this.vueCesium,

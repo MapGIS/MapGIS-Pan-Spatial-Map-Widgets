@@ -13,12 +13,7 @@ export default {
   props: ['geoJSONAnalysis', 'geoJSONTarget'],
 
   data() {
-    return {
-      // 点集资源ID
-      sourceTargetArr: [],
-      // 点集资源ID
-      sourceAnalysisArr: [],
-    }
+    return {}
   },
   watch: {
     geoJSONAnalysis: {
@@ -32,6 +27,10 @@ export default {
   },
 
   mounted() {
+    // 点集资源ID
+    this.sourceTargetArr = []
+    // 点集资源ID
+    this.sourceAnalysisArr = []
     this.sceneOverlays = Overlay.SceneOverlays.getInstance(
       this.Cesium,
       this.vueCesium,
