@@ -47,6 +47,9 @@ export default {
     layerConfig() {
       return this.dataCatalogCheckController.getCheckLayerConfig()
     },
+    sceneConfig() {
+      return this.dataCatalogCheckController.getCheckSceneConfig()
+    },
     showType() {
       return this.widgetInfo.config.showType
     },
@@ -91,6 +94,7 @@ export default {
        */
       // 获取图层列表此时的配置信息
       eventBus.$emit(events.GET_LAYER_LIST_INFO)
+      eventBus.$emit(events.SCENE_CONFIG_INFO)
       const id = UUID.uuid()
       const imageObj = this.base64ToFile(this.getImage(), id)
       const fileInfo = await this.uploadImage(imageObj)
@@ -98,6 +102,7 @@ export default {
       data.is2DMapMode = this.is2DMapMode
       data.image = fileInfo.data.url
       data.options.layerConfig = this.layerConfig
+      data.options.sceneConfig = this.sceneConfig
       if (this.is2DMapMode) {
         const mapBoundArray = this.map.getBounds().toArray()
         const mapBound = {
@@ -142,7 +147,7 @@ export default {
         item.options.layerConfig
       )
       this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig(
-        item.options.sceneSettingConfig
+        item.options.sceneConfig
       )
       this.dataCatalogCheckController.setCurrentLayerChangeConfig([])
       this.dataCatalogCheckController.setCurrentLayerNoChildList([])

@@ -776,8 +776,10 @@ export default {
             const appendLayer = []
             // 调整图层顺序
             layerConfigNodeList.forEach((item) => {
-              const sortLayer = result.find((layer) => layer.id === item.guid)
-              sortLayer && appendLayer.push(sortLayer)
+              if (item) {
+                const sortLayer = result.find((layer) => layer.id === item.guid)
+                sortLayer && appendLayer.push(sortLayer)
+              }
             })
             appendLayer.forEach((item) => {
               doc.defaultMap.add(item)
@@ -1376,6 +1378,8 @@ export default {
       DataCatalogCheckController.setCurrentCheckLayerConfig(null)
       DataCatalogCheckController.setCurrentLayerChangeConfig([])
       DataCatalogCheckController.setCurrentLayerNoChildList([])
+      DataCatalogCheckController.setCurrentCheckSceneSettingConfig({})
+      DataCatalogCheckController.setCheckSceneConfig([])
     },
 
     onClick(item) {

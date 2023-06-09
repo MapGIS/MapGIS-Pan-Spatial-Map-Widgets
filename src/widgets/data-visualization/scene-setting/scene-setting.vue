@@ -4,6 +4,7 @@
       @loaded="loaded"
       :initialStatebar="initialStatebar"
       :initParams="config"
+      :initFavoritesParams="initFavoritesParams"
       ref="sceneSetting"
     >
     </mapgis-3d-scene-setting>
@@ -16,7 +17,13 @@
 </template>
 
 <script lang="ts">
-import { WidgetMixin, api } from '@mapgis/web-app-framework'
+import {
+  WidgetMixin,
+  api,
+  DataCatalogCheckController,
+  eventBus,
+  events,
+} from '@mapgis/web-app-framework'
 
 export default {
   name: 'MpSceneSetting',
@@ -26,6 +33,7 @@ export default {
       // 页面布局方式
       layout: 'horizontal',
       initialStatebar: true,
+      dataCatalogCheckController: DataCatalogCheckController,
     }
   },
 
@@ -37,6 +45,12 @@ export default {
       }
       return config
     },
+    initFavoritesParams() {
+      return this.dataCatalogCheckController.getCurrentCheckSceneSettingConfig()
+    },
+  },
+  created() {
+    eventBus.$on(events.SCENE_CONFIG_INFO, this.getSceneConfig)
   },
 
   methods: {
@@ -116,6 +130,10 @@ export default {
           // this.$message.error('更新场景设置配置失败')
           // console.log('更新场景设置配置失败')
         })
+    },
+    getSceneConfig() {
+      const config = this.getConfig()
+      this.dataCatalogCheckController.setCheckSceneConfig(config)
     },
   },
 }
