@@ -116,7 +116,7 @@ export default {
             layerIdxs: layerIndex,
             coordPrecision: 8,
           }
-          const res = await Feature.FeatureQuery.query(options, true)
+          const res = await Feature.FeatureQuery.query(options, false)
           console.log(res)
           this.dealWithResult(res)
         } else if (serverType === LayerType.IGSVector) {
@@ -131,7 +131,7 @@ export default {
             gdbp,
             coordPrecision: 8,
           }
-          const res = await Feature.FeatureQuery.query(options, true)
+          const res = await Feature.FeatureQuery.query(options, false)
           this.dealWithResult(res)
         }
       } catch (error) {

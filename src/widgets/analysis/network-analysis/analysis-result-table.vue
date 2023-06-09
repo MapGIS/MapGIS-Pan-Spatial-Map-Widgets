@@ -30,7 +30,7 @@
 </template>
 <script lang="ts">
 export default {
-  name: 'MpAnakysisResultTable',
+  name: 'MpAnalysisResultTable',
   props: {
     isFullScreen: {
       type: Boolean,

@@ -107,7 +107,7 @@
             ></mp-hinder-table>
           </mapgis-ui-tab-pane>
           <mapgis-ui-tab-pane key="analysisRes" tab="分析结果">
-            <mp-anakysis-result-table
+            <mp-analysis-result-table
               :isFullScreen="isFullScreen"
               ref="MpNetworkAnalysis"
               @draw-high-result="drawHighResult"
@@ -175,7 +175,7 @@ import {
 } from '@mapgis/web-app-framework'
 import MpHinderTable from './hinder-table'
 import MpCoordinateTable from './coordinate-table'
-import MpAnakysisResultTable from './analysis-result-table'
+import MpAnalysisResultTable from './analysis-result-table'
 import setting from './setting'
 import mapboxLayer from './map-layer/mapbox-layer.vue'
 import cesiumLayer from './map-layer/cesium-layer'
@@ -187,7 +187,7 @@ export default {
     MpHinderTable,
     MpCoordinateTable,
     setting,
-    MpAnakysisResultTable,
+    MpAnalysisResultTable,
     mapboxLayer,
     cesiumLayer,
   },
@@ -559,7 +559,9 @@ export default {
       try {
         this.showLoading = true
         const res = await Analysis.WorkflowAnalysis.executeWorkflow(opt)
-        this.getStatus(res)
+        setTimeout(() => {
+          this.getStatus(res)
+        }, 1000)
       } catch (error) {
         this.showLoading = false
         this.$message.error('分析失败')
