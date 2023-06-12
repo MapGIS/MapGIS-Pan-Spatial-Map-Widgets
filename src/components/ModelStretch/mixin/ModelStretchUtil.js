@@ -1,4 +1,4 @@
-import { LayerType } from '@mapgis/web-app-framework'
+import { LayerType, IGSSceneSublayerType } from '@mapgis/web-app-framework'
 
 export default {
   data() {
