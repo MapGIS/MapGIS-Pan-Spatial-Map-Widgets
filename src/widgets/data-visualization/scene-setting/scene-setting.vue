@@ -43,6 +43,7 @@ export default {
       if (window.localStorage.sceneSetting) {
         config = JSON.parse(window.localStorage.sceneSetting)
       }
+      this.dataCatalogCheckController.setInitSceneConfig(config)
       return config
     },
     initFavoritesParams() {
@@ -94,6 +95,7 @@ export default {
     syncToLocalStorage() {
       const config = this.getConfig()
       window.localStorage.sceneSetting = JSON.stringify(config)
+      this.dataCatalogCheckController.setInitSceneConfig(config)
     },
 
     getConfig() {
