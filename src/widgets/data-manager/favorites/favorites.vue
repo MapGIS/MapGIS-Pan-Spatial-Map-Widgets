@@ -146,9 +146,14 @@ export default {
       this.dataCatalogCheckController.setCurrentCheckLayerConfig(
         item.options.layerConfig
       )
-      this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig(
-        item.options.sceneConfig
-      )
+      // 需要重置一次
+      this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig({})
+      this.$nextTick(() => {
+        this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig(
+          item.options.sceneConfig
+        )
+      })
+
       this.dataCatalogCheckController.setCurrentLayerChangeConfig([])
       this.dataCatalogCheckController.setCurrentLayerNoChildList([])
       if (item.is2DMapMode) {
