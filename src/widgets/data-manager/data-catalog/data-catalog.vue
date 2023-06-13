@@ -1379,7 +1379,7 @@ export default {
       DataCatalogCheckController.setCurrentLayerChangeConfig([])
       DataCatalogCheckController.setCurrentLayerNoChildList([])
       DataCatalogCheckController.setCurrentCheckSceneSettingConfig({})
-      DataCatalogCheckController.setCheckSceneConfig([])
+      DataCatalogCheckController.restoreSceneConfig()
     },
 
     onClick(item) {
