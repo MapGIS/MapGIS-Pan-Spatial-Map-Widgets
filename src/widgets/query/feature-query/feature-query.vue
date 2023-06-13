@@ -473,7 +473,7 @@ export default {
           }, 1000)
         }
       }
-      if (this.isContinuous) {
+      if (!this.isContinuous) {
         this.queryType = ''
       }
     },
