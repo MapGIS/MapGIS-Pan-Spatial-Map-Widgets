@@ -71,6 +71,7 @@ export default {
     if (this.defaultSelect && this.defaultSelect.length > 0) {
       for (let i = 0; i < this.defaultSelect.length; i++) {
         let isZoomTo = false
+        let init // 判断是否为初始化加载
         if (
           // 以默认范围为初始范围
           initPositionMode === 'initExtent'
@@ -112,20 +113,21 @@ export default {
           // 以索引底图的范围为初始范围
           if (this.defaultSelect[i].guid == indexBaseMapGUID) {
             isZoomTo = true
+            init = true
           }
         }
-        this.onSelect(this.defaultSelect[i].name, isZoomTo)
+        this.onSelect(this.defaultSelect[i].name, isZoomTo, init)
       }
     }
   },
   methods: {
-    onSelect(name, isZoomTo = false) {
+    onSelect(name, isZoomTo = false, init = false) {
       if (!this.isShow) return
       if (this.widgetInfo.config.isSingleMode) {
         this.clearBasemap()
       }
       this.basemapNames.push(name)
-      this.renderMaps(name, isZoomTo)
+      this.renderMaps(name, isZoomTo, init)
     },
     getSaveConfig() {
       const baseMapList = this.transfromationMapData()

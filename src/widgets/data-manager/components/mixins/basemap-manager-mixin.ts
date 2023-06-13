@@ -76,7 +76,7 @@ export default {
         })
       }
     },
-    fitBounds(item) {
+    fitBounds(item, init) {
       const { Cesium, map, vueCesium, viewer } = this
       const isOutOfRange = FitBound.fitBoundByLayer(
         item,
@@ -86,7 +86,9 @@ export default {
           viewer,
           vueCesium,
         },
-        this.is2DMapMode === true
+        this.is2DMapMode === true,
+        undefined,
+        init
       )
       if (isOutOfRange) {
         this.$message.error('初始底图范围有误，已调整为经纬度最大范围')
@@ -204,7 +206,7 @@ export default {
     },
 
     // 渲染底图到页面
-    renderMaps(name, isZoomTo) {
+    renderMaps(name, isZoomTo, init) {
       for (let i = 0; i < this.basemaps.length; i++) {
         const basemap = this.basemaps[i]
         if (basemap.name === name) {
@@ -215,7 +217,7 @@ export default {
               await mapLayer.load()
               this.document.baseLayerMap.add(mapLayer)
               if (isZoomTo) {
-                this.fitBounds(mapLayer)
+                this.fitBounds(mapLayer, init)
               }
             } else {
               this.document.baseLayerMap.add(mapLayer)
