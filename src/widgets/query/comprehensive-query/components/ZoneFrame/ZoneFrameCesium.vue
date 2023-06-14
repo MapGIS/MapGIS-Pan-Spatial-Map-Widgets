@@ -86,6 +86,7 @@ export default {
         // 行政区划几何类型一般是Polygon
 
         const { features, geometry } = this.feature
+        const { type } = geometry // 用于判断类型
         this.entityNames = []
         this.entityTextNames = []
 
@@ -107,10 +108,15 @@ export default {
           arr = geometry.coordinates
         }
         for (let i = 0; i < arr.length; i += 1) {
-          const coords =
-            this.center && this.center.length === 2
-              ? arr[i].geometry.coordinates[0]
-              : arr[i]
+          let coords
+          if (type === 'Polygon') {
+            coords =
+              this.center && this.center.length === 2
+                ? arr[i].geometry.coordinates[0]
+                : arr[i]
+          } else if (type === 'MultiPolygon') {
+            coords = arr[i][0] // 多区
+          }
           const name = `zone-frame-${i}`
           this.entityNames.push(name)
           this.sceneOverlays.addPolygon(
@@ -118,7 +124,7 @@ export default {
             coords.join(',').split(',').map(Number),
             fillColor,
             fillOutlineColor,
-            false,
+            coords[0].length > 2, // 数组长度大于2证明是三维点
             { drawOutLine: true, outlineWidth: width }
           )
           if (this.center && this.center.length === 2) {
@@ -165,7 +171,7 @@ export default {
             this.center[0],
             this.center[1],
             this.viewer.camera.positionCartographic.height
-          )
+          ),
         })
       }
     },
@@ -179,7 +185,7 @@ export default {
           ymax
         )
         this.viewer.camera.flyTo({
-          destination: rectangle
+          destination: rectangle,
         })
       }
     },
