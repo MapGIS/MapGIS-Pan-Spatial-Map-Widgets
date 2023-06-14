@@ -362,11 +362,6 @@ export default {
           // this.expandedKeys = [
           //   ...new Set([...expandedKeys, ...this.expandedKeys]),
           // ]
-
-          // 当开启了模型拾取统一开关新增或者删除模型时的逻辑
-          if (this.isOpenPick) {
-            this.updateLayer()
-          }
         }
       },
     },
@@ -1053,13 +1048,16 @@ export default {
       this.currentLayerInfo = {}
     },
 
-    updateM3DProps(val, onlyUpdateLuminanceAtZenith) {
+    updateM3DProps(val, onlyUpdateLuminanceAtZenith, changeEnablePopup) {
       let enablePopup
       let enableModelSwitch
       const { key, maximumScreenSpaceError, layer, id, luminanceAtZenith } = val
       const { viewer, Cesium } = this
       if (layer) {
-        enablePopup = layer.enablePopup
+        enablePopup =
+          changeEnablePopup !== undefined
+            ? changeEnablePopup
+            : layer.enablePopup
         enableModelSwitch = layer.enableModelSwitch
       } else {
         enablePopup = val.enablePopup
@@ -1128,49 +1126,21 @@ export default {
       this.currentLayerInfo = {}
     },
 
-    // 判断是否需要更新layerDocument
-    updateLayer() {
-      const arr = []
-      this.layers.forEach((layer) => {
-        arr.push(layer.id)
-      })
-      // 获取删除的图层
-      const delArr = []
-      this.pickArr.forEach((item) => {
-        !arr.includes(item) && delArr.push(item)
-      })
-      // 获取新增的图层
-      const addArr = []
-      arr.forEach((item) => {
-        !this.pickArr.includes(item) && addArr.push(item)
-      })
-      if (delArr.length > 0 || addArr.length > 0) {
-        this.updateM3DEnablePopupEnable(true)
-      }
-    },
-
     // 模型拾取微件统一开启/关闭拾取
     updateM3DEnablePopupEnable(isOpenPick) {
       this.isOpenPick = isOpenPick
-      if (isOpenPick) {
-        this.dealLayers()
-      } else {
-        this.pickArr = []
-      }
-      const doc = this.layerDocument.clone()
-      const layers = doc.defaultMap.layers()
-      layers.forEach((layer) => {
-        // ModelCache类型图层
-        if (this.isModelCacheLayer(layer)) {
-          layer.enablePopup = isOpenPick
-        } else {
-          const { sublayers } = layer.activeScene
-          sublayers.forEach((sub) => {
-            sub.layer.enablePopup = isOpenPick
-          })
+      this.changeModelPick()
+    },
+    changeModelPick() {
+      let subLayers = []
+      this.layers.forEach((item) => {
+        if (item.sublayers) {
+          subLayers = [...subLayers, ...item.sublayers]
         }
       })
-      this.$emit('update:layerDocument', doc)
+      subLayers.forEach((item) => {
+        this.updateM3DProps(item, false, this.isOpenPick)
+      })
     },
 
     dealLayers() {
