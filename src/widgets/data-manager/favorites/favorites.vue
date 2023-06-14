@@ -35,6 +35,8 @@ export default {
       dataList: [], // 初始化从接口获取的数据
       replaceFields: {}, // 列表模式下tree组件中节点信息展示的替换字段{title: "name",key: "guid"}，具体使用参考ant-design-vue中的tree组件对应api
       dataCatalogCheckController: DataCatalogCheckController,
+      currentId: '', // 再次点击相同的收藏时需要重置一次场景设置信息再设置触发computed
+      isAgain: false,
     }
   },
   computed: {
@@ -139,6 +141,8 @@ export default {
     },
     onShowData(item) {
       const { Cesium, map, vueCesium, viewer } = this
+      this.isAgain = this.currentId === item.id
+      this.currentId = item.id
       if (this.is2DMapMode !== item.is2DMapMode) {
         this.switchMapMode()
       }
@@ -147,12 +151,18 @@ export default {
         item.options.layerConfig
       )
       // 需要重置一次
-      this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig({})
-      this.$nextTick(() => {
+      if (this.isAgain) {
+        this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig({})
+        this.$nextTick(() => {
+          this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig(
+            item.options.sceneConfig
+          )
+        })
+      } else {
         this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig(
           item.options.sceneConfig
         )
-      })
+      }
 
       this.dataCatalogCheckController.setCurrentLayerChangeConfig([])
       this.dataCatalogCheckController.setCurrentLayerNoChildList([])
