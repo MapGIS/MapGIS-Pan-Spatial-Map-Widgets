@@ -686,14 +686,24 @@ export default {
           // console.log(source)
           source.readyPromise.then(() => {
             // console.log(source)
-            const extent = vm._getM3DSetRange(source)
+            let boundingSphere
+            let extent
+            if (!source._root.boundingVolume.northeastCornerCartesian) {
+              boundingSphere = source._root.boundingVolume.boundingSphere
+            } else {
+              extent = vm._getM3DSetRange(source)
+            }
             // console.log(extent)
             for (let j = 0; j < vm.layers.length; j++) {
               if (vm.layers[j].id === id) {
-                vm.layers[j].fullExtent.xmin = extent.xmin
-                vm.layers[j].fullExtent.ymin = extent.ymin
-                vm.layers[j].fullExtent.xmax = extent.xmax
-                vm.layers[j].fullExtent.ymax = extent.ymax
+                if (extent) {
+                  vm.layers[j].fullExtent.xmin = extent.xmin
+                  vm.layers[j].fullExtent.ymin = extent.ymin
+                  vm.layers[j].fullExtent.xmax = extent.xmax
+                  vm.layers[j].fullExtent.ymax = extent.ymax
+                } else if (boundingSphere) {
+                  vm.layers[j].boundingSphere = boundingSphere
+                }
               }
             }
           })
@@ -708,7 +718,7 @@ export default {
     _getM3DSetRange(m3dSet) {
       const { Cesium } = this
       // 如果模型未加载完，这里transform为undefined
-      const transform = m3dSet._transform
+      const transform = m3dSet._transform || m3dSet._root.transform
       if (!transform) {
         return null
       }
