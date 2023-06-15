@@ -312,7 +312,9 @@ export default {
   methods: {
     onDrawShape3D(shapeInfo) {
       this.currentId = shapeInfo.id
-      const fillColor = new this.Cesium.Color.fromCssColorString('#ff0000')
+      const fillColor = new this.Cesium.Color.fromCssColorString(
+        '#ff0000'
+      ).withAlpha(0.5)
       const { xmin, ymin, xmax, ymax } =
         Feature.getGeoJSONFeatureBound(shapeInfo)
       const { type, coordinates } = shapeInfo.geometry
