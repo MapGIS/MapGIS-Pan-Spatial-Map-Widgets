@@ -340,6 +340,14 @@ export default {
   },
 }
 </script>
-<style lang="less" scoped>
-@import './index.less';
+<style lang="scss" scoped>
+.map-view-wrap {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-flow: column nowrap;
+  border: 1px solid $border-color-base;
+  border-radius: $border-radius-base;
+}
 </style>

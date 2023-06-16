@@ -41,7 +41,13 @@ export default {
         .clone()
         .getFlatLayers()
         .forEach((layer, index) => {
-          if (layer.type === 22) {
+          if (
+            [
+              LayerType.Scene,
+              LayerType.IGSScene,
+              LayerType.ModelCache,
+            ].includes(layer.type)
+          ) {
             vm.M3Ds.push({
               key: layer.id,
               value: layer.title,
