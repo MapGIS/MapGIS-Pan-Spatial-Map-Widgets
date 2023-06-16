@@ -30,20 +30,20 @@
               ref="zone"
               v-if="district && item === 'district'"
               :district="district"
-              :active="item === 'district'"
+              :active="item === locationType"
               @change="change"
             />
             <coordinate
               ref="coordinate"
               v-if="item === 'coordinate'"
-              :active="item === 'coordinate'"
+              :active="item === locationType"
               @change="change"
             />
             <frame
               ref="map-sheet"
               v-if="item === 'map-sheet'"
               @change="change"
-              :active="item === 'map-sheet'"
+              :active="item === locationType"
             />
           </mapgis-ui-tab-pane>
         </mapgis-ui-tabs>
