@@ -294,6 +294,7 @@
         :fullScreenAction="false"
         :icon="widgetInfo.icon"
         :visible.sync="showMetaData"
+        :zIndex="2"
       >
         <template>
           <mp-metadata-info :currentConfig="currentConfig" />
