@@ -1939,6 +1939,10 @@ export default {
     ::v-deep .mapgis-ui-tree li .mapgis-ui-tree-node-content-wrapper {
       padding: 0;
     }
+
+    ::v-deep .mapgis-ui-tree li.filter-node > span {
+      color: $warning-color !important;
+    }
   }
   .tree-tabs-list-content {
     position: relative;
