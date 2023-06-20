@@ -54,7 +54,9 @@
               }}</mapgis-ui-col>
               <mapgis-ui-col>{{
                 HeightProgress.maxHeightCopy
-                  ? HeightProgress.maxHeightCopy / 2
+                  ? (HeightProgress.maxHeightCopy +
+                      HeightProgress.startHeightCopy) /
+                    2
                   : 50
               }}</mapgis-ui-col>
               <mapgis-ui-col>{{
