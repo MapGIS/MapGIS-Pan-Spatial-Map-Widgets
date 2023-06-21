@@ -3,6 +3,7 @@
     <mp-draw-pro
       ref="draw"
       :clearDrawMode="clearDrawMode"
+      :featureConfig="featureConfig"
       @start="onDrawStart"
       @finished="onDrawFinished"
     />
@@ -257,10 +258,14 @@ export default {
       return this.widgetInfo.config.isShowLayerList
     },
     clearDrawMode() {
-      return this.widgetInfo.config.clearDrawMode
+      return false
+      // return this.widgetInfo.config.clearDrawMode
     },
     isContinuous() {
       return this.widgetInfo.config.isContinuous
+    },
+    featureConfig() {
+      return baseConfigInstance.config.colorConfig.feature
     },
   },
 
