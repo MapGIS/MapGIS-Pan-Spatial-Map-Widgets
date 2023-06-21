@@ -165,6 +165,8 @@ export default {
 
     updateProjectorOverlayLayerList(layerList) {
       this.projectorOverlayLayerList = [...layerList]
+      // 每次更新投影参数后，同步保存配置数据
+      this.saveConfig()
     },
 
     saveConfig() {
