@@ -51,13 +51,13 @@
       <mapgis-ui-setting-form layout="vertical">
         <mapgis-ui-form-item label="填充颜色">
           <mapgis-ui-color-picker
-            :color.sync="fillColor"
+            v-model="fillColor"
             :disable-alpha="false"
           ></mapgis-ui-color-picker>
         </mapgis-ui-form-item>
         <mapgis-ui-form-item label="轮廓线颜色">
           <mapgis-ui-color-picker
-            :color.sync="lineColor"
+            v-model="lineColor"
             :disable-alpha="false"
           ></mapgis-ui-color-picker>
         </mapgis-ui-form-item>
@@ -312,6 +312,7 @@ export default {
       this.geoJSON = {}
       this.currentLevelFitBound = {}
       this.change(this.geoJSON)
+      this.init()
     },
   },
 
@@ -425,6 +426,9 @@ export default {
   .active {
     color: $primary-color !important;
   }
+}
+::v-deep .m-colorPicker .box {
+  position: fixed; //解决颜色选择器打开后面板显示不全的bug
 }
 </style>
 
