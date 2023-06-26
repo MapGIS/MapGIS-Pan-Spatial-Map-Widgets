@@ -1090,6 +1090,16 @@ export default {
               [Number(extent.xmin), Number(extent.ymin)],
             ],
           ])
+        } else {
+          extentPolygon = polygon([
+            [
+              [Number(xmin), Number(ymin)],
+              [Number(xmax), Number(ymin)],
+              [Number(xmax), Number(ymax)],
+              [Number(xmin), Number(ymax)],
+              [Number(xmin), Number(ymin)],
+            ],
+          ])
         }
       } else {
         extentPolygon = polygon([

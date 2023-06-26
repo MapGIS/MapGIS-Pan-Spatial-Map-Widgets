@@ -129,6 +129,8 @@ export default {
                   layers.push(layer)
                 }
               }
+            } else if (layer.type === LayerType.STKTerrain) {
+              layers.push(layer)
             }
           }
         })
