@@ -65,6 +65,7 @@ import {
   Layer3D,
   Rectangle3D,
   Objects,
+  LayerSublayersManager,
 } from '@mapgis/web-app-framework'
 import MpQueryResultTree from '../../../../../components/QueryResultsTree/QueryResultsTree.vue'
 import MapViewMixin from './mixins/map-view'
@@ -117,6 +118,10 @@ export default {
     mapViewLayer: {
       type: Layer,
       default: () => ({}),
+    },
+    mapViewNum: {
+      type: Number,
+      default: 1,
     },
   },
   data() {
@@ -202,6 +207,9 @@ export default {
      */
     onCesiumLoaded(viewer, sceneController) {
       this.sceneController = sceneController
+      setTimeout(() => {
+        this.setSublayersConfig(sceneController)
+      }, 2000)
       this.isMapLoaded = true
       this.zoomTo({ ...this.initBound })
       // 当分屏大于2个时，初始缩放级别下，部分瓦片不显示，稍微放大一点正常
@@ -300,6 +308,29 @@ export default {
     onQueryClear() {
       this.queryFeatures = []
       this.querySelection = []
+    },
+
+    setSublayersConfig(sceneController) {
+      const layerSublayersManager = LayerSublayersManager.sublayersConfig
+
+      window.sceneController = this.sceneController
+      if (layerSublayersManager && layerSublayersManager.length > 0) {
+        layerSublayersManager.forEach((item) => {
+          const sublayer = sceneController.findSource(item.id)
+          if (
+            sublayer &&
+            sublayer.maximumScreenSpaceError !==
+              Math.floor(
+                item.layerProperty.maximumScreenSpaceError /
+                  (2 * this.mapViewNum)
+              )
+          ) {
+            sublayer.maximumScreenSpaceError = Math.floor(
+              item.layerProperty.maximumScreenSpaceError / (2 * this.mapViewNum)
+            )
+          }
+        })
+      }
     },
   },
   watch: {

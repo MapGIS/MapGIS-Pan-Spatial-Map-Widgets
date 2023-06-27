@@ -205,6 +205,7 @@ import {
   eventBus,
   api,
   DataCatalogCheckController,
+  LayerSublayersManager,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../MetadataInfo/MetadataInfo.vue'
 import MpCustomQuery from '../CustomQuery/CustomQuery.vue'
@@ -286,6 +287,7 @@ export default {
       handler() {
         this.parentKeys = []
         this.resetWidgetRouters()
+        const layerSublayers = []
         if (
           this.layerDocument &&
           this.layerDocument.defaultMap &&
@@ -347,9 +349,10 @@ export default {
               }
             }
             if (item.sublayers && item.sublayers.length > 0) {
-              this.setSublayers(item.sublayers, item.key, arr)
+              this.setSublayers(item.sublayers, item.key, arr, layerSublayers)
             }
           }
+          LayerSublayersManager.sublayersConfig = layerSublayers
           this.layers = layers
 
           this.ticked = arr
@@ -630,12 +633,22 @@ export default {
      * @arr 存储ticked的数组
      * @parentVisible 父节点的可见性
      */
-    setSublayers(sublayers: Array, id: string, arr: Array<string>) {
+    setSublayers(
+      sublayers: Array,
+      id: string,
+      arr: Array<string>,
+      layerSublayers: Array
+    ) {
       for (let index = 0; index < sublayers.length; index++) {
         const item = sublayers[index]
         item.key = `${id}-${index}`
         item.scopedSlots = { title: 'custom' }
         item.visiblePopover = false
+        const sublayerConfig = {
+          id: item.id,
+          layerProperty: item.layer?.layerProperty,
+        }
+        layerSublayers.push(sublayerConfig)
         if (item.layer && this.isWMTSLayer(item.layer)) {
           item.checkable = false
           return
@@ -658,7 +671,7 @@ export default {
           }
         }
         if (item.sublayers && item.sublayers.length > 0) {
-          this.setSublayers(item.sublayers, item.key, arr)
+          this.setSublayers(item.sublayers, item.key, arr, layerSublayers)
         }
       }
     },
