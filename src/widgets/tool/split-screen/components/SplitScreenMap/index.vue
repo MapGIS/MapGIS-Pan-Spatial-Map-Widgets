@@ -18,6 +18,7 @@
             :map-view-id="`split-screen-map-${i}`"
             :map-view-layer="mapViewLayer(id)"
             :resize="resize"
+            :map-view-num="mapViewNum"
           />
         </mapgis-ui-col>
       </mapgis-ui-row>
@@ -84,6 +85,10 @@ export default {
     // 是否全部是三维
     isAll3d() {
       return this.layers.every((layer) => layer instanceof Layer3D)
+    },
+    // 分屏数量
+    mapViewNum() {
+      return this.layerIds.length > 1 ? 2 : 1
     },
   },
   methods: {
