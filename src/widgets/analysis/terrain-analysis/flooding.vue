@@ -20,7 +20,7 @@
         title="洪水淹没进度"
         anchor="bottom-center"
         :width="350"
-        :height="60"
+        :height="80"
         :verticalOffset="40"
         :shrinkAction="false"
         :fullScreenAction="false"
