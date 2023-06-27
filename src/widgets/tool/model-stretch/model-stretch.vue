@@ -85,6 +85,9 @@ export default {
     },
     scaleZ: {
       handler() {
+        if (!this.enableModelStretch) {
+          return
+        }
         this.changeScaleZ(this.scaleZ, this.offset)
         this.updateLayerProperty()
       },
