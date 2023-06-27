@@ -88,7 +88,7 @@ export default {
     },
     // 分屏数量
     mapViewNum() {
-      return this.layerIds.length > 2 ? 2 : 1
+      return this.layerIds.length > 1 ? 2 : 1
     },
   },
   methods: {
