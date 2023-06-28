@@ -17,7 +17,7 @@
       </mapgis-ui-form-item>
       <mapgis-ui-form-item>
         <div slot="label">
-          <mapgis-ui-row type="flex" :gutter="[10, 0]" align="middle">
+          <mapgis-ui-row type="flex" align="middle">
             <mapgis-ui-col flex="auto"><label>X坐标</label></mapgis-ui-col>
             <mapgis-ui-col style="display: flex; align-items: center">
               <mapgis-ui-switch size="small" v-model="pickable" />
@@ -25,32 +25,41 @@
             </mapgis-ui-col>
           </mapgis-ui-row>
         </div>
-        <mapgis-ui-input
+        <mapgis-ui-input-number
           v-if="type === 'd'"
           type="number"
+          :max="180"
+          :min="-180"
+          style="width: 100%"
           v-model="coordDecimal[0]"
           @change="onDecimalCoordChanged"
         />
-        <mapgis-ui-row v-else type="flex" :gutter="[10, 0]" align="middle">
+        <mapgis-ui-row v-else type="flex" align="middle">
           <mapgis-ui-col :span="6">
-            <mapgis-ui-input
+            <mapgis-ui-input-number
               type="number"
+              :max="180"
+              :min="-180"
               v-model="coordDMS[0][0]"
               @change="onDMSCoordChanged"
             />
           </mapgis-ui-col>
           <mapgis-ui-col :span="2">度</mapgis-ui-col>
           <mapgis-ui-col :span="6">
-            <mapgis-ui-input
+            <mapgis-ui-input-number
               type="number"
+              :max="60"
+              :min="-60"
               v-model="coordDMS[0][1]"
               @change="onDMSCoordChanged"
             />
           </mapgis-ui-col>
           <mapgis-ui-col :span="2">分</mapgis-ui-col>
           <mapgis-ui-col :span="6">
-            <mapgis-ui-input
+            <mapgis-ui-input-number
               type="number"
+              :max="60"
+              :min="-60"
               v-model="coordDMS[0][2]"
               @change="onDMSCoordChanged"
             />
@@ -59,32 +68,41 @@
         </mapgis-ui-row>
       </mapgis-ui-form-item>
       <mapgis-ui-form-item label="Y坐标">
-        <mapgis-ui-input
+        <mapgis-ui-input-number
           v-if="type === 'd'"
           type="number"
+          :max="60"
+          :min="-60"
+          style="width: 100%"
           v-model="coordDecimal[1]"
           @change="onDecimalCoordChanged"
         />
-        <mapgis-ui-row v-else type="flex" :gutter="[10, 0]" align="middle">
+        <mapgis-ui-row v-else type="flex" align="middle">
           <mapgis-ui-col :span="6">
-            <mapgis-ui-input
+            <mapgis-ui-input-number
               type="number"
+              :max="180"
+              :min="-180"
               v-model="coordDMS[1][0]"
               @change="onDMSCoordChanged"
             />
           </mapgis-ui-col>
           <mapgis-ui-col :span="2">度</mapgis-ui-col>
           <mapgis-ui-col :span="6">
-            <mapgis-ui-input
+            <mapgis-ui-input-number
               type="number"
+              :max="60"
+              :min="-60"
               v-model="coordDMS[1][1]"
               @change="onDMSCoordChanged"
             />
           </mapgis-ui-col>
           <mapgis-ui-col :span="2">分</mapgis-ui-col>
           <mapgis-ui-col :span="6">
-            <mapgis-ui-input
+            <mapgis-ui-input-number
               type="number"
+              :max="60"
+              :min="-60"
               v-model="coordDMS[1][2]"
               @change="onDMSCoordChanged"
             />
