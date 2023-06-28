@@ -428,7 +428,7 @@ export default {
   }
 }
 ::v-deep .m-colorPicker .box {
-  position: fixed; //解决颜色选择器打开后面板显示不全的bug
+  position: fixed !important; //解决颜色选择器打开后面板显示不全的bug
 }
 </style>
 

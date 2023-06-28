@@ -40,7 +40,7 @@
     <div class="content">
       <json-editor
         v-show="showJson"
-        style="min-height: 230px; overflow: auto"
+        style="overflow: auto"
         v-model="jsonData"
         :mode="'code'"
         :showBtns="false"
@@ -270,7 +270,12 @@ export default {
     }
     .jsoneditor-menu {
       background-color: transparent !important;
-      border: nonre !important;
+      border: none !important;
+    }
+    .jsoneditor-text {
+      background-color: $background-color-base;
+      color: $text-color;
+      height: 200px;
     }
     // .jsoneditor-outer
     //    * {
