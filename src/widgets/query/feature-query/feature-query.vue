@@ -258,8 +258,7 @@ export default {
       return this.widgetInfo.config.isShowLayerList
     },
     clearDrawMode() {
-      return false
-      // return this.widgetInfo.config.clearDrawMode
+      return this.widgetInfo.config.clearDrawMode
     },
     isContinuous() {
       return this.widgetInfo.config.isContinuous
