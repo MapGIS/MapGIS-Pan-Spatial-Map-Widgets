@@ -10,6 +10,7 @@
     <mp-3d-draw-pro
       ref="draw3d"
       :clearDrawMode="clearDrawMode"
+      :featureConfig="featureConfig"
       @start="onDrawStart"
       @finished="onDrawFinished"
     >

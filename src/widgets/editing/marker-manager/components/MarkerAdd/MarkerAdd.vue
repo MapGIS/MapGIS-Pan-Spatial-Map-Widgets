@@ -3,6 +3,7 @@
     <mp-draw-pro ref="draw" @start="onDrawStart" @finished="onDrawFinished" />
     <mp-3d-draw-pro
       ref="draw3d"
+      :featureConfig="featureConfig"
       @start="onDrawStart"
       @finished="onDrawFinished"
     >
@@ -18,7 +19,12 @@
 </template>
 
 <script lang="ts">
-import { AppMixin, UUID, markerIconInstance } from '@mapgis/web-app-framework'
+import {
+  AppMixin,
+  UUID,
+  markerIconInstance,
+  baseConfigInstance,
+} from '@mapgis/web-app-framework'
 import moment from 'moment'
 import MarkerEditWindow from '../MarkerWindow/MarkerEditWindow'
 
@@ -43,6 +49,9 @@ export default {
   computed: {
     drawComponent() {
       return this.is2DMapMode ? this.$refs.draw : this.$refs.draw3d
+    },
+    featureConfig() {
+      return baseConfigInstance.config.colorConfig.feature
     },
   },
   methods: {
