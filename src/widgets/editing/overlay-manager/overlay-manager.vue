@@ -4,6 +4,7 @@
       :models="models"
       :dataSource="dataSource"
       :uploadUrl="uploadUrl"
+      :featureConfig="featureConfig"
       @save="save"
       ref="graphicLayer"
     />
@@ -17,6 +18,7 @@ import {
   api,
   eventBus,
   events,
+  baseConfigInstance,
 } from '@mapgis/web-app-framework'
 
 export default {
@@ -34,6 +36,9 @@ export default {
   computed: {
     uploadUrl() {
       return `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`
+    },
+    featureConfig() {
+      return baseConfigInstance.config.colorConfig
     },
   },
 
