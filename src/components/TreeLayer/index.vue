@@ -414,10 +414,11 @@ export default {
     setLayerEditConfig() {
       const layerEditConfig =
         DataCatalogCheckController.getCurrentLayerChangeConfig()
-
+      const unSetArr = []
       if (layerEditConfig && layerEditConfig.length > 0) {
         layerEditConfig.forEach((item) => {
           const sublayer = this.sceneController.findSource(item.id)
+          sublayer && unSetArr.push(item.id)
           if (
             sublayer &&
             sublayer.maximumScreenSpaceError.toString() !==
@@ -427,6 +428,24 @@ export default {
           }
         })
       }
+
+      const layerSublayers = LayerSublayersManager.sublayersConfig
+      if (layerSublayers && layerSublayers.length > 0) {
+        layerSublayers.forEach((item) => {
+          if (!unSetArr.includes(item.id)) {
+            const sublayer = this.sceneController.findSource(item.id)
+            if (
+              sublayer &&
+              sublayer.maximumScreenSpaceError !==
+                item.layerProperty.maximumScreenSpaceError
+            ) {
+              sublayer.maximumScreenSpaceError =
+                item.layerProperty.maximumScreenSpaceError
+            }
+          }
+        })
+      }
+
       this.$emit('set-opacitys')
     },
     /**
