@@ -7,13 +7,18 @@
       :isAdvanceControl="true"
       :editable="false"
       :measureMethod="measureMethod"
+      :featureConfig="featureConfig"
     />
-    <mapgis-3d-measure ref="mapgis3dMeasure" v-else />
+    <mapgis-3d-measure
+      ref="mapgis3dMeasure"
+      :featureConfig="featureConfig"
+      v-else
+    />
   </div>
 </template>
 
 <script lang="ts">
-import { WidgetMixin } from '@mapgis/web-app-framework'
+import { WidgetMixin, baseConfigInstance } from '@mapgis/web-app-framework'
 
 export default {
   name: 'MpMeasurement',
@@ -27,6 +32,9 @@ export default {
   computed: {
     measureMethod() {
       return this.widgetInfo.config.measureMethod || 'geography'
+    },
+    featureConfig() {
+      return baseConfigInstance.config.colorConfig
     },
   },
   methods: {
