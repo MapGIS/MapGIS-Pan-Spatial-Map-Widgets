@@ -202,6 +202,7 @@ import {
   markerIconInstance,
   DataFlowList,
   ActiveResultSet,
+  SelectedResultSet,
   DomUtil,
   AppMixin,
   ExhibitionMixin,
@@ -365,11 +366,28 @@ export default {
       this.selection = selectedRows
       if (this.selectedRowKeys.length == 0) {
         ActiveResultSet.activeResultSet = {}
+        SelectedResultSet.selectedResultSet =
+          SelectedResultSet.selectedResultSet.filter(
+            (item) => item.id != ActiveResultSet.activeResultSet.id
+          )
       } else {
         ActiveResultSet.activeResultSet = {
           type: 'FeatureCollection',
           features: selectedRows,
           id: this.optionVal.id,
+        }
+        let hasActiveResultSet = false
+        for (let i = 0; i < SelectedResultSet.selectedResultSet.length; i++) {
+          if (SelectedResultSet.selectedResultSet[i].id == this.optionVal.id) {
+            SelectedResultSet.selectedResultSet[i] =
+              ActiveResultSet.activeResultSet
+            hasActiveResultSet = true
+          }
+        }
+        if (!hasActiveResultSet) {
+          SelectedResultSet.selectedResultSet.push(
+            ActiveResultSet.activeResultSet
+          )
         }
       }
       await this.hightlightSelectionMarkers()
@@ -479,6 +497,10 @@ export default {
 
     onClearSelection() {
       this.clearSelection()
+      SelectedResultSet.selectedResultSet =
+        SelectedResultSet.selectedResultSet.filter(
+          (item) => item.id != ActiveResultSet.activeResultSet.id
+        )
       ActiveResultSet.activeResultSet = {}
     },
 

@@ -1,6 +1,63 @@
 <template>
   <div class="mp-widget-overlay-analysis">
+    <div id="widgets-ui" slot="selectLayer">
+      <mapgis-ui-group-tab title="选择数据" id="title-space" />
+      <mapgis-ui-form-model :layout="layout">
+        <mapgis-ui-form-model-item label="叠加图层1" :colon="false">
+          <mapgis-ui-row>
+            <mapgis-ui-col>
+              <mapgis-ui-select v-model="tDataIndex" @change="tchangeTarget">
+                <mapgis-ui-select-option
+                  v-for="(item, index) in layerArrOption"
+                  :key="index"
+                  :value="index"
+                  >{{ item.title }}</mapgis-ui-select-option
+                >
+              </mapgis-ui-select>
+            </mapgis-ui-col>
+          </mapgis-ui-row>
+        </mapgis-ui-form-model-item>
+        <mapgis-ui-form-model-item label="叠加图层2" :colon="false">
+          <mapgis-ui-row>
+            <mapgis-ui-col>
+              <mapgis-ui-select
+                v-model="dDataIndex"
+                @change="dchangeTarget"
+                v-if="!selectLevel"
+              >
+                <mapgis-ui-select-option
+                  v-for="(item, index) in layerArrOption"
+                  :key="index"
+                  :value="index"
+                  >{{ item.title }}</mapgis-ui-select-option
+                >
+              </mapgis-ui-select>
+              <mapgis-ui-select
+                v-model="dDataIndex"
+                @change="dchangeTarget"
+                v-if="selectLevel"
+                disabled
+              >
+                <mapgis-ui-select-option
+                  v-for="(item, index) in layerArrOption"
+                  :key="index"
+                  :value="index"
+                  >{{ item.title }}</mapgis-ui-select-option
+                >
+              </mapgis-ui-select>
+            </mapgis-ui-col>
+          </mapgis-ui-row>
+          <mapgis-ui-checkbox
+            style="line-height: 32px"
+            :checked="selectLevel"
+            @change="changeSelectLevel"
+            >只对选择数据进行操作</mapgis-ui-checkbox
+          >
+        </mapgis-ui-form-model-item>
+      </mapgis-ui-form-model>
+    </div>
     <mapgis-3d-analysis-overlay
+      v-if="dataType !== 'Model'"
       :layout="layout"
       :baseUrl="baseOverlayUrl"
       :srcType="srcType"
@@ -13,64 +70,22 @@
       @load="load"
       @exportResult="exportResult"
       @deleteResult="deleteResult"
-    >
-      <div id="widgets-ui" slot="selectLayer">
-        <mapgis-ui-group-tab title="选择数据" id="title-space" />
-        <mapgis-ui-form-model :layout="layout">
-          <mapgis-ui-form-model-item label="叠加图层1" :colon="false">
-            <mapgis-ui-row>
-              <mapgis-ui-col>
-                <mapgis-ui-select v-model="tDataIndex" @change="tchangeTarget">
-                  <mapgis-ui-select-option
-                    v-for="(item, index) in layerArrOption"
-                    :key="index"
-                    :value="index"
-                    >{{ item.title }}</mapgis-ui-select-option
-                  >
-                </mapgis-ui-select>
-              </mapgis-ui-col>
-            </mapgis-ui-row>
-          </mapgis-ui-form-model-item>
-          <mapgis-ui-form-model-item label="叠加图层2" :colon="false">
-            <mapgis-ui-row>
-              <mapgis-ui-col>
-                <mapgis-ui-select
-                  v-model="dDataIndex"
-                  @change="dchangeTarget"
-                  v-if="!selectLevel"
-                >
-                  <mapgis-ui-select-option
-                    v-for="(item, index) in layerArrOption"
-                    :key="index"
-                    :value="index"
-                    >{{ item.title }}</mapgis-ui-select-option
-                  >
-                </mapgis-ui-select>
-                <mapgis-ui-select
-                  v-model="dDataIndex"
-                  @change="dchangeTarget"
-                  v-if="selectLevel"
-                  disabled
-                >
-                  <mapgis-ui-select-option
-                    v-for="(item, index) in layerArrOption"
-                    :key="index"
-                    :value="index"
-                    >{{ item.title }}</mapgis-ui-select-option
-                  >
-                </mapgis-ui-select>
-              </mapgis-ui-col>
-            </mapgis-ui-row>
-            <mapgis-ui-checkbox
-              style="line-height: 32px"
-              :checked="selectLevel"
-              @change="changeSelectLevel"
-              >只对选择数据进行操作</mapgis-ui-checkbox
-            >
-          </mapgis-ui-form-model-item>
-        </mapgis-ui-form-model>
-      </div>
-    </mapgis-3d-analysis-overlay>
+    />
+    <mapgis-3d-analysis-model-overlay
+      v-else
+      :layout="layout"
+      :baseUrl="baseOverlayUrl"
+      :srcType="srcType"
+      :srcALayer="srcALayer"
+      :srcBLayer="srcBLayer"
+      :srcAFeature="srcAFeature"
+      :srcBFeature="srcBFeature"
+      @listenLayer="showLayer"
+      @listenOverlayAdd="showAdd"
+      @load="load"
+      @exportResult="exportResult"
+      @deleteResult="deleteResult"
+    />
     <mp-export-layer
       :visible="visible"
       :gdbp="destLayer"
@@ -86,10 +101,11 @@
 import {
   LayerType,
   WidgetMixin,
-  ActiveResultSet,
+  SelectedResultSet,
   eventBus,
   events,
   baseConfigInstance,
+  dataCatalogManagerInstance,
 } from '@mapgis/web-app-framework'
 import MpExportLayer from '../../../components/ExportLayer/export-layer.vue'
 
@@ -101,6 +117,7 @@ export default {
     return {
       layout: 'vertical',
       baseOverlayUrl: 'http://localhost:6163',
+      dataType: 'VectorLayer',
       srcType: 'Layer',
       srcALayer: '',
       srcBLayer: '',
@@ -186,6 +203,17 @@ export default {
           arr.push(data)
         } else if (data.type === LayerType.IGSMapImage) {
           arr.push(...data.sublayers)
+        } else if (data.type === LayerType.IGSScene) {
+          const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
+            data.id
+          )
+          if (layerConfig && layerConfig.bindData) {
+            if (!layerConfig.bindData.title) {
+              layerConfig.bindData.title = layerConfig.bindData.serverName
+            }
+            layerConfig.bindData.id = `${data.id}:0`
+            arr.push(layerConfig.bindData)
+          }
         }
       })
       if (arr.length > 0) {
@@ -203,12 +231,18 @@ export default {
         this.srcType = 'Layer'
       } else {
         this.srcType = 'Feature'
-        if (JSON.stringify(ActiveResultSet.activeResultSet) == '{}') {
+        for (let i = 0; i < SelectedResultSet.selectedResultSet.length; i++) {
+          const selectedResultSet = SelectedResultSet.selectedResultSet[i]
+          if (selectedResultSet.id == this.tData.id) {
+            this.srcAFeature = selectedResultSet
+          } else if (selectedResultSet.id == this.dData.id) {
+            this.srcBFeature = selectedResultSet
+          }
+        }
+        if (this.srcAFeature.length == 0 && this.srcBFeature.length == 0) {
           this.$message.warn('当前选择要素为空，请重新选择')
           this.selectLevel = true
           this.changeSelectLevel()
-        } else {
-          this.srcAFeature = ActiveResultSet.activeResultSet
         }
       }
     },
@@ -233,9 +267,13 @@ export default {
     tchangeTarget() {
       const tlayerCurrent = this.tData
       if (tlayerCurrent != null) {
-        if (tlayerCurrent.type == 6) {
-          this.baseOverlayUrl = tlayerCurrent.url
+        this.dataType = 'VectorLayer'
+        if (tlayerCurrent.type == 6 || tlayerCurrent.serverType == 6) {
+          this.baseOverlayUrl = tlayerCurrent.url || tlayerCurrent.serverURL
           this.srcALayer = tlayerCurrent.gdbps
+          if (tlayerCurrent.serverType == 6) {
+            this.dataType = 'Model'
+          }
         } else {
           this.baseOverlayUrl = tlayerCurrent.layer.url
           this.srcALayer = tlayerCurrent.url
@@ -246,8 +284,8 @@ export default {
     dchangeTarget() {
       const dlayerCurrent = this.dData
       if (dlayerCurrent != null) {
-        if (dlayerCurrent.type == 6) {
-          this.baseOverlayUrl = dlayerCurrent.url
+        if (dlayerCurrent.type == 6 || dlayerCurrent.serverType == 6) {
+          this.baseOverlayUrl = dlayerCurrent.url || dlayerCurrent.serverURL
           this.srcBLayer = dlayerCurrent.gdbps
         } else {
           this.baseOverlayUrl = dlayerCurrent.layer.url

@@ -98,8 +98,8 @@ export default {
           geometry,
           gdbp,
         } = this.params
-        let domain
-        if (!!serverUrl && serverUrl.length > 0) {
+        let { domain } = this.params
+        if (!domain && !!serverUrl && serverUrl.length > 0) {
           const url = new URL(serverUrl)
           domain = url.origin
         }
@@ -132,6 +132,24 @@ export default {
             coordPrecision: 8,
           }
           const res = await Feature.FeatureQuery.query(options, false)
+          this.dealWithResult(res)
+        } else if (serverType === LayerType.IGSScene) {
+          const options = {
+            f: 'json',
+            ip,
+            port,
+            domain,
+            page: this.page - 1,
+            pageCount: 10,
+            gdbp,
+            coordPrecision: 8,
+            rtnLabel: false,
+          }
+          const res = await Feature.FeatureQuery.query(
+            options,
+            false,
+            serverType === LayerType.IGSScene
+          )
           this.dealWithResult(res)
         }
       } catch (error) {
@@ -233,6 +251,26 @@ export default {
                     type: 'Polygon',
                     coordinates: [dotsArr],
                   },
+                },
+              ],
+            }
+            break
+          case 'Entity':
+            FeatureCollection = {
+              type: 'FeatureCollection',
+              features: [
+                {
+                  type: 'Feature',
+                  properties: {
+                    bound: [
+                      [val.bound.xmin, val.bound.ymin],
+                      [val.bound.xmax, val.bound.ymax],
+                    ],
+                    fGeom: val.fGeom,
+                    ftype: val.ftype,
+                    FID: val.FID,
+                  },
+                  geometry: {},
                 },
               ],
             }

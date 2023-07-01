@@ -207,8 +207,8 @@ export default {
         gdbp,
         f,
       } = this.optionVal
-      let domain
-      if (!!serverUrl && serverUrl.length > 0) {
+      let { domain } = this.optionVal
+      if (!domain && !!serverUrl && serverUrl.length > 0) {
         const url = new URL(serverUrl)
         domain = url.origin
       }
@@ -346,7 +346,7 @@ export default {
             {
               ip,
               port: port.toString(),
-              domain,
+              domain: 'http://192.168.1.131:8089',
               where: queryWhere,
               geometry: queryGeometry,
               page: current - 1,
@@ -365,7 +365,7 @@ export default {
               {
                 ip,
                 port: port.toString(),
-                domain,
+                domain: 'http://192.168.1.131:8089',
                 where: queryWhere,
                 geometry: queryGeometry,
                 page: 0,
