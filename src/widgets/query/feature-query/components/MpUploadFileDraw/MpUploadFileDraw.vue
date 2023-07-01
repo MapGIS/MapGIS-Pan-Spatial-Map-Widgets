@@ -19,6 +19,8 @@
         drag
         :limit="1"
         accept=".wp,.wl"
+        :file-list="fileList"
+        :remove="handleRemove"
         :before-upload="beforeUpload"
       >
         <mapgis-ui-ant-icon type="cloud-upload"></mapgis-ui-ant-icon>
@@ -83,21 +85,22 @@ export default {
       this.$emit('close')
     },
     beforeUpload(file) {
-      this.fileList = [...this.fileList, file]
-      this.handleUpload()
+      const arr = ['wp', 'WP', 'wl', 'WL']
+      if (!arr.includes(file.name.split('.')[1])) {
+        this.$message.error('文件格式错误')
+        return false
+      }
+      this.handleUpload(file)
       return false
     },
-    async handleUpload() {
-      const { fileList } = this
+    async handleUpload(file) {
       const formData = new FormData()
-      fileList.forEach((file) => {
-        formData.append('files', file)
-      })
+      formData.append('files', file)
       this.uploading = true
       try {
         const res = await this.uploadFile(formData)
         if (res.status === 200) {
-          this.fileList = []
+          this.fileList = [...this.fileList, file]
           try {
             const result = await this.featureQuery(res.data.uploadFiles[0].path)
             if (result.status === 200) {
@@ -145,6 +148,12 @@ export default {
         this.fileList.forEach((item, index) => {
           this.fileList.splice(index, 1)
         })
+    },
+    handleRemove(file) {
+      const index = this.fileList.findIndex((item) => item.uid === file.uid)
+      if (index > -1) {
+        this.fileList.splice(index, 1)
+      }
     },
   },
   watch: {},
