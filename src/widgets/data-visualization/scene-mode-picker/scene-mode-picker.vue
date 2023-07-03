@@ -23,6 +23,7 @@ export default {
       'sceneModePickerContainer',
       viewer.scene
     )
+    sceneModePicker.viewModel.duration = 0 // 去掉切换动画效果，保持视图位置不变
   },
 
   methods: {},
