@@ -1181,7 +1181,9 @@ export default {
         }
       })
       subLayers.forEach((item) => {
-        this.updateM3DProps(item, false, this.isOpenPick)
+        setTimeout(() => {
+          this.updateM3DProps(item, false, this.isOpenPick)
+        }, 100)
       })
     },
 

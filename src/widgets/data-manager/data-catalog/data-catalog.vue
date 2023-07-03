@@ -775,6 +775,7 @@ export default {
           }
           Promise.all(promiseAll).then((result) => {
             const appendLayer = []
+            let isAddLayer3D
             // 调整图层顺序
             layerConfigNodeList.forEach((item) => {
               if (item) {
@@ -783,8 +784,12 @@ export default {
               }
             })
             appendLayer.forEach((item) => {
+              if (item instanceof Layer3D) {
+                isAddLayer3D = true
+              }
               doc.defaultMap.add(item)
             })
+            isAddLayer3D && eventBus.$emit(events.MODEL_PICK_ADD)
           })
         } else {
           layerConfigNodeList.forEach((layerConfigNode) => {
