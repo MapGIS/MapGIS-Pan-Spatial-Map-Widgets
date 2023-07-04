@@ -369,7 +369,6 @@ export default {
       if (!layer.isVisible) {
         return
       }
-      debugger
       const { domain, docName } = layer._parseUrl(layer.url)
 
       const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
@@ -377,15 +376,11 @@ export default {
       )
       let arr = []
       if (layerConfig && layerConfig.bindData) {
-        // if (!layerConfig.bindData.title) {
-        //   layerConfig.bindData.title = layerConfig.bindData.serverName
-        // }
-        // arr.push(layerConfig.bindData)
         arr = [
           {
             ip: baseConfigInstance.config.ip,
             port: Number(baseConfigInstance.config.port),
-            domain: 'http://192.168.1.131:8089',
+            domain,
             serverType: layer.type,
             gdbp: layerConfig.bindData.gdbps,
             geometry: geometry,
@@ -393,18 +388,6 @@ export default {
           },
         ]
       }
-
-      // const arr = [
-      //   {
-      //     ip: baseConfigInstance.config.ip,
-      //     port: Number(baseConfigInstance.config.port),
-      //     domain,
-      //     serverType: layer.type,
-      //     gdbp: layer.gdbps,
-      //     geometry: geometry,
-      //     name: layer.title,
-      //   },
-      // ]
       if (this.queryType === 'target') {
         this.tDataArr = arr
         this.tDataTab = arr.length > 0 ? arr[0].id : ''
@@ -516,8 +499,9 @@ export default {
         }
         paramArr.push(param)
       }
-      const url =
-        'http://192.168.1.131:8089/igs/rest/mrfws/execute/600368?isAsy=false&f=json'
+      const layer = this.queryType === 'target' ? this.tData : this.aData
+      const { domain, docName } = layer._parseUrl(layer.url)
+      const url = `${domain}/igs/rest/mrfws/execute/600368?isAsy=false&f=json`
       const promise = new Promise((resolve, reject) => {
         axios.post(url, paramArr).then((res) => {
           const { data } = res

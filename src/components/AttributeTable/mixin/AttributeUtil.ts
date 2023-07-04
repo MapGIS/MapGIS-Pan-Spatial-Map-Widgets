@@ -346,7 +346,7 @@ export default {
             {
               ip,
               port: port.toString(),
-              domain: 'http://192.168.1.131:8089',
+              domain,
               where: queryWhere,
               geometry: queryGeometry,
               page: current - 1,
@@ -365,7 +365,7 @@ export default {
               {
                 ip,
                 port: port.toString(),
-                domain: 'http://192.168.1.131:8089',
+                domain,
                 where: queryWhere,
                 geometry: queryGeometry,
                 page: 0,
