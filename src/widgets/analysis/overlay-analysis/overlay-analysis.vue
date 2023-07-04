@@ -76,7 +76,6 @@
       :gdbp="destLayer"
       :ip="ip"
       :port="port"
-      :exportConfig="exportConfig"
       @finished="visible = false"
     ></mp-export-layer>
   </div>
@@ -144,14 +143,6 @@ export default {
         return this.layerArrOption[this.dDataIndex]
       }
       return null
-    },
-    exportConfig() {
-      return this.widgetInfo.config
-        ? this.widgetInfo.config.exportConfig
-        : {
-            ip: baseConfigInstance.config.ip,
-            port: baseConfigInstance.config.port,
-          }
     },
     ip() {
       if (!!this.baseOverlayUrl && this.baseOverlayUrl.length > 0) {

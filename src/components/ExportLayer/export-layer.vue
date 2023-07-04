@@ -28,17 +28,6 @@ export default {
     port: { type: String, default: '' },
     visible: { type: Boolean, default: false },
     gdbp: { type: String, default: '' },
-    exportConfig: {
-      type: Object,
-      default: () => {
-        return {
-          ip: baseConfigInstance.config.ip,
-          port: baseConfigInstance.config.port,
-          username: 'admin',
-          password: 'sa.mapgis',
-        }
-      },
-    },
   },
   data() {
     return {
@@ -71,9 +60,6 @@ export default {
         this.port && this.port !== ''
           ? this.port
           : baseConfigInstance.config.port
-      const exportIp = this.exportConfig.ip || baseConfigInstance.config.ip
-      const exportPort =
-        this.exportConfig.port || baseConfigInstance.config.port
       const projectionName =
         baseConfigInstance.config.projectionName || 'EPSG:4326'
       Feature.ExportFeature.ouputToShpOr6x(
@@ -82,8 +68,6 @@ export default {
         this.exportFileType,
         ip,
         port,
-        exportIp,
-        exportPort,
         projectionName
       )
       this.emitFinished()
