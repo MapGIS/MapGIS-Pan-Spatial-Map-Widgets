@@ -1,33 +1,37 @@
 <template>
   <div class="translateLonlat">
-    <mapgis-ui-input
+    <mapgis-ui-input-number
       class="input-lonlat"
       size="small"
       :disabled="unenable"
-      :max-length="type == 'longitude' ? 3 : 2"
+      :max="type == 'longitude' ? 180 : 90"
+      :min="type == 'longitude' ? -180 : -90"
+      :precision="0"
       v-model="coordinate.degree"
-      onkeyup="value=value.replace(/[^\d\.]/g,'').replace(/^[^\d]/g,'').replace('.','$#$').replace(/\./g,'').replace('$#$','.')"
       ref="inputlonlat"
     >
-    </mapgis-ui-input
+    </mapgis-ui-input-number
     >°
-    <mapgis-ui-input
+    <mapgis-ui-input-number
       class="input-lonlat"
       size="small"
+      :min="0"
+      :max="60"
+      :precision="0"
       :disabled="unenable"
       v-model="coordinate.min"
-      onkeyup="value=value.replace(/[^\d\.]/g,'').replace(/^[^\d]/g,'').replace('.','$#$').replace(/\./g,'').replace('$#$','.')"
     >
-    </mapgis-ui-input
+    </mapgis-ui-input-number
     >′
-    <mapgis-ui-input
+    <mapgis-ui-input-number
       class="input-lonlat"
       size="small"
+      :min="0"
+      :max="60"
       :disabled="unenable"
       v-model="coordinate.sec"
-      onkeyup="value=value.replace(/[^\d\.]/g,'').replace(/^[^\d]/g,'').replace('.','$#$').replace(/\./g,'').replace('$#$','.')"
     >
-    </mapgis-ui-input
+    </mapgis-ui-input-number
     >″
   </div>
 </template>
@@ -59,26 +63,13 @@ export default {
   },
   watch: {
     'coordinate.degree': function (str) {
-      // debugger
-      const _this = this
-      _this.coordinate.degree = str.replace(/[^\d]$/, '')
-      if (_this.coordinate.degree > 180 && _this.type == 'longitude')
-        _this.coordinate.degree = 180
-      if (_this.coordinate.degree > 90 && _this.type == 'latitude')
-        _this.coordinate.degree = 90
-      _this.$emit('getLonlat', _this.getLonlat())
+      this.$emit('getLonlat', this.getLonlat())
     },
     'coordinate.min'(str) {
-      const _this = this
-      _this.coordinate.min = str.replace(/[^\d]$/, '')
-      if (_this.coordinate.min > 60) _this.coordinate.min = 59
-      _this.$emit('getLonlat', _this.getLonlat())
+      this.$emit('getLonlat', this.getLonlat())
     },
     'coordinate.sec'(str) {
-      const _this = this
-      this.coordinate.sec = str.replace(/[^\d]$/, '')
-      if (_this.coordinate.sec > 60) _this.coordinate.sec = 59
-      _this.$emit('getLonlat', _this.getLonlat())
+      this.$emit('getLonlat', this.getLonlat())
     },
   },
   methods: {

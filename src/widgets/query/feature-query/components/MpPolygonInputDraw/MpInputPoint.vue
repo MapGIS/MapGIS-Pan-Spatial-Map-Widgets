@@ -12,7 +12,7 @@
         <mapgis-ui-table-column
           key="longitude"
           data-index="longitude"
-          title="东经"
+          title="经度"
         >
           <template slot-scope="text, record, index">
             <mp-translate-lonlat
@@ -27,7 +27,7 @@
         <mapgis-ui-table-column
           key="latitude"
           data-index="latitude"
-          title="北纬"
+          title="纬度"
         >
           <template slot-scope="text, record, index">
             <mp-translate-lonlat
@@ -61,27 +61,31 @@
         <mapgis-ui-table-column
           key="longitude"
           data-index="longitude"
-          title="东经"
+          title="经度"
         >
           <template slot-scope="text, record">
-            <mapgis-ui-input
+            <mapgis-ui-input-number
               v-model="record.longitude"
-              onkeyup="value=value.replace(/[^\d\.]/g,'').replace(/^[^\d]/g,'').replace('.','$#$').replace(/\./g,'').replace('$#$','.')"
+              :min="-180"
+              :max="180"
+              style="width: 100%"
             >
-            </mapgis-ui-input>
+            </mapgis-ui-input-number>
           </template>
         </mapgis-ui-table-column>
         <mapgis-ui-table-column
           key="latitude"
           data-index="latitude"
-          title="北纬"
+          title="纬度"
         >
           <template slot-scope="text, record">
-            <mapgis-ui-input
+            <mapgis-ui-input-number
               v-model="record.latitude"
-              onkeyup="value=value.replace(/[^\d\.]/g,'').replace(/^[^\d]/g,'').replace('.','$#$').replace(/\./g,'').replace('$#$','.')"
+              :min="-90"
+              :max="90"
+              style="width: 100%"
             >
-            </mapgis-ui-input>
+            </mapgis-ui-input-number>
           </template>
         </mapgis-ui-table-column>
         <mapgis-ui-table-column key="action" title="" :width="40">
@@ -120,10 +124,7 @@
         class="icon-btn"
         title="清空"
         style="float: right"
-        @click="
-          _initTable()
-          $emit('clear')
-        "
+        @click="_initTable()"
       ></mapgis-ui-ant-icon>
     </div>
   </div>
