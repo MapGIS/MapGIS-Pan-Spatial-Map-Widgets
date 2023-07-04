@@ -19,9 +19,23 @@ export default {
       isOpenPick: false,
     }
   },
+  created() {
+    eventBus.$on(events.MODEL_PICK_ADD, this.openPick)
+  },
+
   methods: {
     isModelOpenPick(val) {
       eventBus.$emit(events.MODEL_PICK, val)
+    },
+    openPick() {
+      if (this.isOpenPick) {
+        // setTimeout(() => {
+        //   this.isModelOpenPick(false)
+        // }, 5000)
+        setTimeout(() => {
+          this.isModelOpenPick(this.isOpenPick)
+        }, 5000)
+      }
     },
   },
 }
