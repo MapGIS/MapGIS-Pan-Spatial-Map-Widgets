@@ -40,6 +40,7 @@
               type="number"
               :max="180"
               :min="-180"
+              :precision="0"
               v-model="coordDMS[0][0]"
               @change="onDMSCoordChanged"
             />
@@ -49,7 +50,8 @@
             <mapgis-ui-input-number
               type="number"
               :max="60"
-              :min="-60"
+              :min="0"
+              :precision="0"
               v-model="coordDMS[0][1]"
               @change="onDMSCoordChanged"
             />
@@ -59,7 +61,7 @@
             <mapgis-ui-input-number
               type="number"
               :max="60"
-              :min="-60"
+              :min="0"
               v-model="coordDMS[0][2]"
               @change="onDMSCoordChanged"
             />
@@ -71,8 +73,8 @@
         <mapgis-ui-input-number
           v-if="type === 'd'"
           type="number"
-          :max="60"
-          :min="-60"
+          :max="90"
+          :min="-90"
           style="width: 100%"
           v-model="coordDecimal[1]"
           @change="onDecimalCoordChanged"
@@ -81,8 +83,9 @@
           <mapgis-ui-col :span="6">
             <mapgis-ui-input-number
               type="number"
-              :max="180"
-              :min="-180"
+              :max="90"
+              :min="-90"
+              :precision="0"
               v-model="coordDMS[1][0]"
               @change="onDMSCoordChanged"
             />
@@ -92,7 +95,8 @@
             <mapgis-ui-input-number
               type="number"
               :max="60"
-              :min="-60"
+              :min="0"
+              :precision="0"
               v-model="coordDMS[1][1]"
               @change="onDMSCoordChanged"
             />
@@ -102,7 +106,7 @@
             <mapgis-ui-input-number
               type="number"
               :max="60"
-              :min="-60"
+              :min="0"
               v-model="coordDMS[1][2]"
               @change="onDMSCoordChanged"
             />
