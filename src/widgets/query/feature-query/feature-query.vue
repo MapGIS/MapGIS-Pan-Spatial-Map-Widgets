@@ -267,6 +267,21 @@ export default {
     featureConfig() {
       return baseConfigInstance.config.colorConfig.feature
     },
+    fillColor() {
+      return this.featureConfig && this.featureConfig.reg
+        ? this.featureConfig.reg.color
+        : '#1890ff'
+    },
+    fillOutlineColor() {
+      return this.featureConfig && this.featureConfig.line
+        ? this.featureConfig.line.color
+        : '#1890ff'
+    },
+    lineWidth() {
+      return this.featureConfig && this.featureConfig.line
+        ? Number(this.featureConfig.line.size)
+        : 3
+    },
   },
 
   // 二三维地图模式切换时
@@ -317,9 +332,10 @@ export default {
   methods: {
     onDrawShape3D(shapeInfo) {
       this.currentId = shapeInfo.id
-      const fillColor = new this.Cesium.Color.fromCssColorString(
-        '#ff0000'
-      ).withAlpha(0.5)
+      const fillColor = new this.Cesium.Color.fromCssColorString(this.fillColor)
+      const lineColor = new this.Cesium.Color.fromCssColorString(
+        this.fillOutlineColor
+      )
       const { xmin, ymin, xmax, ymax } =
         Feature.getGeoJSONFeatureBound(shapeInfo)
       const { type, coordinates } = shapeInfo.geometry
@@ -329,8 +345,8 @@ export default {
         this.sceneOverlays.addLine(
           shapeInfo.id,
           coordinates.join(',').split(',').map(Number),
-          3,
-          fillColor
+          this.lineWidth,
+          lineColor
         )
       } else {
         coordinates.forEach((coordinate) => {
@@ -359,9 +375,8 @@ export default {
           type: 'fill',
           source: shapeInfo.id,
           paint: {
-            'fill-color': '#1890ff',
-            'fill-outline-color': '#1890ff',
-            'fill-opacity': 0.3,
+            'fill-color': this.fillColor,
+            'fill-outline-color': this.fillOutlineColor,
           },
         })
       }
@@ -371,8 +386,8 @@ export default {
         type: 'line',
         source: shapeInfo.id,
         paint: {
-          'line-color': '#1890ff',
-          'line-width': 3,
+          'line-color': this.fillOutlineColor,
+          'line-width': this.lineWidth,
         },
       })
       const { xmin, ymin, xmax, ymax } =
