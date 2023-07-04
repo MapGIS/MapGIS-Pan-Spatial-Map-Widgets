@@ -11,7 +11,6 @@
         style="height: calc(100% - 36px)"
         :width="width"
         ref="mpinputpoint"
-        @clear="removeGeomtry()"
       ></mp-input-point>
       <mapgis-ui-button size="small" @click="submitInput"
         >确定输入</mapgis-ui-button
