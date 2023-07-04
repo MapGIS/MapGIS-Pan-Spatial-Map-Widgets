@@ -22,7 +22,7 @@
       <mapgis-ui-popover v-model="showTips" trigger="click">
         <a slot="content" @click="choose" v-if="!showJson">
           <div>
-            <div>文本数据格式:</div>
+            <div>文本数据格式（顺时针或逆时针顺序，不支持自相交图形）:</div>
             <div v-for="(item, index) in sample.split('\n')" :key="index">
               {{ item }}
             </div>
@@ -30,7 +30,9 @@
             <div>仅支持MultiPolygon数据</div>
           </div>
         </a>
-        <div v-else slot="content">类型为MultiPolygon的geojson数据</div>
+        <div v-else slot="content">
+          类型为MultiPolygon的geojson数据，不支持自相交图形
+        </div>
         <mapgis-ui-ant-icon
           type="question-circle"
           class="question-circle"
