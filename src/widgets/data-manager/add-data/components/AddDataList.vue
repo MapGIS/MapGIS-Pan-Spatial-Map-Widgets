@@ -240,6 +240,8 @@ export default {
       // 缓存数据，主要用于编辑后取消数据更新
       cacheData: [],
       category: [],
+      // 当前选中项
+      currentItem: null,
     }
   },
 
@@ -469,6 +471,10 @@ export default {
       this.categoryDataList.forEach((item) => {
         if (item.editableKey === key) {
           this.$set(item, 'editable', true)
+          if (item.visible) {
+            // 已选中的数据才需要保存
+            this.currentItem = JSON.parse(JSON.stringify(item))
+          }
         }
       })
       this.editingKey = key
@@ -507,6 +513,15 @@ export default {
       this.categoryDataList.forEach((item) => {
         if (item.editableKey === key) {
           this.$set(item, 'editable', false)
+          if (
+            this.currentItem !== null &&
+            this.currentItem.url !== item.url &&
+            item.visible
+          ) {
+            // 路径已修改，移除之前图层，添加新图层
+            this.removeLayer(this.currentItem)
+            this.addLayer(item)
+          }
         }
       })
       this.cacheData = JSON.parse(JSON.stringify(this.categoryDataList))
