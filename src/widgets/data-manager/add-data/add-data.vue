@@ -299,7 +299,7 @@ export default {
       const datasource = subStrs[2]
       const gdb = subStrs[3]
       const deletUrl = `${domain}/igs/rest/services/system/ResourceServer/datasources/${datasource}/gdbs/${gdb}/sfcls/${name}`
-      axios.get(deletUrl).then((res) => {
+      axios.delete(deletUrl).then((res) => {
         console.log(res.data)
       })
     },

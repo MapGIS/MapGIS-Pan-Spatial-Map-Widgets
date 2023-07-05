@@ -1,4 +1,5 @@
 import { LayerType, IGSSceneSublayerType } from '@mapgis/web-app-framework'
+import ModelEditControlList from './model-edit-control-list'
 
 export default {
   data() {
@@ -34,30 +35,36 @@ export default {
       }
       const { vueKey, Cesium, viewer, vueCesium } = this
       const { id } = layer
-      const g3dLayer = this.getG3dLayer(id)
-      const m3dSet = g3dLayer.getM3DLayers()[0]
-      const initTransform = m3dSet._transform
-      // 模型的自身坐标系原点
-      const cartographic = Cesium.Cartographic.fromCartesian(
-        new Cesium.Cartesian3(
-          initTransform[12],
-          initTransform[13],
-          initTransform[14]
-        )
-      )
-      const longitude = Cesium.Math.toDegrees(cartographic.longitude)
-      const latitude = Cesium.Math.toDegrees(cartographic.latitude)
-      const height = cartographic.height // 模型高度
-      const zmin = m3dSet._root.boundingVolume.minimumHeight
-      // const zmax = 4.5
-      const zmax = m3dSet._root.boundingVolume.maximumHeight
-      this.m3dSetObj = { longitude, latitude, height, zmax, zmin }
-      if (window.modelEditControlList && window.modelEditControlList[id]) {
-        window.transformEditor = window.modelEditControlList[id]
+      let layerId = layer.id
+      if (id.includes(':')) {
+        layerId = id.split(':')[0]
+      }
+      const g3dLayer = this.getG3dLayer(layerId)
+      if (ModelEditControlList[layerId]) {
+        window.transformEditor = ModelEditControlList[layerId]
+        this.m3dSetObj = ModelEditControlList[layerId].m3dSetObj
       } else {
         window.transformEditor = new Cesium.ModelTransformTool(g3dLayer)
         window.transformEditor.initModelEditor(viewer)
-        window.modelEditControlList[id] = window.transformEditor
+        ModelEditControlList[layerId] = window.transformEditor
+        const m3dSet = g3dLayer.getM3DLayers()[0]
+        const initTransform = m3dSet._transform
+        // 模型的自身坐标系原点
+        const cartographic = Cesium.Cartographic.fromCartesian(
+          new Cesium.Cartesian3(
+            initTransform[12],
+            initTransform[13],
+            initTransform[14]
+          )
+        )
+        const longitude = Cesium.Math.toDegrees(cartographic.longitude)
+        const latitude = Cesium.Math.toDegrees(cartographic.latitude)
+        const height = cartographic.height // 模型高度
+        const zmin = m3dSet._root.boundingVolume.minimumHeight
+        // const zmax = 4.5
+        const zmax = m3dSet._root.boundingVolume.maximumHeight
+        this.m3dSetObj = { longitude, latitude, height, zmax, zmin }
+        ModelEditControlList[layerId].m3dSetObj = this.m3dSetObj
       }
     },
     getG3dLayer(id) {
