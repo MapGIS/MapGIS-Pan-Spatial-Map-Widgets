@@ -1093,6 +1093,7 @@ export default {
     updateM3DProps(val, onlyUpdateLuminanceAtZenith, changeEnablePopup) {
       let enablePopup
       let enableModelSwitch
+      let layerProperty = {}
       const { key, maximumScreenSpaceError, layer, id, luminanceAtZenith } = val
       const { viewer, Cesium } = this
       if (layer) {
@@ -1101,9 +1102,11 @@ export default {
             ? changeEnablePopup
             : layer.enablePopup
         enableModelSwitch = layer.enableModelSwitch
+        layerProperty = val.layer.layerProperty
       } else {
         enablePopup = val.enablePopup
         enableModelSwitch = val.enableModelSwitch
+        layerProperty = val.layerProperty
       }
       const indexArr: Array<string> = key.split('-')
       const doc = this.layerDocument.clone()
@@ -1116,12 +1119,8 @@ export default {
           sublayer.maximumScreenSpaceError = maximumScreenSpaceError
           sublayer.luminanceAtZenith = luminanceAtZenith
           sublayer.layer.enablePopup = enablePopup
-          let sublayerLayerProperty = sublayer.layer.layerProperty
-          if (sublayerLayerProperty == undefined) {
-            sublayerLayerProperty = {}
-          }
           sublayer.layer.layerProperty = {
-            ...sublayerLayerProperty,
+            ...layerProperty,
             enablePopup,
             enableModelSwitch,
             maximumScreenSpaceError,
@@ -1146,10 +1145,6 @@ export default {
           MC.enableModelSwitch = enableModelSwitch
           MC.maximumScreenSpaceError = maximumScreenSpaceError
           MC.luminanceAtZenith = luminanceAtZenith
-          let { layerProperty } = MC
-          if (layerProperty == undefined) {
-            layerProperty = {}
-          }
           MC.layerProperty = {
             ...layerProperty,
             enablePopup,
