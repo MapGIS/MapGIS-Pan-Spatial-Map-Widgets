@@ -30,6 +30,9 @@
         <div class="mapgis-ui-upload__text" style="font-size: 10px">
           只支持.wp,.WP,.WL,.wl(经纬度)文件
         </div>
+        <div class="mapgis-ui-upload__text" style="font-size: 10px">
+          请确保已在后台配置IP地址和端口号
+        </div>
       </mapgis-ui-upload-dragger>
     </div>
   </div>
