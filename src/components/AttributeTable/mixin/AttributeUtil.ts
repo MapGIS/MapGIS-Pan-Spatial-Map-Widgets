@@ -617,8 +617,8 @@ export default {
     async queryCount(geometry?: Record<string, any>, where?: string) {
       const { ip, port, isDataStoreQuery, serverName, serverUrl } =
         this.optionVal
-      let domain
-      if (!!serverUrl && serverUrl.length > 0) {
+      let { domain } = this.optionVal
+      if (!domain && !!serverUrl && serverUrl.length > 0) {
         const url = new URL(serverUrl)
         domain = url.origin
       }
