@@ -85,6 +85,7 @@
       :popup-anchor="popupAnchor"
       :popup-toggle-type="popupToggleType"
       :selected-markers="selectedMarkers"
+      :marker-show-type="markerShowType"
     >
       <template slot="popup" slot-scope="{ marker }">
         <marker-show-window :marker="marker"></marker-show-window>
@@ -98,7 +99,7 @@
       :popup-anchor="popupAnchor"
       :popup-toggle-type="popupToggleType"
       :selected-markers="selectedMarkers"
-      :widget-info="widgetInfo"
+      :marker-show-type="markerShowType"
       @popupload="popupLoad"
     >
       <template slot="popup" slot-scope="{ marker }">
@@ -274,6 +275,10 @@ export default {
 
     shownMarkers() {
       return this.stateClosed ? [] : this.markers
+    },
+
+    markerShowType() {
+      return this.widgetInfo.config.markerShowType
     },
 
     selectedMarkers() {

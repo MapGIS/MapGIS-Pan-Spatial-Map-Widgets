@@ -11,6 +11,13 @@
         size="small"
         style="margin: 0 8px"
       />
+      <mapgis-ui-switch
+        checked-children="高亮已选择"
+        un-checked-children="高亮已选择"
+        v-model="hightlightSelection"
+        size="small"
+        style="margin: 0 8px"
+      />
       <mapgis-ui-toolbar-command
         title="缩放至已选择"
         icon="environment"
@@ -125,6 +132,8 @@
       :highlight-style="highlightStyle"
       :popup-anchor="popupAnchor"
       :popup-toggle-type="popupToggleType"
+      :selected-markers="selectedMarkers"
+      :marker-show-type="markerShowType"
       @map-bound-change="onGetGeometry"
     />
     <mp-3d-marker-plotting
@@ -137,6 +146,8 @@
       :highlight-style="highlightStyle"
       :popup-anchor="popupAnchor"
       :popup-toggle-type="popupToggleType"
+      :selected-markers="selectedMarkers"
+      :marker-show-type="markerShowType"
       @map-bound-change="onGetGeometry"
     >
       <template slot="popup" slot-scope="{ properties }">
@@ -299,6 +310,10 @@ export default {
       const { serverType } = this.optionVal
       return serverType === LayerType.IGSScene
     },
+    // marker几何高亮类型，hover表示鼠标放到标注上高亮，default表示显示标注的时候就高亮
+    markerShowType() {
+      return this.hightlightSelection ? 'default' : 'hover'
+    },
   },
   watch: {
     getDataFLowList: {
@@ -405,6 +420,7 @@ export default {
     onRowClick(row: unknown) {},
     // 双击行
     onRowDblclick(row: unknown) {
+      debugger
       const feature = row as GFeature
       let bound = feature.properties.specialLayerBound
       if (bound === undefined) {
@@ -575,9 +591,11 @@ export default {
     async hightlightSelectionMarkers() {
       const selectIcon = await markerIconInstance.selectIcon()
       const unSelectIcon = await markerIconInstance.unSelectIcon()
+      this.selectedMarkers = []
       this.markers.forEach((marker) => {
         if (this.selectedRowKeys.includes(marker.fid)) {
           marker.img = selectIcon
+          this.selectedMarkers.push(marker)
         } else {
           marker.img = unSelectIcon
         }
