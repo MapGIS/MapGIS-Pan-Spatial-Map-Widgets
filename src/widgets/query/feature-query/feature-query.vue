@@ -287,6 +287,11 @@ export default {
   // 二三维地图模式切换时
   watch: {
     mapRender() {
+      if (this.mapRender === 'cesium') {
+        this.$refs.draw.removeDraw()
+      } else {
+        this.$refs.draw.enableDraw()
+      }
       this.onClearDraw()
     },
     'document.defaultMap': {
