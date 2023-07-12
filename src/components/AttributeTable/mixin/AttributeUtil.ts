@@ -46,6 +46,8 @@ export default {
       // 地图范围
       geometry: undefined,
       geometry3D: undefined,
+      // 高亮已选择
+      hightlightSelection: false,
       // 选中的行
       selection: [],
       selectIcon: '',
@@ -76,6 +78,8 @@ export default {
       scrollY: 0,
       isActive: true,
       rowKey: 'fid',
+      // 被选中行对应的markers集合
+      selectedMarkers: [],
     }
   },
   computed: {
@@ -207,8 +211,8 @@ export default {
         gdbp,
         f,
       } = this.optionVal
-      let domain
-      if (!!serverUrl && serverUrl.length > 0) {
+      let { domain } = this.optionVal
+      if (!domain && !!serverUrl && serverUrl.length > 0) {
         const url = new URL(serverUrl)
         domain = url.origin
       }
@@ -617,8 +621,8 @@ export default {
     async queryCount(geometry?: Record<string, any>, where?: string) {
       const { ip, port, isDataStoreQuery, serverName, serverUrl } =
         this.optionVal
-      let domain
-      if (!!serverUrl && serverUrl.length > 0) {
+      let { domain } = this.optionVal
+      if (!domain && !!serverUrl && serverUrl.length > 0) {
         const url = new URL(serverUrl)
         domain = url.origin
       }

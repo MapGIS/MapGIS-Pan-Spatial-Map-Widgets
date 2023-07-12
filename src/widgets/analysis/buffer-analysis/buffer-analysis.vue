@@ -1,7 +1,54 @@
 <template>
   <div class="mp-widget-buffer-analysis">
+    <div id="widgets-ui" v-if="isWidgetOpen">
+      <mapgis-ui-group-tab
+        title="选择图层"
+        id="title-space"
+        :hasBottomMargin="false"
+      />
+      <mapgis-ui-form-model :layout="layout" :labelAlign="'left'">
+        <mapgis-ui-form-model-item :colon="false">
+          <mapgis-ui-row>
+            <mapgis-ui-col>
+              <mapgis-ui-select
+                v-model="tDataIndex"
+                @change="tchangeTarget($event)"
+                v-if="!selectLevel"
+              >
+                <mapgis-ui-select-option
+                  v-for="(item, index) in layerArrOption"
+                  :key="index"
+                  :value="index"
+                  >{{ item.title }}</mapgis-ui-select-option
+                >
+              </mapgis-ui-select>
+              <mapgis-ui-select
+                v-model="tDataIndex"
+                @change="tchangeTarget"
+                v-if="selectLevel"
+                disabled
+              >
+                <mapgis-ui-select-option
+                  v-for="(item, index) in layerArrOption"
+                  :key="index"
+                  :value="index"
+                  >{{ item.title }}</mapgis-ui-select-option
+                >
+              </mapgis-ui-select>
+            </mapgis-ui-col>
+          </mapgis-ui-row>
+          <mapgis-ui-checkbox
+            style="line-height: 32px"
+            :checked="selectLevel"
+            @change="changeSelectLevel"
+            >只对选择数据进行操作</mapgis-ui-checkbox
+          >
+        </mapgis-ui-form-model-item>
+      </mapgis-ui-form-model>
+    </div>
     <!-- 使用缓冲区分析组件 -->
     <mapgis-3d-analysis-buffer
+      v-if="dataType !== 'Model'"
       :layout="layout"
       :baseUrl="baseBufferUrl"
       :srcType="srcType"
@@ -13,54 +60,21 @@
       @load="load"
       @exportResult="exportResult"
       @deleteResult="deleteResult"
-    >
-      <div id="widgets-ui" slot="selectLayer" v-if="isWidgetOpen">
-        <mapgis-ui-group-tab
-          title="选择图层"
-          id="title-space"
-          :hasBottomMargin="false"
-        />
-        <mapgis-ui-form-model :layout="layout" :labelAlign="'left'">
-          <mapgis-ui-form-model-item :colon="false">
-            <mapgis-ui-row>
-              <mapgis-ui-col>
-                <mapgis-ui-select
-                  v-model="tDataIndex"
-                  @change="tchangeTarget($event)"
-                  v-if="!selectLevel"
-                >
-                  <mapgis-ui-select-option
-                    v-for="(item, index) in layerArrOption"
-                    :key="index"
-                    :value="index"
-                    >{{ item.title }}</mapgis-ui-select-option
-                  >
-                </mapgis-ui-select>
-                <mapgis-ui-select
-                  v-model="tDataIndex"
-                  @change="tchangeTarget"
-                  v-if="selectLevel"
-                  disabled
-                >
-                  <mapgis-ui-select-option
-                    v-for="(item, index) in layerArrOption"
-                    :key="index"
-                    :value="index"
-                    >{{ item.title }}</mapgis-ui-select-option
-                  >
-                </mapgis-ui-select>
-              </mapgis-ui-col>
-            </mapgis-ui-row>
-            <mapgis-ui-checkbox
-              style="line-height: 32px"
-              :checked="selectLevel"
-              @change="changeSelectLevel"
-              >只对选择数据进行操作</mapgis-ui-checkbox
-            >
-          </mapgis-ui-form-model-item>
-        </mapgis-ui-form-model>
-      </div>
-    </mapgis-3d-analysis-buffer>
+    />
+    <mapgis-3d-analysis-model-buffer
+      v-else
+      :layout="layout"
+      :baseUrl="baseBufferUrl"
+      :srcType="srcType"
+      :srcLayer="srcLayer"
+      :srcFeature="srcFeature"
+      @listenLayer="showLayer"
+      @listenFeature="showFeature(arguments)"
+      @listenBufferAdd="showAdd"
+      @load="load"
+      @exportResult="exportResult"
+      @deleteResult="deleteResult"
+    />
     <mp-export-layer
       :visible="visible"
       :gdbp="destLayer"
@@ -79,6 +93,7 @@ import {
   events,
   baseConfigInstance,
   ActiveResultSet,
+  dataCatalogManagerInstance,
 } from '@mapgis/web-app-framework'
 import { Style } from '@mapgis/webclient-es6-service'
 import MpExportLayer from '../../../components/ExportLayer/export-layer.vue'
@@ -93,6 +108,7 @@ export default {
     return {
       layout: 'vertical',
       baseBufferUrl: 'http://localhost:6163/',
+      dataType: 'VectorLayer',
       srcType: 'Layer',
       srcLayer: '',
       srcFeature: {},
@@ -179,6 +195,16 @@ export default {
           arr.push(data)
         } else if (data.type === LayerType.IGSMapImage) {
           arr.push(...data.sublayers)
+        } else if (data.type === LayerType.IGSScene) {
+          const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
+            data.id
+          )
+          if (layerConfig && layerConfig.bindData) {
+            if (!layerConfig.bindData.title) {
+              layerConfig.bindData.title = layerConfig.bindData.serverName
+            }
+            arr.push(layerConfig.bindData)
+          }
         }
       })
       if (arr.length > 0) {
@@ -207,10 +233,14 @@ export default {
 
     tchangeTarget(event) {
       const layerCurrent = this.tData
+      this.dataType = 'VectorLayer'
       if (layerCurrent != null) {
-        if (layerCurrent.type == 6) {
-          this.baseBufferUrl = layerCurrent.url
+        if (layerCurrent.type == 6 || layerCurrent.serverType == 6) {
+          this.baseBufferUrl = layerCurrent.url || layerCurrent.serverURL
           this.srcLayer = layerCurrent.gdbps
+          if (layerCurrent.serverType == 6) {
+            this.dataType = 'Model'
+          }
         } else {
           this.baseBufferUrl = layerCurrent.layer.url
           this.srcLayer = layerCurrent.url

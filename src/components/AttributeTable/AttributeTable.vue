@@ -11,6 +11,13 @@
         size="small"
         style="margin: 0 8px"
       />
+      <mapgis-ui-switch
+        checked-children="高亮已选择"
+        un-checked-children="高亮已选择"
+        v-model="hightlightSelection"
+        size="small"
+        style="margin: 0 8px"
+      />
       <mapgis-ui-toolbar-command
         title="缩放至已选择"
         icon="environment"
@@ -125,6 +132,8 @@
       :highlight-style="highlightStyle"
       :popup-anchor="popupAnchor"
       :popup-toggle-type="popupToggleType"
+      :selected-markers="selectedMarkers"
+      :marker-show-type="markerShowType"
       @map-bound-change="onGetGeometry"
     />
     <mp-3d-marker-plotting
@@ -137,6 +146,8 @@
       :highlight-style="highlightStyle"
       :popup-anchor="popupAnchor"
       :popup-toggle-type="popupToggleType"
+      :selected-markers="selectedMarkers"
+      :marker-show-type="markerShowType"
       @map-bound-change="onGetGeometry"
     >
       <template slot="popup" slot-scope="{ properties }">
@@ -202,6 +213,7 @@ import {
   markerIconInstance,
   DataFlowList,
   ActiveResultSet,
+  SelectedResultSet,
   DomUtil,
   AppMixin,
   ExhibitionMixin,
@@ -298,6 +310,10 @@ export default {
       const { serverType } = this.optionVal
       return serverType === LayerType.IGSScene
     },
+    // marker几何高亮类型，hover表示鼠标放到标注上高亮，default表示显示标注的时候就高亮
+    markerShowType() {
+      return this.hightlightSelection ? 'default' : 'hover'
+    },
   },
   watch: {
     getDataFLowList: {
@@ -365,11 +381,28 @@ export default {
       this.selection = selectedRows
       if (this.selectedRowKeys.length == 0) {
         ActiveResultSet.activeResultSet = {}
+        SelectedResultSet.selectedResultSet =
+          SelectedResultSet.selectedResultSet.filter(
+            (item) => item.id != ActiveResultSet.activeResultSet.id
+          )
       } else {
         ActiveResultSet.activeResultSet = {
           type: 'FeatureCollection',
           features: selectedRows,
           id: this.optionVal.id,
+        }
+        let hasActiveResultSet = false
+        for (let i = 0; i < SelectedResultSet.selectedResultSet.length; i++) {
+          if (SelectedResultSet.selectedResultSet[i].id == this.optionVal.id) {
+            SelectedResultSet.selectedResultSet[i] =
+              ActiveResultSet.activeResultSet
+            hasActiveResultSet = true
+          }
+        }
+        if (!hasActiveResultSet) {
+          SelectedResultSet.selectedResultSet.push(
+            ActiveResultSet.activeResultSet
+          )
         }
       }
       await this.hightlightSelectionMarkers()
@@ -387,6 +420,7 @@ export default {
     onRowClick(row: unknown) {},
     // 双击行
     onRowDblclick(row: unknown) {
+      debugger
       const feature = row as GFeature
       let bound = feature.properties.specialLayerBound
       if (bound === undefined) {
@@ -479,6 +513,10 @@ export default {
 
     onClearSelection() {
       this.clearSelection()
+      SelectedResultSet.selectedResultSet =
+        SelectedResultSet.selectedResultSet.filter(
+          (item) => item.id != ActiveResultSet.activeResultSet.id
+        )
       ActiveResultSet.activeResultSet = {}
     },
 
@@ -553,9 +591,11 @@ export default {
     async hightlightSelectionMarkers() {
       const selectIcon = await markerIconInstance.selectIcon()
       const unSelectIcon = await markerIconInstance.unSelectIcon()
+      this.selectedMarkers = []
       this.markers.forEach((marker) => {
         if (this.selectedRowKeys.includes(marker.fid)) {
           marker.img = selectIcon
+          this.selectedMarkers.push(marker)
         } else {
           marker.img = unSelectIcon
         }

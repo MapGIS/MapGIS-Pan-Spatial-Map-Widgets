@@ -576,29 +576,30 @@ export default {
         layer.id
       )
       if (layerConfig && layerConfig.bindData) {
-        for (let index = 0; index < sublayers.length; index++) {
-          const item = sublayers[index]
-          if (!item.visible) {
-            return
-          }
-          exhibition.options.push({
-            id: item.id,
-            name: item.title || item.name,
-            ip: baseConfigInstance.config.ip,
-            port: Number(baseConfigInstance.config.port),
-            domain,
-            serverType: layer.type,
-            gdbp: layerConfig.bindData.gdbps,
-            geometry: geometry,
-          })
-          const { TotalCount } = await this.queryCount(
-            exhibition.options[index],
-            true
-          )
-          if (TotalCount > 0) {
-            activeOptionId = item.id
-          }
+        // for (let index = 0; index < sublayers.length; index++) {
+        //   const item = sublayers[index]
+        //   if (!item.visible) {
+        //     return
+        //   }
+        exhibition.options.push({
+          id: layerConfig.bindData.id,
+          name: layerConfig.title || layerConfig.name,
+          ip: layerConfig.bindData.ip || baseConfigInstance.config.ip,
+          port:
+            layerConfig.bindData.port || Number(baseConfigInstance.config.port),
+          domain,
+          serverType: layer.type,
+          gdbp: layerConfig.bindData.gdbps,
+          geometry: geometry,
+        })
+        const { TotalCount } = await this.queryCount(
+          exhibition.options[0],
+          true
+        )
+        if (TotalCount > 0) {
+          activeOptionId = layerConfig.bindData.id
         }
+        // }
         this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
       }
     },

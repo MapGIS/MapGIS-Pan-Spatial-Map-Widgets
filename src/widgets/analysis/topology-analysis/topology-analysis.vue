@@ -143,12 +143,15 @@ import {
   UUID,
   IGSMapImageLayer,
   IGSVectorLayer,
+  IGSScene,
   baseConfigInstance,
+  dataCatalogManagerInstance,
 } from '@mapgis/web-app-framework'
 import mapboxLayer from './map-layer/mapbox-layer.vue'
 import cesiumLayer from './map-layer/cesium-layer'
 import featureList from './feature-list.vue'
 import * as Zondy from '@mapgis/webclient-es6-service'
+import axios from 'axios'
 
 export default {
   name: 'MpTopologyAnalysis',
@@ -231,7 +234,8 @@ export default {
       val.layers().forEach((data) => {
         if (
           data.type === LayerType.IGSMapImage ||
-          data.type === LayerType.IGSVector
+          data.type === LayerType.IGSVector ||
+          data.type === LayerType.IGSScene
         ) {
           arr.push(data)
         }
@@ -291,7 +295,9 @@ export default {
         if (layer.type === LayerType.IGSMapImage) {
           this.queryFeaturesByDoc(layer, geo)
         } else if (layer.type === LayerType.IGSVector) {
-          this.quertFeatruesByVector(layer, geo)
+          this.queryFeaturesByVector(layer, geo)
+        } else if (layer.type === LayerType.IGSScene) {
+          this.queryFeaturesByIGSScene(layer, geo)
         }
       }
     },
@@ -333,7 +339,7 @@ export default {
       }
     },
 
-    quertFeatruesByVector(layer: IGSVectorLayer, geometry) {
+    queryFeaturesByVector(layer: IGSVectorLayer, geometry) {
       if (!layer.isVisible) {
         return
       }
@@ -359,69 +365,156 @@ export default {
       }
     },
 
-    analysis() {
+    queryFeaturesByIGSScene(layer: IGSScene, geometry) {
+      if (!layer.isVisible) {
+        return
+      }
+      const { domain, docName } = layer._parseUrl(layer.url)
+
+      const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
+        layer.id
+      )
+      let arr = []
+      if (layerConfig && layerConfig.bindData) {
+        arr = [
+          {
+            ip: baseConfigInstance.config.ip,
+            port: Number(baseConfigInstance.config.port),
+            domain,
+            serverType: layer.type,
+            gdbp: layerConfig.bindData.gdbps,
+            geometry: geometry,
+            name: layer.title,
+          },
+        ]
+      }
+      if (this.queryType === 'target') {
+        this.tDataArr = arr
+        this.tDataTab = arr.length > 0 ? arr[0].id : ''
+      } else {
+        this.aDataArr = arr
+        this.aDataTab = arr.length > 0 ? arr[0].id : ''
+      }
+    },
+
+    async analysis() {
       if (this.geoJSONAnalysis && this.geoJSONTarget) {
         this.loading = true
         this.massage = ''
         const target = this.geoJSONTarget.features[0].properties
         const analysis = this.geoJSONAnalysis.features[0].properties
-        const { ip, port } = baseConfigInstance.config
-        let analysisService
-
-        if (target.ftype === 1) {
-          const targetGeom = target.fGeom.PntGeom[0]
-          analysisService = new Zondy.MRGS.TopAnalysis({
-            relativeObj: targetGeom,
-            ip,
-            port,
-          })
-        } else if (target.ftype === 2) {
-          const targetGeom = target.fGeom.LinGeom[0]
-          analysisService = new Zondy.MRGS.TopAnalysis({
-            relativeObj: targetGeom,
-            ip,
-            port,
-          })
-        } else if (analysis.ftype === 3) {
-          const targetGeom = target.fGeom.RegGeom[0]
-          analysisService = new Zondy.MRGS.TopAnalysis({
-            relativeObj: targetGeom,
-            ip,
-            port,
-          })
-        }
-        if (analysis.ftype === 1) {
-          const analysisGeom = analysis.fGeom.PntGeom[0]
-          analysisService.setPnt(analysisGeom)
-        } else if (analysis.ftype === 2) {
-          const analysisGeom = analysis.fGeom.LinGeom[0]
-          analysisService.setLine(analysisGeom)
-        } else if (analysis.ftype === 3) {
-          const analysisGeom = analysis.fGeom.RegGeom[0]
-          analysisService.setReg(analysisGeom)
-        }
-        analysisService.execute(
-          (res) => {
-            let msg = ''
-            if (res === 'Include') {
-              msg = '包含'
-            } else if (res === 'Disjoin') {
-              msg = '相离'
-            } else if (res === 'Intersect') {
-              msg = '相交'
-            } else {
-              msg = '相邻'
-            }
-            this.loading = false
-            this.massage = `分析结果: ${msg}`
-          },
-          () => {
-            this.loading = false
+        if (target.ftype === 'Entity') {
+          const srcInfo1 = this.tDataArr[0].gdbp
+          const srcInfo2 = this.aDataArr[0].gdbp
+          const FID1 = target.FID
+          const FID2 = analysis.FID
+          await this.topology3d(srcInfo1, srcInfo2, FID1, FID2)
+        } else {
+          const { ip, port } = baseConfigInstance.config
+          let analysisService
+          if (target.ftype === 1) {
+            const targetGeom = target.fGeom.PntGeom[0]
+            analysisService = new Zondy.MRGS.TopAnalysis({
+              relativeObj: targetGeom,
+              ip,
+              port,
+            })
+          } else if (target.ftype === 2) {
+            const targetGeom = target.fGeom.LinGeom[0]
+            analysisService = new Zondy.MRGS.TopAnalysis({
+              relativeObj: targetGeom,
+              ip,
+              port,
+            })
+          } else if (analysis.ftype === 3) {
+            const targetGeom = target.fGeom.RegGeom[0]
+            analysisService = new Zondy.MRGS.TopAnalysis({
+              relativeObj: targetGeom,
+              ip,
+              port,
+            })
           }
-        )
+          if (analysis.ftype === 1) {
+            const analysisGeom = analysis.fGeom.PntGeom[0]
+            analysisService.setPnt(analysisGeom)
+          } else if (analysis.ftype === 2) {
+            const analysisGeom = analysis.fGeom.LinGeom[0]
+            analysisService.setLine(analysisGeom)
+          } else if (analysis.ftype === 3) {
+            const analysisGeom = analysis.fGeom.RegGeom[0]
+            analysisService.setReg(analysisGeom)
+          }
+          analysisService.execute(
+            (res) => {
+              let msg = ''
+              if (res === 'Include') {
+                msg = '包含'
+              } else if (res === 'Disjoin') {
+                msg = '相离'
+              } else if (res === 'Intersect') {
+                msg = '相交'
+              } else {
+                msg = '相邻'
+              }
+              this.loading = false
+              this.massage = `分析结果: ${msg}`
+            },
+            () => {
+              this.loading = false
+            }
+          )
+        }
       } else {
         this.$message.error('未选择要素')
       }
+    },
+    /**
+     * 三维体对象之间的包含、相交、相离等空间关系判定
+     * @param srcInfo1 维体对象简单要素类1
+     * @param srcInfo2 维体对象简单要素类2
+     * @param FID1 图元OID1
+     * @param FID2 图元OID2
+     * @return
+     */
+    async topology3d(srcInfo1, srcInfo2, FID1, FID2) {
+      const res = await this.topology3dpromise({
+        srcInfo1,
+        srcInfo2,
+        FID1,
+        FID2,
+      })
+      console.log(res)
+      const msg = res.results[0].Value
+      this.loading = false
+      this.massage = `分析结果: ${msg}`
+    },
+
+    topology3dpromise(options) {
+      const keys = Object.keys(options)
+      const paramArr = []
+      for (let i = 0; i < keys.length; i++) {
+        const param = {
+          Key: keys[i],
+          Value: options[keys[i]],
+        }
+        paramArr.push(param)
+      }
+      const layer = this.queryType === 'target' ? this.tData : this.aData
+      const { domain, docName } = layer._parseUrl(layer.url)
+      const url = `${domain}/igs/rest/mrfws/execute/600368?isAsy=false&f=json`
+      const promise = new Promise((resolve, reject) => {
+        axios.post(url, paramArr).then((res) => {
+          const { data } = res
+          if (!data) {
+            resolve(undefined)
+          } else {
+            resolve(data)
+          }
+        })
+      })
+      return promise.then((data) => {
+        return data
+      })
     },
 
     // 面板关闭时候触发函数
