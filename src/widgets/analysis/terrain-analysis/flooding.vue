@@ -73,6 +73,7 @@
             ><mapgis-ui-toolbar-command
               title="开始"
               :icon="isStart ? 'pause-circle' : 'play-circle'"
+              :style="cursorStyle"
               @click="start"
           /></mapgis-ui-col>
         </mapgis-ui-row>
@@ -110,6 +111,12 @@ export default {
     HeightProgress() {
       return this.progressData
     },
+    cursorStyle() {
+      const cursor = this.isStart ? 'not-allowed' : 'pointer'
+      return {
+        cursor,
+      }
+    },
   },
 
   methods: {
@@ -143,7 +150,7 @@ export default {
     },
 
     onActive() {
-      this.floodAnalysis.mount()
+      this.floodAnalysis && this.floodAnalysis.mount()
     },
 
     // 微件失活时
@@ -168,19 +175,21 @@ export default {
       this.currentHeight = 0
     },
     start() {
-      this.floodAnalysis._doAnalysis()
-      this.isStart = true
-      const { startHeightCopy, maxHeightCopy, floodSpeedCopy } =
-        this.progressData
-      let count = 1
-      this.timer = setInterval(() => {
-        this.currentHeight = startHeightCopy + floodSpeedCopy * count
-        count++
-        if (this.currentHeight >= maxHeightCopy) {
-          this.isStart = false
-          clearInterval(this.timer)
-        }
-      }, 1000)
+      if (!this.isStart) {
+        this.floodAnalysis._doAnalysis()
+        this.isStart = true
+        const { startHeightCopy, maxHeightCopy, floodSpeedCopy } =
+          this.progressData
+        let count = 1
+        this.timer = setInterval(() => {
+          this.currentHeight = startHeightCopy + floodSpeedCopy * count
+          count++
+          if (this.currentHeight >= maxHeightCopy) {
+            this.isStart = false
+            clearInterval(this.timer)
+          }
+        }, 1000)
+      }
     },
   },
 }
