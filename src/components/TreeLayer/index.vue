@@ -1153,8 +1153,10 @@ export default {
             luminanceAtZenith,
           }
           const m3d = this.sceneController.findM3DIgsSource(MC.id)
-          m3d.maximumScreenSpaceError = maximumScreenSpaceError
-          m3d.luminanceAtZenith = luminanceAtZenith
+          if (m3d) {
+            m3d.maximumScreenSpaceError = maximumScreenSpaceError
+            m3d.luminanceAtZenith = luminanceAtZenith
+          }
           if (!onlyUpdateLuminanceAtZenith) {
             this.$emit('update:layerDocument', doc)
           }
