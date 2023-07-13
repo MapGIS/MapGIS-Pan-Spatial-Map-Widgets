@@ -1163,6 +1163,16 @@ export default {
         default:
           return false
       }
+      if (
+        geometry.geometry.type === 'Point' ||
+        geometry.geometry.type === 'LineString'
+      ) {
+        return (
+          // 交叉或者包含都会继续查询
+          !booleanDisjoint(extentPolygon, geometry) ||
+          booleanContains(extentPolygon, geometry)
+        )
+      }
       return (
         // 交叉或者包含都会继续查询
         !booleanDisjoint(extentPolygon, geometry) ||
