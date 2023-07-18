@@ -15,7 +15,7 @@ export default {
   },
   computed: {},
   methods: {
-    isIGSScene(layerObj) {
+    isModelCache(layerObj) {
       const layer = layerObj.layer ? layerObj.layer : layerObj
       if (layer.type === LayerType.IGSScene) {
         if (layer.activeScene) {
@@ -30,7 +30,7 @@ export default {
     },
     changeLayer(layer) {
       if (!layer) return
-      if (!this.isIGSScene(layer)) {
+      if (!this.isModelCache(layer)) {
         return
       }
       const { vueKey, Cesium, viewer, vueCesium } = this

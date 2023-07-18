@@ -606,6 +606,12 @@ export default {
                 if (layerItem.activeScene) {
                   layerItem.activeScene.sublayers[i].visible =
                     !layerItem.activeScene.sublayers[i].visible
+                } else if (
+                  !layerItem.activeScene &&
+                  layerItem.layer.activeScene // 中间层
+                ) {
+                  layerItem.sublayers[i].visible =
+                    !layerItem.sublayers[i].visible
                 }
               } else if (this.isVectorTile(layers[parentIndex])) {
                 /**
