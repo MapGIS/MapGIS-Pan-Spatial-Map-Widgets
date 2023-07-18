@@ -325,6 +325,7 @@ export default {
                 serverUrl: parent.url,
                 f: queryType || '',
               },
+              popupOption: parent.extend?.popupOption,
             }
           },
         },
@@ -357,6 +358,7 @@ export default {
                 gdbp: igsVectorLayer.gdbps,
                 f: queryType || '',
               },
+              popupOption: parent.extend?.popupOption,
             }
           },
         },
@@ -375,6 +377,7 @@ export default {
                 serverUrl: parent.url,
                 f: queryType || '',
               },
+              popupOption: parent.extend?.popupOption,
             }
           },
         },
@@ -400,6 +403,7 @@ export default {
                   gdbp: layerConfig.bindData.gdbps,
                   f: queryType || '',
                 },
+                popupOption: parent.extend?.popupOption,
               }
             }
           },
@@ -416,6 +420,7 @@ export default {
                 serverType: layer.type,
                 f: queryType || '',
               },
+              popupOption: parent.extend?.popupOption,
             }
           },
         },

@@ -76,6 +76,7 @@ export default {
       scrollY: 0,
       isActive: true,
       rowKey: 'fid',
+      currentId: '',
     }
   },
   computed: {
