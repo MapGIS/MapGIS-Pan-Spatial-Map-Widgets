@@ -78,6 +78,7 @@ export default {
       scrollY: 0,
       isActive: true,
       rowKey: 'fid',
+      currentId: '',
       // 被选中行对应的markers集合
       selectedMarkers: [],
     }
