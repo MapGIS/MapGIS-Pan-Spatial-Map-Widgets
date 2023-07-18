@@ -146,16 +146,28 @@
       :highlight-style="highlightStyle"
       :popup-anchor="popupAnchor"
       :popup-toggle-type="popupToggleType"
+      :popup-width="popupWidth"
       :selected-markers="selectedMarkers"
       :marker-show-type="markerShowType"
       @map-bound-change="onGetGeometry"
+      @currentId="updateCurrentMarkerId"
     >
-      <template slot="popup" slot-scope="{ properties }">
-        <mapgis-3d-popup-iot
+      <template slot="popup" slot-scope="{ properties, marker }">
+        <!-- <mapgis-3d-popup-iot
           :properties="properties"
           :dataStoreIp="dataStoreIp"
           :dataStorePort="dataStorePort"
           :getProjectorStatus="getProjectorStatus"
+          @project-screen="projectScreen"
+        /> -->
+        <component
+          v-if="currentId === marker.markerId"
+          :is="popupComponent"
+          :properties="properties"
+          :dataStoreIp="dataStoreIp"
+          :dataStorePort="dataStorePort"
+          :getProjectorStatus="getProjectorStatus"
+          v-bind="popupOption"
           @project-screen="projectScreen"
         />
       </template>
@@ -309,6 +321,15 @@ export default {
     isIGSScence() {
       const { serverType } = this.optionVal
       return serverType === LayerType.IGSScene
+    },
+    popupWidth() {
+      return Number(this.exhibition?.popupOption?.componentWidth || 280)
+    },
+    popupComponent() {
+      return this.exhibition?.popupOption?.component || 'mapgis-3d-popup-iot'
+    },
+    popupOption() {
+      return this.exhibition?.popupOption
     },
     // marker几何高亮类型，hover表示鼠标放到标注上高亮，default表示显示标注的时候就高亮
     markerShowType() {
@@ -775,6 +796,10 @@ export default {
     outFullScreen() {
       DomUtil.outFullScreen()
       this.$refs.attributeTable.classList.remove('beauty-scroll')
+    },
+
+    updateCurrentMarkerId(id) {
+      this.currentId = id
     },
   },
 }
