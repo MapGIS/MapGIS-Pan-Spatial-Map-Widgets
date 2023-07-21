@@ -78,6 +78,7 @@ export default {
       scrollY: 0,
       isActive: true,
       rowKey: 'fid',
+      currentId: '',
       // 被选中行对应的markers集合
       selectedMarkers: [],
     }
@@ -346,57 +347,66 @@ export default {
           queryGeometry = geometry
             ? this.getGeometry3D(source)
             : this.optionVal.geometry
-          const json = await FeatureQuery.query(
-            {
+          const json = await FeatureQuery.igsQuery3DFeatureResourceServer({
+            ip,
+            port: port.toString(),
+            domain,
+            where: queryWhere,
+            geometry: queryGeometry,
+            page: current - 1,
+            pageCount: pageSize,
+            url: gdbp,
+            geometryPrecision: 8,
+            inSrs: 'WGS1984_度',
+            ourSrs: 'WGS1984_度',
+            returnCountOnly: true,
+          })
+          debugger
+          const { count } = json
+          this.pagination.total = count
+          let jsonData = await FeatureQuery.igsQuery3DFeatureResourceServer({
+            ip,
+            port: port.toString(),
+            domain,
+            where: queryWhere,
+            geometry: queryGeometry,
+            page: current - 1,
+            pageCount: pageSize,
+            url: gdbp,
+            geometryPrecision: 8,
+            inSrs: 'WGS1984_度',
+            ourSrs: 'WGS1984_度',
+          })
+          if (val === '1') {
+            jsonData = await FeatureQuery.igsQuery3DFeatureResourceServer({
               ip,
               port: port.toString(),
               domain,
               where: queryWhere,
               geometry: queryGeometry,
-              page: current - 1,
-              pageCount: pageSize,
-              gdbp,
-              coordPrecision: 8,
-              rtnLabel: false,
-            },
-            false,
-            serverType === LayerType.IGSScene
-          )
-          const { AttStruct, SFEleArray = [], TotalCount } = json
-          this.pagination.total = TotalCount
-          if (val === '1') {
-            const jsonData = await FeatureQuery.query(
-              {
-                ip,
-                port: port.toString(),
-                domain,
-                where: queryWhere,
-                geometry: queryGeometry,
-                page: 0,
-                pageCount: this.pagination.total,
-                gdbp,
-                coordPrecision: 8,
-                rtnLabel: false,
-              },
-              false,
-              serverType === LayerType.IGSScene
-            )
-            const { AttStruct, SFEleArray = [], TotalCount } = jsonData
-            const { FldNumber = 0, FldName = [] } = AttStruct
-            this.attrTableToJsonData = this.setTable(
-              SFEleArray,
+              page: 0,
+              pageCount: this.pagination.total,
+              url: gdbp,
+              geometryPrecision: 8,
+              inSrs: 'WGS1984_度',
+              ourSrs: 'WGS1984_度',
+            })
+            this.attrTableToJsonData = this.setTable20(
+              jsonData.features,
               source,
-              FldName,
-              FldNumber
+              jsonData.fields
             )
             return
           }
-          const { FldNumber = 0, FldName = [] } = AttStruct
           if (!(this.tableColumns && this.tableColumns.length > 0)) {
-            const columns = this.setTableScroll(AttStruct)
+            const columns = this.setTableScroll20(jsonData.fields)
             this.tableColumns = columns
           }
-          this.tableData = this.setTable(SFEleArray, source, FldName, FldNumber)
+          this.tableData = this.setTable20(
+            jsonData.features,
+            source,
+            jsonData.fields
+          )
           this.removeMarkers()
           // 如果当前是激活状态，则添加markers
           if (this.isExhibitionActive) {
@@ -483,17 +493,7 @@ export default {
       }
     },
     setTableScroll(AttStruct) {
-      const columns: Array = [
-        {
-          title: this.rowKey,
-          key: this.rowKey,
-          dataIndex: `properties.${this.rowKey}`,
-          align: 'left',
-          // 超过宽度将自动省略
-          ellipsis: true,
-          width: 180,
-        },
-      ]
+      const columns = []
       const {
         FldNumber = 0,
         FldName = [],
@@ -512,6 +512,62 @@ export default {
         const name = FldName[index]
         const alias = FldAlias[index] ? `${FldAlias[index]}` : ''
         const type = FldType[index]
+        const sortable = !['GEOMETRY', 'STRING'].includes(type.toUpperCase())
+        const obj = {
+          title: alias.length ? alias : name,
+          key: name,
+          dataIndex: `properties.${name}`,
+          align: 'left',
+          // 超过宽度将自动省略
+          ellipsis: true,
+        }
+        if (this.useScrollX) {
+          obj.width = 180
+        }
+        columns.push(
+          sortable
+            ? {
+                ...obj,
+                sorter: (a, b) =>
+                  this.sorterFunciton(
+                    a.properties[name],
+                    b.properties[name],
+                    type
+                  ),
+              }
+            : obj
+        )
+      }
+
+      return columns
+    },
+    setTableScroll20(fields) {
+      if (!fields) {
+        return
+      }
+      const columns: Array = [
+        {
+          title: this.rowKey,
+          key: this.rowKey,
+          dataIndex: `properties.${this.rowKey}`,
+          align: 'left',
+          // 超过宽度将自动省略
+          ellipsis: true,
+          width: 180,
+        },
+      ]
+      // 根据字段数计算useScrollX
+      if (fields.length <= 10) {
+        // 10个以内，不需要设固定宽度，且不需要启用水平滚动条
+        this.useScrollX = false
+      } else {
+        // 10个以上，每个设固定宽度180，且启用水平滚动条
+        this.useScrollX = true
+      }
+      for (let index = 0; index < fields.length; index++) {
+        const name = fields[index].name
+        const alias = fields[index].alias ? fields[index].alias : ''
+        const type = fields[index].type
         const sortable = !['GEOMETRY', 'STRING'].includes(type.toUpperCase())
         const obj = {
           title: alias.length ? alias : name,
@@ -614,6 +670,37 @@ export default {
             type: '3DPolygon',
           },
           properties,
+        }
+      })
+    },
+    setTable20(features, source, fields) {
+      return (features || []).map(({ attributes = {}, bound = {} }) => {
+        let boundObj = null
+        if (source) {
+          const tranform = source.root.transform
+          const offset = source._asset.offset
+          boundObj = this.sceneController.localExtentToGlobelExtent(
+            bound,
+            tranform,
+            offset
+          )
+        }
+        const properties = {
+          FID: attributes.FID,
+          specialLayerId: this.optionVal.id,
+          specialLayerBound: boundObj,
+        }
+        // for (let index = 0; index < fields; index++) {
+        //   const name = fields[index].name
+        //   const value = attributes[name]
+        //   properties[name] = value
+        // }
+        return {
+          geometry: {
+            coordinates: [],
+            type: '3DPolygon',
+          },
+          properties: { ...attributes },
         }
       })
     },
