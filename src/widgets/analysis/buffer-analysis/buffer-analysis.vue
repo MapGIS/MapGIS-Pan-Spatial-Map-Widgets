@@ -164,7 +164,7 @@ export default {
         const url = new URL(this.baseBufferUrl)
         return url.origin
       }
-      return `${window.location.protocol}//${baseConfigInstance.config.ip}${baseConfigInstance.config.port}`
+      return `${window.location.protocol}//${baseConfigInstance.config.ip}:${baseConfigInstance.config.port}`
     },
   },
 
@@ -259,30 +259,48 @@ export default {
      * 若缓冲区分析生成新图层，将结果显示在地图容器中，并用图层列表管理
      */
     addNewLayer(bufferStyle, renderType) {
-      const resultLayer: Array<string> = this.getResultLayer()
-      const highlightStyle = {
-        polygon: new FillStyle({
-          width: 8,
-          color: '#ffff00',
-          opacity: 0.8,
-          outlineColor: '#ff0000',
-        }),
+      if (this.dataType === 'Model') {
+        const url = `${this.domain}/igs/rest/services/system/ResourceServer/tempData/models?gdbpUrl=${this.destLayer}`
+        const index = url.lastIndexOf('/')
+        const layerName = url.substring(index + 1, url.length)
+        const resultData = {
+          name: 'IGS图层',
+          description: '综合分析_结果图层',
+          data: {
+            type: 'IGSVector',
+            description: '缓冲区分析',
+            srcLayer: this.srcLayer,
+            url,
+            name: '缓冲区分析三维测试',
+          },
+        }
+        eventBus.$emit(events.ADD_DATA_EVENT, resultData)
+      } else {
+        const resultLayer: Array<string> = this.getResultLayer()
+        const highlightStyle = {
+          polygon: new FillStyle({
+            width: 8,
+            color: '#ffff00',
+            opacity: 0.8,
+            outlineColor: '#ff0000',
+          }),
+        }
+        this.resultData = {
+          name: 'IGS图层',
+          description: '综合分析_结果图层',
+          data: {
+            type: 'IGSVector',
+            description: '缓冲区分析',
+            srcLayer: this.srcLayer,
+            url: resultLayer[0],
+            name: resultLayer[1],
+            renderType: renderType,
+            featureStyle: bufferStyle,
+            highlightStyle: highlightStyle,
+          },
+        }
+        eventBus.$emit(events.ADD_DATA_EVENT, this.resultData)
       }
-      this.resultData = {
-        name: 'IGS图层',
-        description: '综合分析_结果图层',
-        data: {
-          type: 'IGSVector',
-          description: '缓冲区分析',
-          srcLayer: this.srcLayer,
-          url: resultLayer[0],
-          name: resultLayer[1],
-          renderType: renderType,
-          featureStyle: bufferStyle,
-          highlightStyle: highlightStyle,
-        },
-      }
-      eventBus.$emit(events.ADD_DATA_EVENT, this.resultData)
     },
 
     /**

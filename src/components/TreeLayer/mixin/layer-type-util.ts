@@ -358,7 +358,9 @@ export default {
                 gdbp: igsVectorLayer.gdbps,
                 f: queryType || '',
               },
-              popupOption: parent.extend?.popupOption,
+              popupOption: parent
+                ? parent.extend?.popupOption
+                : layer.extend?.popupOption,
             }
           },
         },
