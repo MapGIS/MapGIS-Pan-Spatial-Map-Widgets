@@ -297,40 +297,32 @@ export default {
       this.add = data
     },
 
-    addNewLayer() {
+    getResultLayer() {
+      let url
       if (this.dataType === 'Model') {
-        const url = `${this.domain}/igs/rest/services/system/ResourceServer/tempData/models?gdbpUrl=${this.destLayer}`
-        const index = url.lastIndexOf('/')
-        const layerName = url.substring(index + 1, url.length)
-        const resultData = {
-          name: 'IGS图层',
-          description: '综合分析_结果图层',
-          data: {
-            type: 'IGSVector',
-            description: '缓冲区分析',
-            srcLayer: this.srcLayer,
-            url,
-            name: layerName,
-          },
-        }
-        eventBus.$emit(events.ADD_DATA_EVENT, resultData)
+        url = `${this.domain}/igs/rest/services/system/ResourceServer/tempData/models?gdbpUrl=${this.destLayer}`
       } else {
-        const url = `${this.domain}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
-        const index = url.lastIndexOf('/')
-        const layerName = url.substring(index + 1, url.length)
-        this.resultData = {
-          name: 'IGS图层',
-          description: '综合分析_结果图层',
-          data: {
-            type: 'IGSVector',
-            description: '叠加分析',
-            srcLayer: this.srcALayer + this.srcBLayer,
-            url,
-            name: layerName,
-          },
-        }
-        eventBus.$emit(events.ADD_DATA_EVENT, this.resultData)
+        url = `${this.domain}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
       }
+      const index = url.lastIndexOf('/')
+      const layerName = url.substring(index + 1, url.length)
+      return [url, layerName]
+    },
+
+    addNewLayer() {
+      const resultLayer: Array<string> = this.getResultLayer()
+      this.resultData = {
+        name: 'IGS图层',
+        description: '综合分析_结果图层',
+        data: {
+          type: 'IGSVector',
+          description: '缓冲区分析',
+          srcLayer: this.srcLayer + this.srcBLayer,
+          url: resultLayer[0],
+          name: resultLayer[1],
+        },
+      }
+      eventBus.$emit(events.ADD_DATA_EVENT, this.resultData)
     },
 
     /**
