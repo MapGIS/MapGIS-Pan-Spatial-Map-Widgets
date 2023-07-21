@@ -178,7 +178,7 @@ export default {
         const url = new URL(this.baseOverlayUrl)
         return url.origin
       }
-      return `${window.location.protocol}//${baseConfigInstance.config.ip}${baseConfigInstance.config.port}`
+      return `${window.location.protocol}//${baseConfigInstance.config.ip}:${baseConfigInstance.config.port}`
     },
   },
 
@@ -298,21 +298,39 @@ export default {
     },
 
     addNewLayer() {
-      const url = `${this.domain}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
-      const index = url.lastIndexOf('/')
-      const layerName = url.substring(index + 1, url.length)
-      this.resultData = {
-        name: 'IGS图层',
-        description: '综合分析_结果图层',
-        data: {
-          type: 'IGSVector',
-          description: '叠加分析',
-          srcLayer: this.srcALayer + this.srcBLayer,
-          url,
-          name: layerName,
-        },
+      if (this.dataType === 'Model') {
+        const url = `${this.domain}/igs/rest/services/system/ResourceServer/tempData/models?gdbpUrl=${this.destLayer}`
+        const index = url.lastIndexOf('/')
+        const layerName = url.substring(index + 1, url.length)
+        const resultData = {
+          name: 'IGS图层',
+          description: '综合分析_结果图层',
+          data: {
+            type: 'IGSVector',
+            description: '缓冲区分析',
+            srcLayer: this.srcLayer,
+            url,
+            name: layerName,
+          },
+        }
+        eventBus.$emit(events.ADD_DATA_EVENT, resultData)
+      } else {
+        const url = `${this.domain}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
+        const index = url.lastIndexOf('/')
+        const layerName = url.substring(index + 1, url.length)
+        this.resultData = {
+          name: 'IGS图层',
+          description: '综合分析_结果图层',
+          data: {
+            type: 'IGSVector',
+            description: '叠加分析',
+            srcLayer: this.srcALayer + this.srcBLayer,
+            url,
+            name: layerName,
+          },
+        }
+        eventBus.$emit(events.ADD_DATA_EVENT, this.resultData)
       }
-      eventBus.$emit(events.ADD_DATA_EVENT, this.resultData)
     },
 
     /**
