@@ -95,6 +95,9 @@ export default {
       }
     },
     parseLayerType(typeString: string): LayerType {
+      if (typeString === 'TILE3D') {
+        return LayerType.ModelCache
+      }
       const type = LayerType[typeString]
       if (type === undefined) {
         return LayerType.Unknown
@@ -162,6 +165,15 @@ export default {
               description,
               serverURL: layer.url,
               serverType: this.parseLayerType(layer.type),
+              commonData: layer.commonData,
+              serviceType: layer.serviceType,
+            }
+            if (layer.type === 'TILE3D') {
+              layerConfig.customParameters = [
+                {
+                  format: 'cesium3dTileset',
+                },
+              ]
             }
             if (layer.token) {
               layerConfig.tokenValue = layer.token
@@ -190,7 +202,9 @@ export default {
             name: layer.name,
             description,
             url: layer.serverURL,
-            type: this.getLayerTypeString(layer.serverType),
+            type: layer.commonData.layerServiceType,
+            commonData: layer.commonData,
+            serviceType: layer.serviceType,
           }
           if (layer.tokenValue) {
             layerConfig.token = layer.tokenValue
@@ -216,8 +230,12 @@ export default {
             if (mapLayer.loadStatus === LoadStatus.notLoaded) {
               await mapLayer.load()
               this.document.baseLayerMap.add(mapLayer)
-              if (isZoomTo) {
+              if (isZoomTo || mapLayer.type === LayerType.STKTerrain) {
                 this.fitBounds(mapLayer, init)
+              } else if (mapLayer.type === LayerType.IGSScene) {
+                setTimeout(() => {
+                  this.fitBounds(mapLayer, init)
+                }, 500)
               }
             } else {
               this.document.baseLayerMap.add(mapLayer)
