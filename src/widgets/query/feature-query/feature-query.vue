@@ -1185,6 +1185,13 @@ export default {
       this.checkList = keysInfo
       this.checkLayer = []
       keysInfo.forEach((item) => {
+        // 单图层
+        if (!item.layer?.id) {
+          this.layerKeyRelation[item.id] = []
+          this.layerKeyRelation[item.id].push(item.key)
+          this.checkLayer.push(item)
+          return
+        }
         if (this.layerKeyRelation[item.layer.id]) {
           this.layerKeyRelation[item.layer.id].push(item.key)
         } else {
