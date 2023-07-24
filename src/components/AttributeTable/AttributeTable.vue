@@ -123,7 +123,7 @@
       </mapgis-ui-pagination>
     </div>
     <mp-marker-plotting
-      v-if="is2DMapMode && !isIGSScence"
+      v-if="is2DMapMode && !isIGSScence && !isModelCacheLayer"
       ref="refMarkerPlotting"
       :markers="markers"
       :filter-with-map="filterWithMap"
@@ -310,6 +310,10 @@ export default {
       const { serverType } = this.optionVal
       return serverType === LayerType.IGSScene
     },
+    isModelCacheLayer() {
+      const { serverType } = this.optionVal
+      return serverType === LayerType.ModelCache
+    },
     // marker几何高亮类型，hover表示鼠标放到标注上高亮，default表示显示标注的时候就高亮
     markerShowType() {
       return this.hightlightSelection ? 'default' : 'hover'
@@ -420,7 +424,6 @@ export default {
     onRowClick(row: unknown) {},
     // 双击行
     onRowDblclick(row: unknown) {
-      debugger
       const feature = row as GFeature
       let bound = feature.properties.specialLayerBound
       if (bound === undefined) {
@@ -639,7 +642,7 @@ export default {
       for (let i = 0; i < this.tableData.length; i += 1) {
         const feature = this.tableData[i]
         let center = []
-        if (this.isIGSScence) {
+        if (this.isIGSScence || this.isModelCacheLayer) {
           const { xmin, xmax, ymin, ymax } =
             feature.properties.specialLayerBound
           const longitude = (xmin + xmax) / 2
@@ -661,7 +664,10 @@ export default {
           tempMarkers.push(marker)
         }
       }
-      if (this.isIGSScence && tempMarkers.length > 0) {
+      if (
+        (this.isIGSScence || this.isModelCacheLayer) &&
+        tempMarkers.length > 0
+      ) {
         const arr = await this.getModelHeight(tempMarkers)
         if (arr.length === tempMarkers.length) {
           arr.forEach((item, index) => {

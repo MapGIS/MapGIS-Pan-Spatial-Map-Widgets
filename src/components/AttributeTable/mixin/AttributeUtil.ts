@@ -99,6 +99,7 @@ export default {
         case LayerType.ArcGISMapImage:
           return 'ID'
         case LayerType.IGSScene:
+        case LayerType.ModelCache:
           return 'FID'
         case LayerType.EsGeoCode:
           return 'customerId'
@@ -221,6 +222,7 @@ export default {
       let geojson
       const queryWhere = where || this.optionVal.where
       let queryGeometry = geometry || this.optionVal.geometry
+      let columns = []
       switch (serverType) {
         case LayerType.IGSMapImage:
         case LayerType.IGSVector:
@@ -231,7 +233,7 @@ export default {
               queryWhere
             )
             if (!(this.tableColumns && this.tableColumns.length > 0)) {
-              const columns = this.setTableScroll(AttStruct)
+              columns = this.setTableScroll(AttStruct)
               this.tableColumns = columns
             }
             this.pagination.total = TotalCount
@@ -298,7 +300,7 @@ export default {
             return
           }
           this.tableData = geojson.features
-          const columns: Array = []
+
           const { properties } = geojson.features[0]
           const tags = Object.keys(properties)
           if (tags.length <= 10) {
@@ -342,6 +344,7 @@ export default {
           break
 
         case LayerType.IGSScene:
+        case LayerType.ModelCache:
           // 查找矩阵集
           const source = this.sceneController.findSource(this.optionVal.id)
           queryGeometry = geometry
@@ -351,17 +354,12 @@ export default {
             ip,
             port: port.toString(),
             domain,
-            where: queryWhere,
             geometry: queryGeometry,
-            page: current - 1,
-            pageCount: pageSize,
             url: gdbp,
-            geometryPrecision: 8,
             inSrs: 'WGS1984_度',
-            ourSrs: 'WGS1984_度',
+            outSrs: 'WGS1984_度',
             returnCountOnly: true,
           })
-          debugger
           const { count } = json
           this.pagination.total = count
           let jsonData = await FeatureQuery.igsQuery3DFeatureResourceServer({
@@ -375,7 +373,7 @@ export default {
             url: gdbp,
             geometryPrecision: 8,
             inSrs: 'WGS1984_度',
-            ourSrs: 'WGS1984_度',
+            outSrs: 'WGS1984_度',
           })
           if (val === '1') {
             jsonData = await FeatureQuery.igsQuery3DFeatureResourceServer({
@@ -389,7 +387,7 @@ export default {
               url: gdbp,
               geometryPrecision: 8,
               inSrs: 'WGS1984_度',
-              ourSrs: 'WGS1984_度',
+              outSrs: 'WGS1984_度',
             })
             this.attrTableToJsonData = this.setTable20(
               jsonData.features,
@@ -399,7 +397,7 @@ export default {
             return
           }
           if (!(this.tableColumns && this.tableColumns.length > 0)) {
-            const columns = this.setTableScroll20(jsonData.fields)
+            columns = this.setTableScroll20(jsonData.fields)
             this.tableColumns = columns
           }
           this.tableData = this.setTable20(
@@ -618,46 +616,17 @@ export default {
       return false
     },
     getGeometry3D(source) {
-      if (source) {
-        const transform = source.root.transform
-        const { xmin, ymin, xmax, ymax, zmin, zmax } = this.geometry3D
-        const minPosition = this.sceneController.globelPositionToLocalPosition(
-          { x: xmin, y: ymin, z: zmin },
-          transform
-        )
-        const maxPosition = this.sceneController.globelPositionToLocalPosition(
-          { x: xmax, y: ymax, z: zmax },
-          transform
-        )
-        return new Rectangle3D(
-          minPosition.x,
-          minPosition.y,
-          zmin,
-          maxPosition.x,
-          maxPosition.y,
-          zmax
-        )
-      }
-
-      return undefined
+      const { xmin, ymin, xmax, ymax, zmin, zmax } = this.geometry3D
+      return new Rectangle3D(xmin, ymin, zmin, xmax, ymax, zmax)
     },
     // 设置IGSScene类型的属性表table数据
     setTable(SFEleArray, source, FldName, FldNumber) {
       return (SFEleArray || []).map(({ AttValue = [], bound = {}, FID }) => {
-        let boundObj = null
-        if (source) {
-          const tranform = source.root.transform
-          const offset = source._asset.offset
-          boundObj = this.sceneController.localExtentToGlobelExtent(
-            bound,
-            tranform,
-            offset
-          )
-        }
+        console.log(this.optionVal)
         const properties = {
           FID,
           specialLayerId: this.optionVal.id,
-          specialLayerBound: boundObj,
+          specialLayerBound: bound,
         }
         for (let index = 0; index < FldNumber; index++) {
           const name = FldName[index]
@@ -675,32 +644,17 @@ export default {
     },
     setTable20(features, source, fields) {
       return (features || []).map(({ attributes = {}, bound = {} }) => {
-        let boundObj = null
-        if (source) {
-          const tranform = source.root.transform
-          const offset = source._asset.offset
-          boundObj = this.sceneController.localExtentToGlobelExtent(
-            bound,
-            tranform,
-            offset
-          )
-        }
         const properties = {
           FID: attributes.FID,
           specialLayerId: this.optionVal.id,
-          specialLayerBound: boundObj,
+          specialLayerBound: bound,
         }
-        // for (let index = 0; index < fields; index++) {
-        //   const name = fields[index].name
-        //   const value = attributes[name]
-        //   properties[name] = value
-        // }
         return {
           geometry: {
             coordinates: [],
             type: '3DPolygon',
           },
-          properties: { ...attributes },
+          properties: { ...properties, ...attributes },
         }
       })
     },
