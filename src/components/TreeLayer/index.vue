@@ -206,6 +206,7 @@ import {
   api,
   DataCatalogCheckController,
   LayerSublayersManager,
+  ModelPickController,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../MetadataInfo/MetadataInfo.vue'
 import MpCustomQuery from '../CustomQuery/CustomQuery.vue'
@@ -269,6 +270,7 @@ export default {
       // 图层是否保持编辑样式
       modelSave: false,
       layerConfig: null,
+      modelPickController: ModelPickController,
     }
   },
   computed: {
@@ -393,6 +395,13 @@ export default {
             }, 700)
           }
         }
+      },
+    },
+    'modelPickController.pickLayerObj': {
+      immediate: false,
+      deep: true,
+      handler() {
+        this.parseModelPick()
       },
     },
   },
@@ -1379,6 +1388,44 @@ export default {
       // }
 
       return expandedKeys
+    },
+    parseModelPick() {
+      const changeModelPickArr = ModelPickController.pickLayerObj
+      const modelPickOpen = ModelPickController.modelPickOpen
+      if (changeModelPickArr && changeModelPickArr.length === 0) return
+      const doc = this.layerDocument.clone()
+      const layers = doc.defaultMap.layers()
+      changeModelPickArr.forEach((item) => {
+        // 单个图层和多个图层的处理
+        if (item.childIds && item.childIds.length > 0) {
+          item.childIds.forEach((change) => {
+            const indexArr = change.split(':')
+            const [firstIndex, secondIndex] = indexArr
+            const layer = this.layers.find((c) => c.id === item.parentId)
+            if (indexArr.length === 2) {
+              const editLayer = layers[layer.key]
+              const { sublayers } = editLayer.activeScene
+              const sublayer = sublayers[secondIndex]
+              sublayer.layer.enablePopup = modelPickOpen
+              sublayer.layer.layerProperty = {
+                ...sublayer.layer.layerProperty,
+                enablePopup: modelPickOpen,
+              }
+            }
+          })
+        } else {
+          const layer = this.layers.find(
+            (change) => change.id === item.parentId
+          )
+          const targetLayer = layers[layer.key]
+          targetLayer.enablePopup = modelPickOpen
+          targetLayer.layerProperty = {
+            ...targetLayer.layerProperty,
+            enablePopup: modelPickOpen,
+          }
+        }
+      })
+      this.$emit('update:layerDocument', doc)
     },
   },
   beforeDestroy() {
