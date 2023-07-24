@@ -182,7 +182,10 @@ export default {
     },
 
     locationTypes() {
-      return this.config.placeName.locationMode
+      return (
+        this.config.placeName?.locationMode ||
+        this.config.dataStore.locationMode
+      )
     },
   },
   methods: {
@@ -298,8 +301,6 @@ export default {
      */
     clickItem(feature) {
       const center = Feature.getGeoJSONFeatureCenter(feature)
-      const bound = feature.bound
-      const { xmin, ymin, xmax, ymax } = bound
       if (this.is2DMapMode) {
         this.map.flyTo({
           center: center,
@@ -367,15 +368,22 @@ export default {
       this.closePopup()
       let showProperty
       if (data) {
-        showProperty = this.config.placeName.queryTable.find(
-          (item) => item.placeName === data
-        )
+        if (this.config.placeName) {
+          showProperty = this.config.placeName.queryTable.find(
+            (item) => item.placeName === data
+          )
+        } else {
+          showProperty = this.config.dataStore.queryTable.find(
+            (item) => item.placeName === data
+          )
+        }
       }
       // 如果配置为空采用默认配置
       this.selectShowProperty =
         showProperty && showProperty.showField.length > 0
           ? showProperty.showField
-          : this.config.placeName.defaultShowField
+          : this.config.placeName?.defaultShowField ||
+            this.config.dataStore.defaultShowField
     },
 
     /**
