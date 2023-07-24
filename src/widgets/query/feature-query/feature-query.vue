@@ -541,6 +541,7 @@ export default {
             this.queryFeaturesByDoc(layer, geometry)
             break
           case LayerType.IGSScene:
+          case LayerType.ModelCache:
             this.queryFeaturesByIGSScene(layer, geometry)
             break
           case LayerType.ArcGISMapImage:
@@ -556,7 +557,8 @@ export default {
       if (!layer.isVisible) {
         return
       }
-      const { domain, docName } = layer._parseUrl(layer.url)
+      const url = new URL(layer.url)
+      const domain = url.origin
 
       const exhibition: IAttributeTableListExhibition = {
         id: `${layer.id}`,
@@ -582,7 +584,7 @@ export default {
         //     return
         //   }
         exhibition.options.push({
-          id: layerConfig.bindData.id,
+          id: layerConfig.bindData.id || layer.id,
           name: layerConfig.title || layerConfig.name,
           ip: layerConfig.bindData.ip || baseConfigInstance.config.ip,
           port:
@@ -592,14 +594,28 @@ export default {
           gdbp: layerConfig.bindData.gdbps,
           geometry: geometry,
         })
-        const { TotalCount } = await this.queryCount(
-          exhibition.options[0],
-          true
+        const { xmin, ymin, xmax, ymax, zmin, zmax } = geometry
+        const queryGeometry = new Rectangle3D(
+          xmin,
+          ymin,
+          zmin,
+          xmax,
+          ymax,
+          zmax
         )
+        const json = await FeatureQuery.igsQuery3DFeatureResourceServer({
+          ip: layerConfig.bindData.ip || baseConfigInstance.config.ip,
+          port:
+            layerConfig.bindData.port || Number(baseConfigInstance.config.port),
+          domain,
+          geometry: queryGeometry,
+          url: layerConfig.bindData.gdbps,
+          returnCountOnly: true,
+        })
+        const TotalCount = json.count
         if (TotalCount > 0) {
-          activeOptionId = layerConfig.bindData.id
+          activeOptionId = layerConfig.bindData.id || layer.id
         }
-        // }
         this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
       }
     },
@@ -767,6 +783,25 @@ export default {
         gdbp,
         geometry,
       } = optionVal
+      if (isScence) {
+        const { xmin, ymin, xmax, ymax, zmin, zmax } = geometry
+        const queryGeometry = new Rectangle3D(
+          xmin,
+          ymin,
+          zmin,
+          xmax,
+          ymax,
+          zmax
+        )
+        const json = await FeatureQuery.igsQuery3DFeatureResourceServer({
+          ip,
+          port: port.toString(),
+          domain,
+          geometry: queryGeometry,
+          url: gdbp,
+          returnCountOnly: true,
+        })
+      }
       const featureSet = await FeatureQuery.query(
         {
           ip,
@@ -846,22 +881,17 @@ export default {
       nearDis
     ) {
       let geometry
+      let pointArray
 
       switch (this.queryType) {
         case QueryType.Point:
-          if (!this.is2DMapMode && layer.type === LayerType.IGSScene) {
-            // 三维查询需要用到局部坐标，这里把经纬度转换成局部坐标,这里z轴不做转换
-            const transform = this.getLayerTranform(layer)
-            const offset = this.getLayerOffset(layer)
-            if (transform) {
-              const { x, y, z } =
-                this.sceneController.globelPositionToLocalPosition(
-                  shape,
-                  transform,
-                  offset
-                )
-              geometry = new Point3D(x, y, shape.z)
-            }
+          if (
+            !this.is2DMapMode &&
+            (layer.type === LayerType.IGSScene ||
+              layer.type === LayerType.ModelCache)
+          ) {
+            const { x, y, z } = shape
+            geometry = new Point3D(shape.x, shape.y, shape.z)
           } else {
             let pointNearDis = nearDis
             if (!pointNearDis) {
@@ -875,83 +905,74 @@ export default {
           }
           break
         case QueryType.LineString:
-          if (!this.is2DMapMode && layer.type === LayerType.IGSScene) {
-            // 三维查询需要用到局部坐标，这里把经纬度转换成局部坐标,这里z轴不做转换
-            const transform = this.getLayerTranform(layer)
-            const offset = this.getLayerOffset(layer)
-            if (transform) {
-              const { xmin, ymin, xmax, ymax, zmin, zmax } = this.toQueryRect3D(
-                shape,
-                transform,
-                offset
-              )
-
-              geometry = new Rectangle3D(xmin, ymin, zmin, xmax, ymax, zmax)
+          // if (
+          //   !this.is2DMapMode &&
+          //   (layer.type === LayerType.IGSScene ||
+          //     layer.type === LayerType.ModelCache)
+          // ) {
+          //   const { xmin, ymin, xmax, ymax, zmin, zmax } = shape
+          //   geometry = new Rectangle3D(xmin, ymin, zmin, xmax, ymax, zmax)
+          // } else {
+          let lineNearDis = nearDis
+          pointArray = shape.map((item: Record<string, number>) => {
+            if (!lineNearDis) {
+              // 如果nearDis为0，需要重置nearDis为0.0000001之类的，小数位数与坐标位数保持一致。igs接口这个参数不能直接设置为0
+              const xStr = item.x.toString().split('.')[1]
+              lineNearDis = Number(`0.${xStr}`) / Number(xStr)
             }
-          } else {
-            let lineNearDis = nearDis
-            const pointArray = shape.map((item: Record<string, number>) => {
-              if (!lineNearDis) {
-                // 如果nearDis为0，需要重置nearDis为0.0000001之类的，小数位数与坐标位数保持一致。igs接口这个参数不能直接设置为0
-                const xStr = item.x.toString().split('.')[1]
-                lineNearDis = Number(`0.${xStr}`) / Number(xStr)
-              }
-              return new Zondy.Common.Point2D(item.x, item.y, {
-                nearDis: lineNearDis,
-              })
-            })
-
-            geometry = new Zondy.Common.PolyLine(pointArray, {
+            return new Zondy.Common.Point2D(item.x, item.y, {
               nearDis: lineNearDis,
             })
-          }
+          })
+
+          geometry = new Zondy.Common.PolyLine(pointArray, {
+            nearDis: lineNearDis,
+          })
+          // }
           break
         case QueryType.Polygon:
-          if (!this.is2DMapMode && layer.type === LayerType.IGSScene) {
-            // 三维查询需要用到局部坐标，这里把经纬度转换成局部坐标,这里z轴不做转换
-            const transform = this.getLayerTranform(layer)
-            const offset = this.getLayerOffset(layer)
-            if (transform) {
-              const { xmin, ymin, xmax, ymax, zmin, zmax } = this.toQueryRect3D(
-                shape,
-                transform,
-                offset
-              )
-
-              geometry = new Rectangle3D(xmin, ymin, zmin, xmax, ymax, zmax)
+          // if (
+          //   !this.is2DMapMode &&
+          //   (layer.type === LayerType.IGSScene ||
+          //     layer.type === LayerType.ModelCache)
+          // ) {
+          //   const { xmin, ymin, xmax, ymax, zmin, zmax } = shape
+          //   geometry = new Rectangle3D(xmin, ymin, zmin, xmax, ymax, zmax)
+          // } else {
+          let polyNearDis = nearDis
+          pointArray = shape.map((item: Record<string, number>) => {
+            if (!polyNearDis) {
+              // 如果nearDis为0，需要重置nearDis为0.0000001之类的，小数位数与坐标位数保持一致。igs接口这个参数不能直接设置为0
+              const xStr = item.x.toString().split('.')[1]
+              polyNearDis = Number(`0.${xStr}`) / Number(xStr)
             }
-          } else {
-            let polyNearDis = nearDis
-            const pointArray = shape.map((item: Record<string, number>) => {
-              if (!polyNearDis) {
-                // 如果nearDis为0，需要重置nearDis为0.0000001之类的，小数位数与坐标位数保持一致。igs接口这个参数不能直接设置为0
-                const xStr = item.x.toString().split('.')[1]
-                polyNearDis = Number(`0.${xStr}`) / Number(xStr)
-              }
-              return new Zondy.Common.Point2D(item.x, item.y, {
-                nearDis: polyNearDis,
-              })
+            return new Zondy.Common.Point2D(item.x, item.y, {
+              nearDis: polyNearDis,
             })
+          })
 
-            geometry = new Zondy.Common.Polygon(pointArray)
-          }
+          geometry = new Zondy.Common.Polygon(pointArray)
+          // }
           break
         case QueryType.Cube:
         case QueryType.Circle:
         case QueryType.Rectangle:
-          if (!this.is2DMapMode && layer.type === LayerType.IGSScene) {
-            // 三维查询需要用到局部坐标，这里把经纬度转换成局部坐标,这里z轴不做转换
-            const transform = this.getLayerTranform(layer)
-            const offset = this.getLayerOffset(layer)
-            if (transform) {
-              const { xmin, ymin, xmax, ymax, zmin, zmax } = shape
-
-              geometry = this.transQueryRect3D(
-                { xmin, ymin, xmax, ymax, zmin, zmax },
-                transform,
-                offset
-              )
-            }
+          if (
+            !this.is2DMapMode &&
+            (layer.type === LayerType.IGSScene ||
+              layer.type === LayerType.ModelCache)
+          ) {
+            const { xmin, ymin, xmax, ymax, zmin, zmax } = shape
+            const tempZmin = zmin !== undefined ? zmin : -10000
+            const tempZmax = zmax !== undefined ? zmax : 10000
+            geometry = new Rectangle3D(
+              xmin,
+              ymin,
+              tempZmin,
+              xmax,
+              ymax,
+              tempZmax
+            )
           } else {
             const { xmin, ymin, xmax, ymax } = shape
             geometry = new Zondy.Common.Rectangle(xmin, ymin, xmax, ymax)
@@ -966,81 +987,6 @@ export default {
 
       return geometry
     },
-
-    transQueryRect3D(
-      { xmin, ymin, xmax, ymax, zmin, zmax },
-      transform,
-      offset
-    ) {
-      if (transform) {
-        const minPosition = this.sceneController.globelPositionToLocalPosition(
-          { x: xmin, y: ymin, z: zmin },
-          transform,
-          offset
-        )
-        const maxPosition = this.sceneController.globelPositionToLocalPosition(
-          { x: xmax, y: ymax, z: zmax },
-          transform,
-          offset
-        )
-        return new Rectangle3D(
-          minPosition.x,
-          minPosition.y,
-          zmin,
-          maxPosition.x,
-          maxPosition.y,
-          zmax
-        )
-      }
-      return undefined
-    },
-
-    toQueryRect3D(shape, transform, offset) {
-      const positions = shape.map((item) => {
-        const { x, y, z } = this.sceneController.globelPositionToLocalPosition(
-          item,
-          transform,
-          offset
-        )
-        return {
-          x,
-          y,
-          z: item.z,
-        }
-      })
-      let xmin = 0
-      let ymin = 0
-      let zmin = 0
-      let xmax = 0
-      let ymax = 0
-      let zmax = 0
-      positions.forEach(({ x, y, z }, index) => {
-        if (index === 0) {
-          xmin = x
-          ymin = y
-          zmin = z
-          xmax = x
-          ymax = y
-          zmax = z
-        } else {
-          xmin = xmin - x < 0 ? xmin : x
-          ymin = ymin - y < 0 ? ymin : y
-          zmin = zmin - z < 0 ? zmin : z
-          xmax = xmax - x > 0 ? xmax : x
-          ymax = ymax - y > 0 ? ymax : y
-          zmax = zmax - z > 0 ? zmax : z
-        }
-      })
-      return {
-        xmin,
-        ymin,
-        xmax,
-        ymax,
-        zmin,
-        zmax,
-      }
-    },
-
     getLayerTranform(layer) {
       let tranform = null
       const {
@@ -1093,46 +1039,15 @@ export default {
       const { fullExtent, type } = layer
       const { ymax, ymin, xmax, xmin } = fullExtent
       let geometry
-      let extentPolygon
-
-      if (!this.is2DMapMode && type === LayerType.IGSScene) {
-        const tranform = this.getLayerTranform(layer)
-        if (tranform) {
-          const extent = this.sceneController.localExtentToGlobelExtent(
-            fullExtent,
-            tranform
-          )
-          extentPolygon = polygon([
-            [
-              [Number(extent.xmin), Number(extent.ymin)],
-              [Number(extent.xmax), Number(extent.ymin)],
-              [Number(extent.xmax), Number(extent.ymax)],
-              [Number(extent.xmin), Number(extent.ymax)],
-              [Number(extent.xmin), Number(extent.ymin)],
-            ],
-          ])
-        } else {
-          extentPolygon = polygon([
-            [
-              [Number(xmin), Number(ymin)],
-              [Number(xmax), Number(ymin)],
-              [Number(xmax), Number(ymax)],
-              [Number(xmin), Number(ymax)],
-              [Number(xmin), Number(ymin)],
-            ],
-          ])
-        }
-      } else {
-        extentPolygon = polygon([
-          [
-            [Number(xmin), Number(ymin)],
-            [Number(xmax), Number(ymin)],
-            [Number(xmax), Number(ymax)],
-            [Number(xmin), Number(ymax)],
-            [Number(xmin), Number(ymin)],
-          ],
-        ])
-      }
+      const extentPolygon = polygon([
+        [
+          [Number(xmin), Number(ymin)],
+          [Number(xmax), Number(ymin)],
+          [Number(xmax), Number(ymax)],
+          [Number(xmin), Number(ymax)],
+          [Number(xmin), Number(ymin)],
+        ],
+      ])
       switch (this.queryType) {
         case QueryType.Point:
           geometry = point([shape.x, shape.y])
@@ -1213,7 +1128,10 @@ export default {
     dealwithLayers() {
       const layers = this.document.clone().defaultMap.layers()
       layers.forEach((item) => {
-        if (item.type === LayerType.IGSScene) {
+        if (
+          item.type === LayerType.IGSScene ||
+          item.type === LayerType.ModelCache
+        ) {
           item.sublayers = item.activeScene?.sublayers
         } else if (item.type === LayerType.IGSVector) {
           item.sublayers = item.currentStyle.layers.map((row) => ({

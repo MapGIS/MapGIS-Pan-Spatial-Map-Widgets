@@ -174,7 +174,8 @@ export default {
           this.includeBindData(item)) ||
         (this.isSubLayer(item) && this.isArcGISMapImage(item)) ||
         this.isIgsVectorLayer(item) ||
-        this.isDataFlow(item)
+        this.isDataFlow(item) ||
+        (this.isModelCacheLayer(item) && this.includeBindData(item))
 
       return bool
     },
@@ -184,8 +185,9 @@ export default {
      * @returns boolean
      */
     includeBindData(item) {
-      if (item.layer) {
-        const { id } = item.layer
+      const layer = item.layer || item
+      if (layer) {
+        const { id } = layer
         const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(id)
         if (layerConfig && layerConfig.bindData) {
           return true
@@ -406,6 +408,33 @@ export default {
                   f: queryType || '',
                 },
                 popupOption: parent.extend?.popupOption,
+              }
+            }
+          },
+        },
+        {
+          type: this.isModelCacheLayer(layer),
+          setValue: () => {
+            const sceneLayer = layer.dataRef
+            const url = new URL(layer.url)
+            const domain = url.origin
+            const { id, name, title } = sceneLayer
+            const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
+              layer.id
+            )
+            if (layerConfig && layerConfig.bindData) {
+              exhibition = {
+                id: `${title} ${id}`,
+                name: `${title} ${titleType}`,
+                option: {
+                  id: `${id}`,
+                  domain,
+                  ip: baseConfigInstance.config.ip,
+                  port: Number(baseConfigInstance.config.port),
+                  serverType: layer.type,
+                  gdbp: layerConfig.bindData.gdbps,
+                  f: queryType || '',
+                },
               }
             }
           },
