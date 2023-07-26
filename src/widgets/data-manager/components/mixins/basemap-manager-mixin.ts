@@ -202,7 +202,9 @@ export default {
             name: layer.name,
             description,
             url: layer.serverURL,
-            type: layer.commonData.layerServiceType,
+            type:
+              layer.commonData?.layerServiceType ||
+              this.getLayerTypeString(layer.serverType),
             commonData: layer.commonData,
             serviceType: layer.serviceType,
           }
