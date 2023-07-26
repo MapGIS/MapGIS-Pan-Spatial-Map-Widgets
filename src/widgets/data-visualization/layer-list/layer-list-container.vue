@@ -18,7 +18,6 @@
           :widgetInfo="widgetInfo"
           :widgetRouters="widgetRouters"
           :layerDocument.sync="document"
-          @set-opacitys="setOpacitys"
         >
         </mp-tree-layer>
         <layer-opacity
@@ -94,11 +93,6 @@ export default {
     getLayerList() {
       const data = this.$refs.layerListTree.getCurrentData()
       DataCatalogCheckController.setCheckLayerConfig(data)
-    },
-    setOpacitys() {
-      const layers = DataCatalogCheckController.getCurrentLayerNoChildList()
-      layers.length > 0 &&
-        this.$refs.layerOpacity.setLayerOpacitys(layers, true)
     },
     restoreSetOpacity() {
       DataCatalogCheckController.setCurrentLayerNoChildList([])
