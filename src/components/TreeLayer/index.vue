@@ -421,41 +421,85 @@ export default {
   },
   methods: {
     setLayerEditConfig() {
+      const doc = this.layerDocument.clone()
+      const layers = doc.defaultMap.layers()
       const layerEditConfig =
         DataCatalogCheckController.getCurrentLayerChangeConfig()
       const unSetArr = []
+      // 设置屏幕误差和亮度
       if (layerEditConfig && layerEditConfig.length > 0) {
         layerEditConfig.forEach((item) => {
-          const sublayer = this.sceneController.findSource(item.id)
+          const sublayer =
+            this.sceneController.findSource(item.id) ||
+            this.sceneController.findM3DIgsSource(item.id)
           sublayer && unSetArr.push(item.id)
-          if (
-            sublayer &&
-            sublayer.maximumScreenSpaceError.toString() !==
-              item.maximumScreenSpaceError.toString()
-          ) {
-            sublayer.maximumScreenSpaceError = item.maximumScreenSpaceError
-          }
-        })
-      }
-
-      const layerSublayers = LayerSublayersManager.sublayersConfig
-      if (layerSublayers && layerSublayers.length > 0) {
-        layerSublayers.forEach((item) => {
-          if (!unSetArr.includes(item.id)) {
-            const sublayer = this.sceneController.findSource(item.id)
+          if (sublayer) {
             if (
-              sublayer &&
-              sublayer.maximumScreenSpaceError !==
-                item.layerProperty.maximumScreenSpaceError
+              sublayer.maximumScreenSpaceError.toString() !==
+              item.maximumScreenSpaceError.toString()
             ) {
-              sublayer.maximumScreenSpaceError =
-                item.layerProperty.maximumScreenSpaceError
+              sublayer.maximumScreenSpaceError = item.maximumScreenSpaceError
+            }
+
+            const indexArr = item.id.split(':')
+            if (indexArr.length === 2 || this.isModelCacheLayer(sublayer)) {
+              const [firstIndex, secondIndex] = indexArr
+              const layer = layers.find((current) => current.id === firstIndex)
+              if (indexArr.length === 2) {
+                const { sublayers } = layer.activeScene
+                sublayers.forEach((sub) => {
+                  unSetArr.push(sub.id)
+
+                  const sublayerM3d = this.sceneController.findSource(sub.id)
+                  if (
+                    sublayerM3d.luminanceAtZenith.toString() !==
+                    item.luminanceAtZenith.toString()
+                  ) {
+                    sublayerM3d.luminanceAtZenith = item.luminanceAtZenith
+                    flag = true
+                  }
+                })
+              } else {
+                if (
+                  sublayer.luminanceAtZenith.toString() !==
+                  item.luminanceAtZenith.toString()
+                ) {
+                  sublayer.luminanceAtZenith = item.luminanceAtZenith
+                }
+              }
             }
           }
         })
       }
 
-      this.$emit('set-opacitys')
+      // 正常加载时处理屏幕误差和亮度
+      const layerSublayers = LayerSublayersManager.sublayersConfig
+      if (layerSublayers && layerSublayers.length > 0) {
+        layerSublayers.forEach((item) => {
+          if (!unSetArr.includes(item.id)) {
+            const sublayer =
+              this.sceneController.findSource(item.id) ||
+              this.sceneController.findM3DIgsSource(item.id)
+            if (sublayer) {
+              if (
+                sublayer.maximumScreenSpaceError !==
+                item.layerProperty.maximumScreenSpaceError
+              ) {
+                sublayer.maximumScreenSpaceError =
+                  item.layerProperty.maximumScreenSpaceError
+              }
+
+              if (
+                sublayer.luminanceAtZenith.toString() !==
+                item.layerProperty.luminanceAtZenith.toString()
+              ) {
+                sublayer.luminanceAtZenith =
+                  item.layerProperty.luminanceAtZenith
+              }
+            }
+          }
+        })
+      }
     },
     /**
      * 当正在编辑图层被取消的时候，复位图层树路由
@@ -1341,6 +1385,7 @@ export default {
             key: item.key,
             sysLibraryGuid: item.sysLibraryGuid,
             maximumScreenSpaceError: item.maximumScreenSpaceError,
+            luminanceAtZenith: item.luminanceAtZenith,
             title: item.title,
             url: item.url,
             visible: item.visible,

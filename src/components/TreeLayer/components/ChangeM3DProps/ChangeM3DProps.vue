@@ -22,7 +22,7 @@
         size="large"
         label="模型阴影区域亮度调节"
         v-model="luminanceAtZenith"
-        :range="[0, 200]"
+        :range="[0, 100]"
         :step="0.2"
         @change="luminanceAtZenithChange"
       />
@@ -95,11 +95,11 @@ export default {
     },
   },
   watch: {
-    layer: {
-      handler: 'init',
-      immediate: true,
-      deep: true,
-    },
+    // layer: {
+    //   handler: 'init',
+    //   immediate: true,
+    //   deep: true,
+    // },
     scaleZ: {
       handler(val) {
         this.$emit('update:scaleZ', { scaleZ: val, offset: this.offset })
@@ -116,6 +116,9 @@ export default {
       },
       deep: true,
     },
+  },
+  mounted() {
+    this.init()
   },
   methods: {
     init() {
