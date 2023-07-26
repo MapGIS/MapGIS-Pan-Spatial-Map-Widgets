@@ -699,9 +699,15 @@ export default {
         serverType === LayerType.IGSVector ||
         serverType === LayerType.IGSScene
       ) {
+        let domain
+        if (!!serverUrl && serverUrl.length > 0) {
+          const url = new URL(serverUrl)
+          domain = url.origin
+        }
         this.statisticAndFilterParamas = {
           ip: this.optionVal.ip.toString(),
           port: this.optionVal.port.toString(),
+          domain,
           serverName: this.optionVal.serverName,
           layerIndex: this.currentTableParams.layerIndex,
           serverType,
