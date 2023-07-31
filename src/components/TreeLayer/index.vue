@@ -207,6 +207,7 @@ import {
   DataCatalogCheckController,
   LayerSublayersManager,
   ModelPickController,
+  LayerPropertyEdit,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../MetadataInfo/MetadataInfo.vue'
 import MpCustomQuery from '../CustomQuery/CustomQuery.vue'
@@ -456,7 +457,6 @@ export default {
                     item.luminanceAtZenith.toString()
                   ) {
                     sublayerM3d.luminanceAtZenith = item.luminanceAtZenith
-                    flag = true
                   }
                 })
               } else {
@@ -922,12 +922,11 @@ export default {
         },
         listeners: {
           'update:layer': (val) => {
-            DataCatalogCheckController.setCurrentLayerChangeConfig([])
             this.updateM3DProps(val, false)
             this.changeLayer(val)
             const layer = val.layer ? val.layer : val
             const { dataId, layerProperty } = layer
-            api.updateData({ dataId, layerProperty })
+            // api.updateData({ dataId, layerProperty })
           },
           'update:luminanceAtZenith': (val) => {
             this.updateM3DProps(val, true)
@@ -1149,6 +1148,10 @@ export default {
       this.currentLayerInfo = {}
     },
 
+    // updateLuminanceAtZenith(luminanceAtZenith) {
+    //   const { key, luminanceAtZenith } = val
+    //   const indexArr: Array<string> = key.split('-')
+    // },
     updateM3DProps(val, onlyUpdateLuminanceAtZenith, changeEnablePopup) {
       let enablePopup
       let enableModelSwitch
@@ -1168,8 +1171,30 @@ export default {
         layerProperty = val.layerProperty
       }
       const indexArr: Array<string> = key.split('-')
+      const idArr = id.split(':')
       const doc = this.layerDocument.clone()
       const layers: Array<unknown> = doc.defaultMap.layers()
+
+      // 记录修改后的值
+      const editConfig = {
+        parentId: idArr[0],
+        id: id,
+        layerProperty: {
+          ...layerProperty,
+          enablePopup,
+          enableModelSwitch,
+          maximumScreenSpaceError,
+          luminanceAtZenith,
+        },
+      }
+      LayerPropertyEdit.propertyConfigArr = editConfig
+
+      const editChangeConfig = {
+        id: id,
+        maximumScreenSpaceError: maximumScreenSpaceError,
+        luminanceAtZenith: luminanceAtZenith,
+      }
+      DataCatalogCheckController.editCurrentLayerConfig(editChangeConfig)
       if (indexArr.length === 2 || this.isModelCacheLayer(val)) {
         const [firstIndex, secondIndex] = indexArr
         if (indexArr.length === 2) {
