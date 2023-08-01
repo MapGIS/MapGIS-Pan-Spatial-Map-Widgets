@@ -117,7 +117,7 @@ export default {
       deep: true,
     },
   },
-  mounted() {
+  created() {
     this.init()
   },
   methods: {
@@ -202,6 +202,7 @@ export default {
     },
 
     luminanceAtZenithChange() {
+      if (this.layer.luminanceAtZenith === this.luminanceAtZenith) return
       this.layer.luminanceAtZenith = this.luminanceAtZenith
       if (this.layer.layerProperty !== undefined) {
         this.layer.layerProperty.luminanceAtZenith = this.luminanceAtZenith

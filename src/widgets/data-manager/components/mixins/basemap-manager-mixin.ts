@@ -71,8 +71,8 @@ export default {
         this.clearBasemap()
       } else {
         this.basemapNames = [...this.basemapNamesCopy]
-        this.basemapNames.forEach((name) => {
-          this.renderMaps(name)
+        this.basemapNames.forEach((guid) => {
+          this.renderMaps(guid)
         })
       }
     },
@@ -222,10 +222,10 @@ export default {
     },
 
     // 渲染底图到页面
-    renderMaps(name, isZoomTo, init) {
+    renderMaps(guid, isZoomTo, init) {
       for (let i = 0; i < this.basemaps.length; i++) {
         const basemap = this.basemaps[i]
-        if (basemap.name === name) {
+        if (basemap.guid === guid) {
           basemap.children.forEach(async (layer) => {
             const mapLayer = DataCatalogManager.generateLayerByConfig(layer)
             mapLayer.description = layer.description
@@ -251,14 +251,14 @@ export default {
       }
     },
 
-    onUnSelect(name) {
+    onUnSelect(id) {
       this.basemapNames.splice(
-        this.basemapNames.findIndex((basemapName) => basemapName === name),
+        this.basemapNames.findIndex((guid) => guid === id),
         1
       )
       for (let i = 0; i < this.basemaps.length; i++) {
         const basemap = this.basemaps[i]
-        if (basemap.name === name) {
+        if (basemap.guid === id) {
           basemap.children.forEach((layer) => {
             const maplayer = this.document.baseLayerMap.findLayerById(
               layer.guid

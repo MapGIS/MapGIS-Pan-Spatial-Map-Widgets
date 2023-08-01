@@ -9,9 +9,10 @@
       <mp-basemap-item
         v-for="basemap in basemaps"
         :key="basemap.name"
+        :guid="basemap.guid"
         :name="basemap.name"
         :image="imageUrl(basemap.image)"
-        :active="basemapNames.includes(basemap.name)"
+        :active="basemapNames.includes(basemap.guid)"
         @select="onSelect"
         @un-select="onUnSelect"
       >
@@ -21,7 +22,11 @@
 </template>
 
 <script lang="ts">
-import { api, baseConfigInstance } from '@mapgis/web-app-framework'
+import {
+  api,
+  baseConfigInstance,
+  BaseMapController,
+} from '@mapgis/web-app-framework'
 import basemapManagerMixins from '../components/mixins/basemap-manager-mixin.ts'
 
 export default {
@@ -65,8 +70,13 @@ export default {
           basemap.select = false
         }
       })
+      // BaseMapController.initBaseMapInfo = { isShow }
       return
     }
+    // 记录初始化底图信息
+    let initBaseMap = { isShow, indexBaseMapGUID }
+    const selectBaseMap = this.defaultSelect.map((item) => item.guid)
+    initBaseMap = { ...initBaseMap, selectBaseMap }
     // 加载显示配置里已设置默认选中的底图
     if (this.defaultSelect && this.defaultSelect.length > 0) {
       for (let i = 0; i < this.defaultSelect.length; i++) {
@@ -116,18 +126,18 @@ export default {
             init = true
           }
         }
-        this.onSelect(this.defaultSelect[i].name, isZoomTo, init)
+        this.onSelect(this.defaultSelect[i].guid, isZoomTo, init)
       }
     }
   },
   methods: {
-    onSelect(name, isZoomTo = false, init = false) {
+    onSelect(guid, isZoomTo = false, init = false) {
       if (!this.isShow) return
       if (this.widgetInfo.config.isSingleMode) {
         this.clearBasemap()
       }
-      this.basemapNames.push(name)
-      this.renderMaps(name, isZoomTo, init)
+      this.basemapNames.push(guid)
+      this.renderMaps(guid, isZoomTo, init)
     },
     getSaveConfig() {
       const baseMapList = this.transfromationMapData()

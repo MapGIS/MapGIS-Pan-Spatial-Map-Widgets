@@ -570,19 +570,10 @@ export default {
       const sublayers = this.isShowLayerList
         ? this.getSublayers(layer.id)
         : layer.activeScene?.sublayers
-
-      // const {
-      //   activeScene: { sublayers },
-      // } = layer
       const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
         layer.id
       )
       if (layerConfig && layerConfig.bindData) {
-        // for (let index = 0; index < sublayers.length; index++) {
-        //   const item = sublayers[index]
-        //   if (!item.visible) {
-        //     return
-        //   }
         exhibition.options.push({
           id: layerConfig.bindData.id || layer.id,
           name: layerConfig.title || layerConfig.name,
@@ -905,14 +896,6 @@ export default {
           }
           break
         case QueryType.LineString:
-          // if (
-          //   !this.is2DMapMode &&
-          //   (layer.type === LayerType.IGSScene ||
-          //     layer.type === LayerType.ModelCache)
-          // ) {
-          //   const { xmin, ymin, xmax, ymax, zmin, zmax } = shape
-          //   geometry = new Rectangle3D(xmin, ymin, zmin, xmax, ymax, zmax)
-          // } else {
           let lineNearDis = nearDis
           pointArray = shape.map((item: Record<string, number>) => {
             if (!lineNearDis) {
@@ -928,17 +911,8 @@ export default {
           geometry = new Zondy.Common.PolyLine(pointArray, {
             nearDis: lineNearDis,
           })
-          // }
           break
         case QueryType.Polygon:
-          // if (
-          //   !this.is2DMapMode &&
-          //   (layer.type === LayerType.IGSScene ||
-          //     layer.type === LayerType.ModelCache)
-          // ) {
-          //   const { xmin, ymin, xmax, ymax, zmin, zmax } = shape
-          //   geometry = new Rectangle3D(xmin, ymin, zmin, xmax, ymax, zmax)
-          // } else {
           let polyNearDis = nearDis
           pointArray = shape.map((item: Record<string, number>) => {
             if (!polyNearDis) {
@@ -952,7 +926,6 @@ export default {
           })
 
           geometry = new Zondy.Common.Polygon(pointArray)
-          // }
           break
         case QueryType.Cube:
         case QueryType.Circle:

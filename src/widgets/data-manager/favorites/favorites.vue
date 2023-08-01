@@ -64,6 +64,7 @@ export default {
     },
   },
   mounted() {
+    eventBus.$on(events.DATA_CATALOG_ADD_COLLECT, this.addData)
     if (!this.widgetInfo.config.data) {
       this.$set(this.widgetInfo.config, 'data', [])
     }
@@ -73,6 +74,9 @@ export default {
     this.dataList = JSON.parse(JSON.stringify(this.widgetInfo.config.data))
   },
   methods: {
+    addData() {
+      this.$refs.favorites.openAddModel()
+    },
     async onAddData(data) {
       /**
         const data = {
@@ -148,7 +152,7 @@ export default {
       }
 
       this.dataCatalogCheckController.setCurrentCheckLayerConfig(
-        item.options.layerConfig
+        JSON.parse(JSON.stringify(item.options.layerConfig))
       )
       // 需要重置一次
       if (this.isAgain) {

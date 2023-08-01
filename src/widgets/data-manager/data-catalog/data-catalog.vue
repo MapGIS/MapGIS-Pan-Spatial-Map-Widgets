@@ -344,6 +344,7 @@ import {
   DataFlowList,
   LayerAutoResetManager,
   DataCatalogCheckController,
+  LayerPropertyEdit,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../../../components/MetadataInfo/MetadataInfo.vue'
 import NonSpatial from './non-spatial.vue'
@@ -947,6 +948,23 @@ export default {
         } finally {
           // 2.2判断图层是否载成功。如果成功则将图层添加到documet中。否则，给出提示，并将数据目录树中对应的节点设为未选中状态。
           if (layer.loadStatus === LoadStatus.loaded) {
+            // 如果处于收藏夹复现则无需设置修改的layerProperty信息
+            const currentCheckLayerConfig =
+              DataCatalogCheckController.getCurrentCheckLayerConfig()
+            const relation = currentCheckLayerConfig?.relation
+            // 是否属于收藏夹
+            const isFavoritesLayer = relation && relation[layer.id]
+
+            if (this.is3DLayer(layer) && !isFavoritesLayer) {
+              const editConfigArr = LayerPropertyEdit.propertyConfigArr
+              if (editConfigArr && editConfigArr.length > 0) {
+                const find = editConfigArr.find(
+                  (item) => item.parentId === layer.id
+                )
+                find && this.dealLayers(layer, find)
+              }
+            }
+            // 收藏夹复现处理opacity和layerProperty
             DataCatalogCheckController.dealLayers(layer, this.is3DLayer(layer))
             const unAntoResetArr =
               this.layerAutoResetManager.getUnAutoResetArr()
@@ -999,6 +1017,36 @@ export default {
           })
         }
       }
+    },
+    dealLayers(layer, config) {
+      let sublayers
+      if (this.isIGSScene(layer)) {
+        if (layer.activeScene) {
+          sublayers = layer.activeScene.sublayers
+        }
+      } else {
+        // sublayers = layer.sublayers
+      }
+
+      if (sublayers && sublayers.length > 0) {
+        const sublayer = sublayers.find((item) => item.id === config.id)
+        sublayer.maximumScreenSpaceError =
+          config.layerProperty.maximumScreenSpaceError
+        sublayer.luminanceAtZenith = config.layerProperty.luminanceAtZenith
+        sublayer.layer.layerProperty = { ...config.layerProperty }
+      } else {
+        layer.maximumScreenSpaceError =
+          config.layerProperty.maximumScreenSpaceError
+        layer.luminanceAtZenith = config.layerProperty.luminanceAtZenith
+        layer.layerProperty = { ...config.layerProperty }
+      }
+    },
+    isIGSScene({ type, layer }) {
+      let layerType = type
+      if (layer) {
+        layerType = layer.type
+      }
+      return layerType === LayerType.IGSScene
     },
 
     // 判断是不是三维图层类型
@@ -1094,6 +1142,8 @@ export default {
 
     onCheck(checkedKeys, info) {
       this.layerAutoResetManager.setUnAutoResetArr([])
+      // 如果取消收藏夹中的图层则再次勾选不再使用收藏夹的记录状态
+      !info.checked && DataCatalogCheckController.operateCheck(checkedKeys)
       if (this.isClassify) {
         const preCheckedKeys = this.activeTreeTabRelRelation[this.activeTreeTab]
         this.activeTreeTabRelRelation[this.activeTreeTab] = checkedKeys
@@ -1371,12 +1421,13 @@ export default {
 
     // 收藏按钮
     bookMarksCheck() {
-      eventBus.$emit(
-        events.ADD_ALL_SELECTED_DATA_BOOKMARK_EVENT,
-        this.widgetInfo.label,
-        this.checkedNodeKeys,
-        this.dataCatalogTreeData
-      )
+      // eventBus.$emit(
+      //   events.ADD_ALL_SELECTED_DATA_BOOKMARK_EVENT,
+      //   this.widgetInfo.label,
+      //   this.checkedNodeKeys,
+      //   this.dataCatalogTreeData
+      // )
+      eventBus.$emit(events.DATA_CATALOG_ADD_COLLECT)
     },
 
     resizeCheck() {
