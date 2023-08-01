@@ -762,42 +762,47 @@ export default {
       const vm = this
       for (let i = 0; i < this.layers.length; i++) {
         const layer = this.layers[i]
-        if (layer.id === id && layer.type === LayerType.ModelCache) {
-          let source
-          if (layer.format === ModelCacheFormat.m3d) {
-            source = vm.sceneController.findM3DIgsSource(id)
-          } else if (layer.format === ModelCacheFormat.cesium3dTileset) {
-            source = vm.sceneController.findTileset3DSource(id)
+        let source
+        if (layer.id === id) {
+          if (layer.type === LayerType.ModelCache) {
+            if (layer.format === ModelCacheFormat.m3d) {
+              source = vm.sceneController.findM3DIgsSource(id)
+            } else if (layer.format === ModelCacheFormat.cesium3dTileset) {
+              source = vm.sceneController.findTileset3DSource(id)
+            }
+            source.readyPromise.then(() => {
+              vm._setBoundingSphereAndExtent(source, vm.layers[i])
+            })
+          } else if (layer.type === LayerType.IGSScene) {
+            const layerId = layer.sublayers[0].id
+            setTimeout(() => {
+              source = vm.sceneController.findSource(layerId)
+              vm._setBoundingSphereAndExtent(source, vm.layers[i])
+            }, 1000)
           }
-          // console.log(source)
-          source.readyPromise.then(() => {
-            // console.log(source)
-            let boundingSphere
-            let extent
-            if (!source._root.boundingVolume.northeastCornerCartesian) {
-              boundingSphere = source._root.boundingVolume.boundingSphere
-            } else {
-              extent = vm._getM3DSetRange(source)
-            }
-            // console.log(extent)
-            for (let j = 0; j < vm.layers.length; j++) {
-              if (vm.layers[j].id === id) {
-                if (extent) {
-                  vm.layers[j].fullExtent.xmin = extent.xmin
-                  vm.layers[j].fullExtent.ymin = extent.ymin
-                  vm.layers[j].fullExtent.xmax = extent.xmax
-                  vm.layers[j].fullExtent.ymax = extent.ymax
-                } else if (boundingSphere) {
-                  vm.layers[j].boundingSphere = boundingSphere
-                }
-              }
-            }
-          })
-          break
         }
       }
     },
+    /**
+     * 设置场景服务、模型缓存、3dTiles 图层的BoundingSphere和Extent
+     */
+    _setBoundingSphereAndExtent(source, layer) {
+      const boundingSphere = source._root.boundingVolume.boundingSphere
+      let extent
+      if (source._root.boundingVolume.northeastCornerCartesian) {
+        extent = this._getM3DSetRange(source)
+      }
 
+      if (extent) {
+        layer.fullExtent.xmin = extent.xmin
+        layer.fullExtent.ymin = extent.ymin
+        layer.fullExtent.xmax = extent.xmax
+        layer.fullExtent.ymax = extent.ymax
+      }
+      if (boundingSphere) {
+        layer.boundingSphere = boundingSphere
+      }
+    },
     /**
      * 获取m3d经纬度包围盒
      */
