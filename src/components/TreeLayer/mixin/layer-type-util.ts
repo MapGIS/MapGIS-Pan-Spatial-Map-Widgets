@@ -286,7 +286,6 @@ export default {
      * 获取结果集查询参数
      */
     getExhibition(layer, titleType, queryType) {
-      debugger
       const parent = layer.layer
       let exhibition: Record<string, any> | null = null
       const arr: Array<Record<string, any>> = [
@@ -394,11 +393,6 @@ export default {
             const { id, name, title } = sceneLayer
             const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
               parent.id
-            )
-            console.log(
-              'serverType',
-              parent.type,
-              layerConfig.bindData.serverType
             )
             if (layerConfig && layerConfig.bindData) {
               exhibition = {

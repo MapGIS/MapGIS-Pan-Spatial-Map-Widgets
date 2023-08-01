@@ -207,14 +207,12 @@ export default {
         ip,
         port,
         serverName,
-        searchServiceType,
+        serverType,
         serverUrl,
         layerIndex,
         gdbp,
         f,
       } = this.optionVal
-      const serverType = searchServiceType || this.optionVal.serverType
-      console.log('serverType', searchServiceType, this.optionVal.serverType)
       let { domain } = this.optionVal
       if (!domain && !!serverUrl && serverUrl.length > 0) {
         const url = new URL(serverUrl)
