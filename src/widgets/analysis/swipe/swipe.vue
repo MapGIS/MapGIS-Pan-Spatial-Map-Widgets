@@ -80,6 +80,12 @@ export default {
           this.refreshCesiumCompare = true
           clearTimeout(timer)
         })
+        this.layers.push({
+          id: 'other',
+          title: '其他',
+        })
+      } else {
+        this.layers = this.layers.filter((l: Layer) => l.id !== 'other')
       }
     },
 

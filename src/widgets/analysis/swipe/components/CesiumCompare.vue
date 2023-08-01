@@ -38,12 +38,22 @@ export default {
     },
     // 上级(左侧)图层列表
     beforeLayers() {
-      return this.getLayerIds(this.swipe.aboveLayer)
+      let beforeLayers = [this.swipe.aboveLayer]
+      if (this.swipe.aboveLayer.id == 'other') {
+        // 如果上级(左侧)选的'其他'，则表示上级(左侧)图层为除下级(右侧)图层的所有图层
+        beforeLayers = this.swipe.getLayers(this.swipe.belowLayer.id)
+      }
+      return this.getLayerIds(beforeLayers)
     },
 
     // 下级(右侧)图层列表
     afterLayers() {
-      return this.getLayerIds(this.swipe.belowLayer)
+      let afterLayers = [this.swipe.belowLayer]
+      if (this.swipe.belowLayer.id == 'other') {
+        // 如果下级(右侧)选的'其他'，则表示下级(右侧)图层为除上级(左侧)图层的所有图层
+        afterLayers = this.swipe.getLayers(this.swipe.aboveLayer.id)
+      }
+      return this.getLayerIds(afterLayers)
     },
 
     // 是否展示卷帘
@@ -60,8 +70,15 @@ export default {
     /**
      * 获取图层ID列表
      */
-    getLayerIds({ id }: Layer) {
-      return id ? [id] : []
+    getLayerIds(layers) {
+      const ids = []
+      for (let i = 0; i < layers.length; i++) {
+        const layer = layers[i]
+        if (layer.id) {
+          ids.push(layer.id)
+        }
+      }
+      return ids
     },
   },
 }
