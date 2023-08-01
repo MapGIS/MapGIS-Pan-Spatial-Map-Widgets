@@ -8,6 +8,7 @@
       :layerStyle="layerStyle"
       :highlightStyle="highlightStyle"
       :popupShowType="popupShowType"
+      :popupToggleType="popupToggleType"
       @show-popup="showPopup"
       idField="markerId"
     />
@@ -66,6 +67,9 @@ export default {
     },
   },
   computed: {
+    popupToggleType() {
+      return baseConfigInstance.config.colorConfig.label.image.popupToggleType
+    },
     popupShowType() {
       return baseConfigInstance.config.popupShowType
     },
