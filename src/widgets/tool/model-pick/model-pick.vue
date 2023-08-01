@@ -84,7 +84,7 @@ export default {
           }
           const childLayer = []
           if (layer.sublayers && layer.sublayers.length > 0) {
-            this.getLayerRelation(layer.sublayers, childLayer, openObj.isOpen)
+            this.getLayerRelation(layer.sublayers, childLayer, openObj)
           } else {
             openObj.isOpen = layer.layerProperty?.enablePopup
           }
@@ -133,22 +133,20 @@ export default {
         }, 5000)
       }
     },
-    getLayerRelation(layers, childLayer, isOpen) {
+    getLayerRelation(layers, childLayer, openObj) {
       layers.forEach((layer) => {
         childLayer.push(layer.id)
 
-        if (!isOpen) {
-          isOpen = layer.layer
+        if (!openObj.isOpen) {
+          openObj.isOpen = layer.layer
             ? layer.layer.layerProperty?.enablePopup
             : layer.layerProperty?.enablePopup
         }
         if (layer.layer) {
-          return isOpen
+          return
         }
         if (layer.sublayers && layer.sublayers.length > 0) {
-          this.getLayerRelation(layer.sublayers, childLayer, isOpen)
-        } else {
-          return isOpen
+          this.getLayerRelation(layer.sublayers, childLayer, openObj.isOpen)
         }
       })
     },
