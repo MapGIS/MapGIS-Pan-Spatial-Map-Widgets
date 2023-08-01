@@ -7,6 +7,7 @@
       :highlight="false"
       :layerStyle="layerStyle"
       :highlightStyle="highlightStyle"
+      :popupToggleType="popupToggleType"
       idField="markerId"
     />
     <!-- 聚合标注专题图 -->
@@ -102,6 +103,9 @@ export default {
     }
   },
   computed: {
+    popupToggleType() {
+      return baseConfigInstance.config.colorConfig.label.image.popupToggleType
+    },
     defaultColor() {
       const color = ColorUtil.getColorObject('#ffffff', 0.8)
       return ColorUtil.colorObjectToRgba(color, false)
