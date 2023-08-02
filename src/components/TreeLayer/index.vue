@@ -758,7 +758,8 @@ export default {
      * 三维模型缓存加载完后的回调
      */
     sceneLoadedCallback(id) {
-      const layers = [...this.layers]
+      const doc = this.layerDocument.clone()
+      const { layers } = doc.defaultMap._rootLayer
       const vm = this
       for (let i = 0; i < this.layers.length; i++) {
         const layer = this.layers[i]
@@ -771,13 +772,17 @@ export default {
               source = vm.sceneController.findTileset3DSource(id)
             }
             source.readyPromise.then(() => {
-              vm._setBoundingSphereAndExtent(source, vm.layers[i])
+              const newLayer = vm._setBoundingSphereAndExtent(source, layer)
+              doc.defaultMap._rootLayer.layers[i] = newLayer
+              this.$emit('update:layerDocument', doc)
             })
           } else if (layer.type === LayerType.IGSScene) {
             const layerId = layer.sublayers[0].id
             setTimeout(() => {
               source = vm.sceneController.findSource(layerId)
-              vm._setBoundingSphereAndExtent(source, vm.layers[i])
+              const newLayer = vm._setBoundingSphereAndExtent(source, layer)
+              doc.defaultMap._rootLayer.layers[i] = newLayer
+              this.$emit('update:layerDocument', doc)
             }, 1000)
           }
         }
@@ -802,6 +807,7 @@ export default {
       if (boundingSphere) {
         layer.boundingSphere = boundingSphere
       }
+      return layer
     },
     /**
      * 获取m3d经纬度包围盒
