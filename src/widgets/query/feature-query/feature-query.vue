@@ -559,12 +559,14 @@ export default {
       }
       const url = new URL(layer.url)
       const domain = url.origin
+      const { extend } = layer
 
       const exhibition: IAttributeTableListExhibition = {
         id: `${layer.id}`,
         name: `${layer.title} 查询结果`,
         description: '',
         options: [],
+        popupOption: extend.popupOption,
       }
       let activeOptionId = ''
       const sublayers = this.isShowLayerList
@@ -665,6 +667,7 @@ export default {
       if (!layer.isVisible) {
         return
       }
+      const { extend } = layer
       const { domain, docName } = layer._parseUrl(layer.url)
 
       const exhibition: IAttributeTableListExhibition = {
@@ -672,6 +675,7 @@ export default {
         name: `${layer.title} 查询结果`,
         description: '',
         options: [],
+        popupOption: extend.popupOption,
       }
 
       const sublayers = this.isShowLayerList
@@ -730,6 +734,7 @@ export default {
       if (!layer.isVisible) {
         return
       }
+      const { extend } = layer
       const { domain, docName } = layer._parseUrl(layer.url)
       const isDataStoreQuery = false
       const DNSName = undefined
@@ -752,6 +757,7 @@ export default {
             geometry: geometry,
           },
         ],
+        popupOption: extend.popupOption,
       }
       /**
        * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
@@ -821,12 +827,13 @@ export default {
       if (!layer.isVisible) {
         return
       }
-
+      const { extend } = layer
       const exhibition: IAttributeTableListExhibition = {
         id: `${layer.id}`,
         name: `${layer.title} 查询结果`,
         description: '',
         options: [],
+        popupOption: extend.popupOption,
       }
       let activeOptionId = ''
 

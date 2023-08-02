@@ -21,6 +21,7 @@ import {
   WidgetMixin,
   FitBound,
   DataCatalogCheckController,
+  BaseMapController,
   eventBus,
   events,
   api,
@@ -35,6 +36,7 @@ export default {
       dataList: [], // 初始化从接口获取的数据
       replaceFields: {}, // 列表模式下tree组件中节点信息展示的替换字段{title: "name",key: "guid"}，具体使用参考ant-design-vue中的tree组件对应api
       dataCatalogCheckController: DataCatalogCheckController,
+      baseMapController: BaseMapController,
       currentId: '', // 再次点击相同的收藏时需要重置一次场景设置信息再设置触发computed
       isAgain: false,
     }
@@ -51,6 +53,9 @@ export default {
     },
     sceneConfig() {
       return this.dataCatalogCheckController.getCheckSceneConfig()
+    },
+    baseMapConfig() {
+      return this.baseMapController.currentBaseMapInfo
     },
     showType() {
       return this.widgetInfo.config.showType
@@ -109,6 +114,7 @@ export default {
       data.image = fileInfo.data.url
       data.options.layerConfig = this.layerConfig
       data.options.sceneConfig = this.sceneConfig
+      data.options.baseMapConfig = this.baseMapConfig
       if (this.is2DMapMode) {
         const mapBoundArray = this.map.getBounds().toArray()
         const mapBound = {
@@ -147,25 +153,30 @@ export default {
       const { Cesium, map, vueCesium, viewer } = this
       this.isAgain = this.currentId === item.id
       this.currentId = item.id
+      this.baseMapController.isResize = false
       if (this.is2DMapMode !== item.is2DMapMode) {
         this.switchMapMode()
       }
 
+      const options = JSON.parse(JSON.stringify(item.options))
       this.dataCatalogCheckController.setCurrentCheckLayerConfig(
-        JSON.parse(JSON.stringify(item.options.layerConfig))
+        options.layerConfig
       )
       // 需要重置一次
       if (this.isAgain) {
         this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig({})
+        this.baseMapController.setBaseMapInfo = null
         this.$nextTick(() => {
           this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig(
-            item.options.sceneConfig
+            options.sceneConfig
           )
+          this.baseMapController.setBaseMapInfo = options.baseMapConfig
         })
       } else {
         this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig(
-          item.options.sceneConfig
+          options.sceneConfig
         )
+        this.baseMapController.setBaseMapInfo = options.baseMapConfig
       }
 
       this.dataCatalogCheckController.setCurrentLayerChangeConfig([])
@@ -183,7 +194,6 @@ export default {
         }, 1000)
       } else {
         const { roll, pitch, heading, position } = item.options.mapBound
-        console.log(item.options.mapBound)
         setTimeout(() => {
           viewer.camera.flyTo({
             destination: new Cesium.Cartesian3(

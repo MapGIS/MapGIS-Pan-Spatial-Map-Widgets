@@ -16,6 +16,7 @@
           :is="attributeTableComponent"
           :ref="option.id"
           :option="option"
+          :exhibition="exhibition"
         />
       </mapgis-ui-tab-pane>
       <mapgis-ui-toolbar-command
@@ -51,6 +52,7 @@
         :is="attributeTableComponent"
         ref="activeTag"
         :option="currentOption"
+        :exhibition="exhibition"
       />
     </div>
   </div>
