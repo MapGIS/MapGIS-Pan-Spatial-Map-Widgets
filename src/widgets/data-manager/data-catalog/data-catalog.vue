@@ -345,6 +345,7 @@ import {
   LayerAutoResetManager,
   DataCatalogCheckController,
   LayerPropertyEdit,
+  BaseMapController,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../../../components/MetadataInfo/MetadataInfo.vue'
 import NonSpatial from './non-spatial.vue'
@@ -1437,6 +1438,8 @@ export default {
       DataCatalogCheckController.setCurrentLayerNoChildList([])
       DataCatalogCheckController.setCurrentCheckSceneSettingConfig({})
       DataCatalogCheckController.restoreSceneConfig()
+      BaseMapController.isResize = true
+      BaseMapController.setBaseMapInfo = null
     },
 
     onClick(item) {
