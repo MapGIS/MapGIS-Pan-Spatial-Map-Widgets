@@ -777,7 +777,6 @@ export default {
         setTimeout(() => {
           source = vm.sceneController.findSource(layerId)
           vm._setBoundingSphereAndExtent(source, layer)
-          console.log(doc)
           this.$emit('update:layerDocument', doc)
         }, 1000)
       }
