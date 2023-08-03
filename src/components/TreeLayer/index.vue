@@ -759,33 +759,27 @@ export default {
      */
     sceneLoadedCallback(id) {
       const doc = this.layerDocument.clone()
-      const { layers } = doc.defaultMap._rootLayer
+      const layer = doc.defaultMap.findLayerById(id)
       const vm = this
-      for (let i = 0; i < this.layers.length; i++) {
-        const layer = this.layers[i]
-        let source
-        if (layer.id === id) {
-          if (layer.type === LayerType.ModelCache) {
-            if (layer.format === ModelCacheFormat.m3d) {
-              source = vm.sceneController.findM3DIgsSource(id)
-            } else if (layer.format === ModelCacheFormat.cesium3dTileset) {
-              source = vm.sceneController.findTileset3DSource(id)
-            }
-            source.readyPromise.then(() => {
-              const newLayer = vm._setBoundingSphereAndExtent(source, layer)
-              doc.defaultMap._rootLayer.layers[i] = newLayer
-              this.$emit('update:layerDocument', doc)
-            })
-          } else if (layer.type === LayerType.IGSScene) {
-            const layerId = layer.sublayers[0].id
-            setTimeout(() => {
-              source = vm.sceneController.findSource(layerId)
-              const newLayer = vm._setBoundingSphereAndExtent(source, layer)
-              doc.defaultMap._rootLayer.layers[i] = newLayer
-              this.$emit('update:layerDocument', doc)
-            }, 1000)
-          }
+      let source
+      if (layer.type === LayerType.ModelCache) {
+        if (layer.format === ModelCacheFormat.m3d) {
+          source = vm.sceneController.findM3DIgsSource(id)
+        } else if (layer.format === ModelCacheFormat.cesium3dTileset) {
+          source = vm.sceneController.findTileset3DSource(id)
         }
+        source.readyPromise.then(() => {
+          vm._setBoundingSphereAndExtent(source, layer)
+          this.$emit('update:layerDocument', doc)
+        })
+      } else if (layer.type === LayerType.IGSScene) {
+        const layerId = layer.scenes[0].sublayers[0].id
+        setTimeout(() => {
+          source = vm.sceneController.findSource(layerId)
+          vm._setBoundingSphereAndExtent(source, layer)
+          console.log(doc)
+          this.$emit('update:layerDocument', doc)
+        }, 1000)
       }
     },
     /**
