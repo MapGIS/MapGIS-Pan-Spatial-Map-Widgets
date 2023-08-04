@@ -203,9 +203,15 @@ export default {
      * 点击关闭的回调函数
      */
     onClose() {
-      this.$refs.zone && this.$refs.zone[0].clear()
-      this.$refs.coordinate && this.$refs.coordinate[0].clear()
-      this.$refs['map-sheet'] && this.$refs['map-sheet'][0].clear()
+      this.$refs.zone &&
+        this.$refs.zone.length > 0 &&
+        this.$refs.zone[0].clear()
+      this.$refs.coordinate &&
+        this.$refs.coordinate.length > 0 &&
+        this.$refs.coordinate[0].clear()
+      this.$refs['map-sheet'] &&
+        this.$refs['map-sheet'].length > 0 &&
+        this.$refs['map-sheet'][0].clear()
       this.closePopup()
       this.analysisManager = null
       if (this.sceneController) {
@@ -215,18 +221,22 @@ export default {
 
     /**
      * 查询时的回调函数（在没有查询范围时，采用当前屏幕的范围）
-     * 如果是dataStore数据，并且查询keyword为空，在采用当前可视范围
      */
     onSearch(isDataStoreQuery, val) {
-      if (
-        this.geoJSONExtent === null ||
-        JSON.stringify(this.geoJSONExtent) === '{}' ||
-        (isDataStoreQuery && !val)
-      ) {
-        this.extent = this.getBounds()
-      } else {
+      if (this.geoJSONExtent && Object.keys(this.geoJSONExtent).length > 0) {
         this.extent = this.geoJSONExtent
+      } else {
+        this.extent = this.getBounds()
       }
+      // if (
+      //   this.geoJSONExtent === null ||
+      //   JSON.stringify(this.geoJSONExtent) === '{}' ||
+      //   (isDataStoreQuery && !val)
+      // ) {
+      //   this.extent = this.getBounds()
+      // } else {
+      //   this.extent = this.geoJSONExtent
+      // }
     },
 
     /**

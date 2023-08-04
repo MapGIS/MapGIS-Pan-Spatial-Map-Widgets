@@ -180,25 +180,20 @@ export default {
 
       this.clear()
       this.frameFeature = {
-        type: 'FeatureCollection',
-        features: [
-          {
-            type: 'Feature',
-            properties: { name: item },
-            geometry: {
-              type: 'Polygon',
-              coordinates: [
-                [
-                  [XMin, YMin],
-                  [XMax, YMin],
-                  [XMax, YMax],
-                  [XMin, YMax],
-                  [XMin, YMin],
-                ],
-              ],
-            },
-          },
-        ],
+        type: 'Feature',
+        properties: { name: item },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [XMin, YMin],
+              [XMax, YMin],
+              [XMax, YMax],
+              [XMin, YMax],
+              [XMin, YMin],
+            ],
+          ],
+        },
       }
       this.center = [(XMin + XMax) / 2, (YMin + YMax) / 2]
 

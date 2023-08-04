@@ -271,25 +271,20 @@ export default {
           baseConfigInstance.config.projectionName
         )
         this.frameFeature = {
-          type: 'FeatureCollection',
-          features: [
-            {
-              type: 'Feature',
-              properties: { name: this.frameNo },
-              geometry: {
-                type: 'Polygon',
-                coordinates: [
-                  [
-                    [XMin, YMin],
-                    [XMax, YMin],
-                    [XMax, YMax],
-                    [XMin, YMax],
-                    [XMin, YMin],
-                  ],
-                ],
-              },
-            },
-          ],
+          type: 'Feature',
+          properties: { name: this.frameNo },
+          geometry: {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [XMin, YMin],
+                [XMax, YMin],
+                [XMax, YMax],
+                [XMin, YMax],
+                [XMin, YMin],
+              ],
+            ],
+          },
         }
         this.change(this.frameFeature)
       }
@@ -401,8 +396,8 @@ export default {
         this.coordInDefaultCRS[0],
         this.coordInDefaultCRS[1],
         this.scale,
-        this.crs,
-        baseConfigInstance.config.projectionName
+        baseConfigInstance.config.projectionName,
+        this.crs
       )
       this.frameNo = frameNo
       this.frameNochange(frameNo)
