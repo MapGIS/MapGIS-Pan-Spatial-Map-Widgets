@@ -10,8 +10,9 @@
         v-for="basemap in basemaps"
         :key="basemap.name"
         :name="basemap.name"
+        :guid="basemap.guid"
         :image="imageUrl(basemap.image)"
-        :active="basemapNames.includes(basemap.name)"
+        :active="basemapNames.includes(basemap.guid)"
         :icon="icon"
         @select="onSelect"
         @un-select="onUnSelect"
@@ -62,12 +63,12 @@ export default {
     }
   },
   methods: {
-    onSelect(name, isZoomTo = false) {
+    onSelect(guid, isZoomTo = false) {
       if (!this.isShow) return
       // 清空底图
       this.clearBasemap()
-      this.basemapNames.push(name)
-      this.renderMaps(name, isZoomTo)
+      this.basemapNames.push(guid)
+      this.renderMaps(guid, isZoomTo)
     },
     getSaveConfig() {
       const topographyMapList = this.transfromationMapData()

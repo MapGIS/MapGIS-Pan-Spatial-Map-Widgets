@@ -78,7 +78,7 @@ export default {
         this.viewer.scene._canvas
       )
       // 设置鼠标移动事件的处理函数，这里负责监听x,y坐标值变化
-      handler.setInputAction(movement => {
+      handler.setInputAction((movement) => {
         if (!this.pickable) return
         // 通过指定的椭球或者地图对应的坐标系，将鼠标的二维坐标转换为对应椭球体三维坐标
         const { ellipsoid } = this.viewer.scene.globe
@@ -103,7 +103,7 @@ export default {
             this.center[0],
             this.center[1],
             this.viewer.camera.positionCartographic.height
-          )
+          ),
         })
       }
     },
@@ -111,7 +111,6 @@ export default {
       this.clearFrame()
       if (val && Object.keys(val).length > 0) {
         // 行政区划几何类型一般是Polygon
-        const { features } = val
         this.entityNames = []
         const fillColor = new this.Cesium.Color.fromCssColorString(
           this.highlightStyle.feature.reg.color
@@ -123,8 +122,8 @@ export default {
 
         const width = parseInt(this.highlightStyle.feature.line.size)
 
-        for (let i = 0; i < features.length; i += 1) {
-          const coords = features[i].geometry.coordinates[0]
+        for (let i = 0; i < val.geometry.coordinates.length; i += 1) {
+          const coords = val.geometry.coordinates[i]
           const name = `zone-frame-${i}`
           this.entityNames.push(name)
           this.sceneOverlays.addPolygon(
@@ -135,7 +134,7 @@ export default {
             false,
             { drawOutLine: true, outlineWidth: width }
           )
-          const center = Feature.getGeoJSONFeatureCenter(features[i])
+          const center = Feature.getGeoJSONFeatureCenter(val)
           const rgba = ColorUtil.getColorObject('#FD6A6F', 1)
           const textColor = new this.Cesium.Color(
             rgba.r / 255,
@@ -149,7 +148,7 @@ export default {
             center[1],
             0,
             // 文本内容
-            features[i].properties.name,
+            val.properties.name,
             {
               // 文字大小、字体样式
               font: '12pt 楷体',
@@ -177,7 +176,7 @@ export default {
       const marker = {
         name: 'coordinate-marker',
         center: this.coordinate,
-        img: defaultImg
+        img: defaultImg,
       }
       this.sceneOverlays.addMarker(marker)
     },
