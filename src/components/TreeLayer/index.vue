@@ -773,7 +773,7 @@ export default {
           vm.$emit('update:layerDocument', doc)
         })
       } else if (layer.type === LayerType.IGSScene) {
-        const layerId = layer.scenes[0].sublayers[0].id
+        const layerId = layer.activeScene.sublayers[0].id
         setTimeout(() => {
           source = vm.sceneController.findSource(layerId)
           vm._setBoundingSphereAndExtent(source, layer)
