@@ -9,6 +9,7 @@
       :highlightStyle="highlightStyle"
       :popupShowType="popupShowType"
       :popupToggleType="popupToggleType"
+      :field-configs="fieldConfigs"
       @show-popup="showPopup"
       idField="markerId"
     />
@@ -63,6 +64,11 @@ export default {
     },
     hoverMarker: {
       type: Array,
+      default: () => [],
+    },
+    fieldConfigs: {
+      type: Array,
+      required: false,
       default: () => [],
     },
   },
