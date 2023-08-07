@@ -7,6 +7,7 @@
       :widgetInfo="config"
       :defaultMarkerIcon="defaultMarkerIcon"
       :selectedMarkerIcon="selectedMarkerIcon"
+      :selectShowProperty="selectShowProperty"
       @onClose="onClose"
       @onSearch="onSearch"
       @current-result="currentResult"
@@ -66,6 +67,7 @@
       :cluster="cluster"
       :geojson="current"
       :colorCluster="colorCluster"
+      :field-configs="selectShowProperty"
     />
   </div>
 </template>
@@ -92,6 +94,40 @@ import PlaceNameCesium from './components/PlaceName/PlaceNameCesium.vue'
 import * as turf from '@turf/turf'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
+
+// dataStore默认展示字段，管理平台无配置时展示
+const fieldConfigs = [
+  {
+    fieldName: 'name',
+    showName: '名称',
+  },
+  {
+    fieldName: 'address',
+    showName: '地址',
+  },
+  {
+    fieldName: 'geometry',
+    showName: '地理经纬度',
+  },
+]
+// dataStore查询字段映射（管理平台与前台字段不一致）
+const fieldsMap = {
+  zd_marker: 'marker',
+  zd_addr_code: 'code',
+  zd_country: 'country',
+  zd_street_no: 'streetNo',
+  zd_city: 'city',
+  zd_town: 'town',
+  zd_name: 'name',
+  zd_village: 'village',
+  zd_street: 'street',
+  zd_interest_point: 'interestpoint',
+  zd_province: 'province',
+  zd_nation: 'nation',
+  geometry: 'geometry',
+  zd_address: 'formatAddress',
+  zd_idetifier: 'identifier',
+}
 
 export default {
   name: 'MpComprehensiveQuery',
@@ -300,10 +336,8 @@ export default {
      * 当前展示的结果回调函数（将查询结果展示至地图上）
      */
     currentResult(geojson) {
-      // igs查询时设置字段别名在此处处理
-      this.current = this.config.placeName
-        ? this.setAliasKeys(geojson)
-        : geojson
+      // igs、datastore查询时设置字段别名在此处处理
+      this.current = this.setAliasKeys(geojson)
     },
 
     /**
@@ -391,9 +425,24 @@ export default {
       // 如果配置为空采用默认配置
       this.selectShowProperty =
         showProperty && showProperty.showField.length > 0
-          ? showProperty.showField
+          ? this.defaultShowFieldMapDataStore(showProperty.showField)
           : this.config.placeName?.defaultShowField ||
-            this.config.dataStore.defaultShowField
+            this.defaultShowFieldMapDataStore(
+              this.config.dataStore.defaultShowField
+            )
+    },
+
+    defaultShowFieldMapDataStore(data) {
+      if (this.widgetInfo.config.placeName) return data // igs数据不需要转换
+      if (!data) return fieldConfigs
+      const newShowField = []
+      data.forEach((item) => {
+        newShowField.push({
+          fieldName: fieldsMap[item.fieldName],
+          showName: item.showName,
+        })
+      })
+      return newShowField
     },
 
     /**
