@@ -687,11 +687,10 @@ export default {
       for (let index = 0; index < sublayers.length; index++) {
         const sublayer = sublayers[index]
         if (
-          !sublayer.visible &&
-          sublayer.sublayers &&
-          sublayer.sublayers.length > 0
+          !sublayer.visible ||
+          (sublayer.sublayers && sublayer.sublayers.length > 0)
         ) {
-          return
+          continue
         }
         /**
          * 修改说明：IGS地图文档和图层服务全部都走IGS的接口，不再判断是否为pg数据
@@ -703,7 +702,7 @@ export default {
         const ipPortObj = this.getIpPort({
           isDataStoreQuery,
         })
-        exhibition.options.push({
+        const option = {
           id: sublayer.id,
           name: sublayer.title,
           DNSName,
@@ -716,13 +715,14 @@ export default {
           serverName: docName,
           serverUrl: layer.url,
           geometry: geometry,
-        })
+        }
+        exhibition.options.push(option)
         /**
          * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
          * 修改人：龚跃健
          * 修改时间：2023/1/31
          */
-        const { TotalCount } = await this.queryCount(exhibition.options[index])
+        const { TotalCount } = await this.queryCount(option)
         if (TotalCount > 0) {
           activeOptionId = sublayer.id
         }
@@ -843,7 +843,7 @@ export default {
       for (let index = 0; index < sublayers.length; index++) {
         const sublayer = sublayers[index]
         if (!sublayer.visible) {
-          return
+          continue
         }
         exhibition.options.push({
           id: sublayer.id,
