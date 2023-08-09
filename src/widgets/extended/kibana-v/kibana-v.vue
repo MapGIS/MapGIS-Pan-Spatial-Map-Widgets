@@ -10,7 +10,7 @@
         :key="index"
         style="padding: 0 8px"
       >
-        <mapgis-ui-card class="kibana-v-card" hoverable @click="onView(item)">
+        <mapgis-ui-card class="kibana-v-card" hoverable @click="onView(item)" :bordered="false">
           <div slot="cover" class="img-box">
             <img :src="item.image" :alt="item.title" />
           </div>
@@ -55,7 +55,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-::v-deep .mp-widget-kibana-v {
+.mp-widget-kibana-v {
   width: 100%;
   height: 100%;
   padding: 4px;
@@ -67,7 +67,7 @@ export default {
     .img-box {
       position: relative;
       height: 0;
-      padding-bottom: 60%;
+      padding-bottom: 50%;
       img {
         position: absolute;
         top: 0;
@@ -77,7 +77,10 @@ export default {
       }
     }
     &:hover {
-      .mapgis-ui-card-meta-title {
+      ::v-deep .mapgis-ui-card-cover {
+        transform: scale(1.01);
+      }
+      ::v-deep .mapgis-ui-card-meta-title {
         color: $primary-color;
       }
     }
