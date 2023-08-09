@@ -6,6 +6,7 @@
       :initParams="config"
       :initFavoritesParams="initFavoritesParams"
       :boundingSphereRadius="boundingSphereRadius"
+      :baseLayerIds="baseLayerIds"
       ref="sceneSetting"
     >
     </mapgis-3d-scene-setting>
@@ -39,12 +40,18 @@ export default {
       initialStatebar: true,
       dataCatalogCheckController: DataCatalogCheckController,
       boundingSphereRadius: 0,
+      baseLayerIds: [],
     }
   },
 
   watch: {
-    document: {
+    'document.defaultMap': {
       handler: 'getScenes',
+      immediate: true,
+      deep: true,
+    },
+    'document.baseLayerMap': {
+      handler: 'getBaseLayerMap',
       immediate: true,
       deep: true,
     },
@@ -148,6 +155,32 @@ export default {
         this.boundingSphereRadius = boundingSphere.radius
       }
     },
+
+    getBaseLayerMap() {
+      if (!this.document) return
+      const ids = []
+      this.document.baseLayerMap
+        .clone()
+        .getFlatLayers()
+        .forEach((layer, index) => {
+          if (layer.loadStatus === LoadStatus.loaded) {
+            if (
+              layer.description !== '索引底图' &&
+              (layer.type === LayerType.IGSMapImage ||
+                layer.type === LayerType.IGSVector ||
+                layer.type === LayerType.IGSTile ||
+                layer.type === LayerType.OGCWMS ||
+                layer.type === LayerType.OGCWMTS ||
+                layer.type === LayerType.ArcGISMapImage ||
+                layer.type === LayerType.ArcGISTile)
+            ) {
+              ids.push(layer.id)
+            }
+          }
+        })
+      this.baseLayerIds = [...ids]
+    },
+
     /**
      * 微件打开时
      */
