@@ -25,6 +25,7 @@ import {
   eventBus,
   events,
   api,
+  dataCatalogManagerInstance,
 } from '@mapgis/web-app-framework'
 import axios from 'axios'
 
@@ -39,6 +40,7 @@ export default {
       baseMapController: BaseMapController,
       currentId: '', // 再次点击相同的收藏时需要重置一次场景设置信息再设置触发computed
       isAgain: false,
+      dataCatalogManager: dataCatalogManagerInstance,
     }
   },
   computed: {
@@ -67,6 +69,9 @@ export default {
       // return `${this.baseUrl}/psmap/rest/manager/file/upload`
       return `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`
     },
+    dataCatalogLayerArr() {
+      return this.dataCatalogManager.getAllLayerConfigItems()
+    },
   },
   mounted() {
     eventBus.$on(events.DATA_CATALOG_ADD_COLLECT, this.addData)
@@ -77,6 +82,7 @@ export default {
       this.$set(this.widgetInfo.config, 'showType', 'image')
     }
     this.dataList = JSON.parse(JSON.stringify(this.widgetInfo.config.data))
+    this.baseMapController.saveType = 'url'
   },
   methods: {
     addData() {
@@ -114,7 +120,7 @@ export default {
       data.image = fileInfo.data.url
       data.options.layerConfig = this.layerConfig
       data.options.sceneConfig = this.sceneConfig
-      data.options.baseMapConfig = this.baseMapConfig
+      data.options.baseMapConfig = this.getBaseMapConfig(this.baseMapConfig)
       if (this.is2DMapMode) {
         const mapBoundArray = this.map.getBounds().toArray()
         const mapBound = {
@@ -160,7 +166,7 @@ export default {
 
       const options = JSON.parse(JSON.stringify(item.options))
       this.dataCatalogCheckController.setCurrentCheckLayerConfig(
-        options.layerConfig
+        this.transferLayer(options.layerConfig)
       )
       // 需要重置一次
       if (this.isAgain) {
@@ -170,13 +176,17 @@ export default {
           this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig(
             options.sceneConfig
           )
-          this.baseMapController.setBaseMapInfo = options.baseMapConfig
+          this.baseMapController.setBaseMapInfo = this.transferBaseMap(
+            options.baseMapConfig
+          )
         })
       } else {
         this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig(
           options.sceneConfig
         )
-        this.baseMapController.setBaseMapInfo = options.baseMapConfig
+        this.baseMapController.setBaseMapInfo = this.transferBaseMap(
+          options.baseMapConfig
+        )
       }
 
       this.dataCatalogCheckController.setCurrentLayerChangeConfig([])
@@ -282,6 +292,115 @@ export default {
             reject(Error)
           })
       })
+    },
+    transferLayer(layerConfig) {
+      const { layerInfo, relation } = layerConfig
+      const transferLayerInfo = {}
+      const transferRelation = {}
+      Object.keys(layerInfo).forEach((item) => {
+        // 兼容guid的情况
+        if (item.indexOf('http://') > -1 || item.indexOf('https://') > -1) {
+          const find = this.dataCatalogLayerArr.find(
+            (config) => config.serverURL === item
+          )
+          if (find) {
+            transferLayerInfo[find.guid] = layerInfo[item]
+          }
+        } else {
+          transferLayerInfo[item] = layerInfo[item]
+        }
+      })
+      Object.keys(relation).forEach((item) => {
+        if (item.indexOf('http://') > -1 || item.indexOf('https://') > -1) {
+          const find = this.dataCatalogLayerArr.find(
+            (config) => config.serverURL === item
+          )
+          if (find) {
+            transferRelation[find.guid] = relation[item]
+          }
+        } else {
+          transferRelation[item] = relation[item]
+        }
+      })
+      layerConfig.layerInfo = transferLayerInfo
+      layerConfig.relation = transferRelation
+      return layerConfig
+    },
+    transferBaseMap(baseMapConfig) {
+      const { saveType, baseMapList } = this.baseMapController
+      if (saveType === 'guid') {
+        // 原逻辑不做处理
+      } else if (saveType === 'url') {
+        const { onSelect, unSelect, zoomArr, indexBaseMapGUID } = baseMapConfig
+        const transferOnSelect = this.getBaseMapGuid(onSelect, baseMapList)
+        const transferUnSelect = this.getBaseMapGuid(unSelect, baseMapList)
+        const transferZoomArr = this.getBaseMapGuid(zoomArr, baseMapList)
+        const transferIndexBaseMapGUID = this.getBaseMapGuid(
+          indexBaseMapGUID,
+          baseMapList
+        )
+        baseMapConfig.onSelect = transferOnSelect
+        baseMapConfig.unSelect = transferUnSelect
+        baseMapConfig.zoomArr = transferZoomArr
+        baseMapConfig.indexBaseMapGUID = transferIndexBaseMapGUID[0]
+      }
+      return baseMapConfig
+    },
+    getBaseMapConfig(baseMapConfig) {
+      const { saveType, baseMapList } = this.baseMapController
+      const config = { ...baseMapConfig }
+      if (saveType === 'guid') {
+        // 原逻辑不做处理
+      } else if (saveType === 'url') {
+        const baseMapList = this.baseMapController.baseMapList
+        const { onSelect, unSelect, zoomArr, indexBaseMapGUID } = baseMapConfig
+        const transferOnSelect = this.getUrlArr(onSelect, baseMapList)
+        const transferUnSelect = this.getUrlArr(unSelect, baseMapList)
+        const transferZoomArr = this.getUrlArr(zoomArr, baseMapList)
+        const transferIndexBaseMapGUID = this.getUrlArr(
+          [indexBaseMapGUID],
+          baseMapList
+        )
+        config.onSelect = transferOnSelect
+        config.unSelect = transferUnSelect
+        config.zoomArr = transferZoomArr
+        config.indexBaseMapGUID = transferIndexBaseMapGUID
+      }
+      return config
+    },
+    getUrlArr(ids, baseMapList) {
+      const result = []
+      ids.forEach((item) => {
+        const subArr = []
+        const find = baseMapList.find((layer) => layer.guid === item)
+        const { children } = find
+        children.forEach((sublayer) => {
+          subArr.push(sublayer.serverURL)
+        })
+        result.push(subArr)
+      })
+      return result
+    },
+    getBaseMapGuid(urls, baseMapList) {
+      const transferGuid = []
+      urls.forEach((url) => {
+        const find = baseMapList.find((item) => {
+          // urls为底图的子图层数量
+          let flag
+          if (item.children.length === url.length) {
+            flag = true
+            const { children } = item
+            children.forEach((item) => {
+              if (!url.includes(item.serverURL)) {
+                flag = false
+              }
+            })
+          }
+          return flag
+        })
+        find && transferGuid.push(find.guid)
+      })
+      return transferGuid
     },
   },
 }

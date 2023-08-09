@@ -293,6 +293,10 @@ export default {
         this.clearBasemap()
       }
       this.basemapNames.push(guid)
+      this.updateCurrentBaseMapConfig()
+      this.renderMaps(guid, isZoomTo, init)
+    },
+    updateCurrentBaseMapConfig() {
       const config = this.baseMapConfig()
       const onSelect = this.basemapNames.map((item) => item)
       const unSelect = this.basemaps
@@ -301,7 +305,6 @@ export default {
       config.onSelect = onSelect
       config.unSelect = unSelect
       this.baseMapController.currentBaseMapInfo = config
-      this.renderMaps(guid, isZoomTo, init)
     },
     getSaveConfig() {
       const baseMapList = this.transfromationMapData()

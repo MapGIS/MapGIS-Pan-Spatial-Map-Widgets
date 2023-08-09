@@ -272,6 +272,7 @@ export default {
           break
         }
       }
+      this.updateCurrentBaseMapConfig()
     },
 
     updateLayer(layer) {

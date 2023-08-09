@@ -418,7 +418,7 @@ export default {
   mounted() {
     this.$root.$on(events.SCENE_LOADEN_ON_MAP, this.sceneLoadedCallback)
     eventBus.$on(events.MODEL_PICK, this.updateM3DEnablePopupEnable)
-    eventBus.$on(events.ECHO_LAYER_LIST_INFO, this.echoLayerList)
+    // eventBus.$on(events.ECHO_LAYER_LIST_INFO, this.echoLayerList)
   },
   methods: {
     setLayerEditConfig() {
@@ -1374,14 +1374,31 @@ export default {
     onCloseCustomQuery() {
       this.showCustomQuery = false
     },
+    // 将this.layers转化成一维数组
+    transferLayers(layers, arr) {
+      layers.forEach((item) => {
+        arr.push({ ...item })
+        if (item.sublayers && item.sublayers.length > 0) {
+          this.transferLayers(item.sublayers, arr)
+        }
+      })
+    },
     getCurrentData() {
+      const layerArr = []
       const checkLayerConfig = {}
       const layerInfo = {}
       const expandedKeys = this.expandedKeys
-      const checkNodeKeys = this.ticked
       const relation = {}
+      const checkNodeKeys = this.ticked
+      // 记录checkNodeKeys
+      // this.transferLayers(this.layers, layerArr)
+      // this.ticked.forEach((item) => {
+      //   const find = layerArr.find((layer) => layer.key === item)
+      //   find && checkNodeKeys.push(find.url)
+      // })
       this.layers.forEach((layer) => {
-        relation[layer.id] = layer.key
+        // relation[layer.id] = layer.key
+        relation[layer.url] = layer.key
         this.getLayerProperty(layer, layerInfo)
       })
       return {
@@ -1393,7 +1410,7 @@ export default {
       }
     },
     getLayerProperty(layer, config) {
-      config[layer.id] = {
+      config[layer.url] = {
         layerProperty: layer.layerProperty || null,
         opacity: layer.opacity,
         isVisible: layer.isVisible,
@@ -1403,7 +1420,7 @@ export default {
       if (layer.sublayers && layer.sublayers.length > 0) {
         this.getSublayers(layer.sublayers, sublayerArr)
       }
-      config[layer.id].sublayers = sublayerArr
+      config[layer.url].sublayers = sublayerArr
     },
     getSublayers(layer, sublayerArr) {
       if (layer && layer.length > 0) {
