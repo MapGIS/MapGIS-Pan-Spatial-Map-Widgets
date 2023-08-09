@@ -287,12 +287,11 @@ export default {
   // 二三维地图模式切换时
   watch: {
     mapRender() {
-      if (this.mapRender === 'cesium') {
-        this.$refs.draw.removeDraw()
-      } else {
-        this.$refs.draw.enableDraw()
-      }
       this.onClearDraw()
+      if (!this.is2DMapMode) {
+        // 在切到三维视图后，销毁mapboxgl的绘制组件，每次切回二维，maoboxgl的绘制组件都会初始化。
+        this.$refs.draw.removeDraw()
+      }
     },
     'document.defaultMap': {
       deep: true,
