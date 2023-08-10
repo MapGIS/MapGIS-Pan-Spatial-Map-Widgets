@@ -1316,9 +1316,9 @@
   integrity sha512-Es6WcD0nO5l+2BOQS4uLfNPYQaNDfbot3X1XUoloz+x0mPDS3eeORZJl06HXjwBG1fOGwCRnzK88LMdxKRrd6Q==
 
 "@mapgis/cesium@^16.4.0":
-  version "16.5.2"
-  resolved "http://192.168.11.130:4873/@mapgis%2fcesium/-/cesium-16.5.2.tgz#69161e5b004b2278db476a7d1d1775a8382bdb49"
-  integrity sha512-elHsM4Cpk2nXaRu1ukj4V3HZW5LOEZYPA/FCJMgw17MOIHE+cD4PkDakuhhKFEyou79gdr9cqq1t50sR+qjVkw==
+  version "16.5.4"
+  resolved "http://192.168.11.130:4873/@mapgis%2fcesium/-/cesium-16.5.4.tgz#f650ff7abcb1ffa107e53117097b956b5c0592e2"
+  integrity sha512-gec+uXrbTIm6bE7+hKeGsMTSveV/5vTFjFgUgoi0WT8GYppeI3ifUOpz4luDottHm7QRT2S+7mGgPvZZDKJqIQ==
 
 "@mapgis/geojson-vt@^3.2.2":
   version "3.2.2"
@@ -1418,13 +1418,13 @@
     kdbush "^3.0.0"
 
 "@mapgis/web-app-framework@~16.5.0":
-  version "16.5.9"
-  resolved "http://192.168.11.130:4873/@mapgis%2fweb-app-framework/-/web-app-framework-16.5.9.tgz#ac81c55beb5be176b530d963cb7fe7d5c59dde4e"
-  integrity sha512-wC8wjR2rgKuf5rmwWApp/wVl4idISlyjl5YXj30Z1rYMHxPJWMnJWcB0+HkUkKXEqi4WIIb+nT9G/ite07G06A==
+  version "16.5.11"
+  resolved "http://192.168.11.130:4873/@mapgis%2fweb-app-framework/-/web-app-framework-16.5.11.tgz#6478de421bc0e6f6c57a64ac4ffac664960ca10f"
+  integrity sha512-ZjkcT6WzF2XAW4fbCWct1sAPZqWYfyEmR6Zadh1fslcYJxWo0gIGCcx4Oz1aC3is+XI37XoAqWiyu6WVJAw0uQ==
   dependencies:
     "@mapgis/mapbox-gl" "^16.4.0"
     "@mapgis/webclient-es6-mapboxgl" "^16.4.0"
-    "@mapgis/webclient-es6-service" "^16.4.0"
+    "@mapgis/webclient-es6-service" "~16.2.0"
     "@mapgis/webclient-vue-cesium" "~16.5.0"
     "@mapgis/webclient-vue-mapboxgl" "~16.5.0"
     "@mapgis/webclient-vue-ui" "~16.5.0"
@@ -1453,10 +1453,25 @@
     echarts "^4.8.0"
     mapv "^2.0.56"
 
-"@mapgis/webclient-es6-service@16.4.0", "@mapgis/webclient-es6-service@^16.4.0":
+"@mapgis/webclient-es6-service@16.4.0":
   version "16.4.0"
   resolved "http://192.168.11.130:4873/@mapgis%2fwebclient-es6-service/-/webclient-es6-service-16.4.0.tgz#89bfc52122a9b740ba49996f334da4e40cc8d5c1"
   integrity sha512-XAyACFoIw2i0hGa8a57qbMboe0xiZDYXal4jCQw+XBQpiuQXBhwXUP9bRcQpCB8mvAQ9qgVkDn2c+auhrYvwNA==
+  dependencies:
+    "@turf/turf" "^6.5.0"
+    axios "^0.26.0"
+    core-js "^3.21.1"
+    fast-xml-parser "^3.17.6"
+    fetch-ie8 "^1.5.0"
+    proj4 "^2.7.5"
+    promise-polyfill "^8.2.1"
+    qs "^6.9.4"
+    svg-pathdata "^6.0.0"
+
+"@mapgis/webclient-es6-service@~16.2.0":
+  version "16.2.1"
+  resolved "http://192.168.11.130:4873/@mapgis%2fwebclient-es6-service/-/webclient-es6-service-16.2.1.tgz#e857562dce1ece2e04d9d32117a35d0fe874b753"
+  integrity sha512-juXEcRUbIwm4OalpfF/2c+jNo/pbiumG4CGthnWmmal5wsd/fRx5Ub0XJzWmD4nD0EsRzWdSZ/yaEOxoWWbIZQ==
   dependencies:
     "@turf/turf" "^6.5.0"
     axios "^0.26.0"
@@ -1507,15 +1522,15 @@
     webpack-bundle-analyzer "^4.4.0"
 
 "@mapgis/webclient-vue-cesium@~16.5.0":
-  version "16.5.8"
-  resolved "http://192.168.11.130:4873/@mapgis%2fwebclient-vue-cesium/-/webclient-vue-cesium-16.5.8.tgz#93ab9782743a160a30d4472e316d203d9819ea4c"
-  integrity sha512-j58W3/6RKba/953Tj8OsvxMvVNZUI2qs3eaCK0Onpi9VaEylxf4QGXfXSoBss5ftmA7t4cEHOX47//H4RK5WEg==
+  version "16.5.10"
+  resolved "http://192.168.11.130:4873/@mapgis%2fwebclient-vue-cesium/-/webclient-vue-cesium-16.5.10.tgz#71c49eb5081464033cc93e519e90e7bd2f0d6dc6"
+  integrity sha512-8+GfA3kYVW/9DZqikzaiZDBeMC83QkksNSl7ehOR4m+gS8UMmcuj9vRRHX1S4C2cetWaRbwAVpAv525+ZWB6sg==
   dependencies:
     "@antv/g6" "3.1.1"
     "@antv/hierarchy" "^0.6.8"
     "@mapbox/mapbox-gl-style-spec" "13.23.1"
     "@mapgis/cesium" "^16.4.0"
-    "@mapgis/webclient-es6-service" "^16.4.0"
+    "@mapgis/webclient-es6-service" "~16.2.0"
     "@mapgis/webclient-plot" "^16.4.0"
     "@mapgis/webclient-store" "^10.5.5"
     "@mapgis/webclient-vue-ui" "~16.5.0"
@@ -1545,9 +1560,9 @@
     webfont-matcher "1.1.0"
 
 "@mapgis/webclient-vue-mapboxgl@~16.5.0":
-  version "16.5.8"
-  resolved "http://192.168.11.130:4873/@mapgis%2fwebclient-vue-mapboxgl/-/webclient-vue-mapboxgl-16.5.8.tgz#f857e8f83cf80acf09ad26acac5e326527004ba0"
-  integrity sha512-OlBJHqFRJuyD2/84N3eKMKy2Fy2q9fqEsL+iY88ft2wzsTSlOOeK54G8qzJ9GxQGOzWUy9tvFDiKBSZ3gU83KQ==
+  version "16.5.10"
+  resolved "http://192.168.11.130:4873/@mapgis%2fwebclient-vue-mapboxgl/-/webclient-vue-mapboxgl-16.5.10.tgz#fbe3719ccdd2112046960fcee5c1d6e8533ac777"
+  integrity sha512-Y1BxfJ2ON+dZrPwNS2sJSwuFP0XQf6GP73LbZH9gALU+JoMT+MEs2GS9Jz5+gidRoq/YSFxjBjWjAq3LhJon1w==
   dependencies:
     "@mapgis/mapbox-gl" "^16.4.0"
     "@mapgis/mapbox-gl-compare" "^16.4.0"
@@ -1557,7 +1572,7 @@
     "@mapgis/mapbox-gl-draw-static-mode" "^16.4.0"
     "@mapgis/mapbox-gl-inspect" "^16.4.0"
     "@mapgis/webclient-es6-mapboxgl" "^16.4.0"
-    "@mapgis/webclient-es6-service" "^16.4.0"
+    "@mapgis/webclient-es6-service" "~16.2.0"
     "@mapgis/webclient-plot" "^16.4.0"
     "@mapgis/webclient-store" "^10.5.5"
     "@mapgis/webclient-vue-ui" "~16.5.0"
@@ -1581,13 +1596,13 @@
     vuepress "^1.9.7"
 
 "@mapgis/webclient-vue-ui@~16.5.0":
-  version "16.5.8"
-  resolved "http://192.168.11.130:4873/@mapgis%2fwebclient-vue-ui/-/webclient-vue-ui-16.5.8.tgz#f0bcd24131bc5c04a7d27a9ab620e60f0ae9fa98"
-  integrity sha512-nP4g5vxF1lNiDjbVymhXRf7TbFoCjklcfoe1lG9dClJtxd5BAGf9PO7tkBXhtvr7GxQlvfmF6Y7Ry0Npb/O0dw==
+  version "16.5.10"
+  resolved "http://192.168.11.130:4873/@mapgis%2fwebclient-vue-ui/-/webclient-vue-ui-16.5.10.tgz#772a7bd3f2d1931a3a0bfd41b4b9f6e257dbbe3a"
+  integrity sha512-uHpllryduXgp80Ugm7gDQ4KnuQLxkKpIPE0qTthGINnxRSzcQMGxKO+3NCevoHWACnEMZCPwuBDBwHKJ6R2+cA==
   dependencies:
     "@ant-design/icons" "2.1.1"
     "@mapgis/mapbox-gl" "^16.4.0"
-    "@mapgis/webclient-es6-service" "^16.4.0"
+    "@mapgis/webclient-es6-service" "~16.2.0"
     "@mapgis/webclient-store" "^10.5.5"
     "@vue/composition-api" "^1.0.0-rc.13"
     "@vuepress/plugin-active-header-links" "^1.8.2"
@@ -4065,9 +4080,9 @@
   integrity sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==
 
 "@types/node@*":
-  version "20.4.8"
-  resolved "http://192.168.11.130:4873/@types%2fnode/-/node-20.4.8.tgz#b5dda19adaa473a9bf0ab5cbd8f30ec7d43f5c85"
-  integrity sha512-0mHckf6D2DiIAzh8fM8f3HQCvMKDpK94YQ0DSVkfWTG9BZleYIWudw9cJxX8oCk9bM+vAkDyujDV6dmKHbvQpg==
+  version "20.4.9"
+  resolved "http://192.168.11.130:4873/@types%2fnode/-/node-20.4.9.tgz#c7164e0f8d3f12dfae336af0b1f7fdec8c6b204f"
+  integrity sha512-8e2HYcg7ohnTUbHk8focoklEQYvemQmu9M/f43DZVx43kHn0tE3BY/6gSDxS7k0SprtS0NHvj+L80cGLnoOUcQ==
 
 "@types/node@18.0.0":
   version "18.0.0"
@@ -4890,9 +4905,9 @@ accepts@~1.3.4, accepts@~1.3.5, accepts@~1.3.8:
     negotiator "0.6.3"
 
 ace-builds@^1.20.0:
-  version "1.23.4"
-  resolved "http://192.168.11.130:4873/ace-builds/-/ace-builds-1.23.4.tgz#4f2c813bbdc886a67224be255ab32a280f779a9a"
-  integrity sha512-a4hKAT2T7KNUQC4LQPW2peuoEsZmLYTn4Dwjkh26A3Z+fQ8/fA2JZNs3V6CqvivhbyMQXQJD1u/0qTCoSS6deA==
+  version "1.24.0"
+  resolved "http://192.168.11.130:4873/ace-builds/-/ace-builds-1.24.0.tgz#2e30b3530d486ac3cee6e5531c4b3d34baa382b3"
+  integrity sha512-PdM2yG0zK4KBndvZw0Nc0wRLv/U0/HVVzyC9GpZNgsAaNokbcFQYtMIl3lLtkAxXa+fuePyEaFySNQej+WYEFg==
 
 acorn-globals@^4.3.2:
   version "4.3.4"
@@ -8060,9 +8075,9 @@ ejs@^2.6.1:
   integrity sha512-7vmuyh5+kuUyJKePhQfRQBhXV5Ce+RnaeeQArKu1EAMpL3WbgMt5WG6uQZpEVvYSSsxMXRKOewtDk9RaTKXRlA==
 
 electron-to-chromium@^1.4.477:
-  version "1.4.487"
-  resolved "http://192.168.11.130:4873/electron-to-chromium/-/electron-to-chromium-1.4.487.tgz#e2ef8b15f2791bf68fa6f38f2656f1a551d360ae"
-  integrity sha512-XbCRs/34l31np/p33m+5tdBrdXu9jJkZxSbNxj5I0H1KtV2ZMSB+i/HYqDiRzHaFx2T5EdytjoBRe8QRJE2vQg==
+  version "1.4.490"
+  resolved "http://192.168.11.130:4873/electron-to-chromium/-/electron-to-chromium-1.4.490.tgz#d99286f6e915667fa18ea4554def1aa60eb4d5f1"
+  integrity sha512-6s7NVJz+sATdYnIwhdshx/N/9O6rvMxmhVoDSDFdj6iA45gHR8EQje70+RYsF4GeB+k0IeNSBnP7yG9ZXJFr7A==
 
 element-resize-detector@^1.2.1:
   version "1.2.4"
