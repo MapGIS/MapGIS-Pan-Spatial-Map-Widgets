@@ -311,7 +311,7 @@ export default {
         }
       })
       Object.keys(relation).forEach((item) => {
-        if (item.indexOf('http://') > -1 || item.indexOf('https://') > -1) {
+        if (item.indexOf('://') > -1) {
           const find = this.dataCatalogLayerArr.find(
             (config) => config.serverURL === item
           )

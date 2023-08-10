@@ -194,6 +194,7 @@ export default {
       }
       const { onSelect, zoomArr } = val
       this.basemapNames = [...onSelect]
+      this.updateCurrentBaseMapConfig()
       if (onSelect && onSelect.length > 0) {
         const promiseAll = []
         onSelect.forEach((item) => {
