@@ -622,6 +622,12 @@ export default {
         return
       }
 
+      // 获取勾选的数据，图例使用
+      eventBus.$emit(
+        events.DATA_SELECTION_KEYS_CHANGE_EVENT,
+        this.getDataCatalogCheckedNodeKeys()
+      )
+
       // 扩展图层在相关的微件中移除，勾选取消即可，此处不做其他处理
       if (this.extendLayerRemove) {
         this.extendLayerRemove = !this.extendLayerRemove
