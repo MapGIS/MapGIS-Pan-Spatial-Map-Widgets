@@ -463,6 +463,7 @@ export default {
       layerAutoResetManager: LayerAutoResetManager,
       extendLayerRemoveIds: [],
       lastSelect: '',
+      leafLengthMap: {},
     }
   },
   computed: {
@@ -483,6 +484,9 @@ export default {
     },
     checkKeys() {
       return this.dataCatalogManager.checkedLayerConfigIDs
+    },
+    selectedMaxCount() {
+      return this.widgetInfo.config.otherConfig.selectedMaxCount || 20
     },
     // lastCheck() {
     //   return this.dataCatalogManager.checkedLayerConfigIDs[
@@ -569,6 +573,9 @@ export default {
     },
   },
   methods: {
+    onClose() {
+      this.currentNode = null
+    },
     initLoadKeys() {
       const allLayerNodes = this.dataCatalogManager.getAllLayerConfigItems()
       const initKeys =
@@ -724,6 +731,21 @@ export default {
       // 将新取消选中的图层从document中移除
       this.modifyDocument(newUnChecked, false)
 
+      if (
+        newChecked.length > 0 &&
+        this.currentNode &&
+        this.leafLengthMap[this.currentNode.guid] > this.selectedMaxCount
+      ) {
+        this.$message.error(
+          `添加失败，当前一次允许添加最大节点数为${this.selectedMaxCount}`
+        )
+
+        // 清除选中的节点check状态
+        newChecked.forEach((item) => {
+          this.checkedNodeKeys = this.getCheckedLayerConfigIDs(item)
+        })
+        return
+      }
       // 将新选中的图层节点添加到document
       this.modifyDocument(newChecked, true)
 
@@ -1148,6 +1170,7 @@ export default {
     },
 
     onCheck(checkedKeys, info) {
+      this.currentNode = info.node.dataRef
       this.layerAutoResetManager.setUnAutoResetArr([])
       // 如果取消收藏夹中的图层则再次勾选不再使用收藏夹的记录状态
       !info.checked && DataCatalogCheckController.operateCheck(checkedKeys)
@@ -1744,6 +1767,7 @@ export default {
      */
     getLeafStatus(item) {
       const status = this.getLeafStatusRecursion(item)
+      this.leafLengthMap[item.guid] = status.leafTotal
       return `(${status.leafChecked}/${status.leafTotal})`
     },
 
