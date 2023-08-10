@@ -7,31 +7,36 @@
     </mp-metadata-info-cloud>
     <mapgis-ui-spin :spinning="spinning" size="small">
       <template v-if="metadata">
-        <div v-if="isIGSMapImage(currentLayer || currentConfig)">
-          <mp-metadata-info-doc :metadata="metadata"></mp-metadata-info-doc>
+        <div v-if="isCloudData">
+          <mp-metadata-info-json :metadata="metadata"></mp-metadata-info-json>
         </div>
-        <div v-if="isIGSTile(currentLayer || currentConfig)">
-          <mp-metadata-info-tile :metadata="metadata"></mp-metadata-info-tile>
-        </div>
-        <div v-if="isIGSVector(currentLayer || currentConfig)">
-          <mp-metadata-info-vector
-            :metadata="metadata"
-          ></mp-metadata-info-vector>
-        </div>
-        <div v-if="isIGSScene(currentLayer || currentConfig)">
-          <mp-metadata-info-doc-3-d
-            :metadata="metadata"
-          ></mp-metadata-info-doc-3-d>
-        </div>
-        <div v-if="isArcgis(currentLayer || currentConfig)">
-          <mp-metadata-info-arcgis
-            :metadata="metadata"
-          ></mp-metadata-info-arcgis>
-        </div>
-        <div v-if="isVectorTitle(currentLayer || currentConfig)">
-          <mp-metadata-info-vector-title
-            :metadata="metadata"
-          ></mp-metadata-info-vector-title>
+        <div v-else>
+          <div v-if="isIGSMapImage(currentLayer || currentConfig)">
+            <mp-metadata-info-doc :metadata="metadata"></mp-metadata-info-doc>
+          </div>
+          <div v-if="isIGSTile(currentLayer || currentConfig)">
+            <mp-metadata-info-tile :metadata="metadata"></mp-metadata-info-tile>
+          </div>
+          <div v-if="isIGSVector(currentLayer || currentConfig)">
+            <mp-metadata-info-vector
+              :metadata="metadata"
+            ></mp-metadata-info-vector>
+          </div>
+          <div v-if="isIGSScene(currentLayer || currentConfig)">
+            <mp-metadata-info-doc-3-d
+              :metadata="metadata"
+            ></mp-metadata-info-doc-3-d>
+          </div>
+          <div v-if="isArcgis(currentLayer || currentConfig)">
+            <mp-metadata-info-arcgis
+              :metadata="metadata"
+            ></mp-metadata-info-arcgis>
+          </div>
+          <div v-if="isVectorTitle(currentLayer || currentConfig)">
+            <mp-metadata-info-vector-title
+              :metadata="metadata"
+            ></mp-metadata-info-vector-title>
+          </div>
         </div>
       </template>
     </mapgis-ui-spin>
@@ -56,6 +61,7 @@ import MpMetadataInfoDoc3D from './MetadataInfoDoc3D'
 import MpMetadataInfoArcgis from './MetadataInfoArcgis.vue'
 import MpMetadataInfoVectorTitle from './MetadataInfoVectorTitle.vue'
 import MpMetadataInfoCloud from './MetadataInfoCloud.vue'
+import MpMetadataInfoJson from './MetadataInfoJson.vue'
 
 export default {
   name: 'MpMetadataInfo',
@@ -67,6 +73,7 @@ export default {
     MpMetadataInfoArcgis,
     MpMetadataInfoVectorTitle,
     MpMetadataInfoCloud,
+    MpMetadataInfoJson,
   },
   props: ['currentLayer', 'currentConfig'],
   data() {
@@ -74,6 +81,7 @@ export default {
       metadata: null,
       tableColumns: [],
       spinning: false,
+      isCloudData: false,
     }
   },
   methods: {
@@ -113,6 +121,38 @@ export default {
     isVectorTitle(item) {
       return item.type === LayerType.VectorTile
     },
+    // 将获取到的元数据信息递归进行标准化转换
+    formatValue(value, dictionaryItems, obj) {
+      const key = value[0]
+      if (!key) return
+      const filterDictionaryItems = dictionaryItems.filter(
+        (item) => item.value === value[0]
+      )
+      if (filterDictionaryItems) {
+        obj.label += `${filterDictionaryItems[0].label}/`
+      }
+      this.formatValue(value.splice(1), filterDictionaryItems[0].children, obj)
+    },
+    // 筛选元数据信息提取需要展示的字段
+    formatMetadata(metadataCopy) {
+      return metadataCopy.groups.map((item) => {
+        const items = item.items.map((i) => {
+          if (i.dictionaryItems && i.value) {
+            i.label = ''
+            this.formatValue(i.value, i.dictionaryItems, i)
+            if (i.label && i.label.endsWith('/')) {
+              i.label = i.label.substring(0, i.label.length - 1)
+            }
+          }
+          return { key: i.nickName, value: i.label || i.value }
+        })
+        const metadataItem = {
+          label: item.groupName,
+          items,
+        }
+        return metadataItem
+      })
+    },
   },
   watch: {
     currentLayer: {
@@ -128,6 +168,7 @@ export default {
           ) {
             return
           }
+          const defaultToken = baseConfigInstance.config.token
           let option: Metadata.MetadataQueryParam = {}
           switch (type) {
             case LayerType.IGSScene: {
@@ -189,6 +230,18 @@ export default {
               break
           }
           this.spinning = true
+          // 后台配置了token就先走云管
+          if (defaultToken) {
+            option.token = defaultToken
+            const metadata = await Metadata.CloudMetaDataQuery.query(option)
+            if (metadata) {
+              const metadataCopy = JSON.parse(JSON.stringify(metadata))
+              this.metadata = this.formatMetadata(metadataCopy)
+              this.spinning = false
+              this.isCloudData = true
+              return
+            }
+          }
           if (
             type === LayerType.ArcGISMapImage ||
             type === LayerType.ArcGISTile
@@ -228,7 +281,7 @@ export default {
           let option: Metadata.MetadataQueryParam = {}
           const defaultIp = baseConfigInstance.config.ip
           const defaultPort = baseConfigInstance.config.port
-
+          const defaultToken = baseConfigInstance.config.token
           switch (type) {
             case LayerType.IGSScene: {
               const serverName = this.currentConfig.serverName
@@ -273,6 +326,18 @@ export default {
               break
           }
           this.spinning = true
+          // 后台配置了token就先走云管
+          if (defaultToken) {
+            option.token = defaultToken
+            const metadata = await Metadata.CloudMetaDataQuery.query(option)
+            if (metadata) {
+              const metadataCopy = JSON.parse(JSON.stringify(metadata))
+              this.metadata = this.formatMetadata(metadataCopy)
+              this.spinning = false
+              this.isCloudData = true
+              return
+            }
+          }
           if (
             type === LayerType.ArcGISMapImage ||
             type === LayerType.ArcGISTile
@@ -287,6 +352,7 @@ export default {
             this.metadata = await Metadata.MetaDataQuery.query(option)
           }
           this.spinning = false
+          this.isCloudData = false
         }
       },
     },
