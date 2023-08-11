@@ -72,6 +72,9 @@ export default {
     dataCatalogLayerArr() {
       return this.dataCatalogManager.getAllLayerConfigItems()
     },
+    dataCatalogAllArr() {
+      return this.dataCatalogManager.getAllConfigItems()
+    },
   },
   mounted() {
     eventBus.$on(events.DATA_CATALOG_ADD_COLLECT, this.addData)
@@ -110,6 +113,7 @@ export default {
       }
        */
       // 获取图层列表此时的配置信息
+      this.transferCheckData(data)
       eventBus.$emit(events.GET_LAYER_LIST_INFO)
       eventBus.$emit(events.SCENE_CONFIG_INFO)
       const id = UUID.uuid()
@@ -198,8 +202,8 @@ export default {
           // 发送勾选数据目录节点消息
           eventBus.$emit(
             events.DATA_CATALOG_CHECK_NODES,
-            JSON.parse(JSON.stringify(item.checkKeys)),
-            JSON.parse(JSON.stringify(item.checkKeysRelation))
+            this.transferCheckKeyArr(item.checkKeys),
+            this.transferCheckKeysRelation(item.checkKeysRelation)
           )
         }, 1000)
       } else {
@@ -220,8 +224,8 @@ export default {
           // 发送勾选数据目录节点消息
           eventBus.$emit(
             events.DATA_CATALOG_CHECK_NODES,
-            JSON.parse(JSON.stringify(item.checkKeys)),
-            JSON.parse(JSON.stringify(item.checkKeysRelation))
+            this.transferCheckKeyArr(item.checkKeys),
+            this.transferCheckKeysRelation(item.checkKeysRelation)
           )
         }, 1000)
       }
@@ -299,7 +303,7 @@ export default {
       const transferRelation = {}
       Object.keys(layerInfo).forEach((item) => {
         // 兼容guid的情况
-        if (item.indexOf('http://') > -1 || item.indexOf('https://') > -1) {
+        if (item.indexOf('://') > -1) {
           const find = this.dataCatalogLayerArr.find(
             (config) => config.serverURL === item
           )
@@ -401,6 +405,99 @@ export default {
         find && transferGuid.push(find.guid)
       })
       return transferGuid
+    },
+    transferCheckData(data) {
+      const { checkKeys, checkKeysRelation } = data
+      const transferCheckKeys = []
+      const transferCheckKeysRelation = {}
+      if (checkKeys && checkKeys.length > 0) {
+        checkKeys.forEach((item) => {
+          const find = this.dataCatalogLayerArr.find(
+            (layer) => layer.guid === item
+          )
+          find && transferCheckKeys.push(find.serverURL)
+        })
+        data.checkKeys = transferCheckKeys
+      }
+
+      if (checkKeysRelation && Object.keys(checkKeysRelation).length > 0) {
+        Object.keys(checkKeysRelation).forEach((item) => {
+          const typeArr = checkKeysRelation[item]
+          transferCheckKeysRelation[item] = []
+          typeArr.forEach((id) => {
+            const find = this.dataCatalogLayerArr.find(
+              (layer) => layer.guid === id
+            )
+            find && transferCheckKeysRelation[item].push(find.serverURL)
+          })
+        })
+        data.checkKeysRelation = transferCheckKeysRelation
+      }
+    },
+    transferCheckKeyArr(checkKeys) {
+      const transferCheckKeys = []
+      checkKeys.forEach((item) => {
+        if (item.indexOf('://') > -1) {
+          const find = this.dataCatalogLayerArr.find(
+            (config) => config.serverURL === item
+          )
+          if (find) {
+            transferCheckKeys.push(find.guid)
+          }
+        } else {
+          transferCheckKeys.push(item)
+        }
+      })
+      return transferCheckKeys
+    },
+    transferCheckKeysRelation(checkKeysRelation) {
+      // 获取父级节点只需要使用对应关系数组中的一个url地址就行
+      const transferCheckKeysRelation = {}
+      if (checkKeysRelation && Object.keys(checkKeysRelation).length > 0) {
+        Object.keys(checkKeysRelation).forEach((item) => {
+          const subArr = checkKeysRelation[item]
+          if (subArr && subArr.length > 0) {
+            const frist = subArr[0]
+            let fristData
+            if (frist.indexOf('://') > -1) {
+              fristData = this.dataCatalogAllArr.find(
+                (layer) => layer.serverURL === frist
+              )
+            } else {
+              fristData = this.dataCatalogAllArr.find(
+                (layer) => layer.guid === frist
+              )
+            }
+            let parentData = fristData ? this.getParent(fristData) : null
+
+            const transferSubArr = []
+            subArr.forEach((item) => {
+              if (item.indexOf('://') > -1) {
+                const find = this.dataCatalogLayerArr.find(
+                  (config) => config.serverURL === item
+                )
+                transferSubArr.push(find.guid)
+              } else {
+                transferSubArr.push(item)
+              }
+            })
+            if (parentData) {
+              transferCheckKeysRelation[parentData.guid] = transferSubArr
+            }
+          }
+        })
+      }
+      return transferCheckKeysRelation
+    },
+    getParent(subData) {
+      const find = this.dataCatalogAllArr.find(
+        (item) => item.guid === subData.parentId
+      )
+      if (find && find.parentId) {
+        return this.getParent(find)
+      } else {
+        return find
+      }
     },
   },
 }
