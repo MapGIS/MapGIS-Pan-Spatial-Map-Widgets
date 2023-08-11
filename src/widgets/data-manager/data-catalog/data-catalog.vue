@@ -297,7 +297,10 @@
         :zIndex="2"
       >
         <template>
-          <mp-metadata-info :currentConfig="currentConfig" />
+          <mp-metadata-info
+            :currentConfig="currentConfig"
+            :currentOGCMetadata="currentOGCMetadata"
+          />
         </template>
       </mp-window>
     </mp-window-wrapper>
@@ -346,6 +349,7 @@ import {
   DataCatalogCheckController,
   LayerPropertyEdit,
   BaseMapController,
+  baseConfigInstance,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../../../components/MetadataInfo/MetadataInfo.vue'
 import NonSpatial from './non-spatial.vue'
@@ -464,6 +468,8 @@ export default {
       extendLayerRemoveIds: [],
       lastSelect: '',
       leafLengthMap: {},
+      // 保存OGC元数据信息
+      currentOGCMetadata: {},
     }
   },
   computed: {
@@ -1559,8 +1565,24 @@ export default {
       return type === LayerType.OGCWMS || type === LayerType.OGCWMTS
     },
 
+    // 根据url获取domain及docName
+    parseUrl(urlStr) {
+      const url = new URL(urlStr)
+      const domain = url.origin
+      const serverType = 'igs/rest/services/'
+      const indexServer = urlStr.search(serverType)
+      const indexName = indexServer + serverType.length
+      const docName =
+        urlStr.substr(indexName).split('/').length > 2
+          ? `${urlStr.substr(indexName).split('/')[0]}:${
+              urlStr.substr(indexName).split('/')[1]
+            }`
+          : `${urlStr.substr(indexName).split('/')[0]}`
+      return { domain, docName }
+    },
+
     // 元数据信息按钮响应事件
-    showMetaDataInfo(item) {
+    async showMetaDataInfo(item) {
       if (this.isOGCLayer(item.serverType)) {
         this.showMetaData = false
         const url = item.serverURL
@@ -1569,6 +1591,31 @@ export default {
         if (item.tokenValue && item.tokenValue.length > 0) {
           const tokenKey = item.tokenKey ? item.tokenKey : 'token'
           tempUrl += `?${item.tokenKey}=${item.tokenValue}`
+        }
+        if (baseConfigInstance.config.token) {
+          const token = baseConfigInstance.config.token
+          // 有服务名直接取服务名，没有服务名根据url解析，但是第三方服务根据url解析不到正确的服务名，无法获取云管的元数据信息，因此第三方服务必须要有服务名
+          let domain
+          let docName
+          if (item.serverName) {
+            const url = new URL(tempUrl)
+            domain = url.origin
+            docName = item.serverName
+          } else {
+            const res = this.parseUrl(tempUrl)
+            domain = res.domain
+            docName = res.docName
+          }
+          const option = { domain, docName, token }
+          const metadata = await Metadata.CloudMetaDataQuery.query(option)
+          if (metadata) {
+            this.currentOGCMetadata = {
+              ...JSON.parse(JSON.stringify(metadata)),
+              type: item.serverType,
+            }
+            this.showMetaData = true
+            return
+          }
         }
         if (item.serverType === LayerType.OGCWMS) {
           getCapabilitiesURL =

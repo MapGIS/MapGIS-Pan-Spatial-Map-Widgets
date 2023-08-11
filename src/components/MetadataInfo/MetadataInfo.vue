@@ -75,7 +75,7 @@ export default {
     MpMetadataInfoCloud,
     MpMetadataInfoJson,
   },
-  props: ['currentLayer', 'currentConfig'],
+  props: ['currentLayer', 'currentConfig', 'currentOGCMetadata'],
   data() {
     return {
       metadata: null,
@@ -171,6 +171,14 @@ export default {
           const defaultToken = baseConfigInstance.config.token
           let option: Metadata.MetadataQueryParam = {}
           switch (type) {
+            case LayerType.STKTerrain:
+            case LayerType.ModelCache: {
+              const serverName = this.currentConfig.serverName
+              const ip = this.currentConfig.ip
+              const port = this.currentConfig.port
+              option = { ip, port, docName: serverName }
+              break
+            }
             case LayerType.IGSScene: {
               let res
               if (this.currentLayer.layer) {
@@ -283,6 +291,14 @@ export default {
           const defaultPort = baseConfigInstance.config.port
           const defaultToken = baseConfigInstance.config.token
           switch (type) {
+            case LayerType.STKTerrain:
+            case LayerType.ModelCache: {
+              const serverName = this.currentConfig.serverName
+              const ip = this.currentConfig.ip || defaultIp
+              const port = this.currentConfig.port || defaultPort
+              option = { domain, ip, port, docName: serverName }
+              break
+            }
             case LayerType.IGSScene: {
               const serverName = this.currentConfig.serverName
               const ip = this.currentConfig.ip || defaultIp
@@ -319,7 +335,10 @@ export default {
               break
             }
             case LayerType.VectorTile: {
-              option = { url: serverURL }
+              const serverName = this.currentConfig.serverName
+              const ip = this.currentConfig.ip || defaultIp
+              const port = this.currentConfig.port || defaultPort
+              option = { url: serverURL, ip, port, docName: serverName, domain }
               break
             }
             default:
@@ -353,6 +372,20 @@ export default {
           }
           this.spinning = false
           this.isCloudData = false
+        }
+      },
+    },
+    currentOGCMetadata: {
+      deep: true,
+      immediate: true,
+      handler() {
+        if (this.currentOGCMetadata) {
+          const { type } = this.currentOGCMetadata
+          if (type === LayerType.OGCWMS || type === LayerType.OGCWMTS) {
+            const metadata = JSON.parse(JSON.stringify(this.currentOGCMetadata))
+            this.metadata = this.formatMetadata(metadata)
+            this.isCloudData = true
+          }
         }
       },
     },
