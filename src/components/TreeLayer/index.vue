@@ -151,6 +151,7 @@
             <mp-metadata-info
               v-if="showMetadataInfo"
               :currentLayer="currentLayerInfo"
+              :currentOGCMetadata="currentOGCMetadata"
             />
           </template>
         </mp-window>
@@ -208,6 +209,7 @@ import {
   LayerSublayersManager,
   ModelPickController,
   LayerPropertyEdit,
+  Metadata,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../MetadataInfo/MetadataInfo.vue'
 import MpCustomQuery from '../CustomQuery/CustomQuery.vue'
@@ -272,6 +274,8 @@ export default {
       modelSave: false,
       layerConfig: null,
       modelPickController: ModelPickController,
+      // 保存OGC元数据信息
+      currentOGCMetadata: {},
     }
   },
   computed: {
@@ -1351,19 +1355,49 @@ export default {
       })
     },
 
-    metaDataInfo(node) {
+    // 解析url获取domain及docName
+    parseUrl(urlStr) {
+      const url = new URL(urlStr)
+      const domain = url.origin
+      const serverType = 'igs/rest/services/'
+      const indexServer = urlStr.search(serverType)
+      const indexName = indexServer + serverType.length
+      const docName =
+        urlStr.substr(indexName).split('/').length > 2
+          ? `${urlStr.substr(indexName).split('/')[0]}:${
+              urlStr.substr(indexName).split('/')[1]
+            }`
+          : `${urlStr.substr(indexName).split('/')[0]}`
+      return { domain, docName }
+    },
+
+    async metaDataInfo(node) {
       const layer = node.dataRef
       if (this.isWMTSLayer(layer) || this.isWMSLayer(layer)) {
-        window.open(layer.url)
-      } else {
-        this.showMetadataInfo = true
-        this.currentLayerInfo = layer
+        if (baseConfigInstance.config.token) {
+          const token = baseConfigInstance.config.token
+          const { domain, docName } = this.parseUrl(layer.url)
+          const option = { domain, docName, token }
+          const metadata = await Metadata.CloudMetaDataQuery.query(option)
+          if (metadata) {
+            this.currentOGCMetadata = {
+              ...JSON.parse(JSON.stringify(metadata)),
+              type: layer.type,
+            }
+            this.showMetadataInfo = true
+            return
+          }
+          window.open(layer.url)
+        } else {
+          this.showMetadataInfo = true
+          this.currentLayerInfo = layer
+        }
+        // 复位当前选择的图层
+        // this.$nextTick(() => {
+        //   this.currentLayerInfo = {}
+        // })
+        this.clickPopover(node, false)
       }
-      // 复位当前选择的图层
-      // this.$nextTick(() => {
-      //   this.currentLayerInfo = {}
-      // })
-      this.clickPopover(node, false)
     },
 
     clickPopover(item, visible) {
