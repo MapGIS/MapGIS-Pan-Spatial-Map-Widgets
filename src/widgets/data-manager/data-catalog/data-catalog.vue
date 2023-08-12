@@ -1591,7 +1591,7 @@ export default {
           const tokenKey = item.tokenKey ? item.tokenKey : 'token'
           tempUrl += `?${item.tokenKey}=${item.tokenValue}`
         }
-        if (baseConfigInstance.config.token) {
+        if (baseConfigInstance.config.token && item.serverName) {
           const token = baseConfigInstance.config.token
           // 有服务名直接取服务名，没有服务名根据url解析，但是第三方服务根据url解析不到正确的服务名，无法获取云管的元数据信息，因此第三方服务必须要有服务名
           let domain
@@ -1605,7 +1605,9 @@ export default {
             domain = res.domain
             docName = res.docName
           }
-          const option = { domain, docName, token }
+          const ip = item.ip || baseConfigInstance.config.ip
+          const port = item.port || baseConfigInstance.config.port
+          const option = { domain, docName, token, ip, port }
           const metadata = await Metadata.CloudMetaDataQuery.query(option)
           if (metadata) {
             this.currentOGCMetadata = {
@@ -1625,12 +1627,33 @@ export default {
         }
         window.open(getCapabilitiesURL)
       } else {
-        const layer = {
-          ...item,
-          type: item.serverType,
+        if (item.serverURL.includes('igs/rest')) {
+          const layer = {
+            ...item,
+            type: item.serverType,
+          }
+          this.showMetaData = true
+          this.currentConfig = layer
+        } else {
+          // 第三方注册服务
+          if (baseConfigInstance.config.token) {
+            const token = baseConfigInstance.config.token
+            const ip = item.ip || baseConfigInstance.config.ip
+            const port = item.port || baseConfigInstance.config.port
+            const docName = item.serverName
+            const option = { token, ip, port, docName }
+            const metadata = await Metadata.CloudMetaDataQuery.query(option)
+            if (metadata) {
+              this.currentOGCMetadata = {
+                ...JSON.parse(JSON.stringify(metadata)),
+                type: item.serverType,
+              }
+              this.showMetaData = true
+              return
+            }
+          }
+          window.open(item.serverURL)
         }
-        this.showMetaData = true
-        this.currentConfig = layer
       }
     },
 

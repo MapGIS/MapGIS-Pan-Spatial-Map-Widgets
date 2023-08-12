@@ -380,12 +380,9 @@ export default {
       immediate: true,
       handler() {
         if (this.currentOGCMetadata) {
-          const { type } = this.currentOGCMetadata
-          if (type === LayerType.OGCWMS || type === LayerType.OGCWMTS) {
-            const metadata = JSON.parse(JSON.stringify(this.currentOGCMetadata))
-            this.metadata = this.formatMetadata(metadata)
-            this.isCloudData = true
-          }
+          const metadata = JSON.parse(JSON.stringify(this.currentOGCMetadata))
+          this.metadata = this.formatMetadata(metadata)
+          this.isCloudData = true
         }
       },
     },
