@@ -15,10 +15,22 @@
           v-bind="slotProps"
         >
           <template>
-            <div v-for="(item, index) in data" :key="index">
-              <div>{{ item.name }}</div>
-              <img class="contain-img" :src="item.imgUrl" alt="" />
-            </div>
+            <mapgis-ui-collapse :activeKey="activeKey" :bordered="false">
+              <mapgis-ui-collapse-panel
+                v-for="item in data"
+                :key="item.description"
+              >
+                <template v-if="item.description" slot="header">
+                  <mapgis-ui-tooltip>
+                    <template v-if="item.description" slot="title">
+                      {{ item.description }}
+                    </template>
+                    <div>{{ item.name }}</div>
+                  </mapgis-ui-tooltip>
+                </template>
+                <img class="contain-img" :src="item.imgUrl" alt="" />
+              </mapgis-ui-collapse-panel>
+            </mapgis-ui-collapse>
           </template>
         </mp-window>
       </template>
@@ -36,7 +48,9 @@ import {
   api,
   eventBus,
   events,
+  DataCatalogUtil,
 } from '@mapgis/web-app-framework'
+import { Result } from 'ant-design-vue'
 
 export default {
   name: 'MpLegend',
@@ -53,6 +67,7 @@ export default {
       checkedNodesKeys: [],
       // 图例数据
       data: [],
+      activeKey: [],
     }
   },
 
@@ -122,17 +137,123 @@ export default {
       const newConfig = await api.getWidgetConfig('legend')
       this.checkedTreeData = []
       this.getCheckNodeData(this.treeData)
-      this.data = this.checkedTreeData
-        .reduce((result, item) => {
-          if (Object.keys(newConfig).includes(item.name)) {
-            result.push(item)
+
+      this.data = []
+      this.activeKey = []
+      for (let i = 0; i < this.checkedTreeData.length; i++) {
+        const item = this.checkedTreeData[i]
+        if (Object.keys(newConfig).includes(item.name)) {
+          // 兼容以前的配置
+          item.description = item.name
+          item.imgUrl = `${this.baseUrl}${newConfig[item.name]}`
+          this.data.push(item)
+          this.activeKey.push(item.name)
+        } else {
+          // 1、获取根节点到节点的节点label和legend
+          const labelLegend = DataCatalogUtil.getTreeNodeLabelLegend(
+            item,
+            this.treeData
+          )
+          const { labelArr, labelLengendArr } = labelLegend
+          const length = labelLengendArr.length
+          // 根节点到子节点的label串
+          let tempDescription = labelArr.join('-')
+          // 子节点上的legend
+          let tempLegend = labelLengendArr[length - 1].legend
+          if (Object.keys(newConfig).includes(tempDescription)) {
+            // 子节点的图例已存在newConfig中
+            item.description = tempDescription
+            item.imgUrl = `${this.baseUrl}${newConfig[tempDescription]}`
+            this.data.push(item)
+            this.activeKey.push(tempDescription)
+          } else {
+            // 剩下两种情况：1、图例在newConfig中；2、图例未在newConfig中
+            for (let j = length - 2; j >= 0; j--) {
+              const { label: name, legend } = labelLengendArr[j]
+              const description = labelArr.slice(0, j + 1).join('-')
+              if (Object.keys(newConfig).includes(description)) {
+                // 图例在newConfig中
+                item.description = description
+                item.imgUrl = `${this.baseUrl}${newConfig[description]}`
+                this.data.push(item)
+                this.activeKey.push(description)
+                break
+              }
+              // 图例未在newConfig中，也有两种情况
+              // 第一种情况，根节点上没有legend，向上父节点上找
+              if (!tempLegend || tempLegend.length == 0) {
+                // 父节点上有legend
+                if (legend && legend.length > 0) {
+                  newConfig[description] = legend
+                  tempLegend = legend
+                  tempDescription = description
+                  item.description = tempDescription
+                  item.imgUrl = `${this.baseUrl}${tempLegend}`
+                  this.data.push(item)
+                  this.activeKey.push(description)
+                  await api.saveWidgetConfig({
+                    name: 'legend',
+                    config: JSON.stringify(newConfig),
+                  })
+                  break
+                }
+                // 父节点上没有legend，继续往上找
+                continue
+              } else {
+                // 第二种情况，根节点上有legend，向上父节点上找，看是否与父节点的legend重复
+                // 父节点上有legend
+                if (legend && legend.length > 0) {
+                  // 子节点的legend与父节点不相同，取子节点的
+                  if (legend !== tempLegend) {
+                    newConfig[tempDescription] = tempLegend
+                    item.description = tempDescription
+                    item.imgUrl = `${this.baseUrl}${tempLegend}`
+                    this.data.push(item)
+                    this.activeKey.push(tempDescription)
+                    await api.saveWidgetConfig({
+                      name: 'legend',
+                      config: JSON.stringify(newConfig),
+                    })
+                    break
+                  } else {
+                    // 子节点的legend与父节点相同，取父节点的，并且继续往上找
+                    tempDescription = description
+                    tempLegend = legend
+                    if (j === 0) {
+                      // 如果到根节点，子节点的legend还与父节点相同，则直接取根节点的
+                      newConfig[tempDescription] = tempLegend
+                      item.description = tempDescription
+                      item.imgUrl = `${this.baseUrl}${tempLegend}`
+                      this.data.push(item)
+                      this.activeKey.push(tempDescription)
+                      await api.saveWidgetConfig({
+                        name: 'legend',
+                        config: JSON.stringify(newConfig),
+                      })
+                      break
+                    }
+                  }
+                } else {
+                  // 父节点上没有legend
+                  if (j === 0) {
+                    // 如果到根节点，父节点还是没有legend，则直接取子节点的
+                    newConfig[tempDescription] = tempLegend
+                    item.description = tempDescription
+                    item.imgUrl = `${this.baseUrl}${tempLegend}`
+                    this.data.push(item)
+                    this.activeKey.push(tempDescription)
+                    await api.saveWidgetConfig({
+                      name: 'legend',
+                      config: JSON.stringify(newConfig),
+                    })
+                    break
+                  }
+                }
+              }
+            }
           }
-          return result
-        }, [])
-        .map((item) => {
-          this.$set(item, 'imgUrl', `${this.baseUrl}${newConfig[item.name]}`)
-          return item
-        })
+        }
+      }
     },
   },
 }

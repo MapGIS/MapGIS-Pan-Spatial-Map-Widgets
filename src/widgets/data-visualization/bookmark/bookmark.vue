@@ -44,8 +44,9 @@ import {
   api,
   eventBus,
   events,
+  DataCatalogUtil,
+  TreeConfig,
 } from '@mapgis/web-app-framework'
-import { TreeConfig } from './tree-config'
 
 export default {
   name: 'MpBookmark',
@@ -57,7 +58,6 @@ export default {
       baseTreeData: null,
       // 判断是否是批量添加
       isBatAdd: false,
-      nodeParentLevel: [],
     }
   },
 
@@ -95,9 +95,7 @@ export default {
     // 右键删除该项响应事件
     onDeleteBookmark(node) {
       const index = this.treeData[0].children.findIndex(
-        (item) =>
-          item[TreeConfig.getInstance().config.GUID] ===
-          node[TreeConfig.getInstance().config.GUID]
+        (item) => item[TreeConfig.config.GUID] === node[TreeConfig.config.GUID]
       )
       this.treeData[0].children.splice(index, 1)
       this.saveBookmarks()
@@ -108,9 +106,7 @@ export default {
         if (item.children && item.children.length > 0) {
           this.addAllSelectedToMark(type, checkedKeys, item.children)
         } else {
-          if (
-            checkedKeys.includes(item[TreeConfig.getInstance().config.GUID])
-          ) {
+          if (checkedKeys.includes(item[TreeConfig.config.GUID])) {
             this.addToMark({ params: item, type }, this.baseTreeData)
           }
         }
@@ -121,19 +117,12 @@ export default {
       const this_ = this
       const labelArr = []
       const copyParams = JSON.parse(JSON.stringify(params))
-      this.nodeParentLevel = []
 
       this.baseTreeData = baseTreeData
-      if (params.pos) {
-        this.getParentLevel(params)
-      } else {
-        this.getParentLevel2(params, baseTreeData, [])
-      }
-
-      if (this.nodeParentLevel.length > 0) {
-        this.getNodeLabel(baseTreeData, 0, labelArr)
-      }
-      const treeNodeLabel = labelArr.join('-')
+      const treeNodeLabel = DataCatalogUtil.getTreeNodeLabel(
+        params,
+        baseTreeData
+      )
       copyParams.description = treeNodeLabel
 
       if (this.treeData.some((item) => item.name === type)) {
@@ -141,14 +130,12 @@ export default {
         if (
           childrenArr.some(
             (item) =>
-              item[TreeConfig.getInstance().config.GUID] ===
-              params[TreeConfig.getInstance().config.GUID]
+              item[TreeConfig.config.GUID] === params[TreeConfig.config.GUID]
           )
         ) {
           const index = childrenArr.find(
             (item) =>
-              item[TreeConfig.getInstance().config.GUID] ===
-              params[TreeConfig.getInstance().config.GUID]
+              item[TreeConfig.config.GUID] === params[TreeConfig.config.GUID]
           )
           this.$confirm({
             title: '提示',
@@ -185,50 +172,6 @@ export default {
       this.$message.success({
         content: '收藏成功，通过收藏夹或者书签功能查看',
       })
-    },
-    // 串联该节点所在层级的label(去除首层节点的label)
-    getNodeLabel(node, index, labelArr) {
-      if (index >= 0) {
-        labelArr.push(node[this.nodeParentLevel[index]].name)
-      }
-      if (
-        node[this.nodeParentLevel[index]].children &&
-        node[this.nodeParentLevel[index]].children.length > 0
-      ) {
-        index++
-        this.getNodeLabel(
-          node[this.nodeParentLevel[index - 1]].children,
-          index,
-          labelArr
-        )
-      }
-    },
-    // 获取该节点在目录树中的层级(节点中有pos属性)
-    getParentLevel(node: Record<string, any>) {
-      this.nodeParentLevel = node.pos
-        .split('-')
-        .slice(1)
-        .map((item) => +item)
-    },
-    // 获取该节点在目录树中的层级(节点中无pos属性)
-    getParentLevel2(
-      params: Record<string, any>,
-      baseTreeData: Record<string, any>,
-      arr: number[]
-    ) {
-      for (let i = 0; i < baseTreeData.length; i++) {
-        const newArr = JSON.parse(JSON.stringify(arr))
-        const item = baseTreeData[i]
-        newArr.push(i)
-        if (item.children && item.children.length > 0) {
-          this.getParentLevel2(params, item.children, newArr)
-        } else if (
-          item[TreeConfig.getInstance().config.GUID] ===
-          params[TreeConfig.getInstance().config.GUID]
-        ) {
-          this.nodeParentLevel = newArr
-        }
-      }
     },
     saveBookmarks() {
       api

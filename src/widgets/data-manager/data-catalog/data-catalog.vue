@@ -239,9 +239,7 @@
                 }}</mapgis-ui-menu-item
               >
               <mapgis-ui-menu-item
-                v-if="
-                  hasLegend(item) && !isNonSpatial(item) && !isDataFlow(item)
-                "
+                v-if="!isNonSpatial(item) && !isDataFlow(item)"
                 key="3"
                 @click="onUploadLegend(item)"
               >
@@ -350,6 +348,7 @@ import {
   LayerPropertyEdit,
   BaseMapController,
   baseConfigInstance,
+  DataCatalogUtil,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../../../components/MetadataInfo/MetadataInfo.vue'
 import NonSpatial from './non-spatial.vue'
@@ -568,7 +567,7 @@ export default {
     checkedNodeKeys: {
       deep: false,
       handler() {
-        this.onCheckedNodeKeysChenged()
+        this.onCheckedNodeKeysChanged()
       },
     },
     'dataCatalogManager.checkedLayerConfigIDs': {
@@ -628,7 +627,7 @@ export default {
       }
       return currentData
     },
-    onCheckedNodeKeysChenged() {
+    onCheckedNodeKeysChanged() {
       // 列表展示赋值key不需要再次处理
       if (this.setKeys) {
         this.setKeys = !this.setKeys
@@ -1530,17 +1529,17 @@ export default {
 
     // 是否显示上传图例
     hasLegend(node) {
-      const nodeParentLevel = node.pos
-        .split('-')
-        .slice(1)
-        .map((item) => +item)
-      const LabelArr = []
-      this.getNodeLabel(this.dataCatalogTreeData, 0, LabelArr, nodeParentLevel)
-      if (LabelArr.some((item) => item.indexOf('专题') !== -1)) {
-        return true
-      } else {
-        return false
-      }
+      // const nodeParentLevel = node.pos
+      //   .split('-')
+      //   .slice(1)
+      //   .map((item) => +item)
+      // const LabelArr = []
+      // this.getNodeLabel(this.dataCatalogTreeData, 0, LabelArr, nodeParentLevel)
+      // if (LabelArr.some((item) => item.indexOf('专题') !== -1)) {
+      //   return true
+      // } else {
+      //   return false
+      // }
     },
 
     // 串联该节点所在层级的description
@@ -1691,7 +1690,11 @@ export default {
       if (info.file.status === 'done') {
         const url = info.file.response.url
         const legendConfig = await api.getWidgetConfig('legend')
-        const key = this.legendNode.name
+        // const key = this.legendNode.name
+        const key = DataCatalogUtil.getTreeNodeLabel(
+          this.legendNode,
+          this.dataCatalogTreeData
+        )
         if (url) {
           legendConfig[key] = url
           const res = await api.saveWidgetConfig({
