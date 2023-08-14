@@ -1459,18 +1459,24 @@ export default {
     getSublayers(layer, sublayerArr) {
       if (layer && layer.length > 0) {
         layer.forEach((item) => {
+          // 场景服务的子图层layerProperty属性需要在item.layer.layerProperty中取
           const sublayer = {
             geomType: item.geomType,
             id: item.id,
             key: item.key,
             sysLibraryGuid: item.sysLibraryGuid,
-            maximumScreenSpaceError: item.maximumScreenSpaceError,
-            luminanceAtZenith: item.luminanceAtZenith,
+            maximumScreenSpaceError: item.layer
+              ? item.layer.layerProperty.maximumScreenSpaceError
+              : item.maximumScreenSpaceError,
+            luminanceAtZenith: item.layer
+              ? item.layer.layerProperty.luminanceAtZenith
+              : item.luminanceAtZenith,
             title: item.title,
             url: item.url,
             visible: item.visible,
             visiblePopover: item.visiblePopover,
           }
+
           sublayerArr.push(sublayer)
           const nextSubLayers = item.sublayers
           if (nextSubLayers && nextSubLayers.length > 0) {
