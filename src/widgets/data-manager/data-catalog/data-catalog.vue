@@ -129,6 +129,13 @@
               >
                 元数据信息
               </mapgis-ui-menu-item>
+              <mapgis-ui-menu-item
+                v-if="!isNonSpatial(item) && !isDataFlow(item)"
+                key="2"
+                @click="onUploadLegend(item)"
+              >
+                上传图例
+              </mapgis-ui-menu-item>
             </mapgis-ui-menu>
             <span class="tree-node" :id="`tree_${item.guid}`">
               <span

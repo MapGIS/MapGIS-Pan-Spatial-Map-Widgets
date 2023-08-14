@@ -15,22 +15,29 @@
           v-bind="slotProps"
         >
           <template>
-            <mapgis-ui-collapse :activeKey="activeKey" :bordered="false">
-              <mapgis-ui-collapse-panel
-                v-for="item in data"
-                :key="item.description"
+            <div id="legendContainer">
+              <mapgis-ui-collapse
+                :activeKey="activeKey"
+                :bordered="false"
+                @change="collapseChange"
               >
-                <template v-if="item.description" slot="header">
-                  <mapgis-ui-tooltip>
-                    <template v-if="item.description" slot="title">
-                      {{ item.description }}
-                    </template>
-                    <div>{{ item.name }}</div>
-                  </mapgis-ui-tooltip>
-                </template>
-                <img class="contain-img" :src="item.imgUrl" alt="" />
-              </mapgis-ui-collapse-panel>
-            </mapgis-ui-collapse>
+                <mapgis-ui-collapse-panel
+                  v-for="item in data"
+                  :key="item.description"
+                  :class="item.description"
+                >
+                  <template v-if="item.description" slot="header">
+                    <mapgis-ui-tooltip>
+                      <template v-if="item.description" slot="title">
+                        {{ item.description }}
+                      </template>
+                      <div>{{ item.legendLabel || item.name }}</div>
+                    </mapgis-ui-tooltip>
+                  </template>
+                  <img class="contain-img" :src="item.imgUrl" alt="" />
+                </mapgis-ui-collapse-panel>
+              </mapgis-ui-collapse>
+            </div>
           </template>
         </mp-window>
       </template>
@@ -65,9 +72,12 @@ export default {
       checkedTreeData: [],
       // 被勾选的目录树节点key
       checkedNodesKeys: [],
+      // 上一次被勾选的目录树节点key
+      preCheckedNodesKeys: [],
       // 图例数据
       data: [],
       activeKey: [],
+      scrollPositionKey: undefined,
     }
   },
 
@@ -139,15 +149,18 @@ export default {
       this.getCheckNodeData(this.treeData)
 
       this.data = []
-      this.activeKey = []
+      this.scrollPositionKey = undefined
       for (let i = 0; i < this.checkedTreeData.length; i++) {
         const item = this.checkedTreeData[i]
+        let obj = {}
         if (Object.keys(newConfig).includes(item.name)) {
           // 兼容以前的配置
-          item.description = item.name
-          item.imgUrl = `${this.baseUrl}${newConfig[item.name]}`
-          this.data.push(item)
-          this.activeKey.push(item.name)
+          obj = {
+            description: item.name,
+            legendLabel: item.name,
+            imgUrl: `${this.baseUrl}${newConfig[item.name]}`,
+            name: item.name,
+          }
         } else {
           // 1、获取根节点到节点的节点label和legend
           const labelLegend = DataCatalogUtil.getTreeNodeLabelLegend(
@@ -158,25 +171,31 @@ export default {
           const length = labelLengendArr.length
           // 根节点到子节点的label串
           let tempDescription = labelArr.join('-')
+          let tempLengendLabel = labelArr[labelArr.length - 1]
           // 子节点上的legend
           let tempLegend = labelLengendArr[length - 1].legend
           if (Object.keys(newConfig).includes(tempDescription)) {
             // 子节点的图例已存在newConfig中
-            item.description = tempDescription
-            item.imgUrl = `${this.baseUrl}${newConfig[tempDescription]}`
-            this.data.push(item)
-            this.activeKey.push(tempDescription)
+            obj = {
+              description: tempDescription,
+              legendLabel: tempLengendLabel,
+              imgUrl: `${this.baseUrl}${newConfig[tempDescription]}`,
+              name: tempLengendLabel,
+            }
           } else {
             // 剩下两种情况：1、图例在newConfig中；2、图例未在newConfig中
             for (let j = length - 2; j >= 0; j--) {
               const { label: name, legend } = labelLengendArr[j]
               const description = labelArr.slice(0, j + 1).join('-')
+              const legendLabel = labelArr[j]
               if (Object.keys(newConfig).includes(description)) {
                 // 图例在newConfig中
-                item.description = description
-                item.imgUrl = `${this.baseUrl}${newConfig[description]}`
-                this.data.push(item)
-                this.activeKey.push(description)
+                obj = {
+                  description: description,
+                  legendLabel: legendLabel,
+                  imgUrl: `${this.baseUrl}${newConfig[description]}`,
+                  name: legendLabel,
+                }
                 break
               }
               // 图例未在newConfig中，也有两种情况
@@ -187,10 +206,13 @@ export default {
                   newConfig[description] = legend
                   tempLegend = legend
                   tempDescription = description
-                  item.description = tempDescription
-                  item.imgUrl = `${this.baseUrl}${tempLegend}`
-                  this.data.push(item)
-                  this.activeKey.push(description)
+                  tempLengendLabel = legendLabel
+                  obj = {
+                    description: tempDescription,
+                    legendLabel: tempLengendLabel,
+                    imgUrl: `${this.baseUrl}${tempLegend}`,
+                    name: tempLengendLabel,
+                  }
                   await api.saveWidgetConfig({
                     name: 'legend',
                     config: JSON.stringify(newConfig),
@@ -206,10 +228,12 @@ export default {
                   // 子节点的legend与父节点不相同，取子节点的
                   if (legend !== tempLegend) {
                     newConfig[tempDescription] = tempLegend
-                    item.description = tempDescription
-                    item.imgUrl = `${this.baseUrl}${tempLegend}`
-                    this.data.push(item)
-                    this.activeKey.push(tempDescription)
+                    obj = {
+                      description: tempDescription,
+                      legendLabel: tempLengendLabel,
+                      imgUrl: `${this.baseUrl}${tempLegend}`,
+                      name: tempLengendLabel,
+                    }
                     await api.saveWidgetConfig({
                       name: 'legend',
                       config: JSON.stringify(newConfig),
@@ -218,14 +242,17 @@ export default {
                   } else {
                     // 子节点的legend与父节点相同，取父节点的，并且继续往上找
                     tempDescription = description
+                    tempLengendLabel = legendLabel
                     tempLegend = legend
                     if (j === 0) {
                       // 如果到根节点，子节点的legend还与父节点相同，则直接取根节点的
                       newConfig[tempDescription] = tempLegend
-                      item.description = tempDescription
-                      item.imgUrl = `${this.baseUrl}${tempLegend}`
-                      this.data.push(item)
-                      this.activeKey.push(tempDescription)
+                      obj = {
+                        description: tempDescription,
+                        legendLabel: tempLengendLabel,
+                        imgUrl: `${this.baseUrl}${tempLegend}`,
+                        name: tempLengendLabel,
+                      }
                       await api.saveWidgetConfig({
                         name: 'legend',
                         config: JSON.stringify(newConfig),
@@ -238,10 +265,12 @@ export default {
                   if (j === 0) {
                     // 如果到根节点，父节点还是没有legend，则直接取子节点的
                     newConfig[tempDescription] = tempLegend
-                    item.description = tempDescription
-                    item.imgUrl = `${this.baseUrl}${tempLegend}`
-                    this.data.push(item)
-                    this.activeKey.push(tempDescription)
+                    obj = {
+                      description: tempDescription,
+                      legendLabel: tempLengendLabel,
+                      imgUrl: `${this.baseUrl}${tempLegend}`,
+                      name: tempLengendLabel,
+                    }
                     await api.saveWidgetConfig({
                       name: 'legend',
                       config: JSON.stringify(newConfig),
@@ -253,7 +282,42 @@ export default {
             }
           }
         }
+        if (Object.keys(obj).length > 0) {
+          const dataItem = this.data.find(
+            (item) => item.description == obj.description
+          )
+          if (!dataItem) {
+            // 如果不存在，则追加
+            this.data.push(obj)
+          }
+        }
+        if (
+          !this.preCheckedNodesKeys.includes(item.guid) &&
+          this.checkedNodesKeys.includes(item.guid)
+        ) {
+          // 滑动条定位的地方
+          this.scrollPositionKey = obj.description
+          if (!this.activeKey.includes(obj.description)) {
+            this.activeKey.push(obj.description)
+          }
+        }
       }
+      // console.log('preCheckedNodesKeys', this.preCheckedNodesKeys)
+      // console.log('checkedNodesKeys', this.checkedNodesKeys)
+      this.preCheckedNodesKeys = this.checkedNodesKeys
+      if (this.scrollPositionKey) {
+        setTimeout(() => {
+          const mainContainer =
+            document.getElementById('legendContainer').parentElement // 父级容器
+          const scrollToContainer = mainContainer.getElementsByClassName(
+            this.scrollPositionKey
+          )[0] // 指定的class
+          mainContainer.scrollTop = scrollToContainer.offsetTop
+        }, 500)
+      }
+    },
+    collapseChange(keys) {
+      this.activeKey = [...keys]
     },
   },
 }
