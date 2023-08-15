@@ -236,6 +236,7 @@ import {
   Feature,
   Objects,
   Exhibition,
+  eventBus,
   events,
 } from '@mapgis/web-app-framework'
 import * as Zondy from '@mapgis/webclient-es6-service'
@@ -442,10 +443,22 @@ export default {
       this.query()
     },
     // 单击行
-    onRowClick(row: unknown) {},
+    onRowClick(row: unknown) {
+      const feature = row as GFeature
+      eventBus.$emit(events.ATTRIBUTE_TABLE_CLICK_ROW, {
+        fid: feature.properties[this.rowKey],
+        feature,
+        exhibition: this.exhibition,
+      })
+    },
     // 双击行
     onRowDblclick(row: unknown) {
       const feature = row as GFeature
+      eventBus.$emit(events.ATTRIBUTE_TABLE_DOUBLE_CLICK_ROW, {
+        fid: feature.properties[this.rowKey],
+        feature,
+        exhibition: this.exhibition,
+      })
       let bound = feature.properties.specialLayerBound
       if (bound === undefined) {
         bound = Feature.getGeoJSONFeatureBound(feature)
