@@ -318,6 +318,7 @@
         :fullScreenAction="false"
         :icon="widgetInfo.icon"
         :visible.sync="showNoSpatial"
+        :zIndex="2"
       >
         <template>
           <non-spatial
@@ -325,6 +326,7 @@
             :url="nonSpatialFileListUrl"
             :type="nonSpatialType"
             :treeConfig="widgetConfig"
+            :dataType="dataType"
           ></non-spatial>
         </template>
       </mp-window>
@@ -476,6 +478,7 @@ export default {
       leafLengthMap: {},
       // 保存OGC元数据信息
       currentOGCMetadata: {},
+      dataType: undefined,
     }
   },
   computed: {
@@ -1486,16 +1489,53 @@ export default {
     onClick(item) {
       const widgetConfig = this.widgetInfo.config
       this.nonSpatialType = item.data
-
-      if (item.description.includes('非空间数据')) {
-        this.showNoSpatial = true
-
+      this.nonSpatialFileListUrl = undefined
+      // if (item.description.includes('非空间数据')) {
+      if (item.serverType === LayerType.NOSPATIALDATA) {
         if (
           widgetConfig.treeConfig.useLocalData ||
           widgetConfig.treeConfig.useLocalParam
         ) {
           this.nonSpatialUrl = widgetConfig.urlConfig.nonSpatialUrl
-          this.nonSpatialFileListUrl = `${this.baseUrl}/api/non-spatial/files?pageNumber=0&pageSize=1000&path=${item.data}&protocol=ftp&url=${this.nonSpatialUrl}`
+          if (this.nonSpatialUrl) {
+            // 获取配置的非空间数据地址
+            const ftpServer = this.nonSpatialUrl.search('ftp:')
+            const httpServer = this.nonSpatialUrl.search('http:')
+            const httpsServer = this.nonSpatialUrl.search('https:')
+            if (ftpServer > -1) {
+              this.dataType = 'ftp'
+              this.nonSpatialFileListUrl = `${this.baseUrl}/api/non-spatial/files?pageNumber=0&pageSize=1000&path=${item.data}&protocol=ftp&url=${this.nonSpatialUrl}`
+            } else if (httpServer > -1 || httpsServer > -1) {
+              this.dataType = 'hdfs'
+              this.nonSpatialFileListUrl = this.nonSpatialUrl
+            }
+            // 获取当前节点配置的地址,若当前节点配置的是url则使用该url
+            const { dataUrl } = item
+            if (dataUrl.indexOf('://') > -1) {
+              this.nonSpatialFileListUrl = dataUrl
+            } else {
+              this.nonSpatialFileListUrl += dataUrl
+            }
+          } else {
+            // 无配置的非空间数据地址采用图层中配置的信息
+            const { dataUrl } = item
+            if (dataUrl && dataUrl.indexOf('://') > -1) {
+              this.nonSpatialFileListUrl = dataUrl
+              const ftpServer = dataUrl.search('ftp:')
+              const httpServer = dataUrl.search('http:')
+              const httpsServer = dataUrl.search('https:')
+              if (ftpServer > -1) {
+                this.dataType = 'ftp'
+              } else if (httpServer > -1 || httpsServer > -1) {
+                this.dataType = 'hdfs'
+              }
+            }
+          }
+          if (!this.nonSpatialFileListUrl) {
+            this.$message.info('该非空间数据节点无配置信息！')
+            return
+          }
+          this.showNoSpatial = true
         }
       }
     },
@@ -1515,8 +1555,10 @@ export default {
          * 修改人：龚跃健
          * 修改时间：2022/1/24
          */
+        // 通过类型去判断是否为非空间数据
         if (
           item.description.includes('非空间数据') ||
+          item.serverType === LayerType.NOSPATIALDATA ||
           (!item.children &&
             !Object.prototype.hasOwnProperty.call(item, 'serverType'))
         ) {
