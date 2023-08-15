@@ -17,6 +17,7 @@
           <template>
             <div id="legendContainer">
               <mapgis-ui-collapse
+                v-if="data && data.length > 0"
                 :activeKey="activeKey"
                 :bordered="false"
                 @change="collapseChange"
