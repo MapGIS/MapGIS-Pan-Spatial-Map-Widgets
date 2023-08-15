@@ -45,7 +45,7 @@
             padding: 2px 0 0;
           "
         >
-          <mapgis-ui-icon type="download" />
+          <mapgis-ui-ant-icon type="download" />
         </mapgis-ui-button>
       </mapgis-ui-dropdown>
       <mapgis-ui-toolbar-command
