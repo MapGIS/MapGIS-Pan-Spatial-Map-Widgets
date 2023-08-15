@@ -1,140 +1,239 @@
 <template>
   <div class="mp-widget-non-spatial">
-    <div class="non-spatial-header">
-      <a-input-search
-        v-model="searchValue"
-        placeholder="请输入查询条件"
-        enter-button="搜索"
-        allow-clear
-        @search="onSearch"
-      />
-      <div class="header-right">
-        <div class="right-item first">
-          <span>类型:</span>
-          <a-select v-model="selectType" size="small" @change="onSelectChange">
-            <a-select-option v-for="item in typeOptions" :key="item.value">
-              {{ item.label }}
-            </a-select-option>
-          </a-select>
-        </div>
-        <div class="right-item">
-          <span>展示方式:</span>
-          <a-button
-            class="btn-first"
-            size="small"
-            icon="picture"
-            @click="onPicture"
-          />
-          <a-button
-            class="btn-second"
-            size="small"
-            icon="unordered-list"
-            @click="onList"
-          />
+    <div class="non-spatial-ftp" v-if="dataType === 'ftp'">
+      <div class="non-spatial-header">
+        <mapgis-ui-input-search
+          v-model="searchValue"
+          placeholder="请输入查询条件"
+          enter-button="搜索"
+          allow-clear
+          @search="onSearch"
+        />
+        <div class="header-right">
+          <div class="right-item first">
+            <span>类型:</span>
+            <mapgis-ui-select
+              v-model="selectType"
+              size="small"
+              @change="onSelectChange"
+            >
+              <mapgis-ui-select-option
+                v-for="item in typeOptions"
+                :key="item.value"
+              >
+                {{ item.label }}
+              </mapgis-ui-select-option>
+            </mapgis-ui-select>
+          </div>
+          <div class="right-item">
+            <span>展示方式:</span>
+            <a-button
+              class="btn-first"
+              size="small"
+              icon="picture"
+              @click="onPicture"
+            />
+            <a-button
+              class="btn-second"
+              size="small"
+              icon="unordered-list"
+              @click="onList"
+            />
+          </div>
         </div>
       </div>
-    </div>
-    <div class="non-spatial-panel">
-      <a-table
-        v-show="!showPicutre"
-        :columns="columns"
-        :loading="loading"
-        :data-source="tableData"
-        :pagination="pagination"
-        :rowKey="
-          (record) => {
-            return record.id
-          }
-        "
-        @change="onTablePageChange"
-      >
-        <template slot="name" slot-scope="text, record">
-          <a-icon type="file" />
-          <span @click="onView(record)">{{ text }}</span>
-        </template>
-        <template slot="action" slot-scope="text, record">
-          <a-icon type="download" @click="onClickDownLoad(record)" />
-        </template>
-      </a-table>
-      <div v-show="showPicutre" class="panel-content">
-        <div
-          class="content-item"
-          v-for="item in pictrueData"
-          :key="item.id"
-          @click="onView(item)"
+      <div class="non-spatial-panel">
+        <mapgis-ui-table
+          v-show="!showPicutre"
+          :columns="columns"
+          :loading="loading"
+          :data-source="tableData"
+          :pagination="pagination"
+          :rowKey="
+            (record) => {
+              return record.id
+            }
+          "
+          @change="onTablePageChange"
         >
-          <div class="item-img">
-            <img
-              v-if="item.type === 'doc' || item.type === 'docx'"
-              src="./images/word.png"
-              alt=""
-            />
-            <img
-              v-if="item.type === 'xls' || item.type === 'xlsx'"
-              src="./images/excel.png"
-              alt=""
-            />
-            <img
-              v-if="
-                item.type === 'ppt' ||
-                item.type === 'pptx' ||
-                item.type === 'pdf'
-              "
-              src="./images/pdf.png"
-              alt=""
-            />
-            <img
-              v-if="
-                item.type === 'mp4' ||
-                item.type === 'avi' ||
-                item.type === 'pcx' ||
-                item.type === 'ogg'
-              "
-              src="./images/video.png"
-              alt=""
-            />
-            <img
-              v-if="item.type === 'jpg' || item.type === 'png'"
-              src="./images/img.png"
-              alt=""
-            />
-          </div>
-          <div class="item-label">
-            <a-popover placement="bottom">
-              <template slot="content">
-                <span>{{ item.name }}</span>
-              </template>
-              <div class="lable-text">{{ item.name }}</div>
-            </a-popover>
+          <template slot="name" slot-scope="text, record">
+            <a-icon type="file" />
+            <span @click="onView(record)">{{ text }}</span>
+          </template>
+          <template slot="action" slot-scope="text, record">
+            <a-icon type="download" @click="onClickDownLoad(record)" />
+          </template>
+        </mapgis-ui-table>
+        <div v-show="showPicutre" class="panel-content">
+          <div
+            class="content-item"
+            v-for="item in pictrueData"
+            :key="item.id"
+            @click="onView(item)"
+          >
+            <div class="item-img">
+              <img
+                v-if="item.type === 'doc' || item.type === 'docx'"
+                src="./images/word.png"
+                alt=""
+              />
+              <img
+                v-if="item.type === 'xls' || item.type === 'xlsx'"
+                src="./images/excel.png"
+                alt=""
+              />
+              <img
+                v-if="
+                  item.type === 'ppt' ||
+                  item.type === 'pptx' ||
+                  item.type === 'pdf'
+                "
+                src="./images/pdf.png"
+                alt=""
+              />
+              <img
+                v-if="
+                  item.type === 'mp4' ||
+                  item.type === 'avi' ||
+                  item.type === 'pcx' ||
+                  item.type === 'ogg'
+                "
+                src="./images/video.png"
+                alt=""
+              />
+              <img
+                v-if="item.type === 'jpg' || item.type === 'png'"
+                src="./images/img.png"
+                alt=""
+              />
+            </div>
+            <div class="item-label">
+              <a-popover placement="bottom">
+                <template slot="content">
+                  <span>{{ item.name }}</span>
+                </template>
+                <div class="lable-text">{{ item.name }}</div>
+              </a-popover>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div class="non-spatial-footer">
-      <a-pagination
-        v-show="!showPicutre"
-        :current="currentPageList"
-        :total="pageTotal"
-        :show-total="
-          (total, range) => `${range[0]}-${range[1]} of ${total} items`
-        "
-        :page-size="8"
-        @change="onPageChange"
-      />
+      <div class="non-spatial-footer">
+        <mapgis-ui-pagination
+          v-show="!showPicutre"
+          :current="currentPageList"
+          :total="pageTotal"
+          :show-total="
+            (total, range) => `${range[0]}-${range[1]} of ${total} items`
+          "
+          :page-size="8"
+          @change="onPageChange"
+        />
 
-      <a-pagination
-        v-show="showPicutre"
-        :current="currentPagePic"
-        :total="pageTotal"
-        :show-total="
-          (total, range) => `${range[0]}-${range[1]} of ${total} items`
-        "
-        :page-size="10"
-        :default-current="1"
-        @change="onPicturePageChange"
-      />
+        <mapgis-ui-pagination
+          v-show="showPicutre"
+          :current="currentPagePic"
+          :total="pageTotal"
+          :show-total="
+            (total, range) => `${range[0]}-${range[1]} of ${total} items`
+          "
+          :page-size="10"
+          :default-current="1"
+          @change="onPicturePageChange"
+        />
+      </div>
     </div>
-    <a-modal v-model="showModal" :footer="null" :width="800">
+    <div class="non-spatial-hdfs" v-if="dataType === 'hdfs'">
+      <!-- <mapgis-ui-tree :load-data="onLoadData" :tree-data="treeData">
+        <template slot="title" slot-scope="node">
+          <mapgis-ui-iconfont
+            v-if="node.fileType === 'DIRECTORY'"
+            class="tree-title-icon"
+            type="mapgis-tubiaoqietu_wenjianjia-29"
+          />
+          <mapgis-ui-iconfont
+            v-if="node.fileType !== 'DIRECTORY'"
+            class="tree-title-icon"
+            :type="getIconType(node.type)"
+          />
+          <span class="tree-title-content">{{ node.title }}</span>
+          <mapgis-ui-iconfont
+            v-if="node.fileType !== 'DIRECTORY'"
+            class="tree-title-icon"
+            type="mapgis-show"
+            @click="showDoc(node.path, node.type)"
+          /> </template
+      ></mapgis-ui-tree> -->
+      <mapgis-ui-table
+        :columns="tableColumns"
+        :data-source="tableData"
+        bordered
+        :pagination="false"
+        :rowKey="(row) => row.path"
+      >
+        <template slot="fileType" slot-scope="text, record">
+          {{ text === 'DIRECTORY' ? '文件夹' : '文件' }}
+        </template>
+
+        <template slot="fileSize" slot-scope="text, record">
+          {{ text }}
+        </template>
+        <template slot="operation" slot-scope="text, record">
+          <div class="operate-cloumns">
+            <a
+              v-if="record.fileType === 'DIRECTORY'"
+              @click="getNextData(record.path, record.name)"
+              >查看</a
+            >
+            <a
+              v-if="record.fileType !== 'DIRECTORY'"
+              @click="showDoc(record.path, record.type)"
+              >预览</a
+            >
+            <a
+              v-if="record.fileType !== 'DIRECTORY'"
+              @click="dowloadDoc(record.path, record.name)"
+              >下载</a
+            >
+          </div>
+        </template>
+        <template slot="title" slot-scope="currentPageData">
+          <mapgis-ui-breadcrumb>
+            <a-breadcrumb-item
+              v-for="(item, index) in breadcrumbList"
+              :key="index"
+              ><a class="link-address" @click="changePath(item.url)">{{
+                item.title
+              }}</a></a-breadcrumb-item
+            >
+          </mapgis-ui-breadcrumb>
+        </template>
+      </mapgis-ui-table>
+      <div
+        style="text-align: right; padding: 5px 10px 5px 0"
+        v-if="tableData && tableData.length > 0"
+      >
+        <mapgis-ui-pagination
+          size="small"
+          :total="pagination.total"
+          :show-total="showPaginationTotal"
+          :page-size-options="pagination.pageSizeOptions"
+          :page-size="pagination.pageSize"
+          :current="pagination.current"
+          show-size-changer
+          show-quick-jumper
+          @showSizeChange="onPaginationShowSizeChange"
+          @change="onPaginationChange"
+        >
+        </mapgis-ui-pagination>
+      </div>
+    </div>
+    <mapgis-ui-modal
+      v-model="showModal"
+      :footer="null"
+      :width="800"
+      @cancel="closePreview"
+    >
       <iframe
         v-if="showFileType === 'text'"
         :src="fileUrl"
@@ -145,21 +244,25 @@
       </iframe>
       <video
         v-if="showFileType === 'video'"
+        muted
+        autoplay="autoplay"
+        loop="loop"
         :src="videoUrl"
         alt="预览"
         id="video"
         controls="controls"
         width="752"
-        height="632"
+        height="100%"
+        max-height="632"
       ></video>
       <img
         v-if="showFileType === 'img'"
         :src="imgUrl"
         alt=""
-        width="752"
-        height="632"
+        max-width="752"
+        max-height="632"
       />
-    </a-modal>
+    </mapgis-ui-modal>
   </div>
 </template>
 
@@ -167,10 +270,39 @@
 import { WidgetMixin } from '@mapgis/web-app-framework'
 import axios from 'axios'
 
+const columns = [
+  {
+    title: '类型',
+    dataIndex: 'fileType',
+    scopedSlots: { customRender: 'fileType' },
+  },
+  {
+    title: '文件名',
+    dataIndex: 'name',
+  },
+  {
+    title: '文件大小',
+    dataIndex: 'fileSize',
+    scopedSlots: { customRender: 'fileSize' },
+  },
+  {
+    title: '上次修改日期',
+    dataIndex: 'modificationTime',
+  },
+  {
+    title: '操作',
+    dataIndex: 'operation',
+    scopedSlots: { customRender: 'operation' },
+  },
+]
 export default {
   name: 'MpNonSpatial',
   mixins: [WidgetMixin],
   props: {
+    // 非空间数据类型, ftp | hdfs
+    dataType: {
+      type: String,
+    },
     // 获取当前选种的非空间数据资源列表url
     url: {
       type: String,
@@ -287,20 +419,261 @@ export default {
 
       // 当前预览的文件类型
       showFileType: '',
+      treeData: [],
+      tableColumns: columns,
+      tableData: [],
+      pagination: {
+        current: 1,
+        pageSize: 10,
+        total: 0,
+        pageSizeOptions: ['5', '10', '20', '30', '50'],
+      },
+      currentUrl: undefined,
+      breadcrumbList: [
+        {
+          title: '文件目录',
+          url: this.url,
+        },
+      ],
     }
   },
   watch: {
     // 监听非空间数据url变化，初始化table表格数据及大图状态数据
     url: {
       handler(newVal) {
-        this.onUrlChange(newVal)
+        this.resizeData()
+        if (!newVal) {
+          this.treeData = []
+          return
+        }
+        if (this.dataType === 'ftp') {
+          this.onUrlChange(newVal)
+        } else if (this.dataType === 'hdfs') {
+          this.getHdfsData(newVal)
+        }
       },
     },
   },
+  computed: {},
   created() {
     this.initData()
   },
   methods: {
+    closePreview() {
+      this.showModal = false
+      this.imgUrl = ''
+      this.showFileType = ''
+    },
+    resizeData() {
+      this.breadcrumbList = [
+        {
+          title: '文件目录',
+          url: this.url,
+        },
+      ]
+      this.tableData = []
+    },
+    changePath(url) {
+      if (!url) return
+      const index = this.breadcrumbList.findIndex((item) => item.url === url)
+      this.breadcrumbList = this.breadcrumbList.slice(0, index + 1)
+      this.pagination.current = 1
+      this.getHdfsData(url)
+    },
+    getNextData(url, name) {
+      url = this.url + url
+      this.breadcrumbList.push({
+        title: name,
+        url,
+      })
+      this.pagination.current = 1
+      this.getHdfsData(url)
+    },
+    onPaginationChange(page, pageSize) {
+      this.pagination.current = page
+      this.getHdfsData(this.currentUrl)
+    },
+    onPaginationShowSizeChange(current, size) {
+      this.pagination.pageSize = size
+      this.pagination.current = 1
+      this.getHdfsData(this.currentUrl)
+    },
+    showPaginationTotal(total, range) {
+      return `显示${range[0]}-${range[1]}条，共有 ${total}条`
+    },
+    dowloadDoc(path, name) {
+      try {
+        const paresUrl = new URL(this.url)
+        const { origin } = paresUrl
+        let previewUrl = `${origin}/datastore/rest/services/file/hdfs${path}/download`
+        const link = document.createElement('a')
+        link.style.display = 'none'
+        link.href = previewUrl
+        link.setAttribute('download', name)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      } catch (error) {
+        console.log(error)
+        this.$message.error('url地址异常，无法下载！')
+      }
+    },
+    showDoc(path, type) {
+      try {
+        const paresUrl = new URL(this.url)
+        const { origin } = paresUrl
+        let previewUrl
+        switch (type) {
+          case 'pdf':
+            previewUrl = `${origin}/hdfs/preview?dir=${path}`
+            break
+          case '一般文件':
+            previewUrl = `${origin}/datastore/rest/services/file/hdfs${path}/download?isPreview=true`
+            break
+          case 'video':
+            this.videoUrl = `${origin}/datastore/rest/services/file/hdfs${path}/download?isPreview=true`
+            this.showFileType = 'video'
+            break
+          case 'img':
+            this.imgUrl = `${origin}/datastore/rest/services/file/hdfs${path}/download?isPreview=true`
+            this.showFileType = 'img'
+            break
+        }
+        previewUrl && window.open(previewUrl)
+        if (!previewUrl) {
+          this.showModal = true
+        }
+      } catch (error) {
+        this.$message.error('url地址异常!')
+        this.videoUrl = ''
+        this.imgUrl = ''
+        this.showFileType = ''
+      }
+    },
+    getIconType(type) {
+      let icon
+      switch (type) {
+        case 'video':
+          icon = 'mapgis-video'
+          break
+        case 'pdf':
+          icon = 'mapgis-pdf'
+          break
+        case '一般文件':
+          icon = 'mapgis-doc'
+          break
+        case 'img':
+          icon = 'mapgis-image'
+          break
+        default:
+          // const index = Math.floor(Math.random() * 3)
+          // const arr = ['mapgis-video', 'mapgis-pdf', 'mapgis-doc']
+          // icon = arr[index]
+          break
+      }
+      return icon
+    },
+    onLoadData(treeNode) {
+      return new Promise((resolve) => {
+        const { dataRef } = treeNode
+        const url = this.url + dataRef.path
+        this.getHdfsData(url, dataRef).then(() => resolve())
+      })
+    },
+    getHdfsData(url) {
+      this.currentUrl = url
+      url += `?pageSize=${this.pagination.pageSize}&pageNo=${this.pagination.current}`
+      return new Promise((resolve, reject) => {
+        axios
+          .get(url)
+          .then((res) => {
+            const { data, status } = res
+            if (status === 200) {
+              if (data.t) {
+                // const treeData = this.transferHdfsData(data)
+                // if (dataRef) {
+                //   dataRef.children = [...treeData]
+                //   this.treeData = [...this.treeData]
+                // } else {
+                //   this.treeData = [...treeData]
+                // }
+                this.tableData = this.transferHdfsData(data)
+                this.pagination.total = data.t.total
+                resolve()
+              } else {
+                this.tableData = []
+                this.pagination.total = 0
+                resolve()
+              }
+            } else {
+              this.$message.error('获取hdfs数据列表失败!')
+              resolve()
+            }
+          })
+          .catch((e) => {
+            this.$message.error('获取hdfs数据列表失败!')
+            resolve()
+          })
+      })
+    },
+    transferHdfsData(data) {
+      const { rtn } = data.t
+      const dataList = []
+      rtn.forEach((item) => {
+        const { attri, extAttri } = item
+        const hdfsData = {
+          name: item.name,
+          type: this.getFileType(item.name) || item.type,
+          dbUrl: attri.dbUrl,
+          path: attri.path,
+          datasetUrl: extAttri.datasetUrl,
+          fileType: extAttri.fileType,
+          fileSize: extAttri.fileSize,
+          modificationTime: extAttri.modificationTime,
+          // isLeaf: !(
+          //   extAttri.fileType === 'DIRECTORY' && Number(extAttri.fileSize) > 0
+          // ),
+          // scopedSlots: { title: 'title' },
+        }
+        dataList.push(hdfsData)
+      })
+      return dataList
+    },
+    getFileType(name) {
+      const index = name.lastIndexOf('.') + 1
+      const suffix = name.substr(index)
+      let type
+      // 'doc、docx、xls、xlsx、ppt、pptx、jpg、png、mp4、avi、pcx、ogg、pdf',
+      switch (suffix) {
+        case 'pdf':
+          type = 'pdf'
+          break
+        case 'doc':
+        case 'docx':
+        case 'xls':
+        case 'xlsx':
+        case 'ppt':
+        case 'pptx':
+          type = '一般文件'
+          break
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+          type = 'img'
+          break
+        case 'mp4':
+        case 'avi':
+        case 'pcx':
+        case 'ogg':
+        case 'pdf':
+          type = 'video'
+          break
+        default:
+          type = '一般文件'
+          break
+      }
+      return type
+    },
     onUrlChange(newVal) {
       this.loading = true
       this.getUrlData(newVal).then((res) => {
@@ -502,7 +875,7 @@ export default {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .mp-widget-non-spatial {
   display: flex;
   flex-direction: column;
@@ -611,6 +984,19 @@ export default {
     align-items: center;
     margin: 12px;
   }
+
+  .non-spatial-hdfs {
+    // .tree-title-content {
+    //   margin: 0 8px;
+    // }
+    .operate-cloumns {
+      display: flex;
+      justify-content: space-around;
+    }
+    .link-address {
+      color: $text-color;
+    }
+  }
 }
 ::v-deep .ant-modal {
   top: 60px;
@@ -618,10 +1004,25 @@ export default {
 ::v-deep .ant-modal-body {
   height: 680px;
 }
-::v-deep .ant-modal-close-x {
+::v-deep .mapgis-ui-modal-close-x {
   display: flex;
   justify-content: center;
   width: 28px;
   padding-top: 8px;
 }
+</style>
+//
+<style lang="scss">
+// .preview-model {
+//   .mapgis-ui-modal {
+//     top: 0;
+//     .mapgis-ui-modal-content {
+//       background-color: #fff;
+//       .mapgis-ui-modal-body {
+//         height: 100vh;
+//       }
+//     }
+//   }
+// }
+//
 </style>
