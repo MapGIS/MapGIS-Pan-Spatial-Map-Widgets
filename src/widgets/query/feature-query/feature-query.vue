@@ -144,6 +144,9 @@ import MpGeoJsonInputDraw from './components/MpGeoJsonInputDraw/MpGeoJsonInputDr
 import MpPolygonInputDraw from './components/MpPolygonInputDraw/MpPolygonInputDraw.vue'
 import MpUploadFileDraw from './components/MpUploadFileDraw/MpUploadFileDraw.vue'
 import MpRegionDraw from './components/MpRegionDraw/MpRegionDraw.vue'
+import { Style } from '@mapgis/webclient-es6-service'
+
+const { LineStyle, PointStyle, FillStyle } = Style
 
 const { IAttributeTableListExhibition, AttributeTableListExhibition } =
   Exhibition
@@ -372,27 +375,36 @@ export default {
         type: 'geojson',
         data: shapeInfo.geometry,
       })
+      let style
       const { coordinates, type } = shapeInfo.geometry
       if (type === 'MultiPolygon' || type === 'Polygon') {
+        const fillStyle = new FillStyle({
+          color: this.fillColor,
+          outlineColor: this.fillOutlineColor,
+        })
+        style = {
+          type: 'fill',
+          ...fillStyle.toMapboxStyle(),
+        }
         this.map.addLayer({
           id: `${shapeInfo.id}fill`,
-          type: 'fill',
           source: shapeInfo.id,
-          paint: {
-            'fill-color': this.fillColor,
-            'fill-outline-color': this.fillOutlineColor,
-          },
+          ...style,
         })
       }
 
+      const lineStyle = new LineStyle({
+        color: this.fillOutlineColor,
+        width: this.lineWidth,
+      })
+      style = {
+        type: 'line',
+        ...lineStyle.toMapboxStyle(),
+      }
       this.map.addLayer({
         id: `${shapeInfo.id}line`,
-        type: 'line',
         source: shapeInfo.id,
-        paint: {
-          'line-color': this.fillOutlineColor,
-          'line-width': this.lineWidth,
-        },
+        ...style,
       })
       const { xmin, ymin, xmax, ymax } =
         Feature.getGeoJSONFeatureBound(shapeInfo)
@@ -1119,7 +1131,7 @@ export default {
           item.type === LayerType.ModelCache
         ) {
           item.sublayers = item.activeScene?.sublayers
-        } else if (item.type === LayerType.IGSVector) {
+        } else if (item.type === LayerType.IGSMapImage) {
           item.sublayers = item.currentStyle.layers.map((row) => ({
             ...row,
             visible:

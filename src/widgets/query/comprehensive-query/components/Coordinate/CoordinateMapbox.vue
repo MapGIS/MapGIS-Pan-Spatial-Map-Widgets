@@ -15,6 +15,9 @@ import {
   Feature,
   baseConfigInstance,
 } from '@mapgis/web-app-framework'
+import { Style } from '@mapgis/webclient-es6-service'
+
+const { LineStyle, PointStyle, FillStyle } = Style
 
 export default {
   name: 'CoordinateMapbox',
@@ -90,36 +93,48 @@ export default {
       this.clear()
       if (val && Object.keys(val).length > 0) {
         this.map.addSource('coordinate', { type: 'geojson', data: val })
+        const fillStyle = new FillStyle({
+          color: this.highlightStyle.feature.reg.color,
+          outlineColor: this.highlightStyle.feature.line.color,
+        })
+        let style = {
+          type: 'fill',
+          ...fillStyle.toMapboxStyle(),
+        }
         this.map.addLayer({
           id: 'coordinate',
-          type: 'fill',
           source: 'coordinate',
-          paint: {
-            'fill-color': this.highlightStyle.feature.reg.color,
-          },
+          ...style,
         })
+        const lineStyle = new LineStyle({
+          color: this.highlightStyle.feature.line.color,
+          width: parseInt(this.highlightStyle.feature.line.size),
+        })
+        style = {
+          type: 'line',
+          ...lineStyle.toMapboxStyle(),
+        }
         this.map.addLayer({
           id: 'coordinate-outline',
-          type: 'line',
           source: 'coordinate',
-          paint: {
-            'line-color': this.highlightStyle.feature.line.color,
-            'line-width': parseInt(this.highlightStyle.feature.line.size),
-          },
+          ...style,
         })
+        const pointStyle = new PointStyle({
+          color: this.highlightStyle.label.text.color,
+          size: parseInt(this.highlightStyle.label.text.fontSize),
+        })
+        style = {
+          type: 'circle',
+          ...pointStyle.toMapboxStyle(),
+        }
         this.map.addLayer({
           id: 'coordinate-text',
-          type: 'symbol',
           source: 'coordinate',
-          paint: { 'text-color': this.highlightStyle.label.text.color },
-          layout: {
-            'text-field': '{name}',
-            'text-size': parseInt(this.highlightStyle.label.text.fontSize),
-          },
+          ...style,
         })
       }
     },
-    centerChange(){
+    centerChange() {
       if (this.center && this.center.length > 0) {
         this.map.panTo([this.center[0], this.center[1]])
       }
