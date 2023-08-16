@@ -231,6 +231,7 @@ export default {
       operateLayerData: [],
       currentId: '',
       isDrawStart: false,
+      isQueryFeatures: false, // 是否在查询要素，并显示结果集，显示结果集会触发onDeActive事件，防止取消连续查询事件
     }
   },
   computed: {
@@ -464,6 +465,11 @@ export default {
 
     // 微件失活时
     onDeActive() {
+      // 如果在查询要素，并显示结果集，显示结果集会触发onDeActive事件，防止取消连续查询事件
+      if (this.isQueryFeatures) {
+        return
+      }
+      this.isQueryFeatures = false
       this.clearDrawMode && this.onClearDraw()
       this.doDeActive = true
       this.map.getCanvas().style.cursor = 'grab'
@@ -658,6 +664,7 @@ export default {
         this.activeExhibitionId = this.tempActiveExhibitionId
       }
       this.openExhibitionPanel()
+      this.isQueryFeatures = true
     },
 
     getIpPort({ isDataStoreQuery }) {
