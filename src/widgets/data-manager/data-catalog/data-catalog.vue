@@ -1632,7 +1632,6 @@ export default {
     // 元数据信息按钮响应事件
     async showMetaDataInfo(item) {
       if (this.isOGCLayer(item.serverType)) {
-        this.showMetaData = false
         const url = item.serverURL
         let getCapabilitiesURL = ''
         let tempUrl = url
@@ -1674,6 +1673,7 @@ export default {
           getCapabilitiesURL =
             Metadata.OGCMetadataQuery.generateWMTSGetCapabilitiesURL(tempUrl)
         }
+        this.showMetaData = false
         window.open(getCapabilitiesURL)
       } else {
         if (item.serverURL.includes('igs/rest')) {
