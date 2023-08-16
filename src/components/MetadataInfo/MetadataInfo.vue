@@ -135,23 +135,25 @@ export default {
     },
     // 筛选元数据信息提取需要展示的字段
     formatMetadata(metadataCopy) {
-      return metadataCopy.groups.map((item) => {
-        const items = item.items.map((i) => {
-          if (i.dictionaryItems && i.value) {
-            i.label = ''
-            this.formatValue(i.value, i.dictionaryItems, i)
-            if (i.label && i.label.endsWith('/')) {
-              i.label = i.label.substring(0, i.label.length - 1)
+      if (metadataCopy && Object.keys(metadataCopy).length > 0) {
+        return metadataCopy.groups.map((item) => {
+          const items = item.items.map((i) => {
+            if (i.dictionaryItems && i.value) {
+              i.label = ''
+              this.formatValue(i.value, i.dictionaryItems, i)
+              if (i.label && i.label.endsWith('/')) {
+                i.label = i.label.substring(0, i.label.length - 1)
+              }
             }
+            return { key: i.nickName, value: i.label || i.value }
+          })
+          const metadataItem = {
+            label: item.groupName,
+            items,
           }
-          return { key: i.nickName, value: i.label || i.value }
+          return metadataItem
         })
-        const metadataItem = {
-          label: item.groupName,
-          items,
-        }
-        return metadataItem
-      })
+      }
     },
   },
   watch: {
