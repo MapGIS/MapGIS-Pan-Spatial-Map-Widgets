@@ -118,7 +118,11 @@ export default {
           show: true, // 是否显示
           fillStyle: 'white',
         },
-        gradient: { 0: 'blue', 0.5: 'yellow', 1.0: 'rgb(255,0,0)' }, // 聚合图标渐变色
+        gradient: {
+          0: this.colorCluster,
+          0.5: this.colorCluster,
+          1.0: this.colorCluster,
+        }, // 聚合图标渐变色
         cesium: { postRender: true, postRenderFrame: 0 },
         draw: 'cluster',
         context: '2d',
