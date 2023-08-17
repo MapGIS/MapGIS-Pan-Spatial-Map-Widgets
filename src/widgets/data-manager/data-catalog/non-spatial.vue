@@ -170,6 +170,7 @@
         bordered
         :pagination="false"
         :rowKey="(row) => row.path"
+        :customRow="rowClick"
       >
         <template slot="fileType" slot-scope="text, record">
           {{ text === 'DIRECTORY' ? '文件夹' : '文件' }}
@@ -459,6 +460,19 @@ export default {
     this.initData()
   },
   methods: {
+    rowClick(record) {
+      return {
+        on: {
+          dblclick: () => {
+            if (record.fileType === 'DIRECTORY') {
+              this.getNextData(record.path, record.name)
+            } else {
+              this.showDoc(record.path, record.type)
+            }
+          },
+        },
+      }
+    },
     closePreview() {
       this.showModal = false
       this.imgUrl = ''
