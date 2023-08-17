@@ -201,7 +201,8 @@ export default {
           )
           if (layerConfig && layerConfig.bindData) {
             if (!layerConfig.bindData.title) {
-              layerConfig.bindData.title = layerConfig.bindData.serverName
+              layerConfig.bindData.title =
+                layerConfig.bindData.serverName || data.title
             }
             arr.push(layerConfig.bindData)
           }
@@ -235,10 +236,18 @@ export default {
       const layerCurrent = this.tData
       this.dataType = 'VectorLayer'
       if (layerCurrent != null) {
-        if (layerCurrent.type == 6 || layerCurrent.serverType == 6) {
+        if (
+          layerCurrent.type == LayerType.IGSVector ||
+          layerCurrent.serverType == LayerType.IGSVector ||
+          layerCurrent.type == LayerType.IGSVector3D ||
+          layerCurrent.serverType == LayerType.IGSVector3D
+        ) {
           this.baseBufferUrl = layerCurrent.url || layerCurrent.serverURL
           this.srcLayer = layerCurrent.gdbps
-          if (layerCurrent.serverType == 6) {
+          if (
+            layerCurrent.serverType == LayerType.IGSVector ||
+            layerCurrent.serverType == LayerType.IGSVector3D
+          ) {
             this.dataType = 'Model'
           }
         } else {

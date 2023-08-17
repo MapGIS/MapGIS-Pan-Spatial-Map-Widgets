@@ -200,7 +200,8 @@ export default {
           )
           if (layerConfig && layerConfig.bindData) {
             if (!layerConfig.bindData.title) {
-              layerConfig.bindData.title = layerConfig.bindData.serverName
+              layerConfig.bindData.title =
+                layerConfig.bindData.serverName || data.title
             }
             layerConfig.bindData.id = `${data.id}:0`
             arr.push(layerConfig.bindData)
@@ -259,10 +260,18 @@ export default {
       const tlayerCurrent = this.tData
       if (tlayerCurrent != null) {
         this.dataType = 'VectorLayer'
-        if (tlayerCurrent.type == 6 || tlayerCurrent.serverType == 6) {
+        if (
+          tlayerCurrent.type == LayerType.IGSVector ||
+          tlayerCurrent.serverType == LayerType.IGSVector ||
+          tlayerCurrent.type == LayerType.IGSVector3D ||
+          tlayerCurrent.serverType == LayerType.IGSVector3D
+        ) {
           this.baseOverlayUrl = tlayerCurrent.url || tlayerCurrent.serverURL
           this.srcALayer = tlayerCurrent.gdbps
-          if (tlayerCurrent.serverType == 6) {
+          if (
+            tlayerCurrent.serverType == LayerType.IGSVector ||
+            tlayerCurrent.serverType == LayerType.IGSVector3D
+          ) {
             this.dataType = 'Model'
           }
         } else {
@@ -275,7 +284,12 @@ export default {
     dchangeTarget() {
       const dlayerCurrent = this.dData
       if (dlayerCurrent != null) {
-        if (dlayerCurrent.type == 6 || dlayerCurrent.serverType == 6) {
+        if (
+          dlayerCurrent.type == LayerType.IGSVector ||
+          dlayerCurrent.serverType == LayerType.IGSVector ||
+          dlayerCurrent.type == LayerType.IGSVector3D ||
+          dlayerCurrent.serverType == LayerType.IGSVector3D
+        ) {
           this.baseOverlayUrl = dlayerCurrent.url || dlayerCurrent.serverURL
           this.srcBLayer = dlayerCurrent.gdbps
         } else {
