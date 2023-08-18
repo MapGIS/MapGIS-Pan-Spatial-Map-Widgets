@@ -251,7 +251,7 @@ export default {
             this.dataType = 'Model'
           }
         } else {
-          this.baseBufferUrl = layerCurrent.layer.url
+          this.baseBufferUrl = layerCurrent.layer?.url
           this.srcLayer = layerCurrent.url
         }
       }
