@@ -275,7 +275,7 @@ export default {
             this.dataType = 'Model'
           }
         } else {
-          this.baseOverlayUrl = tlayerCurrent.layer.url
+          this.baseOverlayUrl = tlayerCurrent.layer?.url
           this.srcALayer = tlayerCurrent.url
         }
       }
@@ -293,7 +293,7 @@ export default {
           this.baseOverlayUrl = dlayerCurrent.url || dlayerCurrent.serverURL
           this.srcBLayer = dlayerCurrent.gdbps
         } else {
-          this.baseOverlayUrl = dlayerCurrent.layer.url
+          this.baseOverlayUrl = dlayerCurrent.layer?.url
           this.srcBLayer = dlayerCurrent.url
         }
       }

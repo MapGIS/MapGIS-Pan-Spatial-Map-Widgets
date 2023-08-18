@@ -188,7 +188,7 @@
             >
             <a
               v-if="record.fileType !== 'DIRECTORY'"
-              @click="showDoc(record.path, record.type)"
+              @click="showDoc(record.path, record.type, record.name)"
               >预览</a
             >
             <a
@@ -258,10 +258,9 @@
       ></video>
       <img
         v-if="showFileType === 'img'"
+        class="preview-picture"
         :src="imgUrl"
         alt=""
-        max-width="752"
-        max-height="632"
       />
     </mapgis-ui-modal>
   </div>
@@ -467,7 +466,7 @@ export default {
             if (record.fileType === 'DIRECTORY') {
               this.getNextData(record.path, record.name)
             } else {
-              this.showDoc(record.path, record.type)
+              this.showDoc(record.path, record.type, record.name)
             }
           },
         },
@@ -532,7 +531,11 @@ export default {
         this.$message.error('url地址异常，无法下载！')
       }
     },
-    showDoc(path, type) {
+    showDoc(path, type, name) {
+      if (type === 'download') {
+        this.dowloadDoc(path, name)
+        return
+      }
       try {
         const paresUrl = new URL(this.url)
         const { origin } = paresUrl
@@ -668,18 +671,21 @@ export default {
         case 'xlsx':
         case 'ppt':
         case 'pptx':
-          type = '一般文件'
+          type = 'download'
           break
         case 'jpg':
         case 'jpeg':
         case 'png':
+        case 'gif':
+        case 'svg':
           type = 'img'
           break
-        case 'mp4':
         case 'avi':
         case 'pcx':
+          type = 'download'
+          break
+        case 'mp4':
         case 'ogg':
-        case 'pdf':
           type = 'video'
           break
         default:
@@ -987,7 +993,7 @@ export default {
       }
     }
 
-    ::v-deep.ant-table-pagination {
+    ::v-deep .ant-table-pagination {
       visibility: hidden;
     }
   }
@@ -1012,11 +1018,17 @@ export default {
     }
   }
 }
-::v-deep .ant-modal {
+::v-deep .mapgis-ui-modal {
   top: 60px;
 }
-::v-deep .ant-modal-body {
-  height: 680px;
+::v-deep .mapgis-ui-modal-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  .preview-picture {
+    max-width: 752px;
+    max-height: 632px;
+  }
 }
 ::v-deep .mapgis-ui-modal-close-x {
   display: flex;

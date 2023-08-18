@@ -339,10 +339,9 @@ export default {
         const transferOnSelect = this.getBaseMapGuid(onSelect, baseMapList)
         const transferUnSelect = this.getBaseMapGuid(unSelect, baseMapList)
         const transferZoomArr = this.getBaseMapGuid(zoomArr, baseMapList)
-        const transferIndexBaseMapGUID = this.getBaseMapGuid(
-          indexBaseMapGUID,
-          baseMapList
-        )
+        const transferIndexBaseMapGUID = indexBaseMapGUID
+          ? this.getBaseMapGuid(indexBaseMapGUID, baseMapList)
+          : ['']
         baseMapConfig.onSelect = transferOnSelect
         baseMapConfig.unSelect = transferUnSelect
         baseMapConfig.zoomArr = transferZoomArr
@@ -361,10 +360,9 @@ export default {
         const transferOnSelect = this.getUrlArr(onSelect, baseMapList)
         const transferUnSelect = this.getUrlArr(unSelect, baseMapList)
         const transferZoomArr = this.getUrlArr(zoomArr, baseMapList)
-        const transferIndexBaseMapGUID = this.getUrlArr(
-          [indexBaseMapGUID],
-          baseMapList
-        )
+        const transferIndexBaseMapGUID = indexBaseMapGUID
+          ? this.getUrlArr([indexBaseMapGUID], baseMapList)
+          : indexBaseMapGUID
         config.onSelect = transferOnSelect
         config.unSelect = transferUnSelect
         config.zoomArr = transferZoomArr
