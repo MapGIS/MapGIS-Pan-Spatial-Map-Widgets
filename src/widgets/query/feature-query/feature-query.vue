@@ -128,6 +128,8 @@ import {
   ActiveResultSet,
   DataStoreCatalog,
   Overlay,
+  events,
+  eventBus,
 } from '@mapgis/web-app-framework'
 import * as Zondy from '@mapgis/webclient-es6-service'
 import {
@@ -336,8 +338,18 @@ export default {
       this.viewer
     )
   },
-
+  mounted() {
+    eventBus.$on(events.MARKER_CLICK, this.markerClick)
+  },
   methods: {
+    markerClick(marker) {
+      if (this.isContinuous && this.drawComponent) {
+        this.drawComponent.closeDraw()
+        setTimeout(() => {
+          this.drawComponent.openDraw(this.queryTypes2DrawModes[this.queryType])
+        }, 100)
+      }
+    },
     onDrawShape3D(shapeInfo) {
       this.currentId = shapeInfo.id
       const fillColor = new this.Cesium.Color.fromCssColorString(this.fillColor)
