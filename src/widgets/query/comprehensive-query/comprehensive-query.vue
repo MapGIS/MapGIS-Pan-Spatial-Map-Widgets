@@ -8,6 +8,8 @@
       :defaultMarkerIcon="defaultMarkerIcon"
       :selectedMarkerIcon="selectedMarkerIcon"
       :selectShowProperty="selectShowProperty"
+      :highlightStyle="highlightStyle"
+      :is2DMapMode="is2DMapMode"
       @onClose="onClose"
       @onSearch="onSearch"
       @current-result="currentResult"
