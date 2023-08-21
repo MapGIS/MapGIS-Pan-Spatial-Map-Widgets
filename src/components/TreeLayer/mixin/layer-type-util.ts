@@ -437,6 +437,7 @@ export default {
                   gdbp: layerConfig.bindData.gdbps,
                   f: queryType || '',
                 },
+                popupOption: layer.extend?.popupOption,
               }
             }
           },
@@ -453,7 +454,6 @@ export default {
                 serverType: layer.type,
                 f: queryType || '',
               },
-              popupOption: parent.extend?.popupOption,
             }
           },
         },

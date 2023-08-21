@@ -171,6 +171,7 @@
         :pagination="false"
         :rowKey="(row) => row.path"
         :customRow="rowClick"
+        :loading="loading"
       >
         <template slot="fileType" slot-scope="text, record">
           {{ text === 'DIRECTORY' ? '文件夹' : '文件' }}
@@ -440,6 +441,7 @@ export default {
         },
       ],
       previewImages: [],
+      loading: false,
     }
   },
   watch: {
@@ -454,7 +456,7 @@ export default {
         if (this.dataType === 'ftp') {
           this.onUrlChange(newVal)
         } else if (this.dataType === 'hdfs') {
-          this.getHdfsData(newVal)
+          this.getHdfsData(newVal).then(() => (this.loading = false))
         }
       },
     },
@@ -499,25 +501,27 @@ export default {
       const index = this.breadcrumbList.findIndex((item) => item.url === url)
       this.breadcrumbList = this.breadcrumbList.slice(0, index + 1)
       this.pagination.current = 1
-      this.getHdfsData(url)
+      this.getHdfsData(url).then(() => (this.loading = false))
     },
     getNextData(url, name) {
-      url = this.url + url
+      // path路径不对，使用path拼接有问题
+      const lastItem = this.breadcrumbList[this.breadcrumbList.length - 1]
+      url = lastItem.url + `/${name}`
       this.breadcrumbList.push({
         title: name,
         url,
       })
       this.pagination.current = 1
-      this.getHdfsData(url)
+      this.getHdfsData(url).then(() => (this.loading = false))
     },
     onPaginationChange(page, pageSize) {
       this.pagination.current = page
-      this.getHdfsData(this.currentUrl)
+      this.getHdfsData(this.currentUrl).then(() => (this.loading = false))
     },
     onPaginationShowSizeChange(current, size) {
       this.pagination.pageSize = size
       this.pagination.current = 1
-      this.getHdfsData(this.currentUrl)
+      this.getHdfsData(this.currentUrl).then(() => (this.loading = false))
     },
     showPaginationTotal(total, range) {
       return `显示${range[0]}-${range[1]}条，共有 ${total}条`
@@ -608,6 +612,7 @@ export default {
       })
     },
     getHdfsData(url) {
+      this.loading = true
       this.currentUrl = url
       url += `?pageSize=${this.pagination.pageSize}&pageNo=${this.pagination.current}`
       return new Promise((resolve, reject) => {
