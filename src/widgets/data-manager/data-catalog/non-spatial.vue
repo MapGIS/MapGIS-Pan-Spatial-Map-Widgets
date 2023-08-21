@@ -263,6 +263,10 @@
         alt=""
       />
     </mapgis-ui-modal>
+    <mapgis-ui-picture-viewer
+      :images="previewImages"
+      @previewViewer="previewViewer"
+    />
   </div>
 </template>
 
@@ -435,6 +439,7 @@ export default {
           url: this.url,
         },
       ],
+      previewImages: [],
     }
   },
   watch: {
@@ -459,6 +464,9 @@ export default {
     this.initData()
   },
   methods: {
+    previewViewer(viewer) {
+      this.$viewer = viewer
+    },
     rowClick(record) {
       return {
         on: {
@@ -550,16 +558,18 @@ export default {
           case 'video':
             this.videoUrl = `${origin}/datastore/rest/services/file/hdfs${path}/download?isPreview=true`
             this.showFileType = 'video'
+            this.showModal = true
             break
           case 'img':
-            this.imgUrl = `${origin}/datastore/rest/services/file/hdfs${path}/download?isPreview=true`
-            this.showFileType = 'img'
+            const previewPath = `${origin}/datastore/rest/services/file/hdfs${path}/download?isPreview=true`
+            this.previewImages = []
+            this.previewImages.push(previewPath)
+            this.$viewer.show()
+            // this.imgUrl = `${origin}/datastore/rest/services/file/hdfs${path}/download?isPreview=true`
+            // this.showFileType = 'img'
             break
         }
         previewUrl && window.open(previewUrl)
-        if (!previewUrl) {
-          this.showModal = true
-        }
       } catch (error) {
         this.$message.error('url地址异常!')
         this.videoUrl = ''
