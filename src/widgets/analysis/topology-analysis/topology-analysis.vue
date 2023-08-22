@@ -130,8 +130,12 @@
           :geoJSONAnalysis="geoJSONAnalysis"
         ></cesium-layer>
       </template>
-      <mp-draw-pro ref="draw" @finished="clickFunciton" />
-      <mp-3d-draw-pro ref="draw3d" @finished="clickFunciton" />
+      <mp-draw-pro ref="draw" :clearDrawMode="true" @finished="clickFunciton" />
+      <mp-3d-draw-pro
+        ref="draw3d"
+        :clearDrawMode="true"
+        @finished="clickFunciton"
+      />
     </div>
   </mapgis-ui-spin>
 </template>
