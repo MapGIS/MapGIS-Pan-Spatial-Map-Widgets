@@ -1150,7 +1150,7 @@ export default {
           item.type === LayerType.ModelCache
         ) {
           item.sublayers = item.activeScene?.sublayers
-        } else if (item.type === LayerType.IGSMapImage) {
+        } else if (item.type === LayerType.VectorTile) {
           item.sublayers = item.currentStyle.layers.map((row) => ({
             ...row,
             visible:
