@@ -298,7 +298,7 @@ export default {
         ) {
           // 滑动条定位的地方
           this.scrollPositionKey = obj.description
-          if (!this.activeKey.includes(obj.description)) {
+          if (!this.activeKey.includes(obj.description) && !!obj.description) {
             this.activeKey.push(obj.description)
           }
         }
@@ -313,7 +313,9 @@ export default {
           const scrollToContainer = mainContainer.getElementsByClassName(
             this.scrollPositionKey
           )[0] // 指定的class
-          mainContainer.scrollTop = scrollToContainer.offsetTop
+          if (scrollToContainer !== undefined) {
+            mainContainer.scrollTop = scrollToContainer.offsetTop
+          }
         }, 500)
       }
     },
