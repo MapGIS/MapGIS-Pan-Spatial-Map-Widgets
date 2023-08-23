@@ -519,6 +519,7 @@ export default {
         jsonData.data = jsonDataList
         const blob = new Blob([JSON.stringify(jsonData)])
         await FileSaver.saveAs(blob, `attrData_${datetime}.json`)
+        this.$message.success('导出成功')
       }
     },
 
@@ -531,6 +532,7 @@ export default {
       })
       const datetime = Date.now()
       await FileSaver.saveAs(blob, `attrData_${datetime}.csv`)
+      this.$message.success('导出成功')
     },
 
     onToggleScreen() {
@@ -773,7 +775,7 @@ export default {
     },
 
     updateStatisticAndFilterParamas() {
-      const { serverType, gdbp, serverUrl } = this.optionVal
+      const { serverType, gdbp, serverUrl, name } = this.optionVal
       if (
         serverType === LayerType.IGSMapImage ||
         serverType === LayerType.IGSVector ||
@@ -792,6 +794,7 @@ export default {
           layerIndex: this.currentTableParams.layerIndex,
           serverType,
           gdbp,
+          name,
         }
       } else if (serverType === LayerType.ArcGISMapImage) {
         this.statisticAndFilterParamas = {
@@ -799,6 +802,7 @@ export default {
           layerIndex: this.currentTableParams.layerIndex,
           serverType,
           serverUrl,
+          name,
         }
       }
     },

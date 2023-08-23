@@ -9,6 +9,7 @@
       :highlightStyle="highlightStyle"
       :popupShowType="popupShowType"
       :popupToggleType="popupToggleType"
+      :popupAnchor="popupAnchor"
       :field-configs="fieldConfigs"
       @show-popup="showPopup"
       idField="markerId"
@@ -73,6 +74,9 @@ export default {
     },
   },
   computed: {
+    popupAnchor() {
+      return baseConfigInstance.config.colorConfig.label.image.popupAnchor
+    },
     popupToggleType() {
       return baseConfigInstance.config.colorConfig.label.image.popupToggleType
     },
