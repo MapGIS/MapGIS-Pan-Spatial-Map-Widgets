@@ -187,6 +187,7 @@ export default {
       a.href = dataUrl
       a.click()
       a.remove()
+      this.$message.success('导出成功')
     },
   },
 }
