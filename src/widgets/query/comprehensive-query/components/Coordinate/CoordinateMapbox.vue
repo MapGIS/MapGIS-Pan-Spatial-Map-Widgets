@@ -148,9 +148,14 @@ export default {
 
     onClick({
       lngLat: { lng, lat },
+      originalEvent: { srcElement },
     }: {
       lngLat: { lng: number; lat: number }
+      originalEvent: { srcElement: any }
     }) {
+      // 判断是否点击到标注点，点击到标注点则不进行拾取
+      const { className } = srcElement
+      if (className.indexOf('mapboxgl-marker') > -1) return
       this.emitPickedCoordinate([lng, lat], true)
     },
 
