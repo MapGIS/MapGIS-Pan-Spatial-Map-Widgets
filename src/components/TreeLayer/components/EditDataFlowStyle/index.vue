@@ -49,7 +49,7 @@
             :step="item.step"
           />
           <mapgis-ui-sketch-color-picker
-            v-else
+            v-else-if="item.label !== '模型地址'"
             :color.sync="item.value"
             style="width: 100%"
           />
@@ -147,7 +147,13 @@ export default {
           case 'model':
             formArr = [
               { key: 'url', type: 'string', value: '', label: '模型地址' },
-              { key: 'scale', type: 'number', value: 1, label: '缩放', min: 1 },
+              {
+                key: 'scale',
+                type: 'number',
+                value: 100,
+                label: '缩放',
+                min: 1,
+              },
             ]
             if (type === 'model') {
               this.setLayerValue(formArr)
