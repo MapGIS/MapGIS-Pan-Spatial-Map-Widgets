@@ -918,8 +918,17 @@ export default {
             (layer.type === LayerType.IGSScene ||
               layer.type === LayerType.ModelCache)
           ) {
+            let pointNearDis = nearDis
             const { x, y, z } = shape
-            geometry = new Point3D(shape.x, shape.y, shape.z)
+            if (!pointNearDis) {
+              // 如果nearDis为0，需要重置nearDis为0.0000001之类的，小数位数与坐标位数保持一致。igs接口这个参数不能直接设置为0
+              const xStr = x.toString().split('.')[1]
+              pointNearDis = 0.0001 || Number(`0.${xStr}`) / Number(xStr)
+            }
+
+            geometry = new Point3D(shape.x, shape.y, shape.z, {
+              nearDis: pointNearDis,
+            })
           } else {
             let pointNearDis = nearDis
             if (!pointNearDis) {
