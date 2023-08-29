@@ -206,10 +206,13 @@ export default {
         const { gdbp, docName, layerServiceType, src, ...others } =
           this.subjectConfig
         const serverType =
-          (layerServiceType !== this.layerServiceTypeEnum.geojson
-            ? layerServiceType
-            : LayerType.GeoJson) ||
-          (docName ? LayerType.IGSIMAGE : gdbp ? LayerType.IGSVECTOR : null)
+          layerServiceType && LayerType[layerServiceType]
+            ? LayerType[layerServiceType]
+            : docName
+            ? LayerType.IGSMapImage
+            : gdbp
+            ? LayerType.IGSVector
+            : null
         const serverURL = src || ''
         return this.getServerUri({
           ...others,
@@ -316,7 +319,7 @@ export default {
           serverUri = `${domain}/igs/rest/mrms/docs/${docName}?layerName=${layerName}&layerIndex=${layerIndex}`
           break
         case LayerType.IGSVector:
-          serverUri = `${domain}/igs/rest/mrms/layers?gdbp=${gdbp || gdbps}`
+          serverUri = `${domain}/igs/rest/mrms/layers?gdbps=${gdbp || gdbps}`
           break
         case LayerType.GeoJson:
           serverUri = serverURL
@@ -342,7 +345,7 @@ export default {
           hostname: ip,
           port,
           pathname,
-          query: { gdbp, layerName, layerIndex },
+          query: { gdbps, layerName, layerIndex },
         } = url.parse(uri, true)
         const docName = _last(pathname.split('/'))
 
@@ -350,7 +353,7 @@ export default {
           params = {
             ip,
             port,
-            gdbp,
+            gdbp: gdbps,
             layerServiceType,
           }
         } else if (layerServiceType === LayerServiceType.igsImage) {

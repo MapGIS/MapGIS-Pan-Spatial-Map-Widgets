@@ -213,15 +213,10 @@ export default {
     },
 
     /**
-     * todo 编辑节点, 需要兼容新旧配置
+     * 编辑节点
      */
     onTreeNodeEdit(nodeData: ISubjectConfigNode) {
-      if (nodeData.parentId) {
-        // 新的专题配置
-        this.currentThematicMapNode = nodeData
-      } else {
-        // 旧配置, 需要转换为新配置回显编辑
-      }
+      this.currentThematicMapNode = nodeData
       this.setModulesShow(ModuleType.CREATE)
     },
 
