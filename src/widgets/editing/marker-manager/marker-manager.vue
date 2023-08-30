@@ -108,6 +108,7 @@
     </mp-3d-marker-plotting>
 
     <marker-add
+      :isActive="isActive"
       ref="markerAdd"
       @added="onAddMarker"
       @finished="onInteractiveFinished"
@@ -299,6 +300,10 @@ export default {
     popupToggleType() {
       return baseConfigInstance.config.colorConfig.label.image.popupToggleType
     },
+
+    isActive() {
+      return this.widget.state === 'active'
+    },
   },
 
   watch: {
@@ -428,6 +433,7 @@ export default {
     // 完成添加
     onInteractiveFinished() {
       this.markMode = ''
+      this.closeMark()
     },
 
     onInputFinished() {
