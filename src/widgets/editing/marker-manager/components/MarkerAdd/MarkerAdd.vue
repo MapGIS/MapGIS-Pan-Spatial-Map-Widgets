@@ -32,6 +32,12 @@ export default {
   name: 'MapboxMarkerAdd',
   mixins: [AppMixin],
   components: { MarkerEditWindow },
+  props: {
+    isActive: {
+      type: Boolean,
+      default: false,
+    },
+  },
 
   data() {
     return {
@@ -76,6 +82,7 @@ export default {
 
     // 'finished'响应事件(结束绘制)
     async onDrawFinished({ mode, feature, center }) {
+      if (!this.isActive) return // 解决标注微件加载后，再使用要素查询、测量等微件进行绘制并且绘制完毕后会触发添加标注弹框的bug
       // 构造marker
       const unSelectIcon = await markerIconInstance.unSelectIcon()
 
