@@ -103,6 +103,8 @@ export default {
           return 'FID'
         case LayerType.EsGeoCode:
           return 'customerId'
+        // case LayerType.DataFlowLayer:
+        //   return 'imei'
 
         default:
           return 'fid'
@@ -413,11 +415,16 @@ export default {
           break
 
         case LayerType.DataFlow:
+          const { pagination } = this
           // 获取数据流图层实时返回的数据信息
           const features = this.dataFlowList.getDataFlowById(this.optionVal.id)
           this.setGeoJsonColums({ features, type: 'FeatureCollection' })
           this.pagination.total = features.length
-          this.tableData = features
+          // 模拟分页
+          this.tableData = features.slice(
+            (pagination.current - 1) * pagination.pageSize,
+            pagination.current * pagination.pageSize
+          )
           this.removeMarkers()
           // 如果当前是激活状态，则添加markers
           if (this.isExhibitionActive) {
