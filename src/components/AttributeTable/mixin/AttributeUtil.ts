@@ -364,19 +364,7 @@ export default {
           })
           const { count } = json
           this.pagination.total = count
-          let jsonData = await FeatureQuery.igsQuery3DFeatureResourceServer({
-            ip,
-            port: port.toString(),
-            domain,
-            where: queryWhere,
-            geometry: queryGeometry,
-            page: current - 1,
-            pageCount: pageSize,
-            url: gdbp,
-            geometryPrecision: 8,
-            inSrs: 'WGS1984_度',
-            outSrs: 'WGS1984_度',
-          })
+          let jsonData
           if (val === '1') {
             jsonData = await FeatureQuery.igsQuery3DFeatureResourceServer({
               ip,
@@ -397,6 +385,20 @@ export default {
               jsonData.fields
             )
             return
+          } else {
+            jsonData = await FeatureQuery.igsQuery3DFeatureResourceServer({
+              ip,
+              port: port.toString(),
+              domain,
+              where: queryWhere,
+              geometry: queryGeometry,
+              page: current - 1,
+              pageCount: pageSize,
+              url: gdbp,
+              geometryPrecision: 8,
+              inSrs: 'WGS1984_度',
+              outSrs: 'WGS1984_度',
+            })
           }
           if (!(this.tableColumns && this.tableColumns.length > 0)) {
             columns = this.setTableScroll20(jsonData.fields)
