@@ -99,6 +99,7 @@ import { Style } from '@mapgis/webclient-es6-service'
 import MpExportLayer from '../../../components/ExportLayer/export-layer.vue'
 
 const { FillStyle } = Style
+const Types = ['Lin', 'Pnt', 'Reg']
 
 export default {
   name: 'MpBufferAnalysis',
@@ -194,7 +195,20 @@ export default {
         if (data.type === LayerType.IGSVector) {
           arr.push(data)
         } else if (data.type === LayerType.IGSMapImage) {
-          arr.push(...data.sublayers)
+          // 带组图层的情况
+          data.sublayers.forEach((sublayer) => {
+            if (sublayer.sublayers && sublayer.sublayers.length > 0) {
+              sublayer.sublayers.forEach((item) => {
+                if (Types.includes(item.geomType)) {
+                  arr.push(item)
+                }
+              })
+            } else {
+              if (Types.includes(sublayer.geomType)) {
+                arr.push(sublayer)
+              }
+            }
+          })
         } else if (data.type === LayerType.IGSScene) {
           const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
             data.id
