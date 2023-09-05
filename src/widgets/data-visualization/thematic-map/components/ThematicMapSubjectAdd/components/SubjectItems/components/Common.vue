@@ -311,7 +311,7 @@ export default {
         domain = url.origin
       } else {
         const protocol = window.location.protocol
-        domain = `${protocol}//${ip}:${port}`
+        domain = `https://${ip}:${port}`
       }
       let serverUri = `${domain}/igs/rest/mrms/`
       switch (serverType) {
