@@ -7,7 +7,7 @@ import { MapMixin, Feature } from '@mapgis/web-app-framework'
 import { bboxPolygon, lineString, bbox } from '@turf/turf'
 import { Style } from '@mapgis/webclient-es6-service'
 
-const { LineStyle, PointStyle, FillStyle } = Style
+const { LineStyle, PointStyle, FillStyle, TextStyle } = Style
 
 export default {
   name: 'ZoneFrameMapbox',
@@ -103,23 +103,30 @@ export default {
           type: 'line',
           ...lineStyle.toMapboxStyle(),
         }
+        this.$delete(style, 'filter')
         this.map.addLayer({
           id: 'zone-frame-outline',
           source: 'zone-frame',
           ...style,
         })
 
-        const pointStyle = new PointStyle({
+        const textStyle = new TextStyle({
+          text: '{name}',
           color: this.highlightStyle.label.text.color,
-          size: parseInt(this.highlightStyle.label.text.fontSize),
+          font: {
+            family: '微软雅黑',
+            size: parseInt(this.highlightStyle.label.text.fontSize),
+            style: 'normal',
+            weight: 'normal',
+          },
         })
         style = {
-          type: 'circle',
-          ...pointStyle.toMapboxStyle(),
+          type: 'symbol',
+          ...textStyle.toMapboxStyle(),
         }
         this.map.addLayer({
-          id: 'zone-frame-text',
-          source: 'zone-frame',
+          id: 'coordinate-text',
+          source: 'coordinate',
           ...style,
         })
       }
