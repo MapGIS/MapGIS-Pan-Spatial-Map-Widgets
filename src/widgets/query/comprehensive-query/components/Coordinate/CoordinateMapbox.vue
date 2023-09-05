@@ -17,7 +17,7 @@ import {
 } from '@mapgis/web-app-framework'
 import { Style } from '@mapgis/webclient-es6-service'
 
-const { LineStyle, PointStyle, FillStyle } = Style
+const { LineStyle, PointStyle, FillStyle, TextStyle } = Style
 
 export default {
   name: 'CoordinateMapbox',
@@ -114,18 +114,25 @@ export default {
           type: 'line',
           ...lineStyle.toMapboxStyle(),
         }
+        this.$delete(style, 'filter')
         this.map.addLayer({
           id: 'coordinate-outline',
           source: 'coordinate',
           ...style,
         })
-        const pointStyle = new PointStyle({
+        const textStyle = new TextStyle({
+          text: '{name}',
           color: this.highlightStyle.label.text.color,
-          size: parseInt(this.highlightStyle.label.text.fontSize),
+          font: {
+            family: '微软雅黑',
+            size: parseInt(this.highlightStyle.label.text.fontSize),
+            style: 'normal',
+            weight: 'normal',
+          },
         })
         style = {
-          type: 'circle',
-          ...pointStyle.toMapboxStyle(),
+          type: 'symbol',
+          ...textStyle.toMapboxStyle(),
         }
         this.map.addLayer({
           id: 'coordinate-text',
