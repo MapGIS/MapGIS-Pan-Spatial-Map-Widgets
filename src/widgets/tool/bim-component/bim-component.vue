@@ -7,6 +7,7 @@
     :enableCollapse="false"
     :enableBim="true"
     :enablePopup="true"
+    :highlightStyle="highlightStyle"
   ></mapgis-3d-bim-component>
 </template>
 
@@ -33,7 +34,14 @@ export default {
       show: true,
     }
   },
-
+  computed: {
+    highlightStyle() {
+      return (
+        this.application.baseConfig?.colorConfig?.feature?.reg?.color ||
+        'rgba(255,255,0,0.5)'
+      )
+    },
+  },
   watch: {
     document: {
       immediate: true,
