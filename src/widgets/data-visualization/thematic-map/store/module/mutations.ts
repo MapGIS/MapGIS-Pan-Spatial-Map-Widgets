@@ -66,11 +66,9 @@ export const featureQueryFn:
           layerIdxs: layerIndex,
         }
       : { gdbp }
-    const domain = `https://${ip}:${port}`
     const dataSource = await Feature.FeatureQuery.query({
       ip: ip || baseConfigIp,
       port: port || baseConfigPort,
-      domain,
       page: page || 0,
       pageCount: pageCount || 9999,
       IncludeGeometry: true,
