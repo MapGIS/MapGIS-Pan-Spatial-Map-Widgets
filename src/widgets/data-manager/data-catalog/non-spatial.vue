@@ -166,7 +166,7 @@
       ></mapgis-ui-tree> -->
       <mapgis-ui-table
         :columns="tableColumns"
-        :data-source="tableData"
+        :data-source="hdfsTableData"
         bordered
         :pagination="false"
         :rowKey="(row) => row.path"
@@ -213,15 +213,15 @@
       </mapgis-ui-table>
       <div
         style="text-align: right; padding: 5px 10px 5px 0"
-        v-if="tableData && tableData.length > 0"
+        v-if="hdfsTableData && hdfsTableData.length > 0"
       >
         <mapgis-ui-pagination
           size="small"
-          :total="pagination.total"
+          :total="hdfsPagination.total"
           :show-total="showPaginationTotal"
-          :page-size-options="pagination.pageSizeOptions"
-          :page-size="pagination.pageSize"
-          :current="pagination.current"
+          :page-size-options="hdfsPagination.pageSizeOptions"
+          :page-size="hdfsPagination.pageSize"
+          :current="hdfsPagination.current"
           show-size-changer
           show-quick-jumper
           @showSizeChange="onPaginationShowSizeChange"
@@ -426,8 +426,8 @@ export default {
       showFileType: '',
       treeData: [],
       tableColumns: columns,
-      tableData: [],
-      pagination: {
+      hdfsTableData: [],
+      hdfsPagination: {
         current: 1,
         pageSize: 10,
         total: 0,
@@ -441,7 +441,6 @@ export default {
         },
       ],
       previewImages: [],
-      loading: false,
     }
   },
   watch: {
@@ -494,13 +493,13 @@ export default {
           url: this.url,
         },
       ]
-      this.tableData = []
+      this.hdfsTableData = []
     },
     changePath(url) {
       if (!url) return
       const index = this.breadcrumbList.findIndex((item) => item.url === url)
       this.breadcrumbList = this.breadcrumbList.slice(0, index + 1)
-      this.pagination.current = 1
+      this.hdfsPagination.current = 1
       this.getHdfsData(url).then(() => (this.loading = false))
     },
     getNextData(url, name) {
@@ -511,16 +510,16 @@ export default {
         title: name,
         url,
       })
-      this.pagination.current = 1
+      this.hdfsPagination.current = 1
       this.getHdfsData(url).then(() => (this.loading = false))
     },
     onPaginationChange(page, pageSize) {
-      this.pagination.current = page
+      this.hdfsPagination.current = page
       this.getHdfsData(this.currentUrl).then(() => (this.loading = false))
     },
     onPaginationShowSizeChange(current, size) {
-      this.pagination.pageSize = size
-      this.pagination.current = 1
+      this.hdfsPagination.pageSize = size
+      this.hdfsPagination.current = 1
       this.getHdfsData(this.currentUrl).then(() => (this.loading = false))
     },
     showPaginationTotal(total, range) {
@@ -614,7 +613,7 @@ export default {
     getHdfsData(url) {
       this.loading = true
       this.currentUrl = url
-      url += `?pageSize=${this.pagination.pageSize}&pageNo=${this.pagination.current}`
+      url += `?pageSize=${this.hdfsPagination.pageSize}&pageNo=${this.hdfsPagination.current}`
       return new Promise((resolve, reject) => {
         axios
           .get(url)
@@ -629,12 +628,12 @@ export default {
                 // } else {
                 //   this.treeData = [...treeData]
                 // }
-                this.tableData = this.transferHdfsData(data)
-                this.pagination.total = data.t.total
+                this.hdfsTableData = this.transferHdfsData(data)
+                this.hdfsPagination.total = data.t.total
                 resolve()
               } else {
-                this.tableData = []
-                this.pagination.total = 0
+                this.hdfsTableData = []
+                this.hdfsPagination.total = 0
                 resolve()
               }
             } else {
