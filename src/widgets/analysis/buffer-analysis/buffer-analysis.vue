@@ -43,12 +43,23 @@
             @change="changeSelectLevel"
             >只对选择数据进行操作</mapgis-ui-checkbox
           >
+          <mapgis-ui-checkbox
+            v-show="dataType == 'VectorLayer'"
+            :checked="modelBuffer"
+            @change="
+              () => {
+                modelBuffer = !modelBuffer
+              }
+            "
+          >
+            进行三维分析
+          </mapgis-ui-checkbox>
         </mapgis-ui-form-model-item>
       </mapgis-ui-form-model>
     </div>
     <!-- 使用缓冲区分析组件 -->
-    <mapgis-3d-analysis-buffer
-      v-if="dataType !== 'Model'"
+    <mapgis-3d-analysis-model-buffer
+      v-if="dataType == 'Model' || modelBuffer"
       :layout="layout"
       :baseUrl="baseBufferUrl"
       :srcType="srcType"
@@ -61,7 +72,7 @@
       @exportResult="exportResult"
       @deleteResult="deleteResult"
     />
-    <mapgis-3d-analysis-model-buffer
+    <mapgis-3d-analysis-buffer
       v-else
       :layout="layout"
       :baseUrl="baseBufferUrl"
@@ -131,6 +142,7 @@ export default {
       finishFeature: false,
       visible: false,
       resultData: {},
+      modelBuffer: false,
     }
   },
 
