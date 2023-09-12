@@ -125,8 +125,8 @@ export default {
           ...textStyle.toMapboxStyle(),
         }
         this.map.addLayer({
-          id: 'coordinate-text',
-          source: 'coordinate',
+          id: 'zone-frame-text',
+          source: 'zone-frame',
           ...style,
         })
       }
