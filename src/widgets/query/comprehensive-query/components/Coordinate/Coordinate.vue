@@ -426,6 +426,12 @@ export default {
         }
       },
     },
+    pickable(val) {
+      if (!val) {
+        this.coordInDefaultCRS = []
+        this.center = []
+      }
+    },
     frameable() {
       if (!this.frameable) {
         this.frameNo = ''

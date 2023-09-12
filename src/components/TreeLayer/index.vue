@@ -1387,17 +1387,18 @@ export default {
             this.showMetadataInfo = true
             return
           }
-          window.open(layer.url)
         } else {
-          this.showMetadataInfo = true
-          this.currentLayerInfo = layer
+          window.open(layer.url)
         }
-        // 复位当前选择的图层
-        // this.$nextTick(() => {
-        //   this.currentLayerInfo = {}
-        // })
-        this.clickPopover(node, false)
+      } else {
+        this.showMetadataInfo = true
+        this.currentLayerInfo = layer
       }
+      // 复位当前选择的图层
+      // this.$nextTick(() => {
+      //   this.currentLayerInfo = {}
+      // })
+      this.clickPopover(node, false)
     },
 
     clickPopover(item, visible) {
