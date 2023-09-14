@@ -168,7 +168,7 @@ export default {
     },
 
     exportAllCSV() {
-      const { serverName, serverType, serverUrl } = this.options[0]
+      const { serverName, serverType, serverUrl, gdbp } = this.options[0]
       let { domain } = this.options[0]
       if (!domain && !!serverUrl && serverUrl.length > 0) {
         const url = new URL(serverUrl)
@@ -179,8 +179,14 @@ export default {
         case LayerType.IGSMapImage:
           dataUrl = `${domain}/igs/rest/services/${serverName}/MapServer/query?f=csv&resultRecordCount=1000`
           break
+        case LayerType.IGSScene:
+          dataUrl = `${domain}/igs/rest/services/system/ResourceServer/tempData/features/query?url=${gdbp}&f=csv&resultRecordCount=1000`
+          break
         default:
           break
+      }
+      if (!dataUrl) {
+        return this.$message.error('此服务不支持导出')
       }
       const a = document.createElement('a')
       a.style.display = 'none'
