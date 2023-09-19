@@ -51,6 +51,7 @@
             style="line-height: 32px"
             :checked="selectLevel"
             @change="changeSelectLevel"
+            v-show="dataType !== 'Model'"
             >只对选择数据进行操作</mapgis-ui-checkbox
           >
         </mapgis-ui-form-model-item>
@@ -144,6 +145,12 @@ export default {
       handler: 'documentChange',
       deep: true,
       immediate: true,
+    },
+    // 三维分析不支持要素级，当分析类型变成三维分析时将selectLevel属性置为false
+    dataType() {
+      if (this.dataType === 'Model') {
+        this.selectLevel = false
+      }
     },
   },
 
