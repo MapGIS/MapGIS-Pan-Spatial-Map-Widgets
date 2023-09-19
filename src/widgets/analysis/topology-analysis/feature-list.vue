@@ -134,18 +134,6 @@ export default {
           const res = await Feature.FeatureQuery.query(options, false)
           this.dealWithResult(res)
         } else if (serverType === LayerType.IGSScene) {
-          const option = {
-            f: 'json',
-            ip,
-            port,
-            domain,
-            url: gdbp,
-            geometry,
-            returnCountOnly: true,
-          }
-          // igs新接口目前没有将总条数count和详细的features数据一并返回，需要先请求总条数
-          const res1 =
-            await Feature.FeatureQuery.igsQuery3DFeatureResourceServer(option)
           const options = {
             f: 'json',
             ip,
@@ -161,7 +149,7 @@ export default {
           const res =
             await Feature.FeatureQuery.igsQuery3DFeatureResourceServer(options)
           const data = {}
-          data.TotalCount = res1.count
+          data.TotalCount = res.totalCount
           data.SFEleArray = res.features.map((feature) => {
             feature.FID = feature.attributes.FID
             feature.ftype = res.geometryType
