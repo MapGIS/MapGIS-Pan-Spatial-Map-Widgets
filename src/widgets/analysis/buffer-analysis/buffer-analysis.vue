@@ -41,6 +41,7 @@
             style="line-height: 32px"
             :checked="selectLevel"
             @change="changeSelectLevel"
+            v-show="dataType == 'VectorLayer' && !modelBuffer"
             >只对选择数据进行操作</mapgis-ui-checkbox
           >
           <mapgis-ui-checkbox
@@ -49,6 +50,9 @@
             @change="
               () => {
                 modelBuffer = !modelBuffer
+                if (modelBuffer) {
+                  selectLevel = false
+                }
               }
             "
           >
@@ -151,6 +155,12 @@ export default {
       handler: 'documentChange',
       deep: true,
       immediate: true,
+    },
+    // 三维分析不支持要素级，当分析类型变成三维分析时将selectLevel属性置为false
+    dataType() {
+      if (this.dataType === 'Model') {
+        this.selectLevel = false
+      }
     },
   },
   computed: {
@@ -285,7 +295,7 @@ export default {
 
     getResultLayer() {
       let url
-      if (this.dataType === 'Model') {
+      if (this.dataType === 'Model' || modelBuffer) {
         url = `${this.domain}/igs/rest/services/system/ResourceServer/tempData/models?gdbpUrl=${this.destLayer}`
       } else {
         url = `${this.domain}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
@@ -301,7 +311,7 @@ export default {
     addNewLayer(bufferStyle, renderType) {
       const resultLayer: Array<string> = this.getResultLayer()
       let highlightStyle
-      if (this.dataType !== 'Model') {
+      if (this.dataType !== 'Model' && !modelBuffer) {
         highlightStyle = {
           polygon: new FillStyle({
             width: 8,
