@@ -168,7 +168,12 @@ export default {
     },
 
     exportAllCSV() {
-      const { serverName, serverType, serverUrl, gdbp } = this.options[0]
+      const { serverType, serverUrl, gdbp } = this.options[0]
+      let { serverName } = this.options[0]
+      // 有冒号说明是文件夹里面的服务，新接口支持的格式为文件夹/服务名，因此需将冒号替换成/
+      if (serverName.indexOf(':') > -1) {
+        serverName = serverName.replace(':', '/')
+      }
       let { domain } = this.options[0]
       if (!domain && !!serverUrl && serverUrl.length > 0) {
         const url = new URL(serverUrl)
