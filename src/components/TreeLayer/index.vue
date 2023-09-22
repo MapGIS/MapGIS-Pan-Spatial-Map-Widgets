@@ -774,14 +774,16 @@ export default {
         }
         source.readyPromise.then(() => {
           vm._setBoundingSphereAndExtent(source, layer)
-          vm.$emit('update:layerDocument', doc)
+          // vm.$emit('update:layerDocument', doc)
         })
       } else if (layer.type === LayerType.IGSScene) {
         const layerId = layer.activeScene.sublayers[0].id
         setTimeout(() => {
           source = vm.sceneController.findSource(layerId)
-          vm._setBoundingSphereAndExtent(source, layer)
-          vm.$emit('update:layerDocument', doc)
+          if (source) {
+            vm._setBoundingSphereAndExtent(source, layer)
+          }
+          // vm.$emit('update:layerDocument', doc)
         }, 1000)
       }
     },
