@@ -327,6 +327,10 @@ export default {
       const { serverType } = this.optionVal
       return serverType === LayerType.ModelCache
     },
+    isIGSVector3dLayer() {
+      const { serverType } = this.optionVal
+      return serverType === LayerType.IGSVector3D
+    },
     popupWidth() {
       return Number(this.exhibition?.popupOption?.componentWidth || 280)
     },
@@ -678,7 +682,11 @@ export default {
       for (let i = 0; i < this.tableData.length; i += 1) {
         const feature = this.tableData[i]
         let center = []
-        if (this.isIGSScence || this.isModelCacheLayer) {
+        if (
+          this.isIGSScence ||
+          this.isModelCacheLayer ||
+          this.isIGSVector3dLayer
+        ) {
           const { xmin, xmax, ymin, ymax } =
             feature.properties.specialLayerBound
           const longitude = (xmin + xmax) / 2
@@ -701,7 +709,9 @@ export default {
         }
       }
       if (
-        (this.isIGSScence || this.isModelCacheLayer) &&
+        (this.isIGSScence ||
+          this.isModelCacheLayer ||
+          this.isIGSVector3dLayer) &&
         tempMarkers.length > 0
       ) {
         const arr = await this.getModelHeight(tempMarkers)

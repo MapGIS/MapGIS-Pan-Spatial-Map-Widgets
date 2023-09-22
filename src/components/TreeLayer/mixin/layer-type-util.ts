@@ -46,6 +46,14 @@ export default {
       return type === LayerType.IGSVector
     },
     /**
+     * 判断是否是IGSVector3D图层
+     * @param item layer图层
+     * @returns boolean
+     */
+    isIgsVector3dLayer({ type }) {
+      return type === LayerType.IGSVector3D
+    },
+    /**
      * 判断是否是三维图层
      * @param item layer图层
      * @returns boolean
@@ -175,7 +183,8 @@ export default {
         (this.isSubLayer(item) && this.isArcGISMapImage(item)) ||
         this.isIgsVectorLayer(item) ||
         this.isDataFlow(item) ||
-        (this.isModelCacheLayer(item) && this.includeBindData(item))
+        (this.isModelCacheLayer(item) && this.includeBindData(item)) ||
+        this.isIgsVector3dLayer(item)
 
       return bool
     },
@@ -258,6 +267,9 @@ export default {
 
     isFitbound(layer) {
       if (this.isParentLayer(layer)) {
+        if (this.isIgsVector3dLayer(layer)) {
+          return false
+        }
         // if (this.isIGSScene(layer) && this.is2DMapMode === false) {
         //   return true
         // } else if (!this.isIGSScene(layer)) {
@@ -454,6 +466,35 @@ export default {
                 serverType: layer.type,
                 f: queryType || '',
               },
+            }
+          },
+        },
+        {
+          type: this.isIgsVector3dLayer(layer),
+          setValue: () => {
+            const igsVector3dLayer = layer.dataRef
+            const { domain, docName } = igsVector3dLayer._parseUrl(layer.url)
+            const isDataStoreQuery = false
+            const DNSName = undefined
+            const ipPortObj = this.getIpPort({ isDataStoreQuery })
+            exhibition = {
+              id: `${igsVector3dLayer.title} ${igsVector3dLayer.id}`,
+              name: `${igsVector3dLayer.title} ${titleType}`,
+              option: {
+                id: igsVector3dLayer.id,
+                domain,
+                // ip: ip || baseConfigInstance.config.ip,
+                // port: Number(port || baseConfigInstance.config.port),
+                ...ipPortObj,
+                isDataStoreQuery,
+                DNSName,
+                serverType: igsVector3dLayer.type,
+                gdbp: igsVector3dLayer.gdbp,
+                f: queryType || '',
+              },
+              popupOption: parent
+                ? parent.extend?.popupOption
+                : layer.extend?.popupOption,
             }
           },
         },

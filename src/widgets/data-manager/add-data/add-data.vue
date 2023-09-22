@@ -173,6 +173,11 @@ export default {
           value: 'IGSScene',
           example: 'http://<server>:<port>/igs/rest/g3d/{modelName}',
         },
+        {
+          text: 'MapGIS 三维图层地图服务',
+          value: 'IGSVector3D',
+          example: '',
+        },
       ]
     },
 

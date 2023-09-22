@@ -201,7 +201,10 @@ export default {
           arr.push(data)
         } else if (data.type === LayerType.IGSMapImage) {
           arr.push(...data.sublayers)
-        } else if (data.type === LayerType.IGSScene) {
+        } else if (
+          data.type === LayerType.IGSScene ||
+          data.type === LayerType.ModelCache
+        ) {
           const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
             data.id
           )
@@ -320,14 +323,17 @@ export default {
 
     getResultLayer() {
       let url
+      let layerType
       if (this.dataType === 'Model') {
         url = `${this.domain}/igs/rest/services/system/ResourceServer/tempData/models?gdbpUrl=${this.destLayer}`
+        layerType = 'IGSVector3D'
       } else {
         url = `${this.domain}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
+        layerType = 'IGSVector'
       }
       const index = url.lastIndexOf('/')
       const layerName = url.substring(index + 1, url.length)
-      return [url, layerName]
+      return [url, layerName, layerType]
     },
 
     addNewLayer() {
@@ -336,7 +342,7 @@ export default {
         name: 'IGS图层',
         description: '综合分析_结果图层',
         data: {
-          type: 'IGSVector',
+          type: resultLayer[2],
           description: '缓冲区分析',
           srcLayer: this.srcLayer + this.srcBLayer,
           url: resultLayer[0],

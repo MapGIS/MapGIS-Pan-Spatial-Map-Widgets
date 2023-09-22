@@ -133,7 +133,21 @@ export default {
           }
           const res = await Feature.FeatureQuery.query(options, false)
           this.dealWithResult(res)
-        } else if (serverType === LayerType.IGSScene) {
+        } else if (
+          serverType === LayerType.IGSScene ||
+          serverType === LayerType.ModelCache
+        ) {
+          const option = {
+            f: 'json',
+            ip,
+            port,
+            domain,
+            url: gdbp,
+            geometry,
+            returnCountOnly: true,
+          }
+          const res1 =
+            await Feature.FeatureQuery.igsQuery3DFeatureResourceServer(option)
           const options = {
             f: 'json',
             ip,
@@ -149,7 +163,7 @@ export default {
           const res =
             await Feature.FeatureQuery.igsQuery3DFeatureResourceServer(options)
           const data = {}
-          data.TotalCount = res.totalCount
+          data.TotalCount = res1.count
           data.SFEleArray = res.features.map((feature) => {
             feature.FID = feature.attributes.FID
             feature.ftype = res.geometryType

@@ -148,6 +148,7 @@ import {
   IGSMapImageLayer,
   IGSVectorLayer,
   IGSScene,
+  ModelCache,
   baseConfigInstance,
   dataCatalogManagerInstance,
 } from '@mapgis/web-app-framework'
@@ -239,7 +240,8 @@ export default {
         if (
           data.type === LayerType.IGSMapImage ||
           data.type === LayerType.IGSVector ||
-          data.type === LayerType.IGSScene
+          data.type === LayerType.IGSScene ||
+          data.type === LayerType.ModelCache
         ) {
           arr.push(data)
         }
@@ -300,7 +302,10 @@ export default {
           this.queryFeaturesByDoc(layer, geo)
         } else if (layer.type === LayerType.IGSVector) {
           this.queryFeaturesByVector(layer, geo)
-        } else if (layer.type === LayerType.IGSScene) {
+        } else if (
+          layer.type === LayerType.IGSScene ||
+          layer.type === LayerType.ModelCache
+        ) {
           this.queryFeaturesByIGSScene(layer, geo)
         }
       }
