@@ -38,6 +38,7 @@
               :uploadUrl="`${baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`"
               :showUploadList="false"
               :baseUrl="prefixUrl"
+              :hasPrefix="false"
               @image-url="(val) => updateImgUrl(val, item)"
             ></mapgis-ui-upload-image>
           </div>
