@@ -100,6 +100,7 @@ export default {
           return 'ID'
         case LayerType.IGSScene:
         case LayerType.ModelCache:
+        case LayerType.IGSVector3D:
           return 'FID'
         case LayerType.EsGeoCode:
           return 'customerId'
@@ -345,6 +346,7 @@ export default {
           }
           break
 
+        case LayerType.IGSVector3D:
         case LayerType.IGSScene:
         case LayerType.ModelCache:
           // 查找矩阵集
