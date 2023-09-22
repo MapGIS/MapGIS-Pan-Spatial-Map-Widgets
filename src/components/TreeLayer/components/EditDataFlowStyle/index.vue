@@ -37,6 +37,7 @@
             <mapgis-ui-upload-image
               :uploadUrl="`${baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`"
               :showUploadList="false"
+              :baseUrl="prefixUrl"
               @image-url="(val) => updateImgUrl(val, item)"
             ></mapgis-ui-upload-image>
           </div>
@@ -75,23 +76,27 @@ export default {
   },
   data() {
     return {
-      type: 'point',
       form: [],
     }
   },
-  watch: {
-    'layer.layerStyle.type': {
-      handler(val) {
-        this.type = val
+  computed: {
+    type: {
+      get() {
+        return this.layer.extend.dataFlowOption.type || 'point'
       },
-      immediate: true,
+      set(val) {
+        this.layer.extend.dataFlowOption.type = val
+      },
     },
+    prefixUrl() {
+      return window._CONFIG.domainURL
+    },
+  },
+  watch: {
     type: {
       handler(val) {
+        const { type } = this
         let formArr = []
-        const {
-          layerStyle: { type },
-        } = this.layer
         switch (val) {
           case 'marker':
             formArr = [
@@ -109,7 +114,12 @@ export default {
                 label: '垂直偏移量',
                 min: 0,
               },
-              { key: 'url', type: 'string', value: '', label: '图标地址' },
+              {
+                key: 'markerUrl',
+                type: 'string',
+                value: '',
+                label: '图标地址',
+              },
               {
                 key: 'rotation',
                 type: 'number',
@@ -146,7 +156,7 @@ export default {
             break
           case 'model':
             formArr = [
-              { key: 'url', type: 'string', value: '', label: '模型地址' },
+              { key: 'modelUrl', type: 'string', value: '', label: '模型地址' },
               {
                 key: 'scale',
                 type: 'number',
@@ -214,19 +224,28 @@ export default {
     },
 
     setLayerValue(form = []) {
-      const { layerStyle } = this.layer
+      const { dataFlowOption } = this.layer.extend
+      const options = dataFlowOption ? dataFlowOption[this.type] : null
       form.forEach((item) => {
-        item.value = layerStyle[item.key]
+        if (options && options[item.key]) {
+          item.value = options[item.key]
+        }
       })
     },
 
     submit() {
+      let { dataFlowOption } = this.layer.extend
       const obj = { type: this.type }
-      this.form.forEach((item) => {
-        obj[item.key] = item.value
-      })
-      this.layer.setLayerStyle(obj)
+      obj[this.type] = this.getOptions()
+      dataFlowOption = Object.assign(dataFlowOption, obj)
       this.$emit('update:layer', this.layer)
+    },
+    getOptions() {
+      const options = {}
+      this.form.forEach((item) => {
+        options[item.key] = item.value
+      })
+      return options
     },
   },
 }

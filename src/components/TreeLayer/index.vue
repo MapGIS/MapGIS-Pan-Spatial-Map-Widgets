@@ -1147,13 +1147,14 @@ export default {
     },
 
     updateDataFlowStyle(val: DataFlowLayer) {
-      const { key, layerStyle } = val
+      const { key, extend, dataId } = val
       const doc = this.layerDocument.clone()
       const layers: Array<unknown> = doc.defaultMap.layers()
       const layerItem: DataFlowLayer = layers[key]
-      layerItem.setLayerStyle(layerStyle)
+      layerItem.extend = extend
       this.$emit('update:layerDocument', doc)
       this.currentLayerInfo = {}
+      api.updateData({ dataId, extend })
     },
 
     // updateLuminanceAtZenith(luminanceAtZenith) {
