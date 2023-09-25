@@ -202,6 +202,7 @@ export default {
     async queryGeoJSON(
       geometry: Record<string, unknown> | undefined,
       where: string | undefined,
+      isPageChange = false,
       val = '0'
     ) {
       this.rowKey = this.setRowKey()
@@ -230,7 +231,7 @@ export default {
         case LayerType.IGSMapImage:
         case LayerType.IGSVector:
           const { isDataStoreQuery, DNSName } = this.optionVal
-          if (!isDataStoreQuery) {
+          if (!isDataStoreQuery && !isPageChange) {
             const { AttStruct, TotalCount } = await this.queryCount(
               queryGeometry,
               queryWhere
@@ -280,14 +281,16 @@ export default {
           break
 
         case LayerType.ArcGISMapImage:
-          const { count: totalCount } = await ArcGISFeatureQuery.getTotal({
-            f: 'pjson',
-            where: queryWhere,
-            geometry: queryGeometry,
-            serverUrl,
-            layerIndex,
-          })
-          this.pagination.total = totalCount
+          if (!isPageChange) {
+            const { count: totalCount } = await ArcGISFeatureQuery.getTotal({
+              f: 'pjson',
+              where: queryWhere,
+              geometry: queryGeometry,
+              serverUrl,
+              layerIndex,
+            })
+            this.pagination.total = totalCount
+          }
           geojson = await ArcGISFeatureQuery.query({
             f: 'pjson',
             where: queryWhere,
@@ -296,7 +299,7 @@ export default {
             pageCount: val === '1' ? this.pagination.total : pageSize,
             serverUrl,
             layerIndex,
-            totalCount,
+            totalCount: this.pagination.total,
           })
           if (val === '1') {
             this.attrTableToJsonData = geojson.feature
@@ -354,18 +357,20 @@ export default {
           queryGeometry = geometry
             ? this.getGeometry3D(source)
             : this.optionVal.geometry
-          const json = await FeatureQuery.igsQuery3DFeatureResourceServer({
-            ip,
-            port: port.toString(),
-            domain,
-            geometry: queryGeometry,
-            url: gdbp,
-            inSrs: 'WGS1984_度',
-            outSrs: 'WGS1984_度',
-            returnCountOnly: true,
-          })
-          const { count } = json
-          this.pagination.total = count
+          if (!isPageChange) {
+            const json = await FeatureQuery.igsQuery3DFeatureResourceServer({
+              ip,
+              port: port.toString(),
+              domain,
+              geometry: queryGeometry,
+              url: gdbp,
+              inSrs: 'WGS1984_度',
+              outSrs: 'WGS1984_度',
+              returnCountOnly: true,
+            })
+            const { count } = json
+            this.pagination.total = count
+          }
           let jsonData
           if (val === '1') {
             jsonData = await FeatureQuery.igsQuery3DFeatureResourceServer({
@@ -394,12 +399,12 @@ export default {
               domain,
               where: queryWhere,
               geometry: queryGeometry,
-              page: current - 1,
-              pageCount: pageSize,
               url: gdbp,
               geometryPrecision: 8,
               inSrs: 'WGS1984_度',
               outSrs: 'WGS1984_度',
+              resultRecordCount: pageSize,
+              resultOffset: (current - 1) * pageSize,
             })
           }
           if (!(this.tableColumns && this.tableColumns.length > 0)) {

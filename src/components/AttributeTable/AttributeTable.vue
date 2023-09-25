@@ -439,7 +439,7 @@ export default {
     },
     onPaginationChange(page, pageSize) {
       this.pagination.current = page
-      this.query()
+      this.query(undefined, true)
     },
     onPaginationShowSizeChange(current, size) {
       this.pagination.pageSize = size
@@ -600,18 +600,21 @@ export default {
       return `显示${range[0]}-${range[1]}条，共有 ${total}条`
     },
 
-    async query(where?: string) {
+    async query(where?: string, isPageChange?: boolean) {
       this.loading = true
       this.sceneController = Objects.SceneController.getInstance(
         this.Cesium,
         this.vueCesium,
         this.viewer
       )
+      // 当并非页码改变，即重新拉框查询时，将查询页码置为1，否则可能会出现查询的页码很大而查询结果总条数很小导致查询不到数据的情况
+      this.pagination.current = isPageChange ? this.pagination.current : 1
       try {
         this.clearSelection()
         const attrGeoJson = await this.queryGeoJSON(
           this.filterWithMap ? this.geometry : undefined,
-          where
+          where,
+          isPageChange
         )
       } catch (error) {
         const e = error as Error
