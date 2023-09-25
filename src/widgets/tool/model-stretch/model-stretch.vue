@@ -88,7 +88,7 @@ export default {
         if (!this.enableModelStretch) {
           return
         }
-        this.changeScaleZ(this.scaleZ, this.offset)
+        this.changeScaleZ(this.scaleZ, this.offset, this.layer.id)
         this.updateLayerProperty()
       },
       deep: true,
@@ -98,7 +98,7 @@ export default {
         if (!val) {
           this.updateModelReset()
         } else {
-          this.changeScaleZ(this.scaleZ, this.offset)
+          this.changeScaleZ(this.scaleZ, this.offset, this.layer.id)
         }
         this.updateLayerProperty()
       },

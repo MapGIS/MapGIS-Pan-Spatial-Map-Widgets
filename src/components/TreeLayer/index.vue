@@ -942,13 +942,13 @@ export default {
             this.updateM3DProps(val, true)
           },
           'update:scaleZ': (val) => {
-            this.changeScaleZ(val.scaleZ, val.offset)
+            this.changeScaleZ(val.scaleZ, val.offset, item.id)
           },
           'update:enableModelStretch': (val) => {
             if (!val.enableModelStretch) {
               this.updateModelReset()
             } else {
-              this.changeScaleZ(val.scaleZ, val.offset)
+              this.changeScaleZ(val.scaleZ, val.offset, item.id)
             }
           },
         },

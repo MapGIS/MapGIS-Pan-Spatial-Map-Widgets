@@ -81,9 +81,13 @@ export default {
       const g3dLayer = viewer.scene.layers.getLayer(g3dLayerIndex)
       return g3dLayer
     },
-    changeScaleZ(scaleZ, offset) {
+    changeScaleZ(scaleZ, offset, id) {
       if (window.transformEditor) {
         window.transformEditor.setScala(1, 1, scaleZ)
+        // const g3dLayer = this.getG3dLayer(id)
+        // const m3dSet = g3dLayer.getM3DLayers()[0]
+        // debugger
+        // m3dSet.textureCoordScale = new this.Cesium.Cartesian2(scaleZ, scaleZ)
         const { longitude, latitude, height, zmax, zmin } = this.m3dSetObj
         // 计算顶部到原点距离
         const originToTop = zmax + offset - height
