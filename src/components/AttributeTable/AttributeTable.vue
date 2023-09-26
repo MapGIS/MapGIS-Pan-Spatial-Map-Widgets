@@ -506,6 +506,7 @@ export default {
       await this.queryGeoJSON(
         this.filterWithMap ? this.geometry : undefined,
         where,
+        false,
         val
       )
       // const tableColumns = JSON.parse(JSON.stringify(this.tableColumns))
