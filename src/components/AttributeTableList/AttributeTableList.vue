@@ -170,10 +170,6 @@ export default {
     exportAllCSV() {
       const { serverType, serverUrl, gdbp } = this.options[0]
       let { serverName } = this.options[0]
-      // 有冒号说明是文件夹里面的服务，新接口支持的格式为文件夹/服务名，因此需将冒号替换成/
-      if (serverName.indexOf(':') > -1) {
-        serverName = serverName.replace(':', '/')
-      }
       let { domain } = this.options[0]
       if (!domain && !!serverUrl && serverUrl.length > 0) {
         const url = new URL(serverUrl)
@@ -182,6 +178,10 @@ export default {
       let dataUrl
       switch (serverType) {
         case LayerType.IGSMapImage:
+          // 有冒号说明是文件夹里面的服务，新接口支持的格式为文件夹/服务名，因此需将冒号替换成/
+          if (serverName.indexOf(':') > -1) {
+            serverName = serverName.replace(':', '/')
+          }
           dataUrl = `${domain}/igs/rest/services/${serverName}/MapServer/query?f=csv&resultRecordCount=1000`
           break
         case LayerType.IGSScene:
