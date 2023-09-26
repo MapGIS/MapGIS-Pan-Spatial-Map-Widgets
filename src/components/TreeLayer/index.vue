@@ -220,6 +220,8 @@ import ModelStretchUtil from '../ModelStretch/mixin/ModelStretchUtil.js'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
+window.layers3D = {}
+
 export default {
   name: 'MpTreeLayer',
   components: {
@@ -774,6 +776,7 @@ export default {
         }
         source.readyPromise.then(() => {
           vm._setBoundingSphereAndExtent(source, layer)
+          window.layers3D[layer.id] = layer
           // vm.$emit('update:layerDocument', doc)
         })
       } else if (layer.type === LayerType.IGSScene) {
@@ -782,6 +785,7 @@ export default {
           source = vm.sceneController.findSource(layerId)
           if (source) {
             vm._setBoundingSphereAndExtent(source, layer)
+            window.layers3D[layer.id] = layer
           }
           // vm.$emit('update:layerDocument', doc)
         }, 1000)

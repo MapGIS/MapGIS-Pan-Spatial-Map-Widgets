@@ -1055,8 +1055,24 @@ export default {
     },
 
     isCrossWithLayer(layer, shape): boolean {
-      const { fullExtent, type } = layer
-      const { ymax, ymin, xmax, xmin } = fullExtent
+      const { type } = layer
+      let { fullExtent } = layer
+      let { ymax, ymin, xmax, xmin } = fullExtent
+      if (
+        xmin === 0 &&
+        ymin === 0 &&
+        (type === LayerType.IGSScene || type === LayerType.ModelCache)
+      ) {
+        // 在TreeLayer/index.vue里会定义window.layers3D，并设置三维模型的fullExtent和boundingSphere
+        if (window.layers3D && window.layers3D[layer.id]) {
+          fullExtent = window.layers3D[layer.id].fullExtent
+          xmin = fullExtent.xmin
+          ymin = fullExtent.ymin
+          xmax = fullExtent.xmax
+          ymax = fullExtent.ymax
+        }
+      }
+
       let geometry
       const extentPolygon = polygon([
         [

@@ -108,7 +108,10 @@ export default {
             }
           }
         })
-      this._getM3DSetArrayBoundingSphere(layers)
+      setTimeout(() => {
+        // 防止获取到未加载完的模型
+        this._getM3DSetArrayBoundingSphere(layers)
+      }, 2000)
     },
     /**
      * 获取多个模型的最大包围球
