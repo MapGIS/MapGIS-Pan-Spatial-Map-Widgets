@@ -1,8 +1,8 @@
 <template>
   <div>
     <mapgis-3d-dynamic-marker-layer
-      v-if="!cluster"
-      :data="geojson"
+      v-if="!cluster || (unClusterData && unClusterData.length > 0)"
+      :data="getMarkerGeoJson()"
       :selects="hoverMarker"
       :highlight="false"
       :layerStyle="layerStyle"
@@ -16,7 +16,8 @@
     />
     <!-- 聚合标注专题图 -->
     <mapgis-3d-mapv-layer
-      v-else-if="
+      v-if="
+        cluster &&
         geojson &&
         geojson.features &&
         geojson.features.length > 0 &&
@@ -25,6 +26,7 @@
       :geojson="geojson"
       :options="options"
       count-field="count"
+      @unClusterData="getUnClusterData"
     />
   </div>
 </template>
@@ -130,8 +132,14 @@ export default {
         cesium: { postRender: true, postRenderFrame: 0 },
         draw: 'cluster',
         context: '2d',
+        showUnCluster: false, // 不显示未聚合的点
       }
     },
+  },
+  data() {
+    return {
+      unClusterData: [],
+    }
   },
   methods: {
     showPopup(data) {
@@ -156,6 +164,32 @@ export default {
       highlightStyle.polygon.color = regColor
       highlightStyle.polygon.outlineColor = lineColor
       highlightStyle.polygon.outlineWidth = +lineWidth
+    },
+    // 获取聚合图未聚合的点集
+    getUnClusterData(data) {
+      this.unClusterData = data
+    },
+    // 获取显示标注的geojson
+    getMarkerGeoJson() {
+      if (!this.cluster) {
+        return this.geojson
+      } else if (this.unClusterData && this.unClusterData.length > 0) {
+        const unClusterGeojson = {
+          type: 'FeatureCollection',
+          features: [],
+        }
+        for (let i = 0; i < this.unClusterData.length; i++) {
+          const feature = this.unClusterData[i]
+          const { geometry, properties } = feature
+          const obj = {
+            type: 'Feature',
+            geometry,
+            properties,
+          }
+          unClusterGeojson.features.push(obj)
+        }
+        return unClusterGeojson
+      }
     },
   },
 
