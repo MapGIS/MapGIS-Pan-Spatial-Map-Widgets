@@ -26,28 +26,12 @@
         :step="0.2"
         @change="luminanceAtZenithChange"
       />
-      <mapgis-ui-switch-panel
-        v-if="isIGSScene"
-        size="default"
-        label="模型拉伸"
-        v-model="enableModelStretch"
-      >
-        <mapgis-ui-input-number-panel
-          v-model="scaleZ"
-          size="large"
-          :step="0.5"
-          :slider="true"
-          :range="[1, 20]"
-          label="拉伸级别"
-        />
-        <mapgis-ui-form-item label="偏移量">
-          <mapgis-ui-input-number-addon
-            v-model.number="offset"
-            :step="0.5"
-            addon-after="米"
-          />
-        </mapgis-ui-form-item>
-      </mapgis-ui-switch-panel>
+      <mp-model-stretch-ui
+        :enableModelStretch.sync="enableModelStretch"
+        :scaleZ.sync="scaleZ"
+        :offset.sync="offset"
+        :textureScale.sync="textureScale"
+      />
       <div style="textalign: right">
         <mapgis-ui-button type="primary" @click="submit">
           确认
@@ -60,9 +44,11 @@
 <script lang="ts">
 import { LayerType, IGSSceneSublayerType } from '@mapgis/web-app-framework'
 import UnifyModifyVue from '../UnifyModify/UnifyModify.vue'
+import MpModelStretchUi from '../../../ModelStretch/ModelStretchUi.vue'
 
 export default {
   name: 'MpChangeM3DProps',
+  components: { 'mp-model-stretch-ui': MpModelStretchUi },
   props: ['layer'],
   data() {
     return {
@@ -73,6 +59,8 @@ export default {
       enableModelStretch: false,
       scaleZ: 1,
       offset: -2,
+      // 是否开启纹理拉伸
+      textureScale: false,
     }
   },
   computed: {
@@ -102,16 +90,33 @@ export default {
     // },
     scaleZ: {
       handler(val) {
-        this.$emit('update:scaleZ', { scaleZ: val, offset: this.offset })
+        this.$emit('update:scaleZ', {
+          enableModelStretch: this.enableModelStretch,
+          scaleZ: this.scaleZ,
+          offset: this.offset,
+          textureScale: this.textureScale,
+        })
       },
       deep: true,
     },
     enableModelStretch: {
       handler(val) {
         this.$emit('update:enableModelStretch', {
-          enableModelStretch: val,
+          enableModelStretch: this.enableModelStretch,
           scaleZ: this.scaleZ,
           offset: this.offset,
+          textureScale: this.textureScale,
+        })
+      },
+      deep: true,
+    },
+    textureScale: {
+      handler(val) {
+        this.$emit('update:textureScale', {
+          enableModelStretch: this.enableModelStretch,
+          scaleZ: this.scaleZ,
+          offset: this.offset,
+          textureScale: this.textureScale,
         })
       },
       deep: true,
@@ -153,6 +158,10 @@ export default {
             layerProperty.scaleZ !== undefined ? layerProperty.scaleZ : 1
           this.offset =
             layerProperty.offset !== undefined ? layerProperty.offset : -2
+          this.textureScale =
+            layerProperty.textureScale !== undefined
+              ? layerProperty.textureScale
+              : false
         }
         this.maximumScreenSpaceError =
           maximumScreenSpaceError !== undefined ? maximumScreenSpaceError : 16
@@ -165,8 +174,10 @@ export default {
 
         if (this.enableModelStretch) {
           this.$emit('update:scaleZ', {
+            enableModelStretch: this.enableModelStretch,
             scaleZ: this.scaleZ,
             offset: this.offset,
+            textureScale: this.textureScale,
           })
         }
       }
@@ -196,6 +207,7 @@ export default {
           layerProperty.enableModelStretch = this.enableModelStretch
           layerProperty.scaleZ = this.scaleZ
           layerProperty.offset = this.offset
+          layerProperty.textureScale = this.textureScale
         }
       }
       this.$emit('update:layer', this.layer)

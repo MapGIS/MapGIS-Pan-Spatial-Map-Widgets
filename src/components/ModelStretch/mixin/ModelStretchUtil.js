@@ -84,10 +84,6 @@ export default {
     changeScaleZ(scaleZ, offset, id) {
       if (window.transformEditor) {
         window.transformEditor.setScala(1, 1, scaleZ)
-        // const g3dLayer = this.getG3dLayer(id)
-        // const m3dSet = g3dLayer.getM3DLayers()[0]
-        // debugger
-        // m3dSet.textureCoordScale = new this.Cesium.Cartesian2(scaleZ, scaleZ)
         const { longitude, latitude, height, zmax, zmin } = this.m3dSetObj
         // 计算顶部到原点距离
         const originToTop = zmax + offset - height
@@ -95,6 +91,12 @@ export default {
         const downHeight = originToTop * scaleZ + height
         window.transformEditor.setTranslation(longitude, latitude, -downHeight)
       }
+    },
+    // 1、现有接口只针对平铺纹理；2、顶部和底部纹理可能会变形。
+    changeTextureScale(scaleXY, scaleZ, id) {
+      const g3dLayer = this.getG3dLayer(id)
+      const m3dSet = g3dLayer.getM3DLayers()[0]
+      m3dSet.textureCoordScale = new this.Cesium.Cartesian2(scaleXY, scaleZ)
     },
     updateModelReset() {
       if (!window.transformEditor) {

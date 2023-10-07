@@ -946,13 +946,32 @@ export default {
             this.updateM3DProps(val, true)
           },
           'update:scaleZ': (val) => {
+            if (!val.enableModelStretch) {
+              return
+            }
             this.changeScaleZ(val.scaleZ, val.offset, item.id)
+            if (val.textureScale) {
+              this.changeTextureScale(1, val.scaleZ, item.id)
+            }
           },
           'update:enableModelStretch': (val) => {
             if (!val.enableModelStretch) {
               this.updateModelReset()
             } else {
               this.changeScaleZ(val.scaleZ, val.offset, item.id)
+              if (val.textureScale) {
+                this.changeTextureScale(1, val.scaleZ, item.id)
+              }
+            }
+          },
+          'update:textureScale': (val) => {
+            if (!val.enableModelStretch) {
+              return
+            }
+            if (val.textureScale) {
+              this.changeTextureScale(1, val.scaleZ, item.id)
+            } else {
+              this.changeTextureScale(1, 1, item.id)
             }
           },
         },
