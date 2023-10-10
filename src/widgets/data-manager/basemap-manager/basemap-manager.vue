@@ -194,7 +194,8 @@ export default {
       }
       const { onSelect, zoomArr } = val
       this.basemapNames = [...onSelect]
-      this.updateCurrentBaseMapConfig()
+      // 通过baseMapController控制的地图设置信息不同步到_currentBaseMapInfo中，直接存放在_setBaseMapInfo
+      // this.updateCurrentBaseMapConfig()
       if (onSelect && onSelect.length > 0) {
         const promiseAll = []
         onSelect.forEach((item) => {
