@@ -358,7 +358,7 @@ export default {
             ? this.getGeometry3D(source)
             : this.optionVal.geometry
           if (!isPageChange) {
-            const json = await FeatureQuery.igsQuery3DFeatureResourceServer({
+            const json = await FeatureQuery.igsQueryResourceServer({
               ip,
               port: port.toString(),
               domain,
@@ -373,7 +373,7 @@ export default {
           }
           let jsonData
           if (val === '1') {
-            jsonData = await FeatureQuery.igsQuery3DFeatureResourceServer({
+            jsonData = await FeatureQuery.igsQueryResourceServer({
               ip,
               port: port.toString(),
               domain,
@@ -393,7 +393,7 @@ export default {
             )
             return
           } else {
-            jsonData = await FeatureQuery.igsQuery3DFeatureResourceServer({
+            jsonData = await FeatureQuery.igsQueryResourceServer({
               ip,
               port: port.toString(),
               domain,
@@ -403,8 +403,8 @@ export default {
               geometryPrecision: 8,
               inSrs: 'WGS1984_度',
               outSrs: 'WGS1984_度',
-              resultRecordCount: pageSize,
-              resultOffset: (current - 1) * pageSize,
+              page: current - 1,
+              pageCount: pageSize,
             })
           }
           if (!(this.tableColumns && this.tableColumns.length > 0)) {

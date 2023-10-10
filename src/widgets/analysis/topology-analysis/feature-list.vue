@@ -146,22 +146,20 @@ export default {
             geometry,
             returnCountOnly: true,
           }
-          const res1 =
-            await Feature.FeatureQuery.igsQuery3DFeatureResourceServer(option)
+          const res1 = await Feature.FeatureQuery.igsQueryResourceServer(option)
           const options = {
             f: 'json',
             ip,
             port,
             domain,
-            resultOffset: (this.page - 1) * 10,
-            resultRecordCount: 10,
+            page: this.page - 1,
+            pageCount: 10,
             url: gdbp,
             coordPrecision: 8,
             rtnLabel: false,
             geometry,
           }
-          const res =
-            await Feature.FeatureQuery.igsQuery3DFeatureResourceServer(options)
+          const res = await Feature.FeatureQuery.igsQueryResourceServer(options)
           const data = {}
           data.TotalCount = res1.count
           data.SFEleArray = res.features.map((feature) => {

@@ -625,7 +625,7 @@ export default {
           ymax,
           zmax
         )
-        const json = await FeatureQuery.igsQuery3DFeatureResourceServer({
+        const json = await FeatureQuery.igsQueryResourceServer({
           ip: layerConfig.bindData.ip || baseConfigInstance.config.ip,
           port:
             layerConfig.bindData.port || Number(baseConfigInstance.config.port),
@@ -820,7 +820,7 @@ export default {
           ymax,
           zmax
         )
-        const json = await FeatureQuery.igsQuery3DFeatureResourceServer({
+        const json = await FeatureQuery.igsQueryResourceServer({
           ip,
           port: port.toString(),
           domain,
