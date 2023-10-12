@@ -5,8 +5,8 @@
   "productName": "MapGIS Pan-Spatial Map",
   "author": "MapGIS",
   "license": "Apache-2.0",
-  "main1": "dist-libs/mapgis-pan-spatial-map-widgets.umd.min.js",
-  "module": "src/index.ts",
+  "main": "dist-libs/mapgis-pan-spatial-map-widgets.umd.min.js",
+  "module1": "src/index.ts",
   "scripts": {
     "build": "node --max_old_space_size=12288 ./node_modules/@vue/cli-service/bin/vue-cli-service build --target lib --name mapgis-pan-spatial-map-widgets src/index.ts"
   },
