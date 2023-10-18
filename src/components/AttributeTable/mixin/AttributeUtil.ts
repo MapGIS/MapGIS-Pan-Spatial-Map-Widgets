@@ -46,6 +46,8 @@ export default {
       // 地图范围
       geometry: undefined,
       geometry3D: undefined,
+      // 高亮已选择
+      hightlightSelection: false,
       // 选中的行
       selection: [],
       selectIcon: '',
@@ -76,6 +78,9 @@ export default {
       scrollY: 0,
       isActive: true,
       rowKey: 'fid',
+      currentId: '',
+      // 被选中行对应的markers集合
+      selectedMarkers: [],
     }
   },
   computed: {
@@ -94,9 +99,13 @@ export default {
         case LayerType.ArcGISMapImage:
           return 'ID'
         case LayerType.IGSScene:
+        case LayerType.ModelCache:
+        case LayerType.IGSVector3D:
           return 'FID'
         case LayerType.EsGeoCode:
           return 'customerId'
+        // case LayerType.DataFlowLayer:
+        //   return 'imei'
 
         default:
           return 'fid'
@@ -193,6 +202,7 @@ export default {
     async queryGeoJSON(
       geometry: Record<string, unknown> | undefined,
       where: string | undefined,
+      isPageChange = false,
       val = '0'
     ) {
       this.rowKey = this.setRowKey()
@@ -207,8 +217,8 @@ export default {
         gdbp,
         f,
       } = this.optionVal
-      let domain
-      if (!!serverUrl && serverUrl.length > 0) {
+      let { domain } = this.optionVal
+      if (!domain && !!serverUrl && serverUrl.length > 0) {
         const url = new URL(serverUrl)
         domain = url.origin
       }
@@ -216,17 +226,18 @@ export default {
       let geojson
       const queryWhere = where || this.optionVal.where
       let queryGeometry = geometry || this.optionVal.geometry
+      let columns = []
       switch (serverType) {
         case LayerType.IGSMapImage:
         case LayerType.IGSVector:
           const { isDataStoreQuery, DNSName } = this.optionVal
-          if (!isDataStoreQuery) {
+          if (!isDataStoreQuery && !isPageChange) {
             const { AttStruct, TotalCount } = await this.queryCount(
               queryGeometry,
               queryWhere
             )
             if (!(this.tableColumns && this.tableColumns.length > 0)) {
-              const columns = this.setTableScroll(AttStruct)
+              columns = this.setTableScroll(AttStruct)
               this.tableColumns = columns
             }
             this.pagination.total = TotalCount
@@ -270,14 +281,16 @@ export default {
           break
 
         case LayerType.ArcGISMapImage:
-          const { count: totalCount } = await ArcGISFeatureQuery.getTotal({
-            f: 'pjson',
-            where: queryWhere,
-            geometry: queryGeometry,
-            serverUrl,
-            layerIndex,
-          })
-          this.pagination.total = totalCount
+          if (!isPageChange) {
+            const { count: totalCount } = await ArcGISFeatureQuery.getTotal({
+              f: 'pjson',
+              where: queryWhere,
+              geometry: queryGeometry,
+              serverUrl,
+              layerIndex,
+            })
+            this.pagination.total = totalCount
+          }
           geojson = await ArcGISFeatureQuery.query({
             f: 'pjson',
             where: queryWhere,
@@ -286,14 +299,14 @@ export default {
             pageCount: val === '1' ? this.pagination.total : pageSize,
             serverUrl,
             layerIndex,
-            totalCount,
+            totalCount: this.pagination.total,
           })
           if (val === '1') {
             this.attrTableToJsonData = geojson.feature
             return
           }
           this.tableData = geojson.features
-          const columns: Array = []
+
           const { properties } = geojson.features[0]
           const tags = Object.keys(properties)
           if (tags.length <= 10) {
@@ -336,63 +349,73 @@ export default {
           }
           break
 
+        case LayerType.IGSVector3D:
         case LayerType.IGSScene:
+        case LayerType.ModelCache:
           // 查找矩阵集
           const source = this.sceneController.findSource(this.optionVal.id)
           queryGeometry = geometry
             ? this.getGeometry3D(source)
             : this.optionVal.geometry
-          const json = await FeatureQuery.query(
-            {
+          if (!isPageChange) {
+            const json = await FeatureQuery.igsQueryResourceServer({
+              ip,
+              port: port.toString(),
+              domain,
+              geometry: queryGeometry,
+              url: gdbp,
+              inSrs: 'WGS1984_度',
+              outSrs: 'WGS1984_度',
+              returnCountOnly: true,
+            })
+            const { count } = json
+            this.pagination.total = count
+          }
+          let jsonData
+          if (val === '1') {
+            jsonData = await FeatureQuery.igsQueryResourceServer({
               ip,
               port: port.toString(),
               domain,
               where: queryWhere,
               geometry: queryGeometry,
-              page: current - 1,
-              pageCount: pageSize,
-              gdbp,
-              coordPrecision: 8,
-              rtnLabel: false,
-            },
-            false,
-            serverType === LayerType.IGSScene
-          )
-          const { AttStruct, SFEleArray = [], TotalCount } = json
-          this.pagination.total = TotalCount
-          if (val === '1') {
-            const jsonData = await FeatureQuery.query(
-              {
-                ip,
-                port: port.toString(),
-                domain,
-                where: queryWhere,
-                geometry: queryGeometry,
-                page: 0,
-                pageCount: this.pagination.total,
-                gdbp,
-                coordPrecision: 8,
-                rtnLabel: false,
-              },
-              false,
-              serverType === LayerType.IGSScene
-            )
-            const { AttStruct, SFEleArray = [], TotalCount } = jsonData
-            const { FldNumber = 0, FldName = [] } = AttStruct
-            this.attrTableToJsonData = this.setTable(
-              SFEleArray,
+              page: 0,
+              pageCount: this.pagination.total,
+              url: gdbp,
+              geometryPrecision: 8,
+              inSrs: 'WGS1984_度',
+              outSrs: 'WGS1984_度',
+            })
+            this.attrTableToJsonData = this.setTable20(
+              jsonData.features,
               source,
-              FldName,
-              FldNumber
+              jsonData.fields
             )
             return
+          } else {
+            jsonData = await FeatureQuery.igsQueryResourceServer({
+              ip,
+              port: port.toString(),
+              domain,
+              where: queryWhere,
+              geometry: queryGeometry,
+              url: gdbp,
+              geometryPrecision: 8,
+              inSrs: 'WGS1984_度',
+              outSrs: 'WGS1984_度',
+              page: current - 1,
+              pageCount: pageSize,
+            })
           }
-          const { FldNumber = 0, FldName = [] } = AttStruct
           if (!(this.tableColumns && this.tableColumns.length > 0)) {
-            const columns = this.setTableScroll(AttStruct)
+            columns = this.setTableScroll20(jsonData.fields)
             this.tableColumns = columns
           }
-          this.tableData = this.setTable(SFEleArray, source, FldName, FldNumber)
+          this.tableData = this.setTable20(
+            jsonData.features,
+            source,
+            jsonData.fields
+          )
           this.removeMarkers()
           // 如果当前是激活状态，则添加markers
           if (this.isExhibitionActive) {
@@ -401,11 +424,16 @@ export default {
           break
 
         case LayerType.DataFlow:
+          const { pagination } = this
           // 获取数据流图层实时返回的数据信息
           const features = this.dataFlowList.getDataFlowById(this.optionVal.id)
           this.setGeoJsonColums({ features, type: 'FeatureCollection' })
           this.pagination.total = features.length
-          this.tableData = features
+          // 模拟分页
+          this.tableData = features.slice(
+            (pagination.current - 1) * pagination.pageSize,
+            pagination.current * pagination.pageSize
+          )
           this.removeMarkers()
           // 如果当前是激活状态，则添加markers
           if (this.isExhibitionActive) {
@@ -479,17 +507,7 @@ export default {
       }
     },
     setTableScroll(AttStruct) {
-      const columns: Array = [
-        {
-          title: this.rowKey,
-          key: this.rowKey,
-          dataIndex: `properties.${this.rowKey}`,
-          align: 'left',
-          // 超过宽度将自动省略
-          ellipsis: true,
-          width: 180,
-        },
-      ]
+      const columns = []
       const {
         FldNumber = 0,
         FldName = [],
@@ -508,6 +526,62 @@ export default {
         const name = FldName[index]
         const alias = FldAlias[index] ? `${FldAlias[index]}` : ''
         const type = FldType[index]
+        const sortable = !['GEOMETRY', 'STRING'].includes(type.toUpperCase())
+        const obj = {
+          title: alias.length ? alias : name,
+          key: name,
+          dataIndex: `properties.${name}`,
+          align: 'left',
+          // 超过宽度将自动省略
+          ellipsis: true,
+        }
+        if (this.useScrollX) {
+          obj.width = 180
+        }
+        columns.push(
+          sortable
+            ? {
+                ...obj,
+                sorter: (a, b) =>
+                  this.sorterFunciton(
+                    a.properties[name],
+                    b.properties[name],
+                    type
+                  ),
+              }
+            : obj
+        )
+      }
+
+      return columns
+    },
+    setTableScroll20(fields) {
+      if (!fields) {
+        return
+      }
+      const columns: Array = [
+        {
+          title: this.rowKey,
+          key: this.rowKey,
+          dataIndex: `properties.${this.rowKey}`,
+          align: 'left',
+          // 超过宽度将自动省略
+          ellipsis: true,
+          width: 180,
+        },
+      ]
+      // 根据字段数计算useScrollX
+      if (fields.length <= 10) {
+        // 10个以内，不需要设固定宽度，且不需要启用水平滚动条
+        this.useScrollX = false
+      } else {
+        // 10个以上，每个设固定宽度180，且启用水平滚动条
+        this.useScrollX = true
+      }
+      for (let index = 0; index < fields.length; index++) {
+        const name = fields[index].name
+        const alias = fields[index].alias ? fields[index].alias : ''
+        const type = fields[index].type
         const sortable = !['GEOMETRY', 'STRING'].includes(type.toUpperCase())
         const obj = {
           title: alias.length ? alias : name,
@@ -558,46 +632,17 @@ export default {
       return false
     },
     getGeometry3D(source) {
-      if (source) {
-        const transform = source.root.transform
-        const { xmin, ymin, xmax, ymax, zmin, zmax } = this.geometry3D
-        const minPosition = this.sceneController.globelPositionToLocalPosition(
-          { x: xmin, y: ymin, z: zmin },
-          transform
-        )
-        const maxPosition = this.sceneController.globelPositionToLocalPosition(
-          { x: xmax, y: ymax, z: zmax },
-          transform
-        )
-        return new Rectangle3D(
-          minPosition.x,
-          minPosition.y,
-          zmin,
-          maxPosition.x,
-          maxPosition.y,
-          zmax
-        )
-      }
-
-      return undefined
+      const { xmin, ymin, xmax, ymax, zmin, zmax } = this.geometry3D
+      return new Rectangle3D(xmin, ymin, zmin, xmax, ymax, zmax)
     },
     // 设置IGSScene类型的属性表table数据
     setTable(SFEleArray, source, FldName, FldNumber) {
       return (SFEleArray || []).map(({ AttValue = [], bound = {}, FID }) => {
-        let boundObj = null
-        if (source) {
-          const tranform = source.root.transform
-          const offset = source._asset.offset
-          boundObj = this.sceneController.localExtentToGlobelExtent(
-            bound,
-            tranform,
-            offset
-          )
-        }
+        console.log(this.optionVal)
         const properties = {
           FID,
           specialLayerId: this.optionVal.id,
-          specialLayerBound: boundObj,
+          specialLayerBound: bound,
         }
         for (let index = 0; index < FldNumber; index++) {
           const name = FldName[index]
@@ -613,12 +658,28 @@ export default {
         }
       })
     },
+    setTable20(features, source, fields) {
+      return (features || []).map(({ attributes = {}, bound = {} }) => {
+        const properties = {
+          FID: attributes.FID,
+          specialLayerId: this.optionVal.id,
+          specialLayerBound: bound,
+        }
+        return {
+          geometry: {
+            coordinates: [],
+            type: '3DPolygon',
+          },
+          properties: { ...properties, ...attributes },
+        }
+      })
+    },
     // IGSMapImage、IGSVector图层获取总页数
     async queryCount(geometry?: Record<string, any>, where?: string) {
       const { ip, port, isDataStoreQuery, serverName, serverUrl } =
         this.optionVal
-      let domain
-      if (!!serverUrl && serverUrl.length > 0) {
+      let { domain } = this.optionVal
+      if (!domain && !!serverUrl && serverUrl.length > 0) {
         const url = new URL(serverUrl)
         domain = url.origin
       }

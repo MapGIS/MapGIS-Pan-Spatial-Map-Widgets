@@ -66,7 +66,6 @@ export const featureQueryFn:
           layerIdxs: layerIndex,
         }
       : { gdbp }
-
     const dataSource = await Feature.FeatureQuery.query({
       ip: ip || baseConfigIp,
       port: port || baseConfigPort,

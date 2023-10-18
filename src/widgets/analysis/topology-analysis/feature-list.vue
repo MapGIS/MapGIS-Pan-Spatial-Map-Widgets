@@ -98,8 +98,8 @@ export default {
           geometry,
           gdbp,
         } = this.params
-        let domain
-        if (!!serverUrl && serverUrl.length > 0) {
+        let { domain } = this.params
+        if (!domain && !!serverUrl && serverUrl.length > 0) {
           const url = new URL(serverUrl)
           domain = url.origin
         }
@@ -133,6 +133,41 @@ export default {
           }
           const res = await Feature.FeatureQuery.query(options, false)
           this.dealWithResult(res)
+        } else if (
+          serverType === LayerType.IGSScene ||
+          serverType === LayerType.ModelCache
+        ) {
+          const option = {
+            f: 'json',
+            ip,
+            port,
+            domain,
+            url: gdbp,
+            geometry,
+            returnCountOnly: true,
+          }
+          const res1 = await Feature.FeatureQuery.igsQueryResourceServer(option)
+          const options = {
+            f: 'json',
+            ip,
+            port,
+            domain,
+            page: this.page - 1,
+            pageCount: 10,
+            url: gdbp,
+            coordPrecision: 8,
+            rtnLabel: false,
+            geometry,
+          }
+          const res = await Feature.FeatureQuery.igsQueryResourceServer(options)
+          const data = {}
+          data.TotalCount = res1.count
+          data.SFEleArray = res.features.map((feature) => {
+            feature.FID = feature.attributes.FID
+            feature.ftype = res.geometryType
+            return feature
+          })
+          this.dealWithResult(data)
         }
       } catch (error) {
       } finally {
@@ -237,6 +272,26 @@ export default {
               ],
             }
             break
+          case 'Entity':
+            FeatureCollection = {
+              type: 'FeatureCollection',
+              features: [
+                {
+                  type: 'Feature',
+                  properties: {
+                    bound: [
+                      [val.bound.xmin, val.bound.ymin],
+                      [val.bound.xmax, val.bound.ymax],
+                    ],
+                    fGeom: val.fGeom,
+                    ftype: val.ftype,
+                    FID: val.FID,
+                  },
+                  geometry: {},
+                },
+              ],
+            }
+            break
           default:
             break
         }
@@ -265,6 +320,8 @@ export default {
     padding: 5px 10px;
     text-align: right;
     border-top: 1px solid $border-color;
+    white-space: nowrap;
+    overflow-x: auto;
   }
 }
 </style>

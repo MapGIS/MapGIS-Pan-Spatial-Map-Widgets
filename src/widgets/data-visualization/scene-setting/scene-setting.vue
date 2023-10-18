@@ -5,6 +5,8 @@
       :initialStatebar="initialStatebar"
       :initParams="config"
       :initFavoritesParams="initFavoritesParams"
+      :boundingSphereRadius="boundingSphereRadius"
+      :baseLayerIds="baseLayerIds"
       ref="sceneSetting"
     >
     </mapgis-3d-scene-setting>
@@ -23,6 +25,9 @@ import {
   DataCatalogCheckController,
   eventBus,
   events,
+  LayerType,
+  IGSSceneSublayerType,
+  LoadStatus,
 } from '@mapgis/web-app-framework'
 
 export default {
@@ -34,7 +39,22 @@ export default {
       layout: 'horizontal',
       initialStatebar: true,
       dataCatalogCheckController: DataCatalogCheckController,
+      boundingSphereRadius: 0,
+      baseLayerIds: [],
     }
+  },
+
+  watch: {
+    'document.defaultMap': {
+      handler: 'getScenes',
+      immediate: true,
+      deep: true,
+    },
+    'document.baseLayerMap': {
+      handler: 'getBaseLayerMap',
+      immediate: true,
+      deep: true,
+    },
   },
 
   computed: {
@@ -55,6 +75,115 @@ export default {
   },
 
   methods: {
+    /**
+     * 动态获取基础目录树上已勾选的三维数据
+     */
+    getScenes() {
+      if (!this.document) return
+      const layers = []
+      this.document.defaultMap
+        .clone()
+        .getFlatLayers()
+        .forEach((layer, index) => {
+          if (
+            layer.extend &&
+            layer.extend.selfAdaption &&
+            layer.loadStatus === LoadStatus.loaded
+          ) {
+            if (layer.type === LayerType.IGSScene) {
+              if (layer.activeScene) {
+                const { type } = layer.activeScene.sublayers[0]
+                if (
+                  type === IGSSceneSublayerType.elevation ||
+                  type === IGSSceneSublayerType.modelCache
+                ) {
+                  layers.push(layer)
+                }
+              }
+            } else if (
+              layer.type === LayerType.STKTerrain ||
+              layer.type === LayerType.ModelCache
+            ) {
+              layers.push(layer)
+            }
+          }
+        })
+      setTimeout(() => {
+        // 防止获取到未加载完的模型
+        this._getM3DSetArrayBoundingSphere(layers)
+      }, 2000)
+    },
+    /**
+     * 获取多个模型的最大包围球
+     */
+    _getM3DSetArrayBoundingSphere(layers) {
+      let m3dSetArray = []
+      for (let i = 0; i < layers.length; i++) {
+        const layer = layers[i]
+        let cesiumLayer
+        if (layer.type === LayerType.IGSScene) {
+          cesiumLayer = this.vueCesium.G3DManager.findSource(
+            this.viewer.vueKey,
+            layer.id
+          )
+          if (cesiumLayer) {
+            const { options } = cesiumLayer
+            if (options && options.m3ds && options.m3ds.length > 0) {
+              m3dSetArray = m3dSetArray.concat(options.m3ds)
+            }
+          }
+        } else if (layer.type === LayerType.ModelCache) {
+          cesiumLayer = this.vueCesium.M3DIgsManager.findSource(
+            this.viewer.vueKey,
+            layer.id
+          )
+          if (cesiumLayer) {
+            const { source } = cesiumLayer
+            m3dSetArray.push(source[0])
+          }
+        } else if (layer.type === LayerType.STKTerrain) {
+          cesiumLayer = this.vueCesium.Tileset3DManager.findSource(
+            this.viewer.vueKey,
+            layer.id
+          )
+          if (cesiumLayer) {
+            const { source } = cesiumLayer
+            m3dSetArray.push(source[0])
+          }
+        }
+      }
+      const boundingSphere =
+        this.Cesium.AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
+      if (boundingSphere && boundingSphere.radius !== undefined) {
+        this.boundingSphereRadius = boundingSphere.radius
+      }
+    },
+
+    getBaseLayerMap() {
+      if (!this.document) return
+      const ids = []
+      this.document.baseLayerMap
+        .clone()
+        .getFlatLayers()
+        .forEach((layer, index) => {
+          if (layer.loadStatus === LoadStatus.loaded) {
+            if (
+              layer.description !== '索引底图' &&
+              (layer.type === LayerType.IGSMapImage ||
+                layer.type === LayerType.IGSVector ||
+                layer.type === LayerType.IGSTile ||
+                layer.type === LayerType.OGCWMS ||
+                layer.type === LayerType.OGCWMTS ||
+                layer.type === LayerType.ArcGISMapImage ||
+                layer.type === LayerType.ArcGISTile)
+            ) {
+              ids.push(layer.id)
+            }
+          }
+        })
+      this.baseLayerIds = [...ids]
+    },
+
     /**
      * 微件打开时
      */
@@ -118,7 +247,6 @@ export default {
 
     saveConfig() {
       const config = this.getConfig()
-      console.log(config)
       api
         .saveWidgetConfig({
           name: 'scene-setting',

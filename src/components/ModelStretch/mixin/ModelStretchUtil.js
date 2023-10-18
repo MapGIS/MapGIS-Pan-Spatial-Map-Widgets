@@ -15,7 +15,7 @@ export default {
   },
   computed: {},
   methods: {
-    isIGSScene(layerObj) {
+    isModelCache(layerObj) {
       const layer = layerObj.layer ? layerObj.layer : layerObj
       if (layer.type === LayerType.IGSScene) {
         if (layer.activeScene) {
@@ -30,7 +30,7 @@ export default {
     },
     changeLayer(layer) {
       if (!layer) return
-      if (!this.isIGSScene(layer)) {
+      if (!this.isModelCache(layer)) {
         return
       }
       const { vueKey, Cesium, viewer, vueCesium } = this
@@ -81,7 +81,7 @@ export default {
       const g3dLayer = viewer.scene.layers.getLayer(g3dLayerIndex)
       return g3dLayer
     },
-    changeScaleZ(scaleZ, offset) {
+    changeScaleZ(scaleZ, offset, id) {
       if (window.transformEditor) {
         window.transformEditor.setScala(1, 1, scaleZ)
         const { longitude, latitude, height, zmax, zmin } = this.m3dSetObj
@@ -91,6 +91,12 @@ export default {
         const downHeight = originToTop * scaleZ + height
         window.transformEditor.setTranslation(longitude, latitude, -downHeight)
       }
+    },
+    // 1、现有接口只针对平铺纹理；2、顶部和底部纹理可能会变形。
+    changeTextureScale(scaleXY, scaleZ, id) {
+      const g3dLayer = this.getG3dLayer(id)
+      const m3dSet = g3dLayer.getM3DLayers()[0]
+      m3dSet.textureCoordScale = new this.Cesium.Cartesian2(scaleXY, scaleZ)
     },
     updateModelReset() {
       if (!window.transformEditor) {

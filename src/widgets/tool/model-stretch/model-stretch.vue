@@ -21,6 +21,7 @@
       :enableModelStretch.sync="enableModelStretch"
       :scaleZ.sync="scaleZ"
       :offset.sync="offset"
+      :textureScale.sync="textureScale"
     />
     <mapgis-ui-setting-footer>
       <mapgis-ui-button @click="syncToServer" type="primary" class="full-width">
@@ -64,6 +65,8 @@ export default {
       scaleZ: 1,
       isActive: false,
       offset: -2,
+      // 是否开启纹理拉伸
+      textureScale: false,
     }
   },
   watch: {
@@ -88,7 +91,10 @@ export default {
         if (!this.enableModelStretch) {
           return
         }
-        this.changeScaleZ(this.scaleZ, this.offset)
+        this.changeScaleZ(this.scaleZ, this.offset, this.layer.id)
+        if (this.textureScale) {
+          this.changeTextureScale(1, this.scaleZ, this.layer.id)
+        }
         this.updateLayerProperty()
       },
       deep: true,
@@ -98,7 +104,24 @@ export default {
         if (!val) {
           this.updateModelReset()
         } else {
-          this.changeScaleZ(this.scaleZ, this.offset)
+          this.changeScaleZ(this.scaleZ, this.offset, this.layer.id)
+          if (this.textureScale) {
+            this.changeTextureScale(1, this.scaleZ, this.layer.id)
+          }
+        }
+        this.updateLayerProperty()
+      },
+      deep: true,
+    },
+    textureScale: {
+      handler() {
+        if (!this.enableModelStretch) {
+          return
+        }
+        if (this.textureScale) {
+          this.changeTextureScale(1, this.scaleZ, this.layer.id)
+        } else {
+          this.changeTextureScale(1, 1, this.layer.id)
         }
         this.updateLayerProperty()
       },
@@ -143,6 +166,7 @@ export default {
       this.enableModelStretch = false
       this.scaleZ = 1
       this.offset = -2
+      this.textureScale = false
       const { layerProperty } = this.layer
       if (layerProperty) {
         this.enableModelStretch =
@@ -153,11 +177,15 @@ export default {
           layerProperty.scaleZ !== undefined ? layerProperty.scaleZ : 1
         this.offset =
           layerProperty.offset !== undefined ? layerProperty.offset : -2
+        this.textureScale =
+          layerProperty.textureScale !== undefined
+            ? layerProperty.textureScale
+            : false
       }
       this.changeLayer(this.layer)
     },
     updateLayerProperty() {
-      const { enableModelStretch, scaleZ, offset } = this
+      const { enableModelStretch, scaleZ, offset, textureScale } = this
       const { layerProperty } = this.layer
       if (layerProperty) {
         this.layer.layerProperty = {
@@ -165,12 +193,14 @@ export default {
           enableModelStretch,
           scaleZ,
           offset,
+          textureScale,
         }
       } else {
         this.layer.layerProperty = {
           enableModelStretch,
           scaleZ,
           offset,
+          textureScale,
         }
       }
     },

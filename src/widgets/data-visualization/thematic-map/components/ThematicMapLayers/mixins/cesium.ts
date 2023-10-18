@@ -1,4 +1,11 @@
-import { Layer, ColorUtil, Feature, Overlay } from '@mapgis/web-app-framework'
+import {
+  Layer,
+  ColorUtil,
+  Feature,
+  Overlay,
+  events,
+  eventBus,
+} from '@mapgis/web-app-framework'
 import { getMarker, IMarker } from '../../../utils'
 import BaseMixin from './base'
 
@@ -8,13 +15,8 @@ export default {
   inject: ['viewer', 'Cesium', 'vueCesium'],
   data() {
     return {
-      // 专题图层
-      thematicMapLayer: null,
-
       // 标注
       selfMarker: {},
-
-      sceneOverlays: undefined,
     }
   },
   watch: {
@@ -23,6 +25,22 @@ export default {
      */
     'marker.fid'() {
       this.setSelfMarker(this.marker)
+      if (!this.marker || this.marker.fid === undefined) {
+        const { viewer } = this
+        let { sceneOverlays } = this
+        const { scene } = viewer
+        if (!sceneOverlays) {
+          sceneOverlays = Overlay.SceneOverlays.getInstance(
+            this.Cesium,
+            this.vueCesium,
+            viewer
+          )
+        }
+
+        setTimeout(() => {
+          sceneOverlays.registerMouseEvent('LEFT_CLICK')
+        }, 2000)
+      }
     },
   },
   methods: {
@@ -126,19 +144,37 @@ export default {
         )
       }
       const { scene } = viewer
-      sceneOverlays.unRegisterMouseEvent('LEFT_CLICK')
-      sceneOverlays.registerMouseEvent('LEFT_CLICK', ({ position }) => {
-        this.closePopupWin()
-        const pick = scene.pick(position)
-        if (pick && pick.id) {
-          const { geojsonFeature } = pick.id
+      eventBus.$on(events.CESIUM_LEFT_CLICK, this.leftClick)
+      sceneOverlays.registerMouseEvent('LEFT_CLICK')
+    },
+    leftClick({ position }) {
+      const { viewer, propertiesOption } = this
+      const { scene } = viewer
+      this.closePopupWin()
+      const pick = scene.pick(position)
+      if (pick && pick.id) {
+        const { geojsonFeature } = pick.id
+        if (geojsonFeature) {
           const { fid } = geojsonFeature.properties
           getMarker(geojsonFeature, fid, propertiesOption).then(
             this.setSelfMarker
           )
           this.emitHighlight(fid)
         }
-      })
+      } else {
+        // 标注destory的时候会触发接触左击事件，这里设置一个延时，恢复点击事件
+        let { sceneOverlays } = this
+        if (!sceneOverlays) {
+          sceneOverlays = Overlay.SceneOverlays.getInstance(
+            this.Cesium,
+            this.vueCesium,
+            viewer
+          )
+        }
+        setTimeout(() => {
+          sceneOverlays.registerMouseEvent('LEFT_CLICK')
+        }, 2000)
+      }
     },
 
     /**

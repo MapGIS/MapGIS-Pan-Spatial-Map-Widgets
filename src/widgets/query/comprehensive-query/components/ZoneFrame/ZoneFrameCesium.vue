@@ -103,7 +103,8 @@ export default {
         // const coords = this.feature.geometry.coordinates[0]
         let arr
         if (this.center && this.center.length === 2) {
-          arr = features
+          // 图幅数据无features取geometry.coordinates
+          arr = features || geometry.coordinates
         } else {
           arr = geometry.coordinates
         }
@@ -112,7 +113,9 @@ export default {
           if (type === 'Polygon') {
             coords =
               this.center && this.center.length === 2
-                ? arr[i].geometry.coordinates[0]
+                ? arr[i].geometry
+                  ? arr[i].geometry.coordinates[0]
+                  : arr[i]
                 : arr[i]
           } else if (type === 'MultiPolygon') {
             coords = arr[i][0] // 多区
@@ -141,7 +144,9 @@ export default {
               this.center[1],
               0,
               // 文本内容
-              features[i].properties.name,
+              features
+                ? features[i].properties.name
+                : this.feature.properties.name,
               {
                 // 文字大小、字体样式
                 font: '12pt 楷体',

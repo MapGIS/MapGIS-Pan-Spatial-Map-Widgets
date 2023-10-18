@@ -46,6 +46,14 @@ export default {
       return type === LayerType.IGSVector
     },
     /**
+     * 判断是否是IGSVector3D图层
+     * @param item layer图层
+     * @returns boolean
+     */
+    isIgsVector3dLayer({ type }) {
+      return type === LayerType.IGSVector3D
+    },
+    /**
      * 判断是否是三维图层
      * @param item layer图层
      * @returns boolean
@@ -174,7 +182,9 @@ export default {
           this.includeBindData(item)) ||
         (this.isSubLayer(item) && this.isArcGISMapImage(item)) ||
         this.isIgsVectorLayer(item) ||
-        this.isDataFlow(item)
+        this.isDataFlow(item) ||
+        (this.isModelCacheLayer(item) && this.includeBindData(item)) ||
+        this.isIgsVector3dLayer(item)
 
       return bool
     },
@@ -184,8 +194,9 @@ export default {
      * @returns boolean
      */
     includeBindData(item) {
-      if (item.layer) {
-        const { id } = item.layer
+      const layer = item.layer || item
+      if (layer) {
+        const { id } = layer
         const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(id)
         if (layerConfig && layerConfig.bindData) {
           return true
@@ -256,6 +267,9 @@ export default {
 
     isFitbound(layer) {
       if (this.isParentLayer(layer)) {
+        if (this.isIgsVector3dLayer(layer)) {
+          return false
+        }
         // if (this.isIGSScene(layer) && this.is2DMapMode === false) {
         //   return true
         // } else if (!this.isIGSScene(layer)) {
@@ -325,6 +339,7 @@ export default {
                 serverUrl: parent.url,
                 f: queryType || '',
               },
+              popupOption: parent.extend?.popupOption,
             }
           },
         },
@@ -357,6 +372,9 @@ export default {
                 gdbp: igsVectorLayer.gdbps,
                 f: queryType || '',
               },
+              popupOption: parent
+                ? parent.extend?.popupOption
+                : layer.extend?.popupOption,
             }
           },
         },
@@ -375,6 +393,7 @@ export default {
                 serverUrl: parent.url,
                 f: queryType || '',
               },
+              popupOption: parent.extend?.popupOption,
             }
           },
         },
@@ -397,9 +416,40 @@ export default {
                   ip: baseConfigInstance.config.ip,
                   port: Number(baseConfigInstance.config.port),
                   serverType: parent.type,
+                  searchServiceType: layerConfig.bindData.serverType,
                   gdbp: layerConfig.bindData.gdbps,
                   f: queryType || '',
                 },
+                popupOption: parent.extend?.popupOption,
+              }
+            }
+          },
+        },
+        {
+          type: this.isModelCacheLayer(layer),
+          setValue: () => {
+            const sceneLayer = layer.dataRef
+            const url = new URL(layer.url)
+            const domain = url.origin
+            const { id, name, title } = sceneLayer
+            const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
+              layer.id
+            )
+            if (layerConfig && layerConfig.bindData) {
+              exhibition = {
+                id: `${title} ${id}`,
+                name: `${title} ${titleType}`,
+                option: {
+                  id: `${id}`,
+                  domain,
+                  ip: baseConfigInstance.config.ip,
+                  port: Number(baseConfigInstance.config.port),
+                  serverType: layer.type,
+                  searchServiceType: layerConfig.bindData.serverType,
+                  gdbp: layerConfig.bindData.gdbps,
+                  f: queryType || '',
+                },
+                popupOption: layer.extend?.popupOption,
               }
             }
           },
@@ -416,6 +466,35 @@ export default {
                 serverType: layer.type,
                 f: queryType || '',
               },
+            }
+          },
+        },
+        {
+          type: this.isIgsVector3dLayer(layer),
+          setValue: () => {
+            const igsVector3dLayer = layer.dataRef
+            const { domain, docName } = igsVector3dLayer._parseUrl(layer.url)
+            const isDataStoreQuery = false
+            const DNSName = undefined
+            const ipPortObj = this.getIpPort({ isDataStoreQuery })
+            exhibition = {
+              id: `${igsVector3dLayer.title} ${igsVector3dLayer.id}`,
+              name: `${igsVector3dLayer.title} ${titleType}`,
+              option: {
+                id: igsVector3dLayer.id,
+                domain,
+                // ip: ip || baseConfigInstance.config.ip,
+                // port: Number(port || baseConfigInstance.config.port),
+                ...ipPortObj,
+                isDataStoreQuery,
+                DNSName,
+                serverType: igsVector3dLayer.type,
+                gdbp: igsVector3dLayer.gdbp,
+                f: queryType || '',
+              },
+              popupOption: parent
+                ? parent.extend?.popupOption
+                : layer.extend?.popupOption,
             }
           },
         },

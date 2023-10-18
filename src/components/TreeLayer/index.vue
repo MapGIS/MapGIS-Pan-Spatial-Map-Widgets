@@ -151,6 +151,7 @@
             <mp-metadata-info
               v-if="showMetadataInfo"
               :currentLayer="currentLayerInfo"
+              :currentOGCMetadata="currentOGCMetadata"
             />
           </template>
         </mp-window>
@@ -206,6 +207,9 @@ import {
   api,
   DataCatalogCheckController,
   LayerSublayersManager,
+  ModelPickController,
+  LayerPropertyEdit,
+  Metadata,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../MetadataInfo/MetadataInfo.vue'
 import MpCustomQuery from '../CustomQuery/CustomQuery.vue'
@@ -215,6 +219,8 @@ import RightPopover from './components/RightPopover/index.vue'
 import ModelStretchUtil from '../ModelStretch/mixin/ModelStretchUtil.js'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
+
+window.layers3D = {}
 
 export default {
   name: 'MpTreeLayer',
@@ -269,6 +275,9 @@ export default {
       // 图层是否保持编辑样式
       modelSave: false,
       layerConfig: null,
+      modelPickController: ModelPickController,
+      // 保存OGC元数据信息
+      currentOGCMetadata: {},
     }
   },
   computed: {
@@ -395,6 +404,13 @@ export default {
         }
       },
     },
+    'modelPickController.pickLayerObj': {
+      immediate: false,
+      deep: true,
+      handler() {
+        this.parseModelPick()
+      },
+    },
   },
   created() {
     this.sceneController = Objects.SceneController.getInstance(
@@ -408,45 +424,88 @@ export default {
   mounted() {
     this.$root.$on(events.SCENE_LOADEN_ON_MAP, this.sceneLoadedCallback)
     eventBus.$on(events.MODEL_PICK, this.updateM3DEnablePopupEnable)
-    eventBus.$on(events.ECHO_LAYER_LIST_INFO, this.echoLayerList)
+    // eventBus.$on(events.ECHO_LAYER_LIST_INFO, this.echoLayerList)
   },
   methods: {
     setLayerEditConfig() {
+      const doc = this.layerDocument.clone()
+      const layers = doc.defaultMap.layers()
       const layerEditConfig =
         DataCatalogCheckController.getCurrentLayerChangeConfig()
       const unSetArr = []
+      // 设置屏幕误差和亮度
       if (layerEditConfig && layerEditConfig.length > 0) {
         layerEditConfig.forEach((item) => {
-          const sublayer = this.sceneController.findSource(item.id)
+          const sublayer =
+            this.sceneController.findSource(item.id) ||
+            this.sceneController.findM3DIgsSource(item.id)
           sublayer && unSetArr.push(item.id)
-          if (
-            sublayer &&
-            sublayer.maximumScreenSpaceError.toString() !==
-              item.maximumScreenSpaceError.toString()
-          ) {
-            sublayer.maximumScreenSpaceError = item.maximumScreenSpaceError
-          }
-        })
-      }
-
-      const layerSublayers = LayerSublayersManager.sublayersConfig
-      if (layerSublayers && layerSublayers.length > 0) {
-        layerSublayers.forEach((item) => {
-          if (!unSetArr.includes(item.id)) {
-            const sublayer = this.sceneController.findSource(item.id)
+          if (sublayer) {
             if (
-              sublayer &&
-              sublayer.maximumScreenSpaceError !==
-                item.layerProperty.maximumScreenSpaceError
+              sublayer.maximumScreenSpaceError.toString() !==
+              item.maximumScreenSpaceError.toString()
             ) {
-              sublayer.maximumScreenSpaceError =
-                item.layerProperty.maximumScreenSpaceError
+              sublayer.maximumScreenSpaceError = item.maximumScreenSpaceError
+            }
+
+            const indexArr = item.id.split(':')
+            if (indexArr.length === 2 || this.isModelCacheLayer(sublayer)) {
+              const [firstIndex, secondIndex] = indexArr
+              const layer = layers.find((current) => current.id === firstIndex)
+              if (indexArr.length === 2) {
+                const { sublayers } = layer.activeScene
+                sublayers.forEach((sub) => {
+                  unSetArr.push(sub.id)
+
+                  const sublayerM3d = this.sceneController.findSource(sub.id)
+                  if (
+                    sublayerM3d.luminanceAtZenith.toString() !==
+                    item.luminanceAtZenith.toString()
+                  ) {
+                    sublayerM3d.luminanceAtZenith = item.luminanceAtZenith
+                  }
+                })
+              } else {
+                if (
+                  sublayer.luminanceAtZenith.toString() !==
+                  item.luminanceAtZenith.toString()
+                ) {
+                  sublayer.luminanceAtZenith = item.luminanceAtZenith
+                }
+              }
             }
           }
         })
       }
 
-      this.$emit('set-opacitys')
+      // 正常加载时处理屏幕误差和亮度
+      const layerSublayers = LayerSublayersManager.sublayersConfig
+      if (layerSublayers && layerSublayers.length > 0) {
+        layerSublayers.forEach((item) => {
+          if (!unSetArr.includes(item.id)) {
+            const sublayer =
+              this.sceneController.findSource(item.id) ||
+              this.sceneController.findM3DIgsSource(item.id)
+            if (sublayer) {
+              if (
+                sublayer.maximumScreenSpaceError !==
+                item.layerProperty.maximumScreenSpaceError
+              ) {
+                sublayer.maximumScreenSpaceError =
+                  item.layerProperty.maximumScreenSpaceError
+              }
+
+              if (
+                sublayer.luminanceAtZenith.toString() !==
+                item.layerProperty.luminanceAtZenith.toString()
+              ) {
+                sublayer.luminanceAtZenith =
+                  item.layerProperty.luminanceAtZenith
+              }
+            }
+          }
+        })
+      }
     },
     /**
      * 当正在编辑图层被取消的时候，复位图层树路由
@@ -606,6 +665,12 @@ export default {
                 if (layerItem.activeScene) {
                   layerItem.activeScene.sublayers[i].visible =
                     !layerItem.activeScene.sublayers[i].visible
+                } else if (
+                  !layerItem.activeScene &&
+                  layerItem.layer.activeScene // 中间层
+                ) {
+                  layerItem.sublayers[i].visible =
+                    !layerItem.sublayers[i].visible
                 }
               } else if (this.isVectorTile(layers[parentIndex])) {
                 /**
@@ -699,46 +764,54 @@ export default {
      * 三维模型缓存加载完后的回调
      */
     sceneLoadedCallback(id) {
-      const layers = [...this.layers]
+      const doc = this.layerDocument.clone()
+      const layer = doc.defaultMap.findLayerById(id)
       const vm = this
-      for (let i = 0; i < this.layers.length; i++) {
-        const layer = this.layers[i]
-        if (layer.id === id && layer.type === LayerType.ModelCache) {
-          let source
-          if (layer.format === ModelCacheFormat.m3d) {
-            source = vm.sceneController.findM3DIgsSource(id)
-          } else if (layer.format === ModelCacheFormat.cesium3dTileset) {
-            source = vm.sceneController.findTileset3DSource(id)
-          }
-          // console.log(source)
-          source.readyPromise.then(() => {
-            // console.log(source)
-            let boundingSphere
-            let extent
-            if (!source._root.boundingVolume.northeastCornerCartesian) {
-              boundingSphere = source._root.boundingVolume.boundingSphere
-            } else {
-              extent = vm._getM3DSetRange(source)
-            }
-            // console.log(extent)
-            for (let j = 0; j < vm.layers.length; j++) {
-              if (vm.layers[j].id === id) {
-                if (extent) {
-                  vm.layers[j].fullExtent.xmin = extent.xmin
-                  vm.layers[j].fullExtent.ymin = extent.ymin
-                  vm.layers[j].fullExtent.xmax = extent.xmax
-                  vm.layers[j].fullExtent.ymax = extent.ymax
-                } else if (boundingSphere) {
-                  vm.layers[j].boundingSphere = boundingSphere
-                }
-              }
-            }
-          })
-          break
+      let source
+      if (layer.type === LayerType.ModelCache) {
+        if (layer.format === ModelCacheFormat.m3d) {
+          source = vm.sceneController.findM3DIgsSource(id)
+        } else if (layer.format === ModelCacheFormat.cesium3dTileset) {
+          source = vm.sceneController.findTileset3DSource(id)
         }
+        source.readyPromise.then(() => {
+          vm._setBoundingSphereAndExtent(source, layer)
+          window.layers3D[layer.id] = layer
+          // vm.$emit('update:layerDocument', doc)
+        })
+      } else if (layer.type === LayerType.IGSScene) {
+        const layerId = layer.activeScene.sublayers[0].id
+        setTimeout(() => {
+          source = vm.sceneController.findSource(layerId)
+          if (source) {
+            vm._setBoundingSphereAndExtent(source, layer)
+            window.layers3D[layer.id] = layer
+          }
+          // vm.$emit('update:layerDocument', doc)
+        }, 1000)
       }
     },
+    /**
+     * 设置场景服务、模型缓存、3dTiles 图层的BoundingSphere和Extent
+     */
+    _setBoundingSphereAndExtent(source, layer) {
+      const boundingSphere = source._root.boundingVolume.boundingSphere
+      let extent
+      if (source._root.boundingVolume.northeastCornerCartesian) {
+        extent = this._getM3DSetRange(source)
+      }
 
+      if (extent) {
+        layer.fullExtent.xmin = extent.xmin
+        layer.fullExtent.ymin = extent.ymin
+        layer.fullExtent.xmax = extent.xmax
+        layer.fullExtent.ymax = extent.ymax
+      }
+      if (boundingSphere) {
+        layer.boundingSphere = boundingSphere
+      }
+      return layer
+    },
     /**
      * 获取m3d经纬度包围盒
      */
@@ -863,24 +936,42 @@ export default {
         },
         listeners: {
           'update:layer': (val) => {
-            DataCatalogCheckController.setCurrentLayerChangeConfig([])
             this.updateM3DProps(val, false)
             this.changeLayer(val)
             const layer = val.layer ? val.layer : val
             const { dataId, layerProperty } = layer
-            api.updateData({ dataId, layerProperty })
+            // api.updateData({ dataId, layerProperty })
           },
           'update:luminanceAtZenith': (val) => {
             this.updateM3DProps(val, true)
           },
           'update:scaleZ': (val) => {
-            this.changeScaleZ(val.scaleZ, val.offset)
+            if (!val.enableModelStretch) {
+              return
+            }
+            this.changeScaleZ(val.scaleZ, val.offset, item.id)
+            if (val.textureScale) {
+              this.changeTextureScale(1, val.scaleZ, item.id)
+            }
           },
           'update:enableModelStretch': (val) => {
             if (!val.enableModelStretch) {
               this.updateModelReset()
             } else {
-              this.changeScaleZ(val.scaleZ, val.offset)
+              this.changeScaleZ(val.scaleZ, val.offset, item.id)
+              if (val.textureScale) {
+                this.changeTextureScale(1, val.scaleZ, item.id)
+              }
+            }
+          },
+          'update:textureScale': (val) => {
+            if (!val.enableModelStretch) {
+              return
+            }
+            if (val.textureScale) {
+              this.changeTextureScale(1, val.scaleZ, item.id)
+            } else {
+              this.changeTextureScale(1, 1, item.id)
             }
           },
         },
@@ -1081,15 +1172,20 @@ export default {
     },
 
     updateDataFlowStyle(val: DataFlowLayer) {
-      const { key, layerStyle } = val
+      const { key, extend, dataId } = val
       const doc = this.layerDocument.clone()
       const layers: Array<unknown> = doc.defaultMap.layers()
       const layerItem: DataFlowLayer = layers[key]
-      layerItem.setLayerStyle(layerStyle)
+      layerItem.extend = extend
       this.$emit('update:layerDocument', doc)
       this.currentLayerInfo = {}
+      api.updateData({ dataId, extend })
     },
 
+    // updateLuminanceAtZenith(luminanceAtZenith) {
+    //   const { key, luminanceAtZenith } = val
+    //   const indexArr: Array<string> = key.split('-')
+    // },
     updateM3DProps(val, onlyUpdateLuminanceAtZenith, changeEnablePopup) {
       let enablePopup
       let enableModelSwitch
@@ -1109,8 +1205,30 @@ export default {
         layerProperty = val.layerProperty
       }
       const indexArr: Array<string> = key.split('-')
+      const idArr = id.split(':')
       const doc = this.layerDocument.clone()
       const layers: Array<unknown> = doc.defaultMap.layers()
+
+      // 记录修改后的值
+      const editConfig = {
+        parentId: idArr[0],
+        id: id,
+        layerProperty: {
+          ...layerProperty,
+          enablePopup,
+          enableModelSwitch,
+          maximumScreenSpaceError,
+          luminanceAtZenith,
+        },
+      }
+      LayerPropertyEdit.propertyConfigArr = editConfig
+
+      const editChangeConfig = {
+        id: id,
+        maximumScreenSpaceError: maximumScreenSpaceError,
+        luminanceAtZenith: luminanceAtZenith,
+      }
+      DataCatalogCheckController.editCurrentLayerConfig(editChangeConfig)
       if (indexArr.length === 2 || this.isModelCacheLayer(val)) {
         const [firstIndex, secondIndex] = indexArr
         if (indexArr.length === 2) {
@@ -1263,10 +1381,41 @@ export default {
       })
     },
 
-    metaDataInfo(node) {
+    // 解析url获取domain及docName
+    parseUrl(urlStr) {
+      const url = new URL(urlStr)
+      const domain = url.origin
+      const serverType = 'igs/rest/services/'
+      const indexServer = urlStr.search(serverType)
+      const indexName = indexServer + serverType.length
+      const docName =
+        urlStr.substr(indexName).split('/').length > 2
+          ? `${urlStr.substr(indexName).split('/')[0]}:${
+              urlStr.substr(indexName).split('/')[1]
+            }`
+          : `${urlStr.substr(indexName).split('/')[0]}`
+      return { domain, docName }
+    },
+
+    async metaDataInfo(node) {
       const layer = node.dataRef
       if (this.isWMTSLayer(layer) || this.isWMSLayer(layer)) {
-        window.open(layer.url)
+        if (baseConfigInstance.config.token) {
+          const token = baseConfigInstance.config.token
+          const { domain, docName } = this.parseUrl(layer.url)
+          const option = { domain, docName, token }
+          const metadata = await Metadata.CloudMetaDataQuery.query(option)
+          if (metadata) {
+            this.currentOGCMetadata = {
+              ...JSON.parse(JSON.stringify(metadata)),
+              type: layer.type,
+            }
+            this.showMetadataInfo = true
+            return
+          }
+        } else {
+          window.open(layer.url)
+        }
       } else {
         this.showMetadataInfo = true
         this.currentLayerInfo = layer
@@ -1286,14 +1435,31 @@ export default {
     onCloseCustomQuery() {
       this.showCustomQuery = false
     },
+    // 将this.layers转化成一维数组
+    transferLayers(layers, arr) {
+      layers.forEach((item) => {
+        arr.push({ ...item })
+        if (item.sublayers && item.sublayers.length > 0) {
+          this.transferLayers(item.sublayers, arr)
+        }
+      })
+    },
     getCurrentData() {
+      const layerArr = []
       const checkLayerConfig = {}
       const layerInfo = {}
       const expandedKeys = this.expandedKeys
-      const checkNodeKeys = this.ticked
       const relation = {}
+      const checkNodeKeys = this.ticked
+      // 记录checkNodeKeys
+      // this.transferLayers(this.layers, layerArr)
+      // this.ticked.forEach((item) => {
+      //   const find = layerArr.find((layer) => layer.key === item)
+      //   find && checkNodeKeys.push(find.url)
+      // })
       this.layers.forEach((layer) => {
-        relation[layer.id] = layer.key
+        // relation[layer.id] = layer.key
+        relation[layer.url] = layer.key
         this.getLayerProperty(layer, layerInfo)
       })
       return {
@@ -1305,7 +1471,7 @@ export default {
       }
     },
     getLayerProperty(layer, config) {
-      config[layer.id] = {
+      config[layer.url] = {
         layerProperty: layer.layerProperty || null,
         opacity: layer.opacity,
         isVisible: layer.isVisible,
@@ -1315,22 +1481,29 @@ export default {
       if (layer.sublayers && layer.sublayers.length > 0) {
         this.getSublayers(layer.sublayers, sublayerArr)
       }
-      config[layer.id].sublayers = sublayerArr
+      config[layer.url].sublayers = sublayerArr
     },
     getSublayers(layer, sublayerArr) {
       if (layer && layer.length > 0) {
         layer.forEach((item) => {
+          // 场景服务的子图层layerProperty属性需要在item.layer.layerProperty中取
           const sublayer = {
             geomType: item.geomType,
             id: item.id,
             key: item.key,
             sysLibraryGuid: item.sysLibraryGuid,
-            maximumScreenSpaceError: item.maximumScreenSpaceError,
+            maximumScreenSpaceError: item.layer
+              ? item.layer.layerProperty.maximumScreenSpaceError
+              : item.maximumScreenSpaceError,
+            luminanceAtZenith: item.layer
+              ? item.layer.layerProperty.luminanceAtZenith
+              : item.luminanceAtZenith,
             title: item.title,
             url: item.url,
             visible: item.visible,
             visiblePopover: item.visiblePopover,
           }
+
           sublayerArr.push(sublayer)
           const nextSubLayers = item.sublayers
           if (nextSubLayers && nextSubLayers.length > 0) {
@@ -1373,6 +1546,44 @@ export default {
       // }
 
       return expandedKeys
+    },
+    parseModelPick() {
+      const changeModelPickArr = ModelPickController.pickLayerObj
+      const modelPickOpen = ModelPickController.modelPickOpen
+      if (changeModelPickArr && changeModelPickArr.length === 0) return
+      const doc = this.layerDocument.clone()
+      const layers = doc.defaultMap.layers()
+      changeModelPickArr.forEach((item) => {
+        // 单个图层和多个图层的处理
+        if (item.childIds && item.childIds.length > 0) {
+          item.childIds.forEach((change) => {
+            const indexArr = change.split(':')
+            const [firstIndex, secondIndex] = indexArr
+            const layer = this.layers.find((c) => c.id === item.parentId)
+            if (indexArr.length === 2) {
+              const editLayer = layers[layer.key]
+              const { sublayers } = editLayer.activeScene
+              const sublayer = sublayers[secondIndex]
+              sublayer.layer.enablePopup = modelPickOpen
+              sublayer.layer.layerProperty = {
+                ...sublayer.layer.layerProperty,
+                enablePopup: modelPickOpen,
+              }
+            }
+          })
+        } else {
+          const layer = this.layers.find(
+            (change) => change.id === item.parentId
+          )
+          const targetLayer = layers[layer.key]
+          targetLayer.enablePopup = modelPickOpen
+          targetLayer.layerProperty = {
+            ...targetLayer.layerProperty,
+            enablePopup: modelPickOpen,
+          }
+        }
+      })
+      this.$emit('update:layerDocument', doc)
     },
   },
   beforeDestroy() {

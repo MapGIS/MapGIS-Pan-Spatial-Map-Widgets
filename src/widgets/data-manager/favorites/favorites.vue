@@ -21,9 +21,11 @@ import {
   WidgetMixin,
   FitBound,
   DataCatalogCheckController,
+  BaseMapController,
   eventBus,
   events,
   api,
+  dataCatalogManagerInstance,
 } from '@mapgis/web-app-framework'
 import axios from 'axios'
 
@@ -35,8 +37,10 @@ export default {
       dataList: [], // 初始化从接口获取的数据
       replaceFields: {}, // 列表模式下tree组件中节点信息展示的替换字段{title: "name",key: "guid"}，具体使用参考ant-design-vue中的tree组件对应api
       dataCatalogCheckController: DataCatalogCheckController,
+      baseMapController: BaseMapController,
       currentId: '', // 再次点击相同的收藏时需要重置一次场景设置信息再设置触发computed
       isAgain: false,
+      dataCatalogManager: dataCatalogManagerInstance,
     }
   },
   computed: {
@@ -52,6 +56,9 @@ export default {
     sceneConfig() {
       return this.dataCatalogCheckController.getCheckSceneConfig()
     },
+    baseMapConfig() {
+      return this.baseMapController.currentBaseMapInfo
+    },
     showType() {
       return this.widgetInfo.config.showType
     },
@@ -62,8 +69,15 @@ export default {
       // return `${this.baseUrl}/psmap/rest/manager/file/upload`
       return `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`
     },
+    dataCatalogLayerArr() {
+      return this.dataCatalogManager.getAllLayerConfigItems()
+    },
+    dataCatalogAllArr() {
+      return this.dataCatalogManager.getAllConfigItems()
+    },
   },
   mounted() {
+    eventBus.$on(events.DATA_CATALOG_ADD_COLLECT, this.addData)
     if (!this.widgetInfo.config.data) {
       this.$set(this.widgetInfo.config, 'data', [])
     }
@@ -71,8 +85,12 @@ export default {
       this.$set(this.widgetInfo.config, 'showType', 'image')
     }
     this.dataList = JSON.parse(JSON.stringify(this.widgetInfo.config.data))
+    this.baseMapController.saveType = 'url'
   },
   methods: {
+    addData() {
+      this.$refs.favorites.openAddModel()
+    },
     async onAddData(data) {
       /**
         const data = {
@@ -95,6 +113,7 @@ export default {
       }
        */
       // 获取图层列表此时的配置信息
+      this.transferCheckData(data)
       eventBus.$emit(events.GET_LAYER_LIST_INFO)
       eventBus.$emit(events.SCENE_CONFIG_INFO)
       const id = UUID.uuid()
@@ -105,6 +124,7 @@ export default {
       data.image = fileInfo.data.url
       data.options.layerConfig = this.layerConfig
       data.options.sceneConfig = this.sceneConfig
+      data.options.baseMapConfig = this.getBaseMapConfig(this.baseMapConfig)
       if (this.is2DMapMode) {
         const mapBoundArray = this.map.getBounds().toArray()
         const mapBound = {
@@ -143,24 +163,33 @@ export default {
       const { Cesium, map, vueCesium, viewer } = this
       this.isAgain = this.currentId === item.id
       this.currentId = item.id
+      this.baseMapController.isResize = false
       if (this.is2DMapMode !== item.is2DMapMode) {
         this.switchMapMode()
       }
 
+      const options = JSON.parse(JSON.stringify(item.options))
       this.dataCatalogCheckController.setCurrentCheckLayerConfig(
-        item.options.layerConfig
+        this.transferLayer(options.layerConfig)
       )
       // 需要重置一次
       if (this.isAgain) {
         this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig({})
+        this.baseMapController.setBaseMapInfo = null
         this.$nextTick(() => {
           this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig(
-            item.options.sceneConfig
+            options.sceneConfig
+          )
+          this.baseMapController.setBaseMapInfo = this.transferBaseMap(
+            options.baseMapConfig
           )
         })
       } else {
         this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig(
-          item.options.sceneConfig
+          options.sceneConfig
+        )
+        this.baseMapController.setBaseMapInfo = this.transferBaseMap(
+          options.baseMapConfig
         )
       }
 
@@ -173,13 +202,12 @@ export default {
           // 发送勾选数据目录节点消息
           eventBus.$emit(
             events.DATA_CATALOG_CHECK_NODES,
-            JSON.parse(JSON.stringify(item.checkKeys)),
-            JSON.parse(JSON.stringify(item.checkKeysRelation))
+            this.transferCheckKeyArr(item.checkKeys),
+            this.transferCheckKeysRelation(item.checkKeysRelation)
           )
         }, 1000)
       } else {
         const { roll, pitch, heading, position } = item.options.mapBound
-        console.log(item.options.mapBound)
         setTimeout(() => {
           viewer.camera.flyTo({
             destination: new Cesium.Cartesian3(
@@ -196,8 +224,8 @@ export default {
           // 发送勾选数据目录节点消息
           eventBus.$emit(
             events.DATA_CATALOG_CHECK_NODES,
-            JSON.parse(JSON.stringify(item.checkKeys)),
-            JSON.parse(JSON.stringify(item.checkKeysRelation))
+            this.transferCheckKeyArr(item.checkKeys),
+            this.transferCheckKeysRelation(item.checkKeysRelation)
           )
         }, 1000)
       }
@@ -268,6 +296,206 @@ export default {
             reject(Error)
           })
       })
+    },
+    transferLayer(layerConfig) {
+      const { layerInfo, relation } = layerConfig
+      const transferLayerInfo = {}
+      const transferRelation = {}
+      Object.keys(layerInfo).forEach((item) => {
+        // 兼容guid的情况
+        if (item.indexOf('://') > -1) {
+          const find = this.dataCatalogLayerArr.find(
+            (config) => config.serverURL === item
+          )
+          if (find) {
+            transferLayerInfo[find.guid] = layerInfo[item]
+          }
+        } else {
+          transferLayerInfo[item] = layerInfo[item]
+        }
+      })
+      Object.keys(relation).forEach((item) => {
+        if (item.indexOf('://') > -1) {
+          const find = this.dataCatalogLayerArr.find(
+            (config) => config.serverURL === item
+          )
+          if (find) {
+            transferRelation[find.guid] = relation[item]
+          }
+        } else {
+          transferRelation[item] = relation[item]
+        }
+      })
+      layerConfig.layerInfo = transferLayerInfo
+      layerConfig.relation = transferRelation
+      return layerConfig
+    },
+    transferBaseMap(baseMapConfig) {
+      const { saveType, baseMapList } = this.baseMapController
+      if (saveType === 'guid') {
+        // 原逻辑不做处理
+      } else if (saveType === 'url') {
+        const { onSelect, unSelect, zoomArr, indexBaseMapGUID } = baseMapConfig
+        const transferOnSelect = this.getBaseMapGuid(onSelect, baseMapList)
+        const transferUnSelect = this.getBaseMapGuid(unSelect, baseMapList)
+        const transferZoomArr = this.getBaseMapGuid(zoomArr, baseMapList)
+        const transferIndexBaseMapGUID = indexBaseMapGUID
+          ? this.getBaseMapGuid(indexBaseMapGUID, baseMapList)
+          : ['']
+        baseMapConfig.onSelect = transferOnSelect
+        baseMapConfig.unSelect = transferUnSelect
+        baseMapConfig.zoomArr = transferZoomArr
+        baseMapConfig.indexBaseMapGUID = transferIndexBaseMapGUID[0]
+      }
+      return baseMapConfig
+    },
+    getBaseMapConfig(baseMapConfig) {
+      const { saveType, baseMapList } = this.baseMapController
+      const config = { ...baseMapConfig }
+      if (saveType === 'guid') {
+        // 原逻辑不做处理
+      } else if (saveType === 'url') {
+        const baseMapList = this.baseMapController.baseMapList
+        const { onSelect, unSelect, zoomArr, indexBaseMapGUID } = baseMapConfig
+        const transferOnSelect = this.getUrlArr(onSelect, baseMapList)
+        const transferUnSelect = this.getUrlArr(unSelect, baseMapList)
+        const transferZoomArr = this.getUrlArr(zoomArr, baseMapList)
+        const transferIndexBaseMapGUID = indexBaseMapGUID
+          ? this.getUrlArr([indexBaseMapGUID], baseMapList)
+          : indexBaseMapGUID
+        config.onSelect = transferOnSelect
+        config.unSelect = transferUnSelect
+        config.zoomArr = transferZoomArr
+        config.indexBaseMapGUID = transferIndexBaseMapGUID
+      }
+      return config
+    },
+    getUrlArr(ids, baseMapList) {
+      const result = []
+      ids.forEach((item) => {
+        const subArr = []
+        const find = baseMapList.find((layer) => layer.guid === item)
+        const { children } = find
+        children.forEach((sublayer) => {
+          subArr.push(sublayer.serverURL)
+        })
+        result.push(subArr)
+      })
+      return result
+    },
+    getBaseMapGuid(urls, baseMapList) {
+      const transferGuid = []
+      urls.forEach((url) => {
+        const find = baseMapList.find((item) => {
+          // urls为底图的子图层数量
+          let flag
+          if (item.children.length === url.length) {
+            flag = true
+            const { children } = item
+            children.forEach((item) => {
+              if (!url.includes(item.serverURL)) {
+                flag = false
+              }
+            })
+          }
+          return flag
+        })
+        find && transferGuid.push(find.guid)
+      })
+      return transferGuid
+    },
+    transferCheckData(data) {
+      const { checkKeys, checkKeysRelation } = data
+      const transferCheckKeys = []
+      const transferCheckKeysRelation = {}
+      if (checkKeys && checkKeys.length > 0) {
+        checkKeys.forEach((item) => {
+          const find = this.dataCatalogLayerArr.find(
+            (layer) => layer.guid === item
+          )
+          find && transferCheckKeys.push(find.serverURL)
+        })
+        data.checkKeys = transferCheckKeys
+      }
+
+      if (checkKeysRelation && Object.keys(checkKeysRelation).length > 0) {
+        Object.keys(checkKeysRelation).forEach((item) => {
+          const typeArr = checkKeysRelation[item]
+          transferCheckKeysRelation[item] = []
+          typeArr.forEach((id) => {
+            const find = this.dataCatalogLayerArr.find(
+              (layer) => layer.guid === id
+            )
+            find && transferCheckKeysRelation[item].push(find.serverURL)
+          })
+        })
+        data.checkKeysRelation = transferCheckKeysRelation
+      }
+    },
+    transferCheckKeyArr(checkKeys) {
+      const transferCheckKeys = []
+      checkKeys.forEach((item) => {
+        if (item.indexOf('://') > -1) {
+          const find = this.dataCatalogLayerArr.find(
+            (config) => config.serverURL === item
+          )
+          if (find) {
+            transferCheckKeys.push(find.guid)
+          }
+        } else {
+          transferCheckKeys.push(item)
+        }
+      })
+      return transferCheckKeys
+    },
+    transferCheckKeysRelation(checkKeysRelation) {
+      // 获取父级节点只需要使用对应关系数组中的一个url地址就行
+      const transferCheckKeysRelation = {}
+      if (checkKeysRelation && Object.keys(checkKeysRelation).length > 0) {
+        Object.keys(checkKeysRelation).forEach((item) => {
+          const subArr = checkKeysRelation[item]
+          if (subArr && subArr.length > 0) {
+            const frist = subArr[0]
+            let fristData
+            if (frist.indexOf('://') > -1) {
+              fristData = this.dataCatalogAllArr.find(
+                (layer) => layer.serverURL === frist
+              )
+            } else {
+              fristData = this.dataCatalogAllArr.find(
+                (layer) => layer.guid === frist
+              )
+            }
+            let parentData = fristData ? this.getParent(fristData) : null
+
+            const transferSubArr = []
+            subArr.forEach((item) => {
+              if (item.indexOf('://') > -1) {
+                const find = this.dataCatalogLayerArr.find(
+                  (config) => config.serverURL === item
+                )
+                transferSubArr.push(find.guid)
+              } else {
+                transferSubArr.push(item)
+              }
+            })
+            if (parentData) {
+              transferCheckKeysRelation[parentData.guid] = transferSubArr
+            }
+          }
+        })
+      }
+      return transferCheckKeysRelation
+    },
+    getParent(subData) {
+      const find = this.dataCatalogAllArr.find(
+        (item) => item.guid === subData.parentId
+      )
+      if (find && find.parentId) {
+        return this.getParent(find)
+      } else {
+        return find
+      }
     },
   },
 }

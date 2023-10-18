@@ -85,6 +85,7 @@
       :popup-anchor="popupAnchor"
       :popup-toggle-type="popupToggleType"
       :selected-markers="selectedMarkers"
+      :marker-show-type="markerShowType"
     >
       <template slot="popup" slot-scope="{ marker }">
         <marker-show-window :marker="marker"></marker-show-window>
@@ -98,7 +99,7 @@
       :popup-anchor="popupAnchor"
       :popup-toggle-type="popupToggleType"
       :selected-markers="selectedMarkers"
-      :widget-info="widgetInfo"
+      :marker-show-type="markerShowType"
       @popupload="popupLoad"
     >
       <template slot="popup" slot-scope="{ marker }">
@@ -107,6 +108,7 @@
     </mp-3d-marker-plotting>
 
     <marker-add
+      :isActive="isActive"
       ref="markerAdd"
       @added="onAddMarker"
       @finished="onInteractiveFinished"
@@ -276,6 +278,10 @@ export default {
       return this.stateClosed ? [] : this.markers
     },
 
+    markerShowType() {
+      return this.widgetInfo.config.markerShowType
+    },
+
     selectedMarkers() {
       return !this.stateClosed &&
         this.widgetInfo.config.markerShowType === 'default'
@@ -293,6 +299,10 @@ export default {
 
     popupToggleType() {
       return baseConfigInstance.config.colorConfig.label.image.popupToggleType
+    },
+
+    isActive() {
+      return this.widget.state === 'active'
     },
   },
 
@@ -423,6 +433,7 @@ export default {
     // 完成添加
     onInteractiveFinished() {
       this.markMode = ''
+      this.closeMark()
     },
 
     onInputFinished() {

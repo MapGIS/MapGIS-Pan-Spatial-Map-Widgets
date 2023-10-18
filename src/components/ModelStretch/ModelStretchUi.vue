@@ -20,6 +20,15 @@
           addon-after="米"
         />
       </mapgis-ui-form-item>
+      <mapgis-ui-form
+        labelAlign="left"
+        :label-col="{ span: 14 }"
+        :wrapper-col="{ span: 10 }"
+      >
+        <mapgis-ui-form-item label="纹理缩放">
+          <mapgis-ui-switch v-model="syncedTextureScale" size="small" />
+        </mapgis-ui-form-item>
+      </mapgis-ui-form>
     </mapgis-ui-switch-panel>
   </div>
 </template>
@@ -39,6 +48,11 @@ export default {
     offset: {
       type: Number,
       default: -2,
+    },
+    // 1、现有接口只针对平铺纹理；2、顶部和底部纹理可能会变形。
+    textureScale: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {
@@ -70,6 +84,15 @@ export default {
       },
       set(value) {
         this.$emit('update:offset', value)
+      },
+    },
+    // 同步属性textureScale
+    syncedTextureScale: {
+      get() {
+        return this.textureScale
+      },
+      set(value) {
+        this.$emit('update:textureScale', value)
       },
     },
   },

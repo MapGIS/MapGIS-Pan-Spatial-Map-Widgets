@@ -11,6 +11,13 @@
         size="small"
         style="margin: 0 8px"
       />
+      <mapgis-ui-switch
+        checked-children="高亮已选择"
+        un-checked-children="高亮已选择"
+        v-model="hightlightSelection"
+        size="small"
+        style="margin: 0 8px"
+      />
       <mapgis-ui-toolbar-command
         title="缩放至已选择"
         icon="environment"
@@ -38,7 +45,7 @@
             padding: 2px 0 0;
           "
         >
-          <mapgis-ui-icon type="download" />
+          <mapgis-ui-ant-icon type="download" />
         </mapgis-ui-button>
       </mapgis-ui-dropdown>
       <mapgis-ui-toolbar-command
@@ -116,7 +123,7 @@
       </mapgis-ui-pagination>
     </div>
     <mp-marker-plotting
-      v-if="is2DMapMode && !isIGSScence"
+      v-if="is2DMapMode && !isIGSScence && !isModelCacheLayer"
       ref="refMarkerPlotting"
       :markers="markers"
       :filter-with-map="filterWithMap"
@@ -125,6 +132,8 @@
       :highlight-style="highlightStyle"
       :popup-anchor="popupAnchor"
       :popup-toggle-type="popupToggleType"
+      :selected-markers="selectedMarkers"
+      :marker-show-type="markerShowType"
       @map-bound-change="onGetGeometry"
     />
     <mp-3d-marker-plotting
@@ -137,14 +146,28 @@
       :highlight-style="highlightStyle"
       :popup-anchor="popupAnchor"
       :popup-toggle-type="popupToggleType"
+      :popup-width="popupWidth"
+      :selected-markers="selectedMarkers"
+      :marker-show-type="markerShowType"
       @map-bound-change="onGetGeometry"
+      @currentId="updateCurrentMarkerId"
     >
-      <template slot="popup" slot-scope="{ properties }">
-        <mapgis-3d-popup-iot
+      <template slot="popup" slot-scope="{ properties, marker }">
+        <!-- <mapgis-3d-popup-iot
           :properties="properties"
           :dataStoreIp="dataStoreIp"
           :dataStorePort="dataStorePort"
           :getProjectorStatus="getProjectorStatus"
+          @project-screen="projectScreen"
+        /> -->
+        <component
+          v-if="currentId === marker.markerId"
+          :is="popupComponent"
+          :properties="properties"
+          :dataStoreIp="dataStoreIp"
+          :dataStorePort="dataStorePort"
+          :getProjectorStatus="getProjectorStatus"
+          v-bind="popupOption"
           @project-screen="projectScreen"
         />
       </template>
@@ -202,6 +225,7 @@ import {
   markerIconInstance,
   DataFlowList,
   ActiveResultSet,
+  SelectedResultSet,
   DomUtil,
   AppMixin,
   ExhibitionMixin,
@@ -212,6 +236,7 @@ import {
   Feature,
   Objects,
   Exhibition,
+  eventBus,
   events,
 } from '@mapgis/web-app-framework'
 import * as Zondy from '@mapgis/webclient-es6-service'
@@ -298,6 +323,27 @@ export default {
       const { serverType } = this.optionVal
       return serverType === LayerType.IGSScene
     },
+    isModelCacheLayer() {
+      const { serverType } = this.optionVal
+      return serverType === LayerType.ModelCache
+    },
+    isIGSVector3dLayer() {
+      const { serverType } = this.optionVal
+      return serverType === LayerType.IGSVector3D
+    },
+    popupWidth() {
+      return Number(this.exhibition?.popupOption?.componentWidth || 280)
+    },
+    popupComponent() {
+      return this.exhibition?.popupOption?.component || 'mapgis-3d-popup-iot'
+    },
+    popupOption() {
+      return this.exhibition?.popupOption
+    },
+    // marker几何高亮类型，hover表示鼠标放到标注上高亮，default表示显示标注的时候就高亮
+    markerShowType() {
+      return this.hightlightSelection ? 'default' : 'hover'
+    },
   },
   watch: {
     getDataFLowList: {
@@ -365,18 +411,35 @@ export default {
       this.selection = selectedRows
       if (this.selectedRowKeys.length == 0) {
         ActiveResultSet.activeResultSet = {}
+        SelectedResultSet.selectedResultSet =
+          SelectedResultSet.selectedResultSet.filter(
+            (item) => item.id != ActiveResultSet.activeResultSet.id
+          )
       } else {
         ActiveResultSet.activeResultSet = {
           type: 'FeatureCollection',
           features: selectedRows,
           id: this.optionVal.id,
         }
+        let hasActiveResultSet = false
+        for (let i = 0; i < SelectedResultSet.selectedResultSet.length; i++) {
+          if (SelectedResultSet.selectedResultSet[i].id == this.optionVal.id) {
+            SelectedResultSet.selectedResultSet[i] =
+              ActiveResultSet.activeResultSet
+            hasActiveResultSet = true
+          }
+        }
+        if (!hasActiveResultSet) {
+          SelectedResultSet.selectedResultSet.push(
+            ActiveResultSet.activeResultSet
+          )
+        }
       }
       await this.hightlightSelectionMarkers()
     },
     onPaginationChange(page, pageSize) {
       this.pagination.current = page
-      this.query()
+      this.query(undefined, true)
     },
     onPaginationShowSizeChange(current, size) {
       this.pagination.pageSize = size
@@ -384,10 +447,22 @@ export default {
       this.query()
     },
     // 单击行
-    onRowClick(row: unknown) {},
+    onRowClick(row: unknown) {
+      const feature = row as GFeature
+      eventBus.$emit(events.ATTRIBUTE_TABLE_CLICK_ROW, {
+        fid: feature.properties[this.rowKey],
+        feature,
+        exhibition: this.exhibition,
+      })
+    },
     // 双击行
     onRowDblclick(row: unknown) {
       const feature = row as GFeature
+      eventBus.$emit(events.ATTRIBUTE_TABLE_DOUBLE_CLICK_ROW, {
+        fid: feature.properties[this.rowKey],
+        feature,
+        exhibition: this.exhibition,
+      })
       let bound = feature.properties.specialLayerBound
       if (bound === undefined) {
         bound = Feature.getGeoJSONFeatureBound(feature)
@@ -431,6 +506,7 @@ export default {
       await this.queryGeoJSON(
         this.filterWithMap ? this.geometry : undefined,
         where,
+        false,
         val
       )
       // const tableColumns = JSON.parse(JSON.stringify(this.tableColumns))
@@ -448,6 +524,7 @@ export default {
         jsonData.data = jsonDataList
         const blob = new Blob([JSON.stringify(jsonData)])
         await FileSaver.saveAs(blob, `attrData_${datetime}.json`)
+        this.$message.success('导出成功')
       }
     },
 
@@ -460,6 +537,7 @@ export default {
       })
       const datetime = Date.now()
       await FileSaver.saveAs(blob, `attrData_${datetime}.csv`)
+      this.$message.success('导出成功')
     },
 
     onToggleScreen() {
@@ -479,6 +557,10 @@ export default {
 
     onClearSelection() {
       this.clearSelection()
+      SelectedResultSet.selectedResultSet =
+        SelectedResultSet.selectedResultSet.filter(
+          (item) => item.id != ActiveResultSet.activeResultSet.id
+        )
       ActiveResultSet.activeResultSet = {}
     },
 
@@ -519,18 +601,21 @@ export default {
       return `显示${range[0]}-${range[1]}条，共有 ${total}条`
     },
 
-    async query(where?: string) {
+    async query(where?: string, isPageChange?: boolean) {
       this.loading = true
       this.sceneController = Objects.SceneController.getInstance(
         this.Cesium,
         this.vueCesium,
         this.viewer
       )
+      // 当并非页码改变，即重新拉框查询时，将查询页码置为1，否则可能会出现查询的页码很大而查询结果总条数很小导致查询不到数据的情况
+      this.pagination.current = isPageChange ? this.pagination.current : 1
       try {
         this.clearSelection()
         const attrGeoJson = await this.queryGeoJSON(
           this.filterWithMap ? this.geometry : undefined,
-          where
+          where,
+          isPageChange
         )
       } catch (error) {
         const e = error as Error
@@ -553,9 +638,11 @@ export default {
     async hightlightSelectionMarkers() {
       const selectIcon = await markerIconInstance.selectIcon()
       const unSelectIcon = await markerIconInstance.unSelectIcon()
+      this.selectedMarkers = []
       this.markers.forEach((marker) => {
         if (this.selectedRowKeys.includes(marker.fid)) {
           marker.img = selectIcon
+          this.selectedMarkers.push(marker)
         } else {
           marker.img = unSelectIcon
         }
@@ -599,7 +686,11 @@ export default {
       for (let i = 0; i < this.tableData.length; i += 1) {
         const feature = this.tableData[i]
         let center = []
-        if (this.isIGSScence) {
+        if (
+          this.isIGSScence ||
+          this.isModelCacheLayer ||
+          this.isIGSVector3dLayer
+        ) {
           const { xmin, xmax, ymin, ymax } =
             feature.properties.specialLayerBound
           const longitude = (xmin + xmax) / 2
@@ -621,7 +712,12 @@ export default {
           tempMarkers.push(marker)
         }
       }
-      if (this.isIGSScence && tempMarkers.length > 0) {
+      if (
+        (this.isIGSScence ||
+          this.isModelCacheLayer ||
+          this.isIGSVector3dLayer) &&
+        tempMarkers.length > 0
+      ) {
         const arr = await this.getModelHeight(tempMarkers)
         if (arr.length === tempMarkers.length) {
           arr.forEach((item, index) => {
@@ -693,7 +789,7 @@ export default {
     },
 
     updateStatisticAndFilterParamas() {
-      const { serverType, gdbp, serverUrl } = this.optionVal
+      const { serverType, gdbp, serverUrl, name } = this.optionVal
       if (
         serverType === LayerType.IGSMapImage ||
         serverType === LayerType.IGSVector ||
@@ -712,6 +808,7 @@ export default {
           layerIndex: this.currentTableParams.layerIndex,
           serverType,
           gdbp,
+          name,
         }
       } else if (serverType === LayerType.ArcGISMapImage) {
         this.statisticAndFilterParamas = {
@@ -719,6 +816,7 @@ export default {
           layerIndex: this.currentTableParams.layerIndex,
           serverType,
           serverUrl,
+          name,
         }
       }
     },
@@ -741,6 +839,10 @@ export default {
     outFullScreen() {
       DomUtil.outFullScreen()
       this.$refs.attributeTable.classList.remove('beauty-scroll')
+    },
+
+    updateCurrentMarkerId(id) {
+      this.currentId = id
     },
   },
 }

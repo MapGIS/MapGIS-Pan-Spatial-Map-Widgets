@@ -6,6 +6,9 @@
 
 <script lang="ts">
 import { LayerType, WidgetMixin } from '@mapgis/web-app-framework'
+import { Style } from '@mapgis/webclient-es6-service'
+
+const { LineStyle, PointStyle, FillStyle } = Style
 
 export default {
   name: 'MapboxLayer',
@@ -78,43 +81,55 @@ export default {
         properties: { bound, center },
         geometry: { type, coordinates },
       } = features[0]
+      let style
       if (type === 'Point') {
+        const pointStyle = new PointStyle({
+          color: color,
+          outlineColor: color,
+          radius: 5,
+          opacity: 1,
+        })
+        style = {
+          type: 'circle',
+          ...pointStyle.toMapboxStyle(),
+        }
         this.map.addLayer({
           id: layerId,
-          type: 'circle',
           source: sourceId,
-          paint: {
-            'circle-radius': 5, // 半径
-            'circle-color': color, // 颜色
-            'circle-opacity': 1, // 透明度
-          },
+          ...style,
         })
         this.map.panTo(center)
       } else if (type === 'LineString') {
+        const lineStyle = new LineStyle({
+          color: color,
+          width: 3,
+          opacity: 1,
+        })
+        style = {
+          type: 'line',
+          ...lineStyle.toMapboxStyle(),
+        }
         this.map.addLayer({
           id: layerId,
-          type: 'line',
           source: sourceId,
-          paint: {
-            // 设置填充颜色
-            'line-color': color,
-            'line-opacity': 1,
-            'line-width': 3,
-          },
+          ...style,
         })
         this.map.fitBounds(bound, {
           padding: { top: 100, bottom: 100, left: 200, right: 200 },
         })
       } else if (type === 'Polygon') {
+        const fillStyle = new FillStyle({
+          color: color,
+          outlineColor: '#FFFFFF',
+        })
+        style = {
+          type: 'fill',
+          ...fillStyle.toMapboxStyle(),
+        }
         this.map.addLayer({
           id: layerId,
-          type: 'fill',
           source: sourceId,
-          paint: {
-            // 设置填充颜色
-            'fill-color': color,
-            'fill-outline-color': 'white',
-          },
+          ...style,
         })
         this.map.fitBounds(bound, {
           padding: { top: 100, bottom: 100, left: 200, right: 200 },

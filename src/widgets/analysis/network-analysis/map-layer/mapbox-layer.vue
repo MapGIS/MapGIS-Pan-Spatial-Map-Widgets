@@ -9,6 +9,9 @@
 
 <script lang="ts">
 import { LayerType, WidgetMixin } from '@mapgis/web-app-framework'
+import { Style } from '@mapgis/webclient-es6-service'
+
+const { LineStyle, PointStyle, FillStyle } = Style
 
 export default {
   name: 'MapboxLayer',
@@ -83,15 +86,20 @@ export default {
         type: 'geojson',
         data: layerPoint,
       })
+      const pointStyle = new PointStyle({
+        color: this.circleColor['circle-color'],
+        outlineColor: this.circleColor['circle-color'],
+        radius: 5,
+        opacity: this.circleColor['circle-opacity'],
+      })
+      let style = {
+        type: 'circle',
+        ...pointStyle.toMapboxStyle(),
+      }
       this.map.addLayer({
         id: this.pointResultLayerId,
-        type: 'circle',
         source: this.pointResultSourceId,
-        paint: {
-          'circle-radius': 5, // 半径
-          'circle-color': this.circleColor['circle-color'], // 颜色
-          'circle-opacity': this.circleColor['circle-opacity'], // 透明度
-        },
+        ...style,
       })
 
       // 添加线图层
@@ -99,14 +107,18 @@ export default {
         type: 'geojson',
         data: layerLine,
       })
+      const lineStyle = new LineStyle({
+        color: this.color,
+        width: 4,
+      })
+      style = {
+        type: 'line',
+        ...lineStyle.toMapboxStyle(),
+      }
       this.map.addLayer({
         id: this.lineResultLayerId,
-        type: 'line',
         source: this.lineResultSourceId,
-        paint: {
-          'line-color': this.color,
-          'line-width': 4,
-        },
+        ...style,
       })
     },
 
@@ -117,14 +129,18 @@ export default {
         type: 'geojson',
         data: this.highResultSource,
       })
+      const lineStyle = new LineStyle({
+        color: 'blue',
+        width: 4,
+      })
+      const style = {
+        type: 'line',
+        ...lineStyle.toMapboxStyle(),
+      }
       this.map.addLayer({
         id: this.lineResultClickLayerId,
-        type: 'line',
         source: this.lineResultClickSourceId,
-        paint: {
-          'line-color': 'blue',
-          'line-width': 4,
-        },
+        ...style,
       })
     },
 
@@ -135,11 +151,20 @@ export default {
         type: 'geojson',
         data: this.dataCoordinateArr, // 一开始的数据是空的,后面请求到了再更新
       })
+      const pointStyle = new PointStyle({
+        color: this.circleColor['circle-color'],
+        outlineColor: this.circleColor['circle-color'],
+        radius: 5,
+        opacity: this.circleColor['circle-opacity'],
+      })
+      const style = {
+        type: 'circle',
+        ...pointStyle.toMapboxStyle(),
+      }
       this.map.addLayer({
         id: this.pointLayerId,
-        type: 'circle',
         source: this.pointSourceId,
-        paint: this.circleColor,
+        ...style,
       })
     },
 
@@ -150,14 +175,20 @@ export default {
         type: 'geojson',
         data: this.dataBarrierArr, // 一开始的数据是空的,后面请求到了再更新
       })
+      const pointStyle = new PointStyle({
+        color: 'red',
+        outlineColor: 'red',
+        radius: 5,
+        opacity: this.circleColor['circle-opacity'],
+      })
+      const style = {
+        type: 'circle',
+        ...pointStyle.toMapboxStyle(),
+      }
       this.map.addLayer({
         id: this.barrierLayerId,
-        type: 'circle',
         source: this.barrierSourceId,
-        paint: {
-          ...this.circleColor,
-          'circle-color': 'red',
-        },
+        ...style,
       })
     },
 

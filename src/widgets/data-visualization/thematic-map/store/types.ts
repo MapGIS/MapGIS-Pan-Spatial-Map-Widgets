@@ -13,9 +13,9 @@ type NodeType = 'panel' | 'list' | 'subject'
 
 // 专题图配置
 export enum LayerServiceType {
-  igsImage = 'IGSIMAGE',
-  igsVector = 'IGSVECTOR',
-  geojson = 'GEOJSON',
+  igsImage = 'IGSMapImage',
+  igsVector = 'IGSVector',
+  geojson = 'GeoJson',
   excel = 'EXCEL',
   igsScene = 'IGSScene',
 }

@@ -18,13 +18,14 @@ export default {
     image: String,
     active: Boolean,
     icon: String,
+    guid: String,
   },
   methods: {
     onClick() {
       if (!this.active) {
-        this.$emit('select', this.name)
+        this.$emit('select', this.guid)
       } else {
-        this.$emit('un-select', this.name)
+        this.$emit('un-select', this.guid)
       }
     },
   },

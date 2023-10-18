@@ -129,6 +129,13 @@
               >
                 元数据信息
               </mapgis-ui-menu-item>
+              <mapgis-ui-menu-item
+                v-if="!isNonSpatial(item) && !isDataFlow(item)"
+                key="2"
+                @click="onUploadLegend(item)"
+              >
+                上传图例
+              </mapgis-ui-menu-item>
             </mapgis-ui-menu>
             <span class="tree-node" :id="`tree_${item.guid}`">
               <span
@@ -239,9 +246,7 @@
                 }}</mapgis-ui-menu-item
               >
               <mapgis-ui-menu-item
-                v-if="
-                  hasLegend(item) && !isNonSpatial(item) && !isDataFlow(item)
-                "
+                v-if="!isNonSpatial(item) && !isDataFlow(item)"
                 key="3"
                 @click="onUploadLegend(item)"
               >
@@ -297,7 +302,10 @@
         :zIndex="2"
       >
         <template>
-          <mp-metadata-info :currentConfig="currentConfig" />
+          <mp-metadata-info
+            :currentConfig="currentConfig"
+            :currentOGCMetadata="currentOGCMetadata"
+          />
         </template>
       </mp-window>
     </mp-window-wrapper>
@@ -310,6 +318,7 @@
         :fullScreenAction="false"
         :icon="widgetInfo.icon"
         :visible.sync="showNoSpatial"
+        :zIndex="2"
       >
         <template>
           <non-spatial
@@ -317,6 +326,7 @@
             :url="nonSpatialFileListUrl"
             :type="nonSpatialType"
             :treeConfig="widgetConfig"
+            :dataType="dataType"
           ></non-spatial>
         </template>
       </mp-window>
@@ -344,6 +354,10 @@ import {
   DataFlowList,
   LayerAutoResetManager,
   DataCatalogCheckController,
+  LayerPropertyEdit,
+  BaseMapController,
+  baseConfigInstance,
+  DataCatalogUtil,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../../../components/MetadataInfo/MetadataInfo.vue'
 import NonSpatial from './non-spatial.vue'
@@ -461,6 +475,10 @@ export default {
       layerAutoResetManager: LayerAutoResetManager,
       extendLayerRemoveIds: [],
       lastSelect: '',
+      leafLengthMap: {},
+      // 保存OGC元数据信息
+      currentOGCMetadata: {},
+      dataType: undefined,
     }
   },
   computed: {
@@ -481,6 +499,9 @@ export default {
     },
     checkKeys() {
       return this.dataCatalogManager.checkedLayerConfigIDs
+    },
+    selectedMaxCount() {
+      return this.widgetInfo.config.otherConfig.selectedMaxCount || 20
     },
     // lastCheck() {
     //   return this.dataCatalogManager.checkedLayerConfigIDs[
@@ -556,7 +577,7 @@ export default {
     checkedNodeKeys: {
       deep: false,
       handler() {
-        this.onCheckedNodeKeysChenged()
+        this.onCheckedNodeKeysChanged()
       },
     },
     'dataCatalogManager.checkedLayerConfigIDs': {
@@ -567,6 +588,9 @@ export default {
     },
   },
   methods: {
+    onClose() {
+      this.currentNode = null
+    },
     initLoadKeys() {
       const allLayerNodes = this.dataCatalogManager.getAllLayerConfigItems()
       const initKeys =
@@ -613,12 +637,18 @@ export default {
       }
       return currentData
     },
-    onCheckedNodeKeysChenged() {
+    onCheckedNodeKeysChanged() {
       // 列表展示赋值key不需要再次处理
       if (this.setKeys) {
         this.setKeys = !this.setKeys
         return
       }
+
+      // 获取勾选的数据，图例使用
+      eventBus.$emit(
+        events.DATA_SELECTION_KEYS_CHANGE_EVENT,
+        this.getDataCatalogCheckedNodeKeys()
+      )
 
       // 扩展图层在相关的微件中移除，勾选取消即可，此处不做其他处理
       if (this.extendLayerRemove) {
@@ -716,6 +746,21 @@ export default {
       // 将新取消选中的图层从document中移除
       this.modifyDocument(newUnChecked, false)
 
+      if (
+        newChecked.length > 0 &&
+        this.currentNode &&
+        this.leafLengthMap[this.currentNode.guid] > this.selectedMaxCount
+      ) {
+        this.$message.error(
+          `添加失败，当前一次允许添加最大节点数为${this.selectedMaxCount}`
+        )
+
+        // 清除选中的节点check状态
+        newChecked.forEach((item) => {
+          this.checkedNodeKeys = this.getCheckedLayerConfigIDs(item)
+        })
+        return
+      }
       // 将新选中的图层节点添加到document
       this.modifyDocument(newChecked, true)
 
@@ -947,6 +992,23 @@ export default {
         } finally {
           // 2.2判断图层是否载成功。如果成功则将图层添加到documet中。否则，给出提示，并将数据目录树中对应的节点设为未选中状态。
           if (layer.loadStatus === LoadStatus.loaded) {
+            // 如果处于收藏夹复现则无需设置修改的layerProperty信息
+            const currentCheckLayerConfig =
+              DataCatalogCheckController.getCurrentCheckLayerConfig()
+            const relation = currentCheckLayerConfig?.relation
+            // 是否属于收藏夹
+            const isFavoritesLayer = relation && relation[layer.id]
+
+            if (this.is3DLayer(layer) && !isFavoritesLayer) {
+              const editConfigArr = LayerPropertyEdit.propertyConfigArr
+              if (editConfigArr && editConfigArr.length > 0) {
+                const find = editConfigArr.find(
+                  (item) => item.parentId === layer.id
+                )
+                find && this.dealLayers(layer, find)
+              }
+            }
+            // 收藏夹复现处理opacity和layerProperty
             DataCatalogCheckController.dealLayers(layer, this.is3DLayer(layer))
             const unAntoResetArr =
               this.layerAutoResetManager.getUnAutoResetArr()
@@ -999,6 +1061,36 @@ export default {
           })
         }
       }
+    },
+    dealLayers(layer, config) {
+      let sublayers
+      if (this.isIGSScene(layer)) {
+        if (layer.activeScene) {
+          sublayers = layer.activeScene.sublayers
+        }
+      } else {
+        // sublayers = layer.sublayers
+      }
+
+      if (sublayers && sublayers.length > 0) {
+        const sublayer = sublayers.find((item) => item.id === config.id)
+        sublayer.maximumScreenSpaceError =
+          config.layerProperty.maximumScreenSpaceError
+        sublayer.luminanceAtZenith = config.layerProperty.luminanceAtZenith
+        sublayer.layer.layerProperty = { ...config.layerProperty }
+      } else {
+        layer.maximumScreenSpaceError =
+          config.layerProperty.maximumScreenSpaceError
+        layer.luminanceAtZenith = config.layerProperty.luminanceAtZenith
+        layer.layerProperty = { ...config.layerProperty }
+      }
+    },
+    isIGSScene({ type, layer }) {
+      let layerType = type
+      if (layer) {
+        layerType = layer.type
+      }
+      return layerType === LayerType.IGSScene
     },
 
     // 判断是不是三维图层类型
@@ -1093,7 +1185,10 @@ export default {
     },
 
     onCheck(checkedKeys, info) {
+      this.currentNode = info.node.dataRef
       this.layerAutoResetManager.setUnAutoResetArr([])
+      // 如果取消收藏夹中的图层则再次勾选不再使用收藏夹的记录状态
+      !info.checked && DataCatalogCheckController.operateCheck(checkedKeys)
       if (this.isClassify) {
         const preCheckedKeys = this.activeTreeTabRelRelation[this.activeTreeTab]
         this.activeTreeTabRelRelation[this.activeTreeTab] = checkedKeys
@@ -1371,12 +1466,13 @@ export default {
 
     // 收藏按钮
     bookMarksCheck() {
-      eventBus.$emit(
-        events.ADD_ALL_SELECTED_DATA_BOOKMARK_EVENT,
-        this.widgetInfo.label,
-        this.checkedNodeKeys,
-        this.dataCatalogTreeData
-      )
+      // eventBus.$emit(
+      //   events.ADD_ALL_SELECTED_DATA_BOOKMARK_EVENT,
+      //   this.widgetInfo.label,
+      //   this.checkedNodeKeys,
+      //   this.dataCatalogTreeData
+      // )
+      eventBus.$emit(events.DATA_CATALOG_ADD_COLLECT)
     },
 
     resizeCheck() {
@@ -1386,21 +1482,60 @@ export default {
       DataCatalogCheckController.setCurrentLayerNoChildList([])
       DataCatalogCheckController.setCurrentCheckSceneSettingConfig({})
       DataCatalogCheckController.restoreSceneConfig()
+      BaseMapController.isResize = true
+      BaseMapController.setBaseMapInfo = null
     },
 
     onClick(item) {
       const widgetConfig = this.widgetInfo.config
       this.nonSpatialType = item.data
-
-      if (item.description.includes('非空间数据')) {
-        this.showNoSpatial = true
-
+      this.nonSpatialFileListUrl = undefined
+      // if (item.description.includes('非空间数据')) {
+      if (item.serverType === LayerType.NOSPATIALDATA) {
         if (
           widgetConfig.treeConfig.useLocalData ||
           widgetConfig.treeConfig.useLocalParam
         ) {
           this.nonSpatialUrl = widgetConfig.urlConfig.nonSpatialUrl
-          this.nonSpatialFileListUrl = `${this.baseUrl}/api/non-spatial/files?pageNumber=0&pageSize=1000&path=${item.data}&protocol=ftp&url=${this.nonSpatialUrl}`
+          if (this.nonSpatialUrl) {
+            // 获取配置的非空间数据地址
+            const ftpServer = this.nonSpatialUrl.search('ftp:')
+            const httpServer = this.nonSpatialUrl.search('http:')
+            const httpsServer = this.nonSpatialUrl.search('https:')
+            if (ftpServer > -1) {
+              this.dataType = 'ftp'
+              this.nonSpatialFileListUrl = `${this.baseUrl}/api/non-spatial/files?pageNumber=0&pageSize=1000&path=${item.data}&protocol=ftp&url=${this.nonSpatialUrl}`
+            } else if (httpServer > -1 || httpsServer > -1) {
+              this.dataType = 'hdfs'
+              this.nonSpatialFileListUrl = this.nonSpatialUrl
+            }
+            // 获取当前节点配置的地址,若当前节点配置的是url则使用该url
+            const { dataUrl } = item
+            if (dataUrl.indexOf('://') > -1) {
+              this.nonSpatialFileListUrl = dataUrl
+            } else {
+              this.nonSpatialFileListUrl += dataUrl
+            }
+          } else {
+            // 无配置的非空间数据地址采用图层中配置的信息
+            const { dataUrl } = item
+            if (dataUrl && dataUrl.indexOf('://') > -1) {
+              this.nonSpatialFileListUrl = dataUrl
+              const ftpServer = dataUrl.search('ftp:')
+              const httpServer = dataUrl.search('http:')
+              const httpsServer = dataUrl.search('https:')
+              if (ftpServer > -1) {
+                this.dataType = 'ftp'
+              } else if (httpServer > -1 || httpsServer > -1) {
+                this.dataType = 'hdfs'
+              }
+            }
+          }
+          if (!this.nonSpatialFileListUrl) {
+            this.$message.info('该非空间数据节点无配置信息！')
+            return
+          }
+          this.showNoSpatial = true
         }
       }
     },
@@ -1420,8 +1555,10 @@ export default {
          * 修改人：龚跃健
          * 修改时间：2022/1/24
          */
+        // 通过类型去判断是否为非空间数据
         if (
           item.description.includes('非空间数据') ||
+          item.serverType === LayerType.NOSPATIALDATA ||
           (!item.children &&
             !Object.prototype.hasOwnProperty.call(item, 'serverType'))
         ) {
@@ -1441,17 +1578,17 @@ export default {
 
     // 是否显示上传图例
     hasLegend(node) {
-      const nodeParentLevel = node.pos
-        .split('-')
-        .slice(1)
-        .map((item) => +item)
-      const LabelArr = []
-      this.getNodeLabel(this.dataCatalogTreeData, 0, LabelArr, nodeParentLevel)
-      if (LabelArr.some((item) => item.indexOf('专题') !== -1)) {
-        return true
-      } else {
-        return false
-      }
+      // const nodeParentLevel = node.pos
+      //   .split('-')
+      //   .slice(1)
+      //   .map((item) => +item)
+      // const LabelArr = []
+      // this.getNodeLabel(this.dataCatalogTreeData, 0, LabelArr, nodeParentLevel)
+      // if (LabelArr.some((item) => item.indexOf('专题') !== -1)) {
+      //   return true
+      // } else {
+      //   return false
+      // }
     },
 
     // 串联该节点所在层级的description
@@ -1476,16 +1613,58 @@ export default {
       return type === LayerType.OGCWMS || type === LayerType.OGCWMTS
     },
 
+    // 根据url获取domain及docName
+    parseUrl(urlStr) {
+      const url = new URL(urlStr)
+      const domain = url.origin
+      const serverType = 'igs/rest/services/'
+      const indexServer = urlStr.search(serverType)
+      const indexName = indexServer + serverType.length
+      const docName =
+        urlStr.substr(indexName).split('/').length > 2
+          ? `${urlStr.substr(indexName).split('/')[0]}:${
+              urlStr.substr(indexName).split('/')[1]
+            }`
+          : `${urlStr.substr(indexName).split('/')[0]}`
+      return { domain, docName }
+    },
+
     // 元数据信息按钮响应事件
-    showMetaDataInfo(item) {
+    async showMetaDataInfo(item) {
       if (this.isOGCLayer(item.serverType)) {
-        this.showMetaData = false
         const url = item.serverURL
         let getCapabilitiesURL = ''
         let tempUrl = url
         if (item.tokenValue && item.tokenValue.length > 0) {
           const tokenKey = item.tokenKey ? item.tokenKey : 'token'
           tempUrl += `?${item.tokenKey}=${item.tokenValue}`
+        }
+        if (baseConfigInstance.config.token && item.serverName) {
+          const token = baseConfigInstance.config.token
+          // 有服务名直接取服务名，没有服务名根据url解析，但是第三方服务根据url解析不到正确的服务名，无法获取云管的元数据信息，因此第三方服务必须要有服务名
+          let domain
+          let docName
+          if (item.serverName) {
+            const url = new URL(tempUrl)
+            domain = url.origin
+            docName = item.serverName
+          } else {
+            const res = this.parseUrl(tempUrl)
+            domain = res.domain
+            docName = res.docName
+          }
+          const ip = item.ip || baseConfigInstance.config.ip
+          const port = item.port || baseConfigInstance.config.port
+          const option = { domain, docName, token, ip, port }
+          const metadata = await Metadata.CloudMetaDataQuery.query(option)
+          if (metadata) {
+            this.currentOGCMetadata = {
+              ...JSON.parse(JSON.stringify(metadata)),
+              type: item.serverType,
+            }
+            this.showMetaData = true
+            return
+          }
         }
         if (item.serverType === LayerType.OGCWMS) {
           getCapabilitiesURL =
@@ -1494,14 +1673,36 @@ export default {
           getCapabilitiesURL =
             Metadata.OGCMetadataQuery.generateWMTSGetCapabilitiesURL(tempUrl)
         }
+        this.showMetaData = false
         window.open(getCapabilitiesURL)
       } else {
-        const layer = {
-          ...item,
-          type: item.serverType,
+        if (item.serverURL.includes('igs/rest')) {
+          const layer = {
+            ...item,
+            type: item.serverType,
+          }
+          this.showMetaData = true
+          this.currentConfig = layer
+        } else {
+          // 第三方注册服务
+          if (baseConfigInstance.config.token) {
+            const token = baseConfigInstance.config.token
+            const ip = item.ip || baseConfigInstance.config.ip
+            const port = item.port || baseConfigInstance.config.port
+            const docName = item.serverName
+            const option = { token, ip, port, docName }
+            const metadata = await Metadata.CloudMetaDataQuery.query(option)
+            if (metadata) {
+              this.currentOGCMetadata = {
+                ...JSON.parse(JSON.stringify(metadata)),
+                type: item.serverType,
+              }
+              this.showMetaData = true
+              return
+            }
+          }
+          window.open(item.serverURL)
         }
-        this.showMetaData = true
-        this.currentConfig = layer
       }
     },
 
@@ -1561,7 +1762,11 @@ export default {
       if (info.file.status === 'done') {
         const url = info.file.response.url
         const legendConfig = await api.getWidgetConfig('legend')
-        const key = this.legendNode.name
+        // const key = this.legendNode.name
+        const key = DataCatalogUtil.getTreeNodeLabel(
+          this.legendNode,
+          this.dataCatalogTreeData
+        )
         if (url) {
           legendConfig[key] = url
           const res = await api.saveWidgetConfig({
@@ -1684,6 +1889,7 @@ export default {
      */
     getLeafStatus(item) {
       const status = this.getLeafStatusRecursion(item)
+      this.leafLengthMap[item.guid] = status.leafTotal
       return `(${status.leafChecked}/${status.leafTotal})`
     },
 

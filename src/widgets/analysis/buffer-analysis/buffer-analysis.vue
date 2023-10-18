@@ -1,7 +1,69 @@
 <template>
   <div class="mp-widget-buffer-analysis">
+    <div id="widgets-ui" v-if="isWidgetOpen">
+      <mapgis-ui-group-tab
+        title="选择图层"
+        id="title-space"
+        :hasBottomMargin="false"
+      />
+      <mapgis-ui-form-model :layout="layout" :labelAlign="'left'">
+        <mapgis-ui-form-model-item :colon="false">
+          <mapgis-ui-row>
+            <mapgis-ui-col>
+              <mapgis-ui-select
+                v-model="tDataIndex"
+                @change="tchangeTarget($event)"
+                v-if="!selectLevel"
+              >
+                <mapgis-ui-select-option
+                  v-for="(item, index) in layerArrOption"
+                  :key="index"
+                  :value="index"
+                  >{{ item.title }}</mapgis-ui-select-option
+                >
+              </mapgis-ui-select>
+              <mapgis-ui-select
+                v-model="tDataIndex"
+                @change="tchangeTarget"
+                v-if="selectLevel"
+                disabled
+              >
+                <mapgis-ui-select-option
+                  v-for="(item, index) in layerArrOption"
+                  :key="index"
+                  :value="index"
+                  >{{ item.title }}</mapgis-ui-select-option
+                >
+              </mapgis-ui-select>
+            </mapgis-ui-col>
+          </mapgis-ui-row>
+          <mapgis-ui-checkbox
+            style="line-height: 32px"
+            :checked="selectLevel"
+            @change="changeSelectLevel"
+            v-show="dataType == 'VectorLayer' && !modelBuffer"
+            >只对选择数据进行操作</mapgis-ui-checkbox
+          >
+          <mapgis-ui-checkbox
+            v-show="dataType == 'VectorLayer'"
+            :checked="modelBuffer"
+            @change="
+              () => {
+                modelBuffer = !modelBuffer
+                if (modelBuffer) {
+                  selectLevel = false
+                }
+              }
+            "
+          >
+            进行三维分析
+          </mapgis-ui-checkbox>
+        </mapgis-ui-form-model-item>
+      </mapgis-ui-form-model>
+    </div>
     <!-- 使用缓冲区分析组件 -->
-    <mapgis-3d-analysis-buffer
+    <mapgis-3d-analysis-model-buffer
+      v-if="dataType == 'Model' || modelBuffer"
       :layout="layout"
       :baseUrl="baseBufferUrl"
       :srcType="srcType"
@@ -13,54 +75,21 @@
       @load="load"
       @exportResult="exportResult"
       @deleteResult="deleteResult"
-    >
-      <div id="widgets-ui" slot="selectLayer" v-if="isWidgetOpen">
-        <mapgis-ui-group-tab
-          title="选择图层"
-          id="title-space"
-          :hasBottomMargin="false"
-        />
-        <mapgis-ui-form-model :layout="layout" :labelAlign="'left'">
-          <mapgis-ui-form-model-item :colon="false">
-            <mapgis-ui-row>
-              <mapgis-ui-col>
-                <mapgis-ui-select
-                  v-model="tDataIndex"
-                  @change="tchangeTarget($event)"
-                  v-if="!selectLevel"
-                >
-                  <mapgis-ui-select-option
-                    v-for="(item, index) in layerArrOption"
-                    :key="index"
-                    :value="index"
-                    >{{ item.title }}</mapgis-ui-select-option
-                  >
-                </mapgis-ui-select>
-                <mapgis-ui-select
-                  v-model="tDataIndex"
-                  @change="tchangeTarget"
-                  v-if="selectLevel"
-                  disabled
-                >
-                  <mapgis-ui-select-option
-                    v-for="(item, index) in layerArrOption"
-                    :key="index"
-                    :value="index"
-                    >{{ item.title }}</mapgis-ui-select-option
-                  >
-                </mapgis-ui-select>
-              </mapgis-ui-col>
-            </mapgis-ui-row>
-            <mapgis-ui-checkbox
-              style="line-height: 32px"
-              :checked="selectLevel"
-              @change="changeSelectLevel"
-              >只对选择数据进行操作</mapgis-ui-checkbox
-            >
-          </mapgis-ui-form-model-item>
-        </mapgis-ui-form-model>
-      </div>
-    </mapgis-3d-analysis-buffer>
+    />
+    <mapgis-3d-analysis-buffer
+      v-else
+      :layout="layout"
+      :baseUrl="baseBufferUrl"
+      :srcType="srcType"
+      :srcLayer="srcLayer"
+      :srcFeature="srcFeature"
+      @listenLayer="showLayer"
+      @listenFeature="showFeature(arguments)"
+      @listenBufferAdd="showAdd"
+      @load="load"
+      @exportResult="exportResult"
+      @deleteResult="deleteResult"
+    />
     <mp-export-layer
       :visible="visible"
       :gdbp="destLayer"
@@ -79,11 +108,13 @@ import {
   events,
   baseConfigInstance,
   ActiveResultSet,
+  dataCatalogManagerInstance,
 } from '@mapgis/web-app-framework'
 import { Style } from '@mapgis/webclient-es6-service'
 import MpExportLayer from '../../../components/ExportLayer/export-layer.vue'
 
 const { FillStyle } = Style
+const Types = ['Lin', 'Pnt', 'Reg']
 
 export default {
   name: 'MpBufferAnalysis',
@@ -93,6 +124,7 @@ export default {
     return {
       layout: 'vertical',
       baseBufferUrl: 'http://localhost:6163/',
+      dataType: 'VectorLayer',
       srcType: 'Layer',
       srcLayer: '',
       srcFeature: {},
@@ -114,6 +146,7 @@ export default {
       finishFeature: false,
       visible: false,
       resultData: {},
+      modelBuffer: false,
     }
   },
 
@@ -122,6 +155,12 @@ export default {
       handler: 'documentChange',
       deep: true,
       immediate: true,
+    },
+    // 三维分析不支持要素级，当分析类型变成三维分析时将selectLevel属性置为false
+    dataType() {
+      if (this.dataType === 'Model') {
+        this.selectLevel = false
+      }
     },
   },
   computed: {
@@ -148,7 +187,7 @@ export default {
         const url = new URL(this.baseBufferUrl)
         return url.origin
       }
-      return `${window.location.protocol}//${baseConfigInstance.config.ip}${baseConfigInstance.config.port}`
+      return `${window.location.protocol}//${baseConfigInstance.config.ip}:${baseConfigInstance.config.port}`
     },
   },
 
@@ -178,7 +217,34 @@ export default {
         if (data.type === LayerType.IGSVector) {
           arr.push(data)
         } else if (data.type === LayerType.IGSMapImage) {
-          arr.push(...data.sublayers)
+          // 带组图层的情况
+          data.sublayers.forEach((sublayer) => {
+            if (sublayer.sublayers && sublayer.sublayers.length > 0) {
+              sublayer.sublayers.forEach((item) => {
+                if (Types.includes(item.geomType)) {
+                  arr.push(item)
+                }
+              })
+            } else {
+              if (Types.includes(sublayer.geomType)) {
+                arr.push(sublayer)
+              }
+            }
+          })
+        } else if (
+          data.type === LayerType.IGSScene ||
+          data.type === LayerType.ModelCache
+        ) {
+          const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
+            data.id
+          )
+          if (layerConfig && layerConfig.bindData) {
+            if (!layerConfig.bindData.title) {
+              layerConfig.bindData.title =
+                layerConfig.bindData.serverName || data.title
+            }
+            arr.push(layerConfig.bindData)
+          }
         }
       })
       if (arr.length > 0) {
@@ -207,22 +273,42 @@ export default {
 
     tchangeTarget(event) {
       const layerCurrent = this.tData
+      this.dataType = 'VectorLayer'
       if (layerCurrent != null) {
-        if (layerCurrent.type == 6) {
-          this.baseBufferUrl = layerCurrent.url
+        if (
+          layerCurrent.type == LayerType.IGSVector ||
+          layerCurrent.serverType == LayerType.IGSVector ||
+          layerCurrent.type == LayerType.IGSVector3D ||
+          layerCurrent.serverType == LayerType.IGSVector3D
+        ) {
+          this.baseBufferUrl = layerCurrent.url || layerCurrent.serverURL
           this.srcLayer = layerCurrent.gdbps
+          if (
+            layerCurrent.serverType == LayerType.IGSVector ||
+            layerCurrent.serverType == LayerType.IGSVector3D
+          ) {
+            this.dataType = 'Model'
+          }
         } else {
-          this.baseBufferUrl = layerCurrent.layer.url
+          this.baseBufferUrl = layerCurrent.layer?.url
           this.srcLayer = layerCurrent.url
         }
       }
     },
 
     getResultLayer() {
-      const url = `${this.domain}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
+      let url
+      let layerType
+      if (this.dataType === 'Model' || modelBuffer) {
+        url = `${this.domain}/igs/rest/services/system/ResourceServer/tempData/models?gdbpUrl=${this.destLayer}`
+        layerType = 'IGSVector3D'
+      } else {
+        url = `${this.domain}/igs/rest/mrms/layers?gdbps=${this.destLayer}`
+        layerType = 'IGSVector'
+      }
       const index = url.lastIndexOf('/')
       const layerName = url.substring(index + 1, url.length)
-      return [url, layerName]
+      return [url, layerName, layerType]
     },
 
     /**
@@ -230,19 +316,22 @@ export default {
      */
     addNewLayer(bufferStyle, renderType) {
       const resultLayer: Array<string> = this.getResultLayer()
-      const highlightStyle = {
-        polygon: new FillStyle({
-          width: 8,
-          color: '#ffff00',
-          opacity: 0.8,
-          outlineColor: '#ff0000',
-        }),
+      let highlightStyle
+      if (this.dataType !== 'Model' && !modelBuffer) {
+        highlightStyle = {
+          polygon: new FillStyle({
+            width: 8,
+            color: '#ffff00',
+            opacity: 0.8,
+            outlineColor: '#ff0000',
+          }),
+        }
       }
       this.resultData = {
         name: 'IGS图层',
         description: '综合分析_结果图层',
         data: {
-          type: 'IGSVector',
+          type: resultLayer[2],
           description: '缓冲区分析',
           srcLayer: this.srcLayer,
           url: resultLayer[0],

@@ -5,6 +5,9 @@
 <script lang="ts">
 import { MapMixin, Feature } from '@mapgis/web-app-framework'
 import { bboxPolygon, lineString, bbox } from '@turf/turf'
+import { Style } from '@mapgis/webclient-es6-service'
+
+const { LineStyle, PointStyle, FillStyle, TextStyle } = Style
 
 export default {
   name: 'ZoneFrameMapbox',
@@ -78,32 +81,53 @@ export default {
           type: 'geojson',
           data: this.feature,
         })
+        const fillStyle = new FillStyle({
+          color: this.highlightStyle.feature.reg.color,
+          outlineColor: this.highlightStyle.feature.line.color,
+        })
+        let style = {
+          type: 'fill',
+          ...fillStyle.toMapboxStyle(),
+        }
         this.map.addLayer({
           id: 'zone-frame',
-          type: 'fill',
           source: 'zone-frame',
-          paint: {
-            'fill-color': this.highlightStyle.feature.reg.color,
-          },
+          ...style,
         })
+
+        const lineStyle = new LineStyle({
+          color: this.highlightStyle.feature.line.color,
+          width: parseInt(this.highlightStyle.feature.line.size),
+        })
+        style = {
+          type: 'line',
+          ...lineStyle.toMapboxStyle(),
+        }
+        this.$delete(style, 'filter')
         this.map.addLayer({
           id: 'zone-frame-outline',
-          type: 'line',
           source: 'zone-frame',
-          paint: {
-            'line-color': this.highlightStyle.feature.line.color,
-            'line-width': parseInt(this.highlightStyle.feature.line.size),
+          ...style,
+        })
+
+        const textStyle = new TextStyle({
+          text: '{name}',
+          color: this.highlightStyle.label.text.color,
+          font: {
+            family: '微软雅黑',
+            size: parseInt(this.highlightStyle.label.text.fontSize),
+            style: 'normal',
+            weight: 'normal',
           },
         })
+        style = {
+          type: 'symbol',
+          ...textStyle.toMapboxStyle(),
+        }
         this.map.addLayer({
           id: 'zone-frame-text',
-          type: 'symbol',
           source: 'zone-frame',
-          paint: { 'text-color': this.highlightStyle.label.text.color },
-          layout: {
-            'text-field': '{name}',
-            'text-size': parseInt(this.highlightStyle.label.text.fontSize),
-          },
+          ...style,
         })
       }
     },
