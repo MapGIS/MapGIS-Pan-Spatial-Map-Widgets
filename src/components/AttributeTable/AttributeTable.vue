@@ -128,6 +128,7 @@
       :markers="markers"
       :filter-with-map="filterWithMap"
       :fit-bound="fitBound"
+      :center="panToCenter"
       :selection-bound="selectionBound"
       :highlight-style="highlightStyle"
       :popup-anchor="popupAnchor"
@@ -142,6 +143,7 @@
       :markers="markers"
       :filter-with-map="filterWithMap"
       :fit-bound="fitBound"
+      :center="panToCenter"
       :selection-bound="selectionBound"
       :highlight-style="highlightStyle"
       :popup-anchor="popupAnchor"
@@ -448,15 +450,25 @@ export default {
     },
     // 单击行
     onRowClick(row: unknown) {
+      // 单击行定位到要素
       const feature = row as GFeature
       eventBus.$emit(events.ATTRIBUTE_TABLE_CLICK_ROW, {
         fid: feature.properties[this.rowKey],
         feature,
         exhibition: this.exhibition,
       })
+      let bound = feature.properties.specialLayerBound
+      if (bound === undefined) {
+        bound = Feature.getGeoJSONFeatureBound(feature)
+      }
+      this.panToCenter = [
+        (bound.xmin + bound.xmax) / 2,
+        (bound.ymin + bound.ymax) / 2,
+      ]
     },
     // 双击行
     onRowDblclick(row: unknown) {
+      // 双击缩放至要素
       const feature = row as GFeature
       eventBus.$emit(events.ATTRIBUTE_TABLE_DOUBLE_CLICK_ROW, {
         fid: feature.properties[this.rowKey],
@@ -469,21 +481,23 @@ export default {
       }
       const width = bound.xmax - bound.xmin
       const height = bound.ymax - bound.ymin
-      const center = {
-        x: (bound.xmin + bound.xmax) / 2,
-        y: (bound.ymin + bound.ymax) / 2,
-      }
-      /**
-       * 当缩放的范围为点时，跳转过去，会导致标注点消失，
-       * 这个给点一个矩形范围
-       * @修改人 龚瑞强
-       * @date 2021/12/28
-       */
-      bound = {
-        xmin: center.x - (width || 0.1),
-        ymin: center.y - (height || 0.1),
-        xmax: center.x + (width || 0.1),
-        ymax: center.y + (height || 0.1),
+      if (width == 0 || height == 0) {
+        const center = {
+          x: (bound.xmin + bound.xmax) / 2,
+          y: (bound.ymin + bound.ymax) / 2,
+        }
+        /**
+         * 当缩放的范围为点时，跳转过去，会导致标注点消失，
+         * 这个给点一个矩形范围
+         * @修改人 龚瑞强
+         * @date 2021/12/28
+         */
+        bound = {
+          xmin: center.x - (width || 0.1),
+          ymin: center.y - (height || 0.1),
+          xmax: center.x + (width || 0.1),
+          ymax: center.y + (height || 0.1),
+        }
       }
       this.fitBound = { ...(bound as Record<string, number>) }
     },

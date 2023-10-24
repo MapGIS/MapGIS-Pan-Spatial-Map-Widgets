@@ -34,6 +34,7 @@ export default {
       tableColumns: [],
       markers: [],
       fitBound: {},
+      panToCenter: [0, 0],
       selectionBound: {},
       // 是否正在加载
       loading: false,
