@@ -7,6 +7,8 @@
       :initFavoritesParams="initFavoritesParams"
       :boundingSphereRadius="boundingSphereRadius"
       :baseLayerIds="baseLayerIds"
+      :publicPath="publicPath"
+      :isWidgetOpen="isWidgetOpen"
       ref="sceneSetting"
     >
     </mapgis-3d-scene-setting>
@@ -41,6 +43,7 @@ export default {
       dataCatalogCheckController: DataCatalogCheckController,
       boundingSphereRadius: 0,
       baseLayerIds: [],
+      isWidgetOpen: false,
     }
   },
 
@@ -68,6 +71,9 @@ export default {
     },
     initFavoritesParams() {
       return this.dataCatalogCheckController.getCurrentCheckSceneSettingConfig()
+    },
+    publicPath() {
+      return this.application.publicPath
     },
   },
   created() {
@@ -188,6 +194,7 @@ export default {
      * 微件打开时
      */
     onOpen() {
+      this.isWidgetOpen = true
       this.setting.mount()
     },
 
@@ -195,6 +202,7 @@ export default {
      * 微件关闭时
      */
     onClose() {
+      this.isWidgetOpen = false
       this.setting.unmount()
       this.syncToLocalStorage()
     },
