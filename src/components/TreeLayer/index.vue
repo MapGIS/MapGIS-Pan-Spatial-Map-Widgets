@@ -217,6 +217,7 @@ import MpUnifyModify from './components/UnifyModify/UnifyModify.vue'
 import layerTypeUtil from './mixin/layer-type-util'
 import RightPopover from './components/RightPopover/index.vue'
 import ModelStretchUtil from '../ModelStretch/mixin/ModelStretchUtil.js'
+import layerCoordinateGridUtil from './mixin/layer-coordinate-grid-util'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
@@ -236,6 +237,7 @@ export default {
     ExhibitionControllerMixin,
     layerTypeUtil,
     ModelStretchUtil,
+    layerCoordinateGridUtil,
   ],
   inject: ['vueCesium'],
   props: {
@@ -278,6 +280,8 @@ export default {
       modelPickController: ModelPickController,
       // 保存OGC元数据信息
       currentOGCMetadata: {},
+      // 记录当前编辑的图层id
+      currentEditLayerId: '',
     }
   },
   computed: {
@@ -409,6 +413,22 @@ export default {
       deep: true,
       handler() {
         this.parseModelPick()
+      },
+    },
+    widgetRouters: {
+      handler(val) {
+        if (val.length === 1) {
+          const targetId = this.currentLayerInfo.id || this.currentEditLayerId
+          const layer = this.getTargetLayer(targetId)
+          // 模型包围盒
+          const modelBoundingBox = layer ? layer.debugShowBoundingVolume : false
+          if (modelBoundingBox) {
+            this.updateModelBoundingBox(false, targetId)
+          }
+          // 清除模型坐标网格
+          this.removeAllGraphicLayers()
+          this.currentEditLayerId = ''
+        }
       },
     },
   },
@@ -939,6 +959,7 @@ export default {
             this.updateM3DProps(val, false)
             this.changeLayer(val)
             const layer = val.layer ? val.layer : val
+            this.currentEditLayerId = val.id
             const { dataId, layerProperty } = layer
             // api.updateData({ dataId, layerProperty })
           },
@@ -973,6 +994,12 @@ export default {
             } else {
               this.changeTextureScale(1, 1, item.id)
             }
+          },
+          'update:modelBoundingBox': (val, layerId) => {
+            this.updateModelBoundingBox(val, layerId)
+          },
+          'update:modelCoordinateGrid': (val, type, layerId) => {
+            this.updateModelCoordinateGrid(val, type, layerId)
           },
         },
       })
@@ -1283,6 +1310,23 @@ export default {
       this.currentLayerInfo = {}
     },
 
+    updateModelBoundingBox(val, layerId) {
+      const targetLayer = this.getTargetLayer(layerId)
+      targetLayer.debugShowBoundingVolume = val
+    },
+    updateModelCoordinateGrid(val, type, layerId) {
+      this.removeAllGraphicLayers()
+      if (val) {
+        const targetLayer = this.getTargetLayer(layerId)
+        this.initCoordinateGrid(targetLayer, type)
+      }
+    },
+    getTargetLayer(id) {
+      const targetLayer =
+        this.sceneController.findSource(id) ||
+        this.sceneController.findM3DIgsSource(id)
+      return targetLayer
+    },
     // 模型拾取微件统一开启/关闭拾取
     updateM3DEnablePopupEnable(isOpenPick) {
       this.isOpenPick = isOpenPick
