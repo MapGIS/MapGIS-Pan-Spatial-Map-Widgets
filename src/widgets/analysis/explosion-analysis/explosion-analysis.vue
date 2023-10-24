@@ -36,11 +36,25 @@ export default {
           .clone()
           .getFlatLayers()
           .forEach((layer, index) => {
-            const { id, type, title } = layer
-            if (type === LayerType.IGSScene) {
+            const { id, type, title, searchParams } = layer
+            if (type === LayerType.IGSScene || type === LayerType.ModelCache) {
+              if (searchParams && searchParams.searchServiceType) {
+                if (searchParams.searchServiceType === LayerType.IGSVector3D) {
+                  searchParams.searchServiceType = 'IGSVector3D'
+                } else if (
+                  searchParams.searchServiceType === LayerType.IGSVector
+                ) {
+                  searchParams.searchServiceType = 'IGSVector'
+                } else if (
+                  searchParams.searchServiceType === LayerType.IGSMapImage
+                ) {
+                  searchParams.searchServiceType = 'IGSMapImage'
+                }
+              }
               layers.push({
-                title: title,
                 vueIndex: id,
+                searchParams,
+                ...layer,
               })
             }
           })
