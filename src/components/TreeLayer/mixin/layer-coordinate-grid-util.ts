@@ -23,45 +23,42 @@ export default {
     },
     drawCoordinateGrid(layer) {
       const { Cesium } = this
-      // 模型网格边界四个点坐标
-      let southWestBottom, southWestTop, southEastBottom, northWestBottom
-      // 单位向量
-      let normalizeX, normalizeY, normalizeZ
       // 获取模型原点坐标和其他三个方向坐标
-      let center = layer.root.boundingVolume.boundingVolume.center
-      let halfAxes = layer.root.boundingVolume.boundingVolume.halfAxes
+      const center = layer.root.boundingVolume.boundingVolume.center
+      const halfAxes = layer.root.boundingVolume.boundingVolume.halfAxes
 
-      let halfAxesX = Cesium.Matrix3.getColumn(
+      const halfAxesX = Cesium.Matrix3.getColumn(
         halfAxes,
         0,
         new Cesium.Cartesian3()
       )
-      let halfAxesY = Cesium.Matrix3.getColumn(
+      const halfAxesY = Cesium.Matrix3.getColumn(
         halfAxes,
         1,
         new Cesium.Cartesian3()
       )
-      let halfAxesZ = Cesium.Matrix3.getColumn(
+      const halfAxesZ = Cesium.Matrix3.getColumn(
         halfAxes,
         2,
         new Cesium.Cartesian3()
       )
 
       // 单位法向量
-      normalizeX = Cesium.Cartesian3.normalize(
+      const normalizeX = Cesium.Cartesian3.normalize(
         halfAxesX,
         new Cesium.Cartesian3()
       )
-      normalizeY = Cesium.Cartesian3.normalize(
+      const normalizeY = Cesium.Cartesian3.normalize(
         halfAxesY,
         new Cesium.Cartesian3()
       )
-      normalizeZ = Cesium.Cartesian3.normalize(
+      const normalizeZ = Cesium.Cartesian3.normalize(
         halfAxesZ,
         new Cesium.Cartesian3()
       )
 
-      southWestBottom = Cesium.Cartesian3.subtract(
+      // 模型网格边界四个点坐标
+      const southWestBottom = Cesium.Cartesian3.subtract(
         center,
         halfAxesX,
         new Cesium.Cartesian3()
@@ -69,7 +66,7 @@ export default {
       Cesium.Cartesian3.subtract(southWestBottom, halfAxesY, southWestBottom)
       Cesium.Cartesian3.subtract(southWestBottom, halfAxesZ, southWestBottom)
 
-      southWestTop = Cesium.Cartesian3.subtract(
+      const southWestTop = Cesium.Cartesian3.subtract(
         center,
         halfAxesX,
         new Cesium.Cartesian3()
@@ -77,7 +74,7 @@ export default {
       Cesium.Cartesian3.subtract(southWestTop, halfAxesY, southWestTop)
       Cesium.Cartesian3.add(southWestTop, halfAxesZ, southWestTop)
 
-      southEastBottom = Cesium.Cartesian3.add(
+      const southEastBottom = Cesium.Cartesian3.add(
         center,
         halfAxesX,
         new Cesium.Cartesian3()
@@ -85,7 +82,7 @@ export default {
       Cesium.Cartesian3.subtract(southEastBottom, halfAxesY, southEastBottom)
       Cesium.Cartesian3.subtract(southEastBottom, halfAxesZ, southEastBottom)
 
-      northWestBottom = Cesium.Cartesian3.subtract(
+      const northWestBottom = Cesium.Cartesian3.subtract(
         center,
         halfAxesX,
         new Cesium.Cartesian3()
@@ -115,6 +112,8 @@ export default {
         case 'grid':
           // 坐标网格风格2，绘制平面网格
           this.drawGridStyleForGrid(drawConfig)
+          break
+        default:
           break
       }
     },
@@ -158,9 +157,10 @@ export default {
       const midDistance = [distanceX, distanceY, distanceZ].find(
         (item) => item !== maxDistance && item !== minDistance
       )
-      let maxScale, midScale, minScale
+      let midScale
+      let minScale
       // 默认绘制10个刻度
-      maxScale = Math.ceil(maxDistance / 10)
+      const maxScale = Math.ceil(maxDistance / 10)
       // 以最大值作为刻度标准
       midScale = Math.ceil(midDistance / maxScale)
       midScale = midScale > 1 ? maxScale : Math.floor(midDistance)
@@ -242,76 +242,78 @@ export default {
             this.addLineAndTextZ(startPosition, i * gridLength, unitVector)
           }
           break
+        default:
+          break
       }
     },
     addGraphicPolylineArrow(positions) {
       const { Cesium } = this
       const polylineGraphic = new Cesium.Graphic({
-        //类型
+        // 类型
         type: 'polyline',
-        //几何数组
+        // 几何数组
         positions: positions,
-        //样式
+        // 样式
         style: {
-          //箭头线材质
+          // 箭头线材质
           material: Cesium.Material.fromType('PolylineArrow', {
-            //颜色
+            // 颜色
             color: Cesium.Color.AQUA,
           }),
-          //宽度
+          // 宽度
           width: 4,
-          //深度测试
+          // 深度测试
           depthTest: true,
         },
       })
-      //将标绘添加入标绘图层
+      // 将标绘添加入标绘图层
       this.graphicsLayer.addGraphic(polylineGraphic)
     },
     addGraphicPolyline(positions) {
       const { Cesium } = this
-      let polylineGraphic = new Cesium.Graphic({
-        //类型
+      const polylineGraphic = new Cesium.Graphic({
+        // 类型
         type: 'polyline',
-        //几何数组
+        // 几何数组
         positions: positions,
-        //样式
+        // 样式
         style: {
-          //颜色
+          // 颜色
           color: Cesium.Color.AQUA,
-          //宽度
+          // 宽度
           width: 1,
-          //深度测试
+          // 深度测试
           depthTest: true,
         },
       })
-      //将标绘添加入标绘图层
+      // 将标绘添加入标绘图层
       this.graphicsLayer.addGraphic(polylineGraphic)
     },
     addGraphicText(positions, text) {
       const { Cesium } = this
       const { extrudedHeight } = this
-      let textGraphic = new Cesium.Graphic({
-        //类型
+      const textGraphic = new Cesium.Graphic({
+        // 类型
         type: 'wall',
-        //几何点数组
+        // 几何点数组
         positions: positions,
-        //样式
+        // 样式
         style: {
           extrudedHeight: extrudedHeight,
           height: Cesium.Cartographic.fromCartesian(positions[1]).height,
-          //材质类型
+          // 材质类型
           materialType: 'text',
-          //材质
+          // 材质
           material: {
-            //文字
+            // 文字
             text: text,
-            //文字颜色
+            // 文字颜色
             fillColor: Cesium.Color.AQUA,
             font: 'bolder 10px MicroSoft YaHei',
           },
         },
       })
-      //将标绘点添加入标绘图层
+      // 将标绘点添加入标绘图层
       this.graphicsLayer.addGraphic(textGraphic)
     },
     // 通过原点坐标和偏移量添加X方向刻度线和刻度值
@@ -320,7 +322,7 @@ export default {
       const { scaleLength, extrudedHeight } = this
       const { normalizeX, normalizeY, normalizeZ } = unitVector
       // 计算刻度线两点坐标
-      let linePosition1 = Cesium.Cartesian3.add(
+      const linePosition1 = Cesium.Cartesian3.add(
         startPosition,
         Cesium.Cartesian3.multiplyByScalar(
           normalizeX,
@@ -329,7 +331,7 @@ export default {
         ),
         new Cesium.Cartesian3()
       )
-      let linePosition2 = Cesium.Cartesian3.subtract(
+      const linePosition2 = Cesium.Cartesian3.subtract(
         linePosition1,
         Cesium.Cartesian3.multiplyByScalar(
           normalizeZ,
@@ -339,7 +341,7 @@ export default {
         new Cesium.Cartesian3()
       )
       // 计算刻度值两点坐标
-      let textPosition1 = Cesium.Cartesian3.subtract(
+      const textPosition1 = Cesium.Cartesian3.subtract(
         linePosition2,
         Cesium.Cartesian3.multiplyByScalar(
           normalizeX,
@@ -348,7 +350,7 @@ export default {
         ),
         new Cesium.Cartesian3()
       )
-      let textPosition2 = Cesium.Cartesian3.subtract(
+      const textPosition2 = Cesium.Cartesian3.subtract(
         Cesium.Cartesian3.add(
           textPosition1,
           Cesium.Cartesian3.multiplyByScalar(
@@ -374,7 +376,7 @@ export default {
       const { scaleLength, extrudedHeight } = this
       const { normalizeX, normalizeY, normalizeZ } = unitVector
       // 计算刻度线两点坐标
-      let linePosition1 = Cesium.Cartesian3.add(
+      const linePosition1 = Cesium.Cartesian3.add(
         startPosition,
         Cesium.Cartesian3.multiplyByScalar(
           normalizeY,
@@ -383,7 +385,7 @@ export default {
         ),
         new Cesium.Cartesian3()
       )
-      let linePosition2 = Cesium.Cartesian3.add(
+      const linePosition2 = Cesium.Cartesian3.add(
         linePosition1,
         Cesium.Cartesian3.multiplyByScalar(
           normalizeZ,
@@ -393,7 +395,7 @@ export default {
         new Cesium.Cartesian3()
       )
       // 计算刻度值两点坐标
-      let textPosition1 = Cesium.Cartesian3.add(
+      const textPosition1 = Cesium.Cartesian3.add(
         Cesium.Cartesian3.subtract(
           linePosition2,
           Cesium.Cartesian3.multiplyByScalar(
@@ -410,7 +412,7 @@ export default {
         ),
         new Cesium.Cartesian3()
       )
-      let textPosition2 = Cesium.Cartesian3.subtract(
+      const textPosition2 = Cesium.Cartesian3.subtract(
         Cesium.Cartesian3.add(
           textPosition1,
           Cesium.Cartesian3.multiplyByScalar(
@@ -436,7 +438,7 @@ export default {
       const { scaleLength, extrudedHeight } = this
       const { normalizeX, normalizeY, normalizeZ } = unitVector
       // 计算刻度线两点坐标
-      let linePosition1 = Cesium.Cartesian3.add(
+      const linePosition1 = Cesium.Cartesian3.add(
         startPosition,
         Cesium.Cartesian3.multiplyByScalar(
           normalizeZ,
@@ -445,7 +447,7 @@ export default {
         ),
         new Cesium.Cartesian3()
       )
-      let linePosition2 = Cesium.Cartesian3.add(
+      const linePosition2 = Cesium.Cartesian3.add(
         linePosition1,
         Cesium.Cartesian3.multiplyByScalar(
           normalizeX,
@@ -455,7 +457,7 @@ export default {
         new Cesium.Cartesian3()
       )
       // 计算刻度值两点坐标
-      let textPosition1 = Cesium.Cartesian3.add(
+      const textPosition1 = Cesium.Cartesian3.add(
         linePosition2,
         Cesium.Cartesian3.multiplyByScalar(
           normalizeZ,
@@ -464,7 +466,7 @@ export default {
         ),
         new Cesium.Cartesian3()
       )
-      let textPosition2 = Cesium.Cartesian3.add(
+      const textPosition2 = Cesium.Cartesian3.add(
         Cesium.Cartesian3.subtract(
           textPosition1,
           Cesium.Cartesian3.multiplyByScalar(
@@ -488,8 +490,8 @@ export default {
       const { Cesium } = this
       const { scaleLength, extrudedHeight } = this
       const { normalizeX, normalizeY, normalizeZ } = unitVector
-      let OriginalPointPosition1 = southWestBottom
-      let OriginalPointPosition2 = Cesium.Cartesian3.subtract(
+      const OriginalPointPosition1 = southWestBottom
+      const OriginalPointPosition2 = Cesium.Cartesian3.subtract(
         Cesium.Cartesian3.add(
           OriginalPointPosition1,
           Cesium.Cartesian3.multiplyByScalar(
@@ -546,7 +548,7 @@ export default {
     drawGridStyle(centerPosition, position1, position2, gridNum1, gridNum2) {
       const { Cesium } = this
       // position1每一份坐标向量
-      let averagePosition1 = Cesium.Cartesian3.divideByScalar(
+      const averagePosition1 = Cesium.Cartesian3.divideByScalar(
         Cesium.Cartesian3.subtract(
           position1,
           centerPosition,
@@ -556,7 +558,7 @@ export default {
         new Cesium.Cartesian3()
       )
       // position2每一份坐标向量
-      let averagePosition2 = Cesium.Cartesian3.divideByScalar(
+      const averagePosition2 = Cesium.Cartesian3.divideByScalar(
         Cesium.Cartesian3.subtract(
           position2,
           centerPosition,
@@ -566,7 +568,7 @@ export default {
         new Cesium.Cartesian3()
       )
       for (let i = 0; i <= gridNum1; i++) {
-        let linePosition1 = Cesium.Cartesian3.add(
+        const linePosition1 = Cesium.Cartesian3.add(
           centerPosition,
           Cesium.Cartesian3.multiplyByScalar(
             averagePosition1,
@@ -576,7 +578,7 @@ export default {
           new Cesium.Cartesian3()
         )
         for (let j = 0; j <= gridNum2; j++) {
-          let linePosition2 = Cesium.Cartesian3.add(
+          const linePosition2 = Cesium.Cartesian3.add(
             position2,
             Cesium.Cartesian3.multiplyByScalar(
               averagePosition1,
@@ -587,7 +589,7 @@ export default {
           )
           // 绘制线
           this.addGraphicPolyline([linePosition1, linePosition2])
-          let linePositionNew1 = Cesium.Cartesian3.add(
+          const linePositionNew1 = Cesium.Cartesian3.add(
             centerPosition,
             Cesium.Cartesian3.multiplyByScalar(
               averagePosition2,
@@ -596,7 +598,7 @@ export default {
             ),
             new Cesium.Cartesian3()
           )
-          let linePositionNew2 = Cesium.Cartesian3.add(
+          const linePositionNew2 = Cesium.Cartesian3.add(
             position1,
             Cesium.Cartesian3.multiplyByScalar(
               averagePosition2,
