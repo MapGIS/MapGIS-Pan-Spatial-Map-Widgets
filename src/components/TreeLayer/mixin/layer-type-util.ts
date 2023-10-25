@@ -95,7 +95,8 @@ export default {
         key.indexOf('-') > -1
       ) {
         const index = key.split('-')[0]
-        return this.layers[index]?.type === LayerType.VectorTile
+
+        return this.layers && this.layers[index]?.type === LayerType.VectorTile
       }
       return type === LayerType.VectorTile
     },
@@ -184,9 +185,23 @@ export default {
         this.isIgsVectorLayer(item) ||
         this.isDataFlow(item) ||
         (this.isModelCacheLayer(item) && this.includeBindData(item)) ||
-        this.isIgsVector3dLayer(item)
+        this.isIgsVector3dLayer(item) ||
+        this.isIgsTileLayerBindIgsMapImageData(item)
 
       return bool
+    },
+
+    /**
+     * 判断是否为瓦片服务关联的二维地图文档的子图层
+     * @param item layer图层
+     * @returns boolean
+     */
+    isIgsTileLayerBindIgsMapImageData({ layer, sublayers }) {
+      let layerType
+      if (layer) {
+        layerType = layer.type
+      }
+      return layerType === LayerType.IGSTile && sublayers.length === 0
     },
     /**
      * 判断是否是绑定BindData
@@ -222,7 +237,8 @@ export default {
         this.isWMSLayer(item) ||
         this.isArcGISMapImage(item) ||
         this.isArcGISTile(item) ||
-        this.isVectorTile(item)
+        this.isVectorTile(item) ||
+        this.isIgsTileLayerBindIgsMapImageData(item)
       return bool
     },
     /**
@@ -402,11 +418,28 @@ export default {
           setValue: () => {
             const sceneLayer = layer.dataRef
             const { domain, docName } = parent._parseUrl(parent.url)
+            const queryPrefix = parent.extend.queryPrefix || ''
+            const querySuffix = parent.extend.querySuffix || ''
             const { id, name, title } = sceneLayer
             const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
               parent.id
             )
             if (layerConfig && layerConfig.bindData) {
+              let gdbp
+              const is3dBind2dData =
+                parent.searchParams &&
+                parent.searchParams.mapList &&
+                parent.searchParams.mapList.length > 0
+              if (is3dBind2dData) {
+                gdbp = parent.searchParams.mapList.find(
+                  (map) =>
+                    `${queryPrefix}${map.LayerName}${querySuffix}` ===
+                    layer.title
+                ).URL
+              } else {
+                gdbp = layerConfig.bindData.gdbps
+              }
+
               exhibition = {
                 id: `${title} ${id}`,
                 name: `${title} ${titleType}`,
@@ -417,8 +450,9 @@ export default {
                   port: Number(baseConfigInstance.config.port),
                   serverType: parent.type,
                   searchServiceType: layerConfig.bindData.serverType,
-                  gdbp: layerConfig.bindData.gdbps,
+                  gdbp,
                   f: queryType || '',
+                  is3dBind2dData,
                 },
                 popupOption: parent.extend?.popupOption,
               }
@@ -495,6 +529,35 @@ export default {
               popupOption: parent
                 ? parent.extend?.popupOption
                 : layer.extend?.popupOption,
+            }
+          },
+        },
+        {
+          type: parent && this.isIgsTileLayer(parent),
+          setValue: () => {
+            const { domain } = parent._parseUrl(parent.url)
+            const isDataStoreQuery = false
+            const DNSName = undefined
+            const ipPortObj = this.getIpPort({ isDataStoreQuery })
+            exhibition = {
+              id: `${parent.title} ${layer.title} ${layer.id}`,
+              name: `${layer.title} ${titleType}`,
+              description: `${parent.title} ${layer.title}`,
+              option: {
+                id: layer.id,
+                name: layer.title,
+                isDataStoreQuery,
+                DNSName,
+                domain,
+                ...ipPortObj,
+                serverType: LayerType.IGSMapImage,
+                layerIndex: layer.id,
+                gdbp: layer.url,
+                serverName: parent.searchParams.searchName,
+                serverUrl: parent.url,
+                f: queryType || '',
+              },
+              popupOption: parent.extend?.popupOption,
             }
           },
         },
