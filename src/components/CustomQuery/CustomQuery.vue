@@ -3,7 +3,6 @@
 </template>
 
 <script lang="ts">
-import { Component, Mixins, Prop } from 'vue-property-decorator'
 import {
   ExhibitionControllerMixin,
   Exhibition,
@@ -11,25 +10,24 @@ import {
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
-@Component({
+export default {
   name: 'MpCustomQuery',
-  components: {},
-})
-export default class MpCustomQuery extends Mixins(ExhibitionControllerMixin) {
-  @Prop(Object) readonly queryParams!: Record<string, any>
+  props: ['queryParams'],
+  mixins: [ExhibitionControllerMixin],
+  methods: {
+    // 确定
+    onFinish(search) {
+      const exhibition: IAttributeTableExhibition = { ...this.queryParams }
 
-  // 确定
-  onFinish(search) {
-    const exhibition: IAttributeTableExhibition = { ...this.queryParams }
+      exhibition.option.where = search.length > 0 ? `(${search})` : ''
 
-    exhibition.option.where = search.length > 0 ? `(${search})` : ''
+      this.addExhibition(new AttributeTableExhibition(exhibition))
+      this.openExhibitionPanel()
 
-    this.addExhibition(new AttributeTableExhibition(exhibition))
-    this.openExhibitionPanel()
-
-    // 关闭窗口
-    this.$emit('close')
-  }
+      // 关闭窗口
+      this.$emit('close')
+    },
+  },
 }
 </script>
 

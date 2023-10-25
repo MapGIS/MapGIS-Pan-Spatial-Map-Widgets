@@ -109,6 +109,7 @@
                 v-if="!isVectorTileSubLayer(item)"
                 ref="rightPopover"
                 :layer-item="item"
+                :map-list="mapList"
                 @meta-data-info="metaDataInfo"
                 @attributes="attributes"
                 @custom-query="customQuery"
@@ -292,6 +293,23 @@ export default {
 
       return []
     },
+    mapList() {
+      if (this.layers && this.layers.length > 0) {
+        return this.layers.map((layer) => {
+          if (
+            layer.searchParams &&
+            layer.searchParams.mapList &&
+            layer.searchParams.mapList.length > 0
+          ) {
+            return layer.searchParams.mapList
+          } else {
+            return []
+          }
+        })
+      } else {
+        return []
+      }
+    },
   },
   watch: {
     'layerDocument.defaultMap': {
@@ -340,7 +358,7 @@ export default {
                 title: row.description || row.id,
               }))
             }
-            if (this.isWMTSLayer(item)) {
+            if (this.isWMTSLayer(item) || this.isIgsTileLayer(item)) {
               if (item.isVisible || item.visible) {
                 arr.push(item.key)
               }
@@ -756,6 +774,13 @@ export default {
         if (item.layer && this.isWMTSLayer(item.layer)) {
           item.checkable = false
           return
+        }
+        if (item.layer && this.isIgsTileLayer(item.layer)) {
+          item.checkable = false
+          if (item.sublayers && item.sublayers.length > 0) {
+            this.setSublayers(item.sublayers, item.key, arr, layerSublayers)
+          }
+          continue
         }
         if (
           (item.sublayers && item.sublayers.length === 0) ||

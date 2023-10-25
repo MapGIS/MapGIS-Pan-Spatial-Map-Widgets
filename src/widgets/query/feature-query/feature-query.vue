@@ -571,13 +571,117 @@ export default {
             break
           case LayerType.IGSScene:
           case LayerType.ModelCache:
-            this.queryFeaturesByIGSScene(layer, geometry)
+            if (
+              layer.searchParams &&
+              layer.searchParams.mapList &&
+              layer.searchParams.mapList.length > 0
+            ) {
+              this.queryFeaturesByBindDoc(layer, geometry)
+            } else {
+              this.queryFeaturesByIGSScene(layer, geometry)
+            }
+
             break
           case LayerType.ArcGISMapImage:
             this.queryFeaturesByArcgis(layer, geometry)
             break
+          case LayerType.IGSTile:
+            if (layer.sublayers && layer.sublayers.length > 0) {
+              this.queryFeaturesByBindDoc(layer, geometry)
+            }
+            break
           default:
             break
+        }
+      })
+    },
+
+    // 关联二维地图文档的三维服务或瓦片服务走这个查询
+    async queryFeaturesByBindDoc(layer, geometry) {
+      if (!layer.isVisible) {
+        return
+      }
+      const url = new URL(layer.url)
+      const domain = url.origin
+      const { extend } = layer
+      const queryPrefix = extend.queryPrefix || ''
+      const querySuffix = extend.querySuffix || ''
+
+      const exhibition: IAttributeTableListExhibition = {
+        id: `${layer.id}`,
+        name: `${layer.title} 查询结果`,
+        description: '',
+        options: [],
+        popupOption: extend.popupOption,
+      }
+      let activeOptionId = ''
+      const allSublayers = []
+      switch (layer.type) {
+        case LayerType.IGSScene:
+          this.getAllSublayer(allSublayers, layer.activeScene.sublayers)
+          break
+        case LayerType.IGSTile:
+          this.getAllSublayer(allSublayers, layer.sublayers)
+          break
+        default:
+          break
+      }
+
+      for (let index = 0; index < allSublayers.length; index++) {
+        const sublayer = allSublayers[index]
+        let map = {}
+        switch (layer.type) {
+          case LayerType.IGSScene:
+            map = layer.searchParams.mapList.find(
+              (map) =>
+                `${queryPrefix}${map.LayerName}${querySuffix}` ===
+                sublayer.title
+            )
+            break
+          case LayerType.IGSTile:
+            map.URL = sublayer.url
+            break
+          default:
+            break
+        }
+
+        if (map) {
+          const isDataStoreQuery = false
+          const ipPortObj = this.getIpPort({
+            isDataStoreQuery,
+          })
+          const options = {
+            id: sublayer.id,
+            name: sublayer.title,
+            domain,
+            ...ipPortObj,
+            serverType: layer.type,
+            gdbp: map.URL,
+            geometry,
+            is3dBind2dData: true,
+          }
+          exhibition.options.push(options)
+          /**
+           * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
+           * 修改人：龚跃健
+           * 修改时间：2023/1/31
+           */
+          const { TotalCount } = await this.queryCount(options, true)
+          if (TotalCount > 0) {
+            activeOptionId = sublayer.id
+          }
+        }
+      }
+
+      this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
+    },
+
+    getAllSublayer(allSublayers, sublayers) {
+      sublayers.forEach((sublayer) => {
+        if (sublayer.sublayers && sublayer.sublayers.length === 0) {
+          allSublayers.push(sublayer)
+        } else {
+          this.getAllSublayer(allSublayers, sublayer.sublayers)
         }
       })
     },
@@ -798,7 +902,7 @@ export default {
       this.setActiveExhibitionIdAndOptionId(exhibition, null, TotalCount)
     },
 
-    // IGSMapImage、IGSVector图层获取总页数
+    // IGSMapImage、IGSVector图层获取总页数,关联二维地图文档的三维服务也调用这个函数获取总页数
     async queryCount(optionVal, isScence = false) {
       const {
         ip,
@@ -811,23 +915,15 @@ export default {
         geometry,
       } = optionVal
       if (isScence) {
-        const { xmin, ymin, xmax, ymax, zmin, zmax } = geometry
-        const queryGeometry = new Rectangle3D(
-          xmin,
-          ymin,
-          zmin,
-          xmax,
-          ymax,
-          zmax
-        )
         const json = await FeatureQuery.igsQueryResourceServer({
           ip,
           port: port.toString(),
           domain,
-          geometry: queryGeometry,
+          geometry,
           url: gdbp,
           returnCountOnly: true,
         })
+        return { TotalCount: json.count }
       }
       const featureSet = await FeatureQuery.query(
         {

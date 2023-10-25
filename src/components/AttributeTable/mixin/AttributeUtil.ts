@@ -102,6 +102,7 @@ export default {
         case LayerType.IGSScene:
         case LayerType.ModelCache:
         case LayerType.IGSVector3D:
+        case LayerType.IGSTile:
           return 'FID'
         case LayerType.EsGeoCode:
           return 'customerId'
@@ -217,6 +218,7 @@ export default {
         layerIndex,
         gdbp,
         f,
+        is3dBind2dData = false,
       } = this.optionVal
       let { domain } = this.optionVal
       if (!domain && !!serverUrl && serverUrl.length > 0) {
@@ -390,7 +392,8 @@ export default {
             this.attrTableToJsonData = this.setTable20(
               jsonData.features,
               source,
-              jsonData.fields
+              jsonData.fields,
+              is3dBind2dData
             )
             return
           } else {
@@ -415,7 +418,8 @@ export default {
           this.tableData = this.setTable20(
             jsonData.features,
             source,
-            jsonData.fields
+            jsonData.fields,
+            is3dBind2dData
           )
           this.removeMarkers()
           // 如果当前是激活状态，则添加markers
@@ -502,6 +506,82 @@ export default {
             }
           }
           break
+
+        case LayerType.IGSTile: {
+          queryGeometry = this.optionVal.geometry
+          if (!isPageChange) {
+            const json = await FeatureQuery.igsQueryResourceServer({
+              ip,
+              port: port.toString(),
+              domain,
+              geometry: queryGeometry,
+              url: gdbp,
+              inSrs: 'WGS1984_度',
+              outSrs: 'WGS1984_度',
+              returnCountOnly: true,
+            })
+            const { count } = json
+            this.pagination.total = count
+          }
+          let jsonData
+          if (val === '1') {
+            jsonData = await FeatureQuery.igsQueryResourceServer({
+              ip,
+              port: port.toString(),
+              domain,
+              where: queryWhere,
+              geometry: queryGeometry,
+              page: 0,
+              pageCount: this.pagination.total,
+              url: gdbp,
+              geometryPrecision: 8,
+              inSrs: 'WGS1984_度',
+              outSrs: 'WGS1984_度',
+            })
+            this.attrTableToJsonData = this.setTable20(
+              jsonData.features,
+              source,
+              jsonData.fields,
+              is3dBind2dData
+            )
+            return
+          } else {
+            jsonData = await FeatureQuery.igsQueryResourceServer({
+              ip,
+              port: port.toString(),
+              domain,
+              where: queryWhere,
+              geometry: queryGeometry,
+              url: gdbp,
+              geometryPrecision: 8,
+              inSrs: 'WGS1984_度',
+              outSrs: 'WGS1984_度',
+              page: current - 1,
+              pageCount: pageSize,
+            })
+          }
+          if (!(this.tableColumns && this.tableColumns.length > 0)) {
+            columns = this.setTableScroll20(jsonData.fields)
+            this.tableColumns = columns
+          }
+          console.log(jsonData, 'jsonData')
+
+          const tableData = []
+          jsonData.features.forEach((item) => {
+            tableData.push({
+              type: 'Feature',
+              properties: item.attributes,
+              geometry: item.geometry,
+            })
+          })
+          this.tableData = tableData
+          this.removeMarkers()
+          // 如果当前是激活状态，则添加markers
+          if (this.isExhibitionActive) {
+            await this.addMarkers()
+          }
+          break
+        }
 
         default:
           break
@@ -659,21 +739,25 @@ export default {
         }
       })
     },
-    setTable20(features, source, fields) {
-      return (features || []).map(({ attributes = {}, bound = {} }) => {
-        const properties = {
-          FID: attributes.FID,
-          specialLayerId: this.optionVal.id,
-          specialLayerBound: bound,
+    setTable20(features, source, fields, is3dBind2dData) {
+      return (features || []).map(
+        ({ attributes = {}, bound = {}, geometry = {} }) => {
+          const properties = {
+            FID: attributes.FID,
+            specialLayerId: this.optionVal.id,
+            specialLayerBound: bound,
+            specialLayerType: geometry.type,
+            is3dBind2dData,
+          }
+          return {
+            geometry: {
+              coordinates: [],
+              type: '3DPolygon',
+            },
+            properties: { ...properties, ...attributes },
+          }
         }
-        return {
-          geometry: {
-            coordinates: [],
-            type: '3DPolygon',
-          },
-          properties: { ...properties, ...attributes },
-        }
-      })
+      )
     },
     // IGSMapImage、IGSVector图层获取总页数
     async queryCount(geometry?: Record<string, any>, where?: string) {

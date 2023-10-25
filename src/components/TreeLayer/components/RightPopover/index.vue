@@ -25,6 +25,10 @@ export default {
       type: Object,
       default: () => ({}),
     },
+    mapList: {
+      type: Array,
+      default: () => [],
+    },
   },
   data() {
     return {

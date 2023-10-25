@@ -10,31 +10,33 @@
         <mapgis-ui-form-model-item :colon="false">
           <mapgis-ui-row>
             <mapgis-ui-col>
-              <mapgis-ui-select
+              <mapgis-ui-tree-select
                 v-model="tDataIndex"
+                placeholder="请选择图层"
+                :tree-data="layerArrOption"
+                :getPopupContainer="
+                  (e) => {
+                    return e.parentNode
+                  }
+                "
+                tree-default-expand-all
+                :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
+                :replace-fields="replaceFields"
+                @select="tSelectTarget"
                 @change="tchangeTarget($event)"
                 v-if="!selectLevel"
+                :showSearch="true"
               >
-                <mapgis-ui-select-option
-                  v-for="(item, index) in layerArrOption"
-                  :key="index"
-                  :value="index"
-                  >{{ item.title }}</mapgis-ui-select-option
-                >
-              </mapgis-ui-select>
-              <mapgis-ui-select
+              </mapgis-ui-tree-select>
+              <mapgis-ui-tree-select
                 v-model="tDataIndex"
-                @change="tchangeTarget"
+                placeholder="请选择图层"
+                :tree-data="layerArrOption"
+                :replace-fields="replaceFields"
                 v-if="selectLevel"
                 disabled
               >
-                <mapgis-ui-select-option
-                  v-for="(item, index) in layerArrOption"
-                  :key="index"
-                  :value="index"
-                  >{{ item.title }}</mapgis-ui-select-option
-                >
-              </mapgis-ui-select>
+              </mapgis-ui-tree-select>
             </mapgis-ui-col>
           </mapgis-ui-row>
           <mapgis-ui-checkbox
@@ -147,6 +149,13 @@ export default {
       visible: false,
       resultData: {},
       modelBuffer: false,
+      replaceFields: {
+        children: 'sublayers',
+        title: 'title',
+        key: 'layerIndex',
+        value: 'title',
+      },
+      layerArrOption: [],
     }
   },
 
@@ -164,12 +173,6 @@ export default {
     },
   },
   computed: {
-    tData() {
-      if (this.tDataIndex !== null) {
-        return this.layerArrOption[this.tDataIndex]
-      }
-      return null
-    },
     ip() {
       if (!!this.baseBufferUrl && this.baseBufferUrl.length > 0) {
         return this.baseBufferUrl.split('/')[2].split(':')[0]
@@ -213,45 +216,111 @@ export default {
       this.tDataIndex = null
       this.layerArrOption = []
       const arr = []
-      val.layers().forEach((data) => {
-        if (data.type === LayerType.IGSVector) {
-          arr.push(data)
-        } else if (data.type === LayerType.IGSMapImage) {
-          // 带组图层的情况
-          data.sublayers.forEach((sublayer) => {
-            if (sublayer.sublayers && sublayer.sublayers.length > 0) {
-              sublayer.sublayers.forEach((item) => {
-                if (Types.includes(item.geomType)) {
-                  arr.push(item)
-                }
-              })
-            } else {
-              if (Types.includes(sublayer.geomType)) {
-                arr.push(sublayer)
-              }
-            }
-          })
+      const layers: Array<unknown> = this.document.clone().defaultMap.layers()
+      for (let i = 0; i < layers.length; i++) {
+        const layer = layers[i]
+        if (
+          layer.type === LayerType.IGSVector ||
+          layer.type === LayerType.IGSMapImage ||
+          layer.type === LayerType.IGSTile
+        ) {
+          const treeNodeData = {
+            id: layer.id,
+            layerIndex: `${i}`,
+            sublayers: [],
+            title: layer.title,
+            url: layer.url,
+            serverURL: layer.serverURL,
+            type: layer.type,
+            serverType: layer.serverType,
+            layer,
+          }
+          if (layer.sublayers && layer.sublayers.length > 0) {
+            treeNodeData.disabled = true
+            this.formatTreeNodeData(
+              treeNodeData.sublayers,
+              layer.sublayers,
+              treeNodeData.layerIndex,
+              layer
+            )
+          }
+          arr.push(treeNodeData)
         } else if (
-          data.type === LayerType.IGSScene ||
-          data.type === LayerType.ModelCache
+          layer.type === LayerType.IGSScene ||
+          layer.type === LayerType.ModelCache
         ) {
           const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
-            data.id
+            layer.id
           )
           if (layerConfig && layerConfig.bindData) {
+            const treeNodeData = {
+              id: layer.id,
+              layerIndex: `${i}`,
+              sublayers: [],
+              title: layer.title,
+              url: layer.url,
+              serverURL: layer.serverURL,
+              type: layer.type,
+              serverType: layer.serverType,
+              layer,
+              disabled: true,
+            }
             if (!layerConfig.bindData.title) {
               layerConfig.bindData.title =
-                layerConfig.bindData.serverName || data.title
+                layerConfig.bindData.serverName || layer.title
             }
-            arr.push(layerConfig.bindData)
+            layerConfig.bindData.id = `${layer.id}:0`
+            treeNodeData.sublayers.push({
+              id: layerConfig.bindData.id,
+              layerIndex: `${i}-0`,
+              sublayers: [],
+              title: layerConfig.bindData.title,
+              url: layerConfig.bindData.url,
+              serverURL: layerConfig.bindData.serverURL,
+              gdbps: layerConfig.bindData.gdbps,
+              type: layerConfig.bindData.type,
+              serverType: layerConfig.bindData.serverType,
+              layer,
+            })
+            arr.push(treeNodeData)
           }
         }
-      })
+      }
+
       if (arr.length > 0) {
         this.layerArrOption = arr
-        this.tDataIndex = 0
       }
-      this.tchangeTarget()
+    },
+
+    formatTreeNodeData(arr, sublayers, index, parantLayer) {
+      for (let i = 0; i < sublayers.length; i++) {
+        const layer = sublayers[i]
+        const treeNodeData = {
+          id: layer.id,
+          layerIndex: `${index}-${i}`,
+          sublayers: [],
+          title: layer.title,
+          url: layer.url,
+          serverURL: layer.serverURL,
+          type: layer.type,
+          serverType: layer.serverType,
+          layer: parantLayer,
+        }
+        if (layer.sublayers && layer.sublayers.length > 0) {
+          treeNodeData.disabled = true
+          this.formatTreeNodeData(
+            treeNodeData.sublayers,
+            layer.sublayers,
+            treeNodeData.layerIndex,
+            parantLayer
+          )
+        }
+        arr.push(treeNodeData)
+      }
+    },
+
+    tSelectTarget(value, node) {
+      this.tData = node.dataRef
     },
 
     // 微件窗口模式切换时回调
@@ -299,7 +368,7 @@ export default {
     getResultLayer() {
       let url
       let layerType
-      if (this.dataType === 'Model' || modelBuffer) {
+      if (this.dataType === 'Model' || this.modelBuffer) {
         url = `${this.domain}/igs/rest/services/system/ResourceServer/tempData/models?gdbpUrl=${this.destLayer}`
         layerType = 'IGSVector3D'
       } else {
@@ -317,7 +386,7 @@ export default {
     addNewLayer(bufferStyle, renderType) {
       const resultLayer: Array<string> = this.getResultLayer()
       let highlightStyle
-      if (this.dataType !== 'Model' && !modelBuffer) {
+      if (this.dataType !== 'Model' && !this.modelBuffer) {
         highlightStyle = {
           polygon: new FillStyle({
             width: 8,

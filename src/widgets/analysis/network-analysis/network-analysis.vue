@@ -585,7 +585,7 @@ export default {
             this.showLoading = false
             this.dealWithExecuteRes(res)
           })
-        } else if (status === 'Runing') {
+        } else if (status === 'Runing' || status === 'waiting') {
           window.setTimeout(() => {
             this.getStatus(guid)
           }, 1000)
