@@ -505,7 +505,7 @@ export default {
     getNextData(url, name) {
       // path路径不对，使用path拼接有问题
       const lastItem = this.breadcrumbList[this.breadcrumbList.length - 1]
-      url = lastItem.url + `/${name}`
+      url = `${lastItem.url}/${name}`
       this.breadcrumbList.push({
         title: name,
         url,
@@ -529,7 +529,7 @@ export default {
       try {
         const paresUrl = new URL(this.url)
         const { origin } = paresUrl
-        let previewUrl = `${origin}/datastore/rest/services/file/hdfs${path}/download`
+        const previewUrl = `${origin}/datastore/rest/services/file/hdfs${path}/download`
         const link = document.createElement('a')
         link.style.display = 'none'
         link.href = previewUrl
@@ -570,6 +570,8 @@ export default {
             this.$viewer.show()
             // this.imgUrl = `${origin}/datastore/rest/services/file/hdfs${path}/download?isPreview=true`
             // this.showFileType = 'img'
+            break
+          default:
             break
         }
         previewUrl && window.open(previewUrl)

@@ -214,12 +214,41 @@ export default {
         const { id } = layer
         const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(id)
         if (layerConfig && layerConfig.bindData) {
-          return true
+          if (
+            layerConfig.bindData.gdbps &&
+            layerConfig.bindData.gdbps.includes('gdbp')
+          ) {
+            return true
+          } else if (
+            layer.searchParams &&
+            layer.searchParams.mapList &&
+            layer.searchParams.mapList.length > 0
+          ) {
+            const queryPrefix = layer.extend.queryPrefix || ''
+            const querySuffix = layer.extend.querySuffix || ''
+
+            return layer.searchParams.mapList.some((map) => {
+              return (
+                `${queryPrefix}${map.LayerName}${querySuffix}` === item.title
+              )
+            })
+          } else {
+            return false
+          }
         } else {
           return false
         }
       }
       return false
+    },
+    /**
+     * 判断是否是展示自定义查询按钮
+     * @param item layer图层
+     * @returns boolean
+     */
+    isCustomQuery(item) {
+      const bool = this.isAttributes(item)
+      return bool
     },
     /**
      * 判断是否是展示元数据按钮
@@ -229,16 +258,17 @@ export default {
     isMetaData(item) {
       const bool =
         // this.isParentLayer(item) &&
-        this.isIGSScene(item) ||
-        this.isIgsDocLayer(item) ||
-        this.isIgsVectorLayer(item) ||
-        this.isIgsTileLayer(item) ||
-        this.isWMTSLayer(item) ||
-        this.isWMSLayer(item) ||
-        this.isArcGISMapImage(item) ||
-        this.isArcGISTile(item) ||
-        this.isVectorTile(item) ||
-        this.isIgsTileLayerBindIgsMapImageData(item)
+        (this.isIGSScene(item) ||
+          this.isIgsDocLayer(item) ||
+          this.isIgsVectorLayer(item) ||
+          this.isIgsTileLayer(item) ||
+          this.isWMTSLayer(item) ||
+          this.isWMSLayer(item) ||
+          this.isArcGISMapImage(item) ||
+          this.isArcGISTile(item) ||
+          this.isVectorTile(item) ||
+          this.isIgsTileLayerBindIgsMapImageData(item)) &&
+        this.isParentLayer(item)
       return bool
     },
     /**
@@ -431,11 +461,13 @@ export default {
                 parent.searchParams.mapList &&
                 parent.searchParams.mapList.length > 0
               if (is3dBind2dData) {
-                gdbp = parent.searchParams.mapList.find(
+                const map = parent.searchParams.mapList.find(
                   (map) =>
                     `${queryPrefix}${map.LayerName}${querySuffix}` ===
                     layer.title
-                ).URL
+                )
+                if (!map) return
+                gdbp = map.URL
               } else {
                 gdbp = layerConfig.bindData.gdbps
               }
@@ -466,10 +498,28 @@ export default {
             const url = new URL(layer.url)
             const domain = url.origin
             const { id, name, title } = sceneLayer
+            const queryPrefix = layer.extend.queryPrefix || ''
+            const querySuffix = layer.extend.querySuffix || ''
             const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
               layer.id
             )
             if (layerConfig && layerConfig.bindData) {
+              let gdbp
+              const is3dBind2dData =
+                layer.searchParams &&
+                layer.searchParams.mapList &&
+                layer.searchParams.mapList.length > 0
+              if (is3dBind2dData) {
+                const map = layer.searchParams.mapList.find(
+                  (map) =>
+                    `${queryPrefix}${map.LayerName}${querySuffix}` ===
+                    layer.title
+                )
+                if (!map) return
+                gdbp = map.URL
+              } else {
+                gdbp = layerConfig.bindData.gdbps
+              }
               exhibition = {
                 id: `${title} ${id}`,
                 name: `${title} ${titleType}`,
@@ -480,8 +530,9 @@ export default {
                   port: Number(baseConfigInstance.config.port),
                   serverType: layer.type,
                   searchServiceType: layerConfig.bindData.serverType,
-                  gdbp: layerConfig.bindData.gdbps,
+                  gdbp,
                   f: queryType || '',
+                  is3dBind2dData,
                 },
                 popupOption: layer.extend?.popupOption,
               }
