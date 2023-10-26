@@ -202,6 +202,7 @@ export default {
       ],
       defaultQueryTypes3d: [
         QueryType.Point,
+        QueryType.Circle,
         QueryType.Polygon,
         QueryType.LineString,
         QueryType.Rectangle,
