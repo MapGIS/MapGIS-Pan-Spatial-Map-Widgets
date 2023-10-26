@@ -30,10 +30,7 @@
           @change="enableModelCoordinateGridChange"
         />
       </mapgis-ui-form-item>
-      <mapgis-ui-form-item
-        v-if="enableModelCoordinateGrid"
-        label="模型坐标网格类型"
-      >
+      <mapgis-ui-form-item v-if="enableModelCoordinateGrid">
         <mapgis-ui-radio-group
           v-model="coordinateGridType"
           :options="[
