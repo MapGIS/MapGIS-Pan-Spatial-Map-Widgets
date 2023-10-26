@@ -620,6 +620,12 @@ export default {
         case LayerType.IGSScene:
           this.getAllSublayer(allSublayers, layer.activeScene.sublayers)
           break
+
+        case LayerType.ModelCache:
+          allSublayers.push({
+            title: layer.title,
+          })
+          break
         case LayerType.IGSTile:
           this.getAllSublayer(allSublayers, layer.sublayers)
           break
@@ -632,6 +638,7 @@ export default {
         let map = {}
         switch (layer.type) {
           case LayerType.IGSScene:
+          case LayerType.ModelCache:
             map = layer.searchParams.mapList.find(
               (map) =>
                 `${queryPrefix}${map.LayerName}${querySuffix}` ===

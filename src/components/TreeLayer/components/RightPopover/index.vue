@@ -35,9 +35,7 @@ export default {
       listData: [
         {
           name: '图层元数据',
-          show:
-            this.isMetaData(this.layerItem) &&
-            this.isParentLayer(this.layerItem),
+          show: this.isMetaData(this.layerItem),
           click: () => this.metaDataInfo(),
         },
         {
@@ -48,9 +46,10 @@ export default {
         {
           name: '自定义查询',
           show:
-            this.isMetaData(this.layerItem) &&
-            !this.isDataFlow(this.layerItem) &&
-            !this.isParentLayer(this.layerItem),
+            (this.isMetaData(this.layerItem) &&
+              !this.isDataFlow(this.layerItem) &&
+              this.isSubLayer(this.layerItem)) ||
+            this.isCustomQuery(this.layerItem),
           click: () => this.customQuery(),
         },
         {
