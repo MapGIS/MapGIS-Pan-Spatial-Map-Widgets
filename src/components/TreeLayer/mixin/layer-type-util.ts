@@ -212,11 +212,10 @@ export default {
       const layer = item.layer || item
       if (layer) {
         const { id } = layer
-        const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(id)
-        if (layerConfig && layerConfig.bindData) {
+        if (layer && layer.searchParams) {
           if (
-            layerConfig.bindData.gdbps &&
-            layerConfig.bindData.gdbps.includes('gdbp')
+            layer.searchParams.searchName &&
+            layer.searchParams.searchName.includes('gdbp')
           ) {
             return true
           } else if (
@@ -451,43 +450,40 @@ export default {
             const queryPrefix = parent.extend.queryPrefix || ''
             const querySuffix = parent.extend.querySuffix || ''
             const { id, name, title } = sceneLayer
-            const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
-              parent.id
-            )
-            if (layerConfig && layerConfig.bindData) {
-              let gdbp
-              const is3dBind2dData =
-                parent.searchParams &&
-                parent.searchParams.mapList &&
-                parent.searchParams.mapList.length > 0
-              if (is3dBind2dData) {
-                const map = parent.searchParams.mapList.find(
-                  (map) =>
-                    `${queryPrefix}${map.LayerName}${querySuffix}` ===
-                    layer.title
-                )
-                if (!map) return
-                gdbp = map.URL
-              } else {
-                gdbp = layerConfig.bindData.gdbps
-              }
 
-              exhibition = {
-                id: `${title} ${id}`,
-                name: `${title} ${titleType}`,
-                option: {
-                  id: `${id}`,
-                  domain,
-                  ip: baseConfigInstance.config.ip,
-                  port: Number(baseConfigInstance.config.port),
-                  serverType: parent.type,
-                  searchServiceType: layerConfig.bindData.serverType,
-                  gdbp,
-                  f: queryType || '',
-                  is3dBind2dData,
-                },
-                popupOption: parent.extend?.popupOption,
-              }
+            let gdbp
+            const is3dBind2dData =
+              parent.searchParams &&
+              parent.searchParams.mapList &&
+              parent.searchParams.mapList.length > 0
+            if (is3dBind2dData) {
+              const map = parent.searchParams.mapList.find(
+                (map) =>
+                  `${queryPrefix}${map.LayerName}${querySuffix}` === layer.title
+              )
+              if (!map) return
+              gdbp = map.URL
+            } else if (parent.searchParams.searchName.includes('gdbp')) {
+              gdbp = parent.searchParams.searchName
+            } else {
+              return
+            }
+
+            exhibition = {
+              id: `${title} ${id}`,
+              name: `${title} ${titleType}`,
+              option: {
+                id: `${id}`,
+                domain,
+                ip: baseConfigInstance.config.ip,
+                port: Number(baseConfigInstance.config.port),
+                serverType: parent.type,
+                searchServiceType: parent.searchParams.searchServiceType,
+                gdbp,
+                f: queryType || '',
+                is3dBind2dData,
+              },
+              popupOption: parent.extend?.popupOption,
             }
           },
         },
@@ -500,42 +496,40 @@ export default {
             const { id, name, title } = sceneLayer
             const queryPrefix = layer.extend.queryPrefix || ''
             const querySuffix = layer.extend.querySuffix || ''
-            const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
-              layer.id
-            )
-            if (layerConfig && layerConfig.bindData) {
-              let gdbp
-              const is3dBind2dData =
-                layer.searchParams &&
-                layer.searchParams.mapList &&
-                layer.searchParams.mapList.length > 0
-              if (is3dBind2dData) {
-                const map = layer.searchParams.mapList.find(
-                  (map) =>
-                    `${queryPrefix}${map.LayerName}${querySuffix}` ===
-                    layer.title
-                )
-                if (!map) return
-                gdbp = map.URL
-              } else {
-                gdbp = layerConfig.bindData.gdbps
-              }
-              exhibition = {
-                id: `${title} ${id}`,
-                name: `${title} ${titleType}`,
-                option: {
-                  id: `${id}`,
-                  domain,
-                  ip: baseConfigInstance.config.ip,
-                  port: Number(baseConfigInstance.config.port),
-                  serverType: layer.type,
-                  searchServiceType: layerConfig.bindData.serverType,
-                  gdbp,
-                  f: queryType || '',
-                  is3dBind2dData,
-                },
-                popupOption: layer.extend?.popupOption,
-              }
+
+            let gdbp
+            const is3dBind2dData =
+              layer.searchParams &&
+              layer.searchParams.mapList &&
+              layer.searchParams.mapList.length > 0
+            if (is3dBind2dData) {
+              const map = layer.searchParams.mapList.find(
+                (map) =>
+                  `${queryPrefix}${map.LayerName}${querySuffix}` === layer.title
+              )
+              if (!map) return
+              gdbp = map.URL
+            } else if (layer.searchParams.searchName.includes('gdbp')) {
+              gdbp = layer.searchParams.searchName
+            } else {
+              return
+            }
+
+            exhibition = {
+              id: `${title} ${id}`,
+              name: `${title} ${titleType}`,
+              option: {
+                id: `${id}`,
+                domain,
+                ip: baseConfigInstance.config.ip,
+                port: Number(baseConfigInstance.config.port),
+                serverType: layer.type,
+                searchServiceType: layer.searchParams.searchServiceType,
+                gdbp,
+                f: queryType || '',
+                is3dBind2dData,
+              },
+              popupOption: layer.extend?.popupOption,
             }
           },
         },

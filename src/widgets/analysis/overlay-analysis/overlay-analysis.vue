@@ -239,39 +239,23 @@ export default {
           layer.type === LayerType.IGSScene ||
           layer.type === LayerType.ModelCache
         ) {
-          const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
-            layer.id
-          )
-          if (layerConfig && layerConfig.bindData) {
+          // 只支持使用绑定的简单要素类进行分析，绑定二维地图文档无法分析
+          if (
+            layer.searchParams &&
+            layer.searchParams.searchName &&
+            layer.searchParams.searchName.includes('gdbp')
+          ) {
             const treeNodeData = {
               id: layer.id,
               layerIndex: `${i}`,
               sublayers: [],
               title: layer.title,
-              url: layer.url,
+              url: layer.searchParams.searchName,
               serverURL: layer.serverURL,
               type: layer.type,
               serverType: layer.serverType,
               layer,
-              disabled: true,
             }
-            if (!layerConfig.bindData.title) {
-              layerConfig.bindData.title =
-                layerConfig.bindData.serverName || layer.title
-            }
-            layerConfig.bindData.id = `${layer.id}:0`
-            treeNodeData.sublayers.push({
-              id: layerConfig.bindData.id,
-              layerIndex: `${i}-0`,
-              sublayers: [],
-              title: layerConfig.bindData.title,
-              url: layerConfig.bindData.url,
-              serverURL: layerConfig.bindData.serverURL,
-              gdbps: layerConfig.bindData.gdbps,
-              type: layerConfig.bindData.type,
-              serverType: layerConfig.bindData.serverType,
-              layer,
-            })
             arr.push(treeNodeData)
           }
         }
