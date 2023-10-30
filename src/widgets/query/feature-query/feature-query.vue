@@ -680,8 +680,9 @@ export default {
           }
         }
       }
-
-      this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
+      if (exhibition.options.length > 0) {
+        this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
+      }
     },
 
     getAllSublayer(allSublayers, sublayers) {
@@ -700,6 +701,8 @@ export default {
       }
       const url = new URL(layer.url)
       const domain = url.origin
+      const ip = url.hostname
+      const port = url.port
       const { extend } = layer
 
       const exhibition: IAttributeTableListExhibition = {
@@ -713,19 +716,18 @@ export default {
       const sublayers = this.isShowLayerList
         ? this.getSublayers(layer.id)
         : layer.activeScene?.sublayers
-      const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
-        layer.id
-      )
-      if (layerConfig && layerConfig.bindData) {
+      if (
+        layer.searchParams &&
+        layer.searchParams.searchName?.includes('gdbp')
+      ) {
         exhibition.options.push({
-          id: layerConfig.bindData.id || layer.id,
-          name: layerConfig.title || layerConfig.name,
-          ip: layerConfig.bindData.ip || baseConfigInstance.config.ip,
-          port:
-            layerConfig.bindData.port || Number(baseConfigInstance.config.port),
+          id: `${layer.id}:0`,
+          name: layer.title,
+          ip: ip || baseConfigInstance.config.ip,
+          port: port || Number(baseConfigInstance.config.port),
           domain,
           serverType: layer.type,
-          gdbp: layerConfig.bindData.gdbps,
+          gdbp: layer.searchParams.searchName,
           geometry: geometry,
         })
         const { xmin, ymin, xmax, ymax, zmin, zmax } = geometry
@@ -738,17 +740,16 @@ export default {
           zmax
         )
         const json = await FeatureQuery.igsQueryResourceServer({
-          ip: layerConfig.bindData.ip || baseConfigInstance.config.ip,
-          port:
-            layerConfig.bindData.port || Number(baseConfigInstance.config.port),
+          ip: ip || baseConfigInstance.config.ip,
+          port: port || Number(baseConfigInstance.config.port),
           domain,
           geometry: queryGeometry,
-          url: layerConfig.bindData.gdbps,
+          url: layer.searchParams.searchName,
           returnCountOnly: true,
         })
         const TotalCount = json.count
         if (TotalCount > 0) {
-          activeOptionId = layerConfig.bindData.id || layer.id
+          activeOptionId = `${layer.id}:0`
         }
         this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
       }
