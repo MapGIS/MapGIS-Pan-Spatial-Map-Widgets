@@ -680,8 +680,9 @@ export default {
           }
         }
       }
-
-      this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
+      if (exhibition.options.length > 0) {
+        this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
+      }
     },
 
     getAllSublayer(allSublayers, sublayers) {
