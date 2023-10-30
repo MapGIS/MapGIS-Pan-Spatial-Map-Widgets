@@ -261,13 +261,22 @@ export default {
       val.layers().forEach((data) => {
         if (
           data.type === LayerType.IGSMapImage ||
-          data.type === LayerType.IGSVector ||
-          data.type === LayerType.IGSScene ||
-          data.type === LayerType.ModelCache
+          data.type === LayerType.IGSVector
         ) {
           arr.push(data)
         } else if (data.type === LayerType.IGSTile) {
           if (data.sublayers && data.sublayers.length > 0) {
+            arr.push(data)
+          }
+        } else if (
+          data.type === LayerType.IGSScene ||
+          data.type === LayerType.ModelCache
+        ) {
+          if (
+            data.searchParams &&
+            data.searchParams.searchName &&
+            data.searchParams.searchName.includes('gdbp')
+          ) {
             arr.push(data)
           }
         }
@@ -457,18 +466,18 @@ export default {
       }
       const { domain, docName } = layer._parseUrl(layer.url)
 
-      const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
-        layer.id
-      )
       let arr = []
-      if (layerConfig && layerConfig.bindData) {
+      if (
+        layer.searchParams &&
+        layer.searchParams.searchName?.includes('gdbp')
+      ) {
         arr = [
           {
             ip: baseConfigInstance.config.ip,
             port: Number(baseConfigInstance.config.port),
             domain,
             serverType: layer.type,
-            gdbp: layerConfig.bindData.gdbps,
+            gdbp: layer.searchParams.searchName,
             geometry: geometry,
             name: layer.title,
           },
