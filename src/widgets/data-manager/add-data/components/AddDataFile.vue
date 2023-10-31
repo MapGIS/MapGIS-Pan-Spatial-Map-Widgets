@@ -39,7 +39,7 @@
       <mapgis-ui-row>
         <mapgis-ui-upload-dragger
           name="file"
-          :action="`${domain}/igs/rest/resource/upload`"
+          :action="action"
           :accept="accept"
           @change="handleChange"
         >
@@ -116,6 +116,9 @@ export default {
         case '6X':
           this.accept = '.wp,.wt,.wl'
           break
+        case 'GeoJson':
+          this.accept = '.geojson,.json'
+          break
         case 'KML':
           this.accept = '.kml'
           break
@@ -135,6 +138,13 @@ export default {
       const protocol = window.location.protocol
       const domain = `${protocol}//${this.config.igsIp}:${this.config.igsPort}`
       return domain
+    },
+    action() {
+      if (['TIF', 'SHP', '6X'].includes(this.fileDataType.value)) {
+        return `${this.domain}/igs/rest/resource/upload`
+      } else {
+        return `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files`
+      }
     },
   },
 
@@ -163,9 +173,31 @@ export default {
         this.$message.warn('请上传正确的文件')
         return false
       }
+      let type = 'IGSVector'
+      switch (this.fileDataType.value) {
+        case 'TIF':
+        case 'SHP':
+        case '6X':
+          type = 'IGSVector'
+          break
+        case 'GeoJson':
+          type = 'GeoJson'
+          break
+        case 'KML':
+          type = 'KML'
+          break
+        case 'KMZ':
+          type = 'KMZ'
+          break
+        case 'CZML':
+          type = 'CZML'
+          break
+        default:
+          break
+      }
       const data = {
         name: this.categoryName,
-        data: { type: 'IGSVector', url: this.file, name: this.name },
+        data: { type, url: this.file, name: this.name },
       }
       this.$emit('added', data)
     },
@@ -174,20 +206,24 @@ export default {
       if (info.file.status === 'done') {
         let path = ''
         this.isDisabled = false
-        console.log(info)
-        if (info.file.name.endsWith('.zip')) {
-          // 上传的是zip压缩包(即shp类型文件)
-          const shpItem = info.file.response.data.find((item) =>
-            item.url.endsWith('shp')
-          )
-          path = shpItem.path
+        // console.log(info)
+        if (['TIF', 'SHP', '6X'].includes(this.fileDataType.value)) {
+          if (info.file.name.endsWith('.zip')) {
+            // 上传的是zip压缩包(即shp类型文件)
+            const shpItem = info.file.response.data.find((item) =>
+              item.url.endsWith('shp')
+            )
+            path = shpItem.path
+          } else {
+            path = info.file.response.data[0].path
+          }
+
+          this.file = `${this.domain}/igs/rest/mrms/layers?gdbps=${path}`
         } else {
-          path = info.file.response.data[0].path
+          this.file = `${this.baseUrl}${info.file.response.url}`
         }
 
-        this.file = `${this.domain}/igs/rest/mrms/layers?gdbps=${path}`
-
-        console.log(this.file)
+        // console.log(this.file)
       }
     },
   },

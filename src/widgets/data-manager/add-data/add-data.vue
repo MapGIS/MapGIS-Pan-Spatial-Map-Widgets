@@ -147,6 +147,7 @@ export default {
         { text: 'GeoTIFF 数据', value: 'TIF' },
         { text: 'Esri Shapefile', value: 'SHP' },
         { text: 'MapGIS 6X 工作区文件', value: '6X' },
+        { text: 'GeoJSON 数据', value: 'GeoJson' },
       ]
     },
 
@@ -176,7 +177,22 @@ export default {
         {
           text: 'MapGIS 三维图层地图服务',
           value: 'IGSVector3D',
-          example: '',
+          example: 'http://<server>:<port>/igs/rest/mrms/layers?gdbps={gdbps}',
+        },
+        {
+          text: 'KML',
+          value: 'KML',
+          example: 'http://<server>:<port>/FileName.kml',
+        },
+        {
+          text: 'KMZ',
+          value: 'KMZ',
+          example: 'http://<server>:<port>/FileName.kmz',
+        },
+        {
+          text: 'CZML',
+          value: 'CZML',
+          example: 'http://<server>:<port>/FileName.czml',
         },
       ]
     },
@@ -195,8 +211,10 @@ export default {
 
     fileDataTypes() {
       // 目前暂不支持kml、kmz、czml类型文件上传出图、所以暂时隐藏这三种上传文件类型
-      // return this.is2DMapMode ? this.fileDataTypes2D : this.fileDataTypes3D
-      return this.fileDataTypes2D
+      return this.is2DMapMode
+        ? this.fileDataTypes2D
+        : [...this.fileDataTypes2D, ...this.fileDataTypes3D]
+      // return this.fileDataTypes2D
     },
 
     dataList() {
