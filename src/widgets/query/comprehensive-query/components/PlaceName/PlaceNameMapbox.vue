@@ -228,7 +228,7 @@ export default {
   overflow: auto;
   .table-marker-item {
     padding: 0;
-    font-size: 10px;
+    font-size: 12px;
     div {
       padding: 2px 2px;
       overflow: hidden;
