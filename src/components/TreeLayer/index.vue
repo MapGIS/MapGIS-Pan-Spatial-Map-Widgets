@@ -14,6 +14,7 @@
         @check="tickedChange"
         :expanded-keys="expandedKeys"
         @expand="onExpand"
+        @select="onSelect"
         checkable
         :tree-data="layers"
         block-node
@@ -631,6 +632,18 @@ export default {
     //  没有这一步，手动控制展开的位置无法折叠
     onExpand(expandedKeys) {
       this.expandedKeys = expandedKeys
+    },
+
+    // 选中树节点触发展开/收起
+    onSelect(selectedKeys, e) {
+      const flag = this.expandedKeys.includes(e.node.eventKey)
+      if (flag) {
+        this.expandedKeys = this.expandedKeys.filter(
+          (item) => item !== e.node.eventKey
+        )
+      } else {
+        this.expandedKeys.push(e.node.eventKey)
+      }
     },
 
     /**
