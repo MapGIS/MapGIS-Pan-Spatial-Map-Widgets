@@ -163,9 +163,9 @@ export default {
       const maxScale = Math.ceil(maxDistance / 10)
       // 以最大值作为刻度标准
       midScale = Math.ceil(midDistance / maxScale)
-      midScale = midScale > 1 ? maxScale : Math.floor(midDistance)
+      midScale = midScale > 1 ? maxScale : Math.ceil(midDistance)
       minScale = Math.ceil(minDistance / maxScale)
-      minScale = minScale > 1 ? maxScale : Math.floor(minDistance)
+      minScale = minScale > 1 ? maxScale : Math.ceil(minDistance)
       // 获取xyz坐标对应的刻度
       const scaleX = [maxDistance, midDistance, minDistance].find(
         (item) => item === distanceX
@@ -218,28 +218,62 @@ export default {
       // let gridLengthX, gridLengthY, gridLengthZ
       const { Cesium } = this
       // 绘制轴线
-      this.addGraphicPolylineArrow([startPosition, endPosition])
+      const end = Cesium.Cartesian3.add(
+        endPosition,
+        Cesium.Cartesian3.multiplyByScalar(
+          Cesium.Cartesian3.normalize(
+            Cesium.Cartesian3.subtract(
+              endPosition,
+              startPosition,
+              new Cesium.Cartesian3()
+            ),
+            new Cesium.Cartesian3()
+          ),
+          gridLength,
+          new Cesium.Cartesian3()
+        ),
+        new Cesium.Cartesian3()
+      )
+      this.addGraphicPolylineArrow([startPosition, end])
       // 两点间的距离
       const distance = Cesium.Cartesian3.distance(endPosition, startPosition)
       this.extrudedHeight = gridLength
       // 绘制刻度线和刻度值
       switch (direction) {
         case 'x':
-          for (let i = 1; i < Math.ceil(distance / gridLength); i++) {
+          for (let i = 1; i <= Math.floor(distance / gridLength); i++) {
             // 绘制X刻度线和刻度值
-            this.addLineAndTextX(startPosition, i * gridLength, unitVector)
+            this.addLineAndTextX(
+              startPosition,
+              i === Math.floor(distance / gridLength)
+                ? Math.floor(distance)
+                : i * gridLength,
+              unitVector
+            )
           }
           break
         case 'y':
-          for (let i = 1; i < Math.ceil(distance / gridLength); i++) {
+          for (let i = 1; i <= Math.floor(distance / gridLength); i++) {
             // 绘制Y刻度线和刻度值
-            this.addLineAndTextY(startPosition, i * gridLength, unitVector)
+            this.addLineAndTextY(
+              startPosition,
+              i === Math.floor(distance / gridLength)
+                ? Math.floor(distance)
+                : i * gridLength,
+              unitVector
+            )
           }
           break
         case 'z':
-          for (let i = 1; i < Math.ceil(distance / gridLength); i++) {
+          for (let i = 1; i <= Math.floor(distance / gridLength); i++) {
             // 绘制Z刻度线和刻度值
-            this.addLineAndTextZ(startPosition, i * gridLength, unitVector)
+            this.addLineAndTextZ(
+              startPosition,
+              i === Math.floor(distance / gridLength)
+                ? Math.floor(distance)
+                : i * gridLength,
+              unitVector
+            )
           }
           break
         default:
