@@ -220,7 +220,7 @@ export default {
 
           this.file = `${this.domain}/igs/rest/mrms/layers?gdbps=${path}`
         } else {
-          this.file = `${this.baseUrl}${info.file.response.url}`
+          this.file = `${window.location.origin}${info.file.response.url}`
         }
 
         // console.log(this.file)
