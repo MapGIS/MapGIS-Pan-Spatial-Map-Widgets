@@ -20,6 +20,11 @@ import WebAppFrameworkUI, {
   baseConfigInstance,
 } from '@mapgis/web-app-framework'
 
+const A = 40487.57
+const B = 0.00007096758
+const C = 91610.74
+const D = -40467.74
+
 export default {
   name: 'MpMapModePicker',
   mixins: [WidgetMixin],
@@ -35,8 +40,7 @@ export default {
         : '<svg class="icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="200" height="200"><defs><style/></defs><path d="M37.01 822.29h353.536c21.687 0 35.292-13.623 35.292-34.468 0-20.425-13.605-34.03-35.292-34.03H107.21v-2.14l166.345-161.645c101.248-98.286 131.017-149.34 131.017-214.857 0-97.408-86.345-171.868-201.636-171.868-90.624 0-168.046 48.933-194.012 123.795-5.083 14.5-7.094 26.386-7.094 37.028 0 21.266 12.635 35.292 33.48 35.292 20.005 0 28.508-9.344 34.89-30.61 3.401-13.203 8.082-25.107 14.884-36.17 22.547-37.851 64.677-62.116 117.852-62.116 68.919 0 123.794 48.493 123.794 108.91 0 48.932-19.986 82.102-104.228 165.064L23.406 742.31C5.522 760.174 0 770.816 0 786.56c0 22.126 14.464 35.73 37.01 35.73zm511.78-.86h174.447C913.792 821.43 1024 707.84 1024 515.969c0-191.854-110.19-302.903-300.782-302.903H548.791c-23.406 0-38.272 15.324-38.272 39.132V781.86c0 24.246 14.884 39.57 38.272 39.57zm38.73-69.777V281.984h130.176c146.34 0 227.602 85.102 227.602 234.423 0 150.162-81.261 235.246-227.602 235.246z"/></svg>'
     },
   },
-  beforeCreate() {
-  },
+  beforeCreate() {},
   created() {
     this.sceneController = Objects.SceneController.getInstance(
       this.Cesium,
@@ -44,8 +48,7 @@ export default {
       this.viewer
     )
   },
-  beforeMount() {
-  },
+  beforeMount() {},
   /**
    * 修改说明：地图初始显示模式与baseconfig里的配置保持一致，默认显示二维
    * 修改人：龚跃健
@@ -64,30 +67,75 @@ export default {
     }
   },
   methods: {
+    altitudeToZoom(height) {
+      const lv =
+        // eslint-disable-next-line no-restricted-properties
+        Math.round(D + (A - D) / (1 + Math.pow(Number(height) / C, B))) + 1
+      return lv > -1 ? lv : 0
+    },
+    zoomToAltitude(zoom) {
+      // eslint-disable-next-line no-restricted-properties
+      return Math.round(C * Math.pow((A - D) / (zoom - D) - 1, 1 / B))
+    },
     /**
-     * 获取当前视图的经纬度范围
+     * 获取当前视图的中心点及层级、高度
      */
     getCurrentViewRectBounds() {
-      let rectBounds = null
+      const { Cesium, map, vueCesium, viewer } = this
       if (!this.is2DMapMode) {
-        rectBounds = this.sceneController.getComputeViewRectangle()
+        const res = viewer.camera.pickEllipsoid(
+          new Cesium.Cartesian2(
+            viewer.canvas.clientWidth / 2,
+            viewer.canvas.clientHeight / 2
+          )
+        )
+        const curPosition = Cesium.Ellipsoid.WGS84.cartesianToCartographic(res)
+        const lon = (curPosition.longitude * 180) / Math.PI
+        const lat = (curPosition.latitude * 180) / Math.PI
+        this.center = [lon, lat]
+        const height = Cesium.Cartographic.fromCartesian(
+          viewer.camera.position
+        ).height
+        this.zoom = this.altitudeToZoom(height)
       } else if (this.map) {
-        const { _ne, _sw } = this.map.getBounds()
-        rectBounds = {
-          xmin: _sw.lng,
-          ymin: _sw.lat,
-          xmax: _ne.lng,
-          ymax: _ne.lat,
-        }
+        this.center = this.map.getCenter()
+        const zoom = this.map.getZoom()
+        this.height = this.zoomToAltitude(zoom)
       }
-      this.rectBounds = rectBounds
     },
     /**
      * 切换模式之前的操作
      */
     beforeSwitchMapMode() {
-      // this.getCurrentViewRectBounds()
+      if (baseConfigInstance.config.perspectiveSynchronization) {
+        this.getCurrentViewRectBounds()
+      } else {
+        this.center = null
+      }
+
       this.switchMapMode()
+    },
+
+    /**
+     * 二三维切换变化后
+     */
+    onMapModeChanged() {
+      if (!this.center) return
+      if (!this.is2DMapMode) {
+        const { lng, lat } = this.center
+        this.sceneController.cameraSetView({
+          destination: this.sceneController.getCartesian3FromDegrees(
+            lng,
+            lat,
+            this.height
+          ),
+        })
+      } else {
+        this.map.jumpTo({
+          center: this.center,
+          zoom: this.zoom - 1,
+        })
+      }
     },
   },
 }
