@@ -838,11 +838,22 @@ export default {
           // vm.$emit('update:layerDocument', doc)
         })
       } else if (layer.type === LayerType.IGSScene) {
-        const layerId = layer.activeScene.sublayers[0].id
+        const layerIdArr = []
+        layer.activeScene.sublayers.forEach((sublayer) => {
+          if (sublayer.sublayers.length > 0) {
+            sublayer.sublayers.forEach((item) => {
+              layerIdArr.push(item.id)
+            })
+          } else {
+            layerIdArr.push(sublayer.id)
+          }
+        })
         setTimeout(() => {
-          source = vm.sceneController.findSource(layerId)
-          if (source) {
-            vm._setBoundingSphereAndExtent(source, layer)
+          const sourceArr = layerIdArr.map((layerId) =>
+            vm.sceneController.findSource(layerId)
+          )
+          if (sourceArr) {
+            vm._setIGSSceneBoundingSphereAndExtent(sourceArr, layer)
             window.layers3D[layer.id] = layer
           }
           // vm.$emit('update:layerDocument', doc)
@@ -850,7 +861,21 @@ export default {
       }
     },
     /**
-     * 设置场景服务、模型缓存、3dTiles 图层的BoundingSphere和Extent
+     * 设置场景服务图层的BoundingSphere和Extent
+     */
+    _setIGSSceneBoundingSphereAndExtent(sourceArr, layer) {
+      const extent = this._getM3DSetArrayRange(sourceArr)
+      if (extent) {
+        layer.fullExtent.xmin = extent.xmin
+        layer.fullExtent.ymin = extent.ymin
+        layer.fullExtent.xmax = extent.xmax
+        layer.fullExtent.ymax = extent.ymax
+        layer.boundingSphere = extent.boundingSphere
+      }
+      return layer
+    },
+    /**
+     * 设置模型缓存、3dTiles 图层的BoundingSphere和Extent
      */
     _setBoundingSphereAndExtent(source, layer) {
       const boundingSphere = source._root.boundingVolume.boundingSphere
@@ -869,6 +894,45 @@ export default {
         layer.boundingSphere = boundingSphere
       }
       return layer
+    },
+    /**
+     * 获取多个M3D的最大包围盒范围(以最大包围盒中心点为原点)
+     */
+    _getM3DSetArrayRange(m3dSetArray) {
+      let xmin
+      let ymin
+      let xmax
+      let ymax
+      let zmin
+      let zmax
+      const boundingSphere =
+        this.Cesium.AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
+      for (let i = 0; i < m3dSetArray.length; i++) {
+        const m3d = m3dSetArray[i]
+        const range = this._getM3DSetRange(m3d)
+        if (!range) {
+          continue
+        }
+        if (xmin == undefined || range.xmin < xmin) {
+          xmin = range.xmin
+        }
+        if (ymin == undefined || range.ymin < ymin) {
+          ymin = range.ymin
+        }
+        if (xmax == undefined || range.xmax > xmax) {
+          xmax = range.xmax
+        }
+        if (ymax == undefined || range.ymax > ymax) {
+          ymax = range.ymax
+        }
+        if (zmin == undefined || range.zmin < zmin) {
+          zmin = range.zmin
+        }
+        if (zmax == undefined || range.zmax > zmax) {
+          zmax = range.zmax
+        }
+      }
+      return { xmin, ymin, xmax, ymax, zmin, zmax, boundingSphere }
     },
     /**
      * 获取m3d经纬度包围盒
