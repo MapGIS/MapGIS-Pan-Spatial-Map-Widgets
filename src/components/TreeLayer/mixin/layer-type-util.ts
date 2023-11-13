@@ -148,6 +148,18 @@ export default {
     isWMSLayer({ type }) {
       return type === LayerType.OGCWMS
     },
+
+    /**
+     * 判断是否是要素图层
+     * @param item layer图层
+     * @returns boolean
+     */
+    isFeatureLayer({ layer }) {
+      return [LayerType.IGSVector, LayerType.IGSFeature].includes(layer.type)
+    },
+    isGeoJsonLayer({ type }) {
+      return type === LayerType.GeoJson
+    },
     /**
      * 判断是否展示列表右侧操作菜单（在在线制图组件中需要打开左侧弹框组件）
      * @param item 图层

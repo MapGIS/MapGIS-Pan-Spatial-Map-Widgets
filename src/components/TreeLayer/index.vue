@@ -120,6 +120,7 @@
                 @edit-data-flow-style="editDataFlowStyle"
                 @change-m3d-props="changeM3DProps"
                 @model-edit="modelEdit"
+                @feature-edit="featureEdit"
                 @query="queryFeature"
               />
               <!-- <slot
@@ -219,6 +220,7 @@ import layerTypeUtil from './mixin/layer-type-util'
 import RightPopover from './components/RightPopover/index.vue'
 import ModelStretchUtil from '../ModelStretch/mixin/ModelStretchUtil.js'
 import layerCoordinateGridUtil from './mixin/layer-coordinate-grid-util'
+import featureEditUtil from './mixin/feature-eidt-util'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
@@ -239,6 +241,7 @@ export default {
     layerTypeUtil,
     ModelStretchUtil,
     layerCoordinateGridUtil,
+    featureEditUtil,
   ],
   inject: ['vueCesium'],
   props: {
@@ -1079,6 +1082,101 @@ export default {
           },
         },
       })
+    },
+    /**
+     * 打开要素编辑页面
+     */
+    async featureEdit(item) {
+      // 获取属性字段
+      const fieldInfo = await this.getFeatureField(item)
+      this.currentLayerInfo = item.dataRef
+      debugger
+      this.openPage({
+        title: '要素编辑',
+        name: 'MpFeatureEdit',
+        component: () => import('./components/FeatureEdit/FeatureEdit.vue'),
+        props: {
+          fieldInfo: fieldInfo,
+          layer: this.currentLayerInfo,
+        },
+        listeners: {
+          'feature-edit-change': (type, params, callback) => {
+            this.featureEditChange(type, params, callback)
+          },
+          'update:layer': (val) => {},
+        },
+      })
+    },
+    featureEditChange(type, params, callback) {
+      const gdbpUrl = this.isGdbpType(this.currentLayerInfo.url)
+      if (gdbpUrl) {
+        this.featureChangeByGdbp(type, params, callback)
+      } else {
+        this.featureChangeByUrl(type, params, callback)
+      }
+    },
+    featureChangeByGdbp(type, params, callback) {
+      const { statisticsField, groupField } = params
+      const maxStatisticsType = {
+        label: '最大值',
+        value: 'FUNCTION_MAX',
+        type: 'max',
+      }
+      const minStatisticsType = {
+        label: '最小值',
+        value: 'FUNCTION_MIN',
+        type: 'min',
+      }
+      let result
+      switch (type) {
+        // 一值一类
+        case 'uniqueValue':
+          const uniqueValueData = this.getStatisticsResult(
+            this.currentLayerInfo,
+            'single',
+            statisticsField,
+            groupField,
+            maxStatisticsType
+          )
+          result = this.transformStatisticsData('uniqueValue', uniqueValueData)
+          break
+        // 分类
+        case 'classBreak':
+          const minData = this.getStatisticsResult(
+            this.currentLayerInfo,
+            'single',
+            statisticsField,
+            groupField,
+            minStatisticsType
+          )
+          const maxData = this.getStatisticsResult(
+            this.currentLayerInfo,
+            'single',
+            statisticsField,
+            groupField,
+            maxStatisticsType
+          )
+          result = [
+            ...this.transformStatisticsData('classBreakMin', minData),
+            ...this.transformStatisticsData('classBreakMax', maxData),
+          ]
+          break
+      }
+      callback(result)
+    },
+    featureChangeByUrl(type, params, callback) {
+      // 从geojson数据中过滤一值一类只需要分组字段即可，统计字段不使用,分段则反之
+      const { statisticsField, groupField } = params
+      let result
+      switch (type) {
+        case 'uniqueValue':
+          result = this.filterFeatureSet(type, groupField.value)
+          break
+        case 'classBreak':
+          result = this.filterFeatureSet(type, statisticsField.value)
+          break
+      }
+      callback(result)
     },
 
     updateModel(type, val) {
