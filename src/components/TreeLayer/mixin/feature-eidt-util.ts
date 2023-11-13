@@ -10,7 +10,7 @@ export default {
     // 获取要素中的属性字段
     getFeatureField(sublayer) {
       return new Promise((resolve) => {
-        // 通过url请求的数据记录features信息，避免后续操作重复请求
+        // 通过url请求的数据记录features信息
         this.featureSet = null
         // 通过url判断是gdbp还是geojson数据地址
         const gdbpUrl = this.isGdbpType(sublayer.url)
@@ -25,13 +25,19 @@ export default {
             resolve(this.transformAttStruct(AttStruct))
           })
         } else {
-          axios.get(sublayer.url).then((res) => {
-            const {
-              data: { features },
-            } = res
-            this.featureSet = features
-            resolve(this.transformFeaturesField(features))
-          })
+          // geojson数据直接从layer.source中获取
+          //   axios.get(sublayer.url).then((res) => {
+          //     const {
+          //       data: { features },
+          //     } = res
+          //     this.featureSet = features
+          //     resolve(this.transformFeaturesField(features))
+          //   })
+          const {
+            source: { features },
+          } = sublayer
+          this.featureSet = features
+          resolve(this.transformFeaturesField(features))
         }
       })
     },
