@@ -1,7 +1,15 @@
-<template></template>
+<template>
+  <mapgis-ui-feature-edit
+    @feature-edit-change="featureEditChange"
+    @get-renderer="getRenderer"
+    :fieldInfo="fieldInfo"
+    :featureType="featureType"
+  ></mapgis-ui-feature-edit>
+</template>
 
 <script>
 import featureEditUtil from '../../mixin/feature-eidt-util'
+
 export default {
   name: 'FeatureEdit',
   mixins: [featureEditUtil],
@@ -17,17 +25,23 @@ export default {
   data() {
     return {}
   },
+  computed: {
+    featureType() {
+      return this.layer.geomType
+    },
+  },
   methods: {
     // feature-edit-change
-    featureEditChange() {
-      const gdbpUrl = this.isGdbpType(this.currentLayerInfo.url)
+    featureEditChange(type, params, callback) {
+      debugger
+      const gdbpUrl = this.isGdbpType(this.layer.url)
       if (gdbpUrl) {
         this.featureChangeByGdbp(type, params, callback)
       } else {
         this.featureChangeByUrl(type, params, callback)
       }
     },
-    featureChangeByGdbp(type, params, callback) {
+    async featureChangeByGdbp(type, params, callback) {
       const { statisticsField, groupField } = params
       const maxStatisticsType = {
         label: '最大值',
@@ -44,7 +58,7 @@ export default {
         // 一值一类
         case 'uniqueValue':
           const uniqueValueData = this.getStatisticsResult(
-            this.currentLayerInfo,
+            this.layer,
             'single',
             statisticsField,
             groupField,
@@ -54,15 +68,15 @@ export default {
           break
         // 分类
         case 'classBreak':
-          const minData = this.getStatisticsResult(
-            this.currentLayerInfo,
+          const minData = await this.getStatisticsResult(
+            this.layer,
             'single',
             statisticsField,
             groupField,
             minStatisticsType
           )
-          const maxData = this.getStatisticsResult(
-            this.currentLayerInfo,
+          const maxData = await this.getStatisticsResult(
+            this.layer,
             'single',
             statisticsField,
             groupField,
@@ -72,6 +86,8 @@ export default {
             ...this.transformStatisticsData('classBreakMin', minData),
             ...this.transformStatisticsData('classBreakMax', maxData),
           ]
+          break
+        default:
           break
       }
       callback(result)
@@ -87,8 +103,13 @@ export default {
         case 'classBreak':
           result = this.filterFeatureSet(type, statisticsField.value)
           break
+        default:
+          break
       }
       callback(result)
+    },
+    getRenderer(renderer) {
+      console.log(renderer, 'renderer')
     },
   },
 }

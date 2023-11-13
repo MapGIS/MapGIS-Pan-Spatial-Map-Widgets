@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { Statistics } from '@mapgis/web-app-framework'
+
 export default {
   inject: ['getApplication'],
   data() {
@@ -73,6 +74,7 @@ export default {
       const queryParams = {
         domain: origin,
         gdbp: sublayer.url,
+        serverType: layer.type,
       }
       const result = await Statistics.getStatisticsResult(
         queryParams,
@@ -109,7 +111,7 @@ export default {
           const minData = []
           data.forEach((sub) => {
             Object.keys(sub).forEach((item) => {
-              minData.push(sub[item])
+              minData.push(Number(sub[item]))
             })
           })
           result.push(Math.min(...minData))
@@ -118,10 +120,12 @@ export default {
           const maxData = []
           data.forEach((sub) => {
             Object.keys(sub).forEach((item) => {
-              maxData.push(sub[item])
+              maxData.push(Number(sub[item]))
             })
           })
-          result.push(Math.min(...maxData))
+          result.push(Math.max(...maxData))
+          break
+        default:
           break
       }
       return result
@@ -129,8 +133,13 @@ export default {
     isGdbpType(url) {
       let flag
       try {
-        new URL(url)
-        flag = true
+        // eslint-disable-next-line no-new
+        const urlInfo = new URL(url)
+        if (urlInfo.protocol === 'gdbp:') {
+          flag = false
+        } else {
+          flag = true
+        }
       } catch (error) {
         flag = false
       }
@@ -144,6 +153,8 @@ export default {
           break
         case 'classBreak':
           result = this.filterFeatureSetByMinAndMax(targetValue)
+          break
+        default:
           break
       }
       return result
