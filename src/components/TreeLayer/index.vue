@@ -25,6 +25,15 @@
       >
         <!-- 原来的图标类型为type="check-circle" -->
         <div slot="custom" slot-scope="item" class="tree-item-handle">
+          <div>
+            <i
+              v-if="nodeIcon(item).isSvg"
+              class="icon"
+              v-html="nodeIcon(item).icon"
+            >
+            </i>
+            <img v-else class="tree-item-icon" :src="nodeIcon(item).icon" />
+          </div>
           <!-- wmts图层的子图层start ：当为wmts图层时，子图层是展示当前选中的图层， -->
           <mapgis-ui-iconfont
             v-if="
@@ -191,6 +200,7 @@ import {
   ExhibitionControllerMixin,
   Exhibition,
   LayerType,
+  IGSSceneSublayerType,
   ModelCacheFormat,
   IGSMapImageLayer,
   IGSVectorLayer,
@@ -220,6 +230,7 @@ import layerTypeUtil from './mixin/layer-type-util'
 import RightPopover from './components/RightPopover/index.vue'
 import ModelStretchUtil from '../ModelStretch/mixin/ModelStretchUtil.js'
 import layerCoordinateGridUtil from './mixin/layer-coordinate-grid-util'
+import { defaultDataIconsConfig } from '../../theme/dataIconsConfig.js'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
@@ -466,6 +477,77 @@ export default {
     // eventBus.$on(events.ECHO_LAYER_LIST_INFO, this.echoLayerList)
   },
   methods: {
+    nodeIcon(item) {
+      let icon
+      if (item.type !== undefined) {
+        let { type } = item
+        if (item.layer && item.layer.type === LayerType.IGSScene) {
+          // 场景服务里的组图层/子图层
+          if (type === IGSSceneSublayerType.groupLayer3D) {
+            // 场景服务的组图层
+            let { layerIcons } = this.application.baseConfig
+            if (!layerIcons || layerIcons.length == 0) {
+              layerIcons = defaultDataIconsConfig.layerIcons
+            }
+            for (let i = 0; i < layerIcons.length; i++) {
+              for (let j = 0; j < layerIcons[i].children.length; j++) {
+                const child = layerIcons[i].children[j]
+                if (child.layerType === 'Group') {
+                  icon = child.icon
+                  return {
+                    isSvg: icon && icon.indexOf('<svg') >= 0,
+                    icon,
+                  }
+                }
+              }
+            }
+          } else if (type === IGSSceneSublayerType.modelCache) {
+            type = LayerType.ModelCache
+          }
+        }
+        // 服务类型
+        let { serviceIcons } = this.application.baseConfig
+        if (!serviceIcons || serviceIcons.length == 0) {
+          serviceIcons = defaultDataIconsConfig.serviceIcons
+        }
+        for (let i = 0; i < serviceIcons.length; i++) {
+          for (let j = 0; j < serviceIcons[i].children.length; j++) {
+            const child = serviceIcons[i].children[j]
+            if (type === LayerType[child.serviceType]) {
+              icon = child.icon
+              return {
+                isSvg: icon && icon.indexOf('<svg') >= 0,
+                icon,
+              }
+            }
+          }
+        }
+      } else if (item.dataRef && item.dataRef.geomType) {
+        // 图层类型
+        let { layerIcons } = this.application.baseConfig
+        if (!layerIcons || layerIcons.length == 0) {
+          layerIcons = defaultDataIconsConfig.layerIcons
+        }
+        let geomType = item.dataRef.geomType
+        if (item.dataRef.sublayers && item.dataRef.sublayers.length > 0) {
+          geomType = 'Group'
+        }
+        for (let i = 0; i < layerIcons.length; i++) {
+          for (let j = 0; j < layerIcons[i].children.length; j++) {
+            const child = layerIcons[i].children[j]
+            if (geomType === child.layerType) {
+              icon = child.icon
+              return {
+                isSvg: icon && icon.indexOf('<svg') >= 0,
+                icon,
+              }
+            }
+          }
+        }
+      }
+      icon = ''
+      return { isSvg: icon && icon.indexOf('<svg') >= 0, icon }
+    },
     setLayerEditConfig() {
       const doc = this.layerDocument.clone()
       const layers = doc.defaultMap.layers()
@@ -1771,6 +1853,22 @@ export default {
       width: 100%;
       overflow: hidden;
       align-items: center;
+      .tree-item-icon {
+        width: 1em;
+        height: 1em;
+        vertical-align: -0.125em;
+        margin-right: 5px;
+      }
+      .icon {
+        display: flex;
+        fill: currentColor;
+        align-items: center;
+        margin-right: 5px;
+        > svg {
+          width: 100%;
+          height: 100%;
+        }
+      }
       .more {
         font-size: 16px;
         margin-right: 0;

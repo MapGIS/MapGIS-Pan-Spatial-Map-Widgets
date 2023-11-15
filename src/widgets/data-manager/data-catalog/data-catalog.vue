@@ -112,11 +112,16 @@
             lastSelect === item.guid && !item.children ? 'check-light' : '',
           ]"
         >
-          <img
-            v-if="widgetInfo.config.iconConfig[nodeLevel(item)]"
-            :src="baseUrl + widgetInfo.config.iconConfig[nodeLevel(item)]"
-            class="tree-item-icon"
-          />
+          <div v-if="widgetInfo.config.iconConfig[nodeLevel(item)]">
+            <i
+              v-if="nodeIcon(item).isSvg"
+              class="icon"
+              v-html="nodeIcon(item).icon"
+            >
+            </i>
+            <img v-else class="tree-item-icon" :src="nodeIcon(item).icon" />
+          </div>
+
           <mapgis-ui-dropdown
             v-if="item.children && item.children.length > 0"
             :trigger="['contextmenu']"
@@ -362,6 +367,7 @@ import {
 import MpMetadataInfo from '../../../components/MetadataInfo/MetadataInfo.vue'
 import NonSpatial from './non-spatial.vue'
 import * as turf from '@turf/turf'
+import { defaultDataIconsConfig } from '../../../theme/dataIconsConfig.js'
 
 export default {
   name: 'MpDataCatalog',
@@ -588,6 +594,42 @@ export default {
     },
   },
   methods: {
+    nodeIcon(item) {
+      let icon
+      if (item.serverType !== undefined) {
+        const { useLocalDataNodeIcon, dataNodeIcon } =
+          this.widgetConfig.treeConfig
+        if (
+          useLocalDataNodeIcon !== undefined &&
+          !useLocalDataNodeIcon &&
+          dataNodeIcon !== undefined
+        ) {
+          return {
+            isSvg: dataNodeIcon && dataNodeIcon.indexOf('<svg') >= 0,
+            icon: dataNodeIcon,
+          }
+        }
+        let { serviceIcons } = this.application.baseConfig
+        if (!serviceIcons || serviceIcons.length == 0) {
+          serviceIcons = defaultDataIconsConfig.serviceIcons
+        }
+        for (let i = 0; i < serviceIcons.length; i++) {
+          for (let j = 0; j < serviceIcons[i].children.length; j++) {
+            const child = serviceIcons[i].children[j]
+            if (LayerType[child.serviceType] === item.serverType) {
+              icon = child.icon
+              return {
+                isSvg: icon && icon.indexOf('<svg') >= 0,
+                icon,
+              }
+            }
+          }
+        }
+      }
+      icon =
+        this.baseUrl + this.widgetInfo.config.iconConfig[this.nodeLevel(item)]
+      return { isSvg: icon && icon.indexOf('<svg') >= 0, icon }
+    },
     onClose() {
       this.currentNode = null
     },
@@ -2121,6 +2163,16 @@ export default {
       align-items: center;
       font-size: 17px;
       padding-left: 12px;
+    }
+  }
+  .icon {
+    display: flex;
+    fill: currentColor;
+    align-items: center;
+    margin-right: 5px;
+    > svg {
+      width: 100%;
+      height: 100%;
     }
   }
   .tree-container {
