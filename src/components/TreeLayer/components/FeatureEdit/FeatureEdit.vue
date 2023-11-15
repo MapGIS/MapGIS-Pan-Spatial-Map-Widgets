@@ -9,6 +9,7 @@
 
 <script>
 import featureEditUtil from '../../mixin/feature-eidt-util'
+import { LayerFeatureEdit } from '@mapgis/web-app-framework'
 
 export default {
   name: 'FeatureEdit',
@@ -23,11 +24,23 @@ export default {
     },
   },
   data() {
-    return {}
+    return {
+      layerFeatureEdit: LayerFeatureEdit,
+    }
   },
   computed: {
     featureType() {
-      return this.layer.geomType
+      const { layer } = this.layer
+      let layerInfo
+      if (layer) {
+        layerInfo = this.layerFeatureEdit.getFeatureRelation(
+          layer.url,
+          this.layer.url
+        )
+      } else {
+        layerInfo = this.layerFeatureEdit.getFeatureRelation(this.layer.url)
+      }
+      return layerInfo?.type
     },
   },
   methods: {
