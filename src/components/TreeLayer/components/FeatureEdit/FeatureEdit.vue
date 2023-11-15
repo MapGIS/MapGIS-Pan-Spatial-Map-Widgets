@@ -33,7 +33,6 @@ export default {
   methods: {
     // feature-edit-change
     featureEditChange(type, params, callback) {
-      debugger
       const gdbpUrl = this.isGdbpType(this.layer.url)
       if (gdbpUrl) {
         this.featureChangeByGdbp(type, params, callback)
@@ -57,7 +56,7 @@ export default {
       switch (type) {
         // 一值一类
         case 'uniqueValue':
-          const uniqueValueData = this.getStatisticsResult(
+          const uniqueValueData = await this.getStatisticsResult(
             this.layer,
             'single',
             statisticsField,
@@ -95,13 +94,20 @@ export default {
     featureChangeByUrl(type, params, callback) {
       // 从geojson数据中过滤一值一类只需要分组字段即可，统计字段不使用,分段则反之
       const { statisticsField, groupField } = params
+      const {
+        source: { features },
+      } = this.layer
       let result
       switch (type) {
         case 'uniqueValue':
-          result = this.filterFeatureSet(type, groupField.value)
+          result = this.filterFeatureSet(type, groupField.value, features)
           break
         case 'classBreak':
-          result = this.filterFeatureSet(type, statisticsField.value)
+          result = this.filterFeatureSet(
+            type,
+            statisticsField[0].value,
+            features
+          )
           break
         default:
           break

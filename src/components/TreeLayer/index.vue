@@ -1090,7 +1090,6 @@ export default {
       // 获取属性字段
       const fieldInfo = await this.getFeatureField(item)
       this.currentLayerInfo = item.dataRef
-      debugger
       this.openPage({
         title: '要素编辑',
         name: 'MpFeatureEdit',

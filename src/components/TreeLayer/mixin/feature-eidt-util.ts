@@ -10,8 +10,6 @@ export default {
     // 获取要素中的属性字段
     getFeatureField(sublayer) {
       return new Promise((resolve) => {
-        // 通过url请求的数据记录features信息
-        this.featureSet = null
         // 通过url判断是gdbp还是geojson数据地址
         const gdbpUrl = this.isGdbpType(sublayer.url)
         if (gdbpUrl) {
@@ -36,7 +34,6 @@ export default {
           const {
             source: { features },
           } = sublayer
-          this.featureSet = features
           resolve(this.transformFeaturesField(features))
         }
       })
@@ -151,41 +148,41 @@ export default {
       }
       return !flag
     },
-    filterFeatureSet(type, targetValue) {
+    filterFeatureSet(type, targetValue, featureSet) {
       let result
       switch (type) {
         case 'uniqueValue':
-          result = this.filterFeatureSetByField(targetValue)
+          result = this.filterFeatureSetByField(targetValue, featureSet)
           break
         case 'classBreak':
-          result = this.filterFeatureSetByMinAndMax(targetValue)
+          result = this.filterFeatureSetByMinAndMax(targetValue, featureSet)
           break
         default:
           break
       }
       return result
     },
-    filterFeatureSetByField(targetValue) {
-      if (!this.featureSet) {
+    filterFeatureSetByField(targetValue, featureSet) {
+      if (!featureSet) {
         return []
       }
       const result = []
-      this.featureSet.forEach((feature) => {
-        const { attributes } = feature
-        if (!result.includes(attributes[targetValue])) {
-          result.push(attributes[targetValue])
+      featureSet.forEach((feature) => {
+        const { properties } = feature
+        if (!result.includes(properties[targetValue])) {
+          result.push(properties[targetValue])
         }
       })
       return result
     },
-    filterFeatureSetByMinAndMax(targetValue) {
-      if (!this.featureSet) {
+    filterFeatureSetByMinAndMax(targetValue, featureSet) {
+      if (!featureSet) {
         return []
       }
       const result = []
-      this.featureSet.forEach((feature) => {
-        const { attributes } = feature
-        result.push(attributes[targetValue])
+      featureSet.forEach((feature) => {
+        const { properties } = feature
+        result.push(properties[targetValue])
       })
       return [Math.min(...result), Math.max(...result)]
     },
