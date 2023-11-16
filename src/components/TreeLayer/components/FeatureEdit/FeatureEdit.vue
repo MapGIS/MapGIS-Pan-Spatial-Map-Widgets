@@ -31,18 +31,50 @@ export default {
   },
   computed: {
     featureType() {
+      // 从LayerFeatureEdit获取已存在的编辑样式
       const layerInfo = this.getFeatureStyle()
-      return layerInfo?.type
+      // 如果LayerFeatureEdit中不存在需要从this.layer中获取
+      if (!layerInfo) {
+        const geomType = this.getFeatureStyleByLayer()
+        return geomType
+      }
+      return layerInfo.type
     },
     layerFeatureStyle() {
       return this.getFeatureStyle()
     },
   },
   mounted() {
-    // window.getRenderer = () => this.getRenderer()
+    window.getRenderer = () => this.getRenderer()
   },
 
   methods: {
+    getFeatureStyleByLayer() {
+      const { geomType, source } = this.layer
+      // geojson数据有geomType为空的情况
+      if (!geomType && featureStyle) {
+        const transformType = this.getGeometryType(featureStyle.type)
+        return transformType
+      }
+      return geomType
+    },
+    getGeometryType(type) {
+      let transformType
+      switch (type) {
+        case 'point':
+          transformType = 'Pnt'
+          break
+        case 'line':
+          transformType = 'Lin'
+          break
+        case 'polygon':
+          transformType = 'Reg'
+          break
+        default:
+          break
+      }
+      return transformType
+    },
     getFeatureStyle() {
       const { layer } = this.layer
       let layerInfo
@@ -139,22 +171,92 @@ export default {
       }
       callback(result)
     },
-    getRenderer(renderer) {
+    getRenderer(renderer = {}, symbolType) {
+      debugger
       const { layer } = this.layer
-      let relations
+      let extend
+      const isEdit = Object.keys(renderer).length > 0
       if (layer) {
-        this.layerFeatureEdit.updateFeatureRenderer(
+        const hasFeatureStyle = this.layerFeatureEdit.getFeatureRelation(
           layer.url,
-          this.layer.url,
-          renderer
+          this.layer.url
         )
+        if (hasFeatureStyle) {
+          this.layerFeatureEdit.updateFeatureRenderer(
+            layer.url,
+            this.layer.url,
+            renderer,
+            symbolType
+          )
+        } else {
+          const relation = this.getFeatureRelation(
+            layer,
+            symbolType,
+            renderer,
+            true
+          )
+          this.layerFeatureEdit.setFeatureRelation(this.layer.url, realtion)
+        }
+
+        extend = layer.extend
       } else {
-        this.layerFeatureEdit.updateFeatureRenderer(
-          this.layer.url,
-          undefined,
-          renderer
+        const hasFeatureStyle = this.layerFeatureEdit.getFeatureRelation(
+          this.layer.url
         )
+        if (hasFeatureStyle) {
+          this.layerFeatureEdit.updateFeatureRenderer(
+            this.layer.url,
+            undefined,
+            renderer,
+            symbolType
+          )
+        } else {
+          const relation = this.getFeatureRelation(
+            layer,
+            symbolType,
+            renderer,
+            false
+          )
+          this.layerFeatureEdit.setFeatureRelation(this.layer.url, realtion)
+        }
+
+        extend = this.layer.extend
       }
+      // 在extend上记录对应子图层的编辑样式
+      this.changeFeatureStyle(extend, renderer, symbolType, isEdit)
+      this.$emit('update:layer', this.layer)
+    },
+    changeFeatureStyle(extend, renderer, symbolType, isEdit) {
+      if (isEdit) {
+        if (!extend.featureStyle) {
+          extend.featureStyle = {}
+        }
+        if (!extend.featureStyle[this.layer.url]) {
+          extend.featureStyle[this.layer.url] = {}
+        }
+        extend.featureStyle[this.layer.url].renderer = renderer
+        extend.featureStyle[this.layer.url].symbolType = symbolType
+        extend.featureStyle[this.layer.url].type = this.featureType
+      } else {
+        if (extend.featureStyle && extend.featureStyle[this.layer.url]) {
+          delete extend.featureStyle[this.layer.url]
+        }
+      }
+    },
+    getFeatureRelation(layer, symbolType, renderer, hasParent) {
+      let relation = {}
+      const sublayer = {
+        id: hasParent ? layer.id : this.layer.id,
+        type: this.featureType,
+        symbolType: symbolType,
+        renderer: renderer,
+      }
+      if (hasParent) {
+        relation[layer.url] = sublayer
+      } else {
+        relation = sublayer
+      }
+      return relation
     },
   },
 }
