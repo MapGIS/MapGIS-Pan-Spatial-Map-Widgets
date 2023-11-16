@@ -4,6 +4,7 @@
     @get-renderer="getRenderer"
     :fieldInfo="fieldInfo"
     :featureType="featureType"
+    :layerFeatureStyle="layerFeatureStyle"
   ></mapgis-ui-feature-edit>
 </template>
 
@@ -30,6 +31,19 @@ export default {
   },
   computed: {
     featureType() {
+      const layerInfo = this.getFeatureStyle()
+      return layerInfo?.type
+    },
+    layerFeatureStyle() {
+      return this.getFeatureStyle()
+    },
+  },
+  mounted() {
+    // window.getRenderer = () => this.getRenderer()
+  },
+
+  methods: {
+    getFeatureStyle() {
       const { layer } = this.layer
       let layerInfo
       if (layer) {
@@ -40,10 +54,8 @@ export default {
       } else {
         layerInfo = this.layerFeatureEdit.getFeatureRelation(this.layer.url)
       }
-      return layerInfo?.type
+      return layerInfo
     },
-  },
-  methods: {
     // feature-edit-change
     featureEditChange(type, params, callback) {
       const gdbpUrl = this.isGdbpType(this.layer.url)
@@ -128,7 +140,21 @@ export default {
       callback(result)
     },
     getRenderer(renderer) {
-      console.log(renderer, 'renderer')
+      const { layer } = this.layer
+      let relations
+      if (layer) {
+        this.layerFeatureEdit.updateFeatureRenderer(
+          layer.url,
+          this.layer.url,
+          renderer
+        )
+      } else {
+        this.layerFeatureEdit.updateFeatureRenderer(
+          this.layer.url,
+          undefined,
+          renderer
+        )
+      }
     },
   },
 }
