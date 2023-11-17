@@ -12,25 +12,25 @@ export const defaultDataIconsConfig = {
       children: [
         {
           id: uuidv4(),
-          label: 'MapGIS 矢量地图服务',
+          label: '地图服务',
           serviceType: 'IGSMapImage',
           icon: `${domain}/file/default/dataIcons/MapGIS矢量地图服务.png`,
         },
         {
           id: uuidv4(),
-          label: 'MapGIS 瓦片地图服务',
+          label: '栅格瓦片服务',
           serviceType: 'IGSTile',
           icon: `${domain}/file/default/dataIcons/MapGIS瓦片地图服务.png`,
         },
         {
           id: uuidv4(),
-          label: 'MapGIS 图层地图服务',
+          label: '图层地图服务',
           serviceType: 'IGSVector',
           icon: `${domain}/file/default/dataIcons/MapGIS图层地图服务.png`,
         },
         {
           id: uuidv4(),
-          label: 'MapGIS 矢量瓦片服务',
+          label: '矢量瓦片服务',
           serviceType: 'VectorTile',
           icon: `${domain}/file/default/dataIcons/MapGIS矢量瓦片服务.png`,
         },
@@ -42,19 +42,19 @@ export const defaultDataIconsConfig = {
         },
         {
           id: uuidv4(),
-          label: 'MapGIS 数据流服务',
+          label: '数据流服务',
           serviceType: 'DataFlow',
           icon: `${domain}/file/default/dataIcons/MapGIS数据流服务.png`,
         },
         {
           id: uuidv4(),
-          label: 'MapGIS 场景服务',
+          label: '场景服务',
           serviceType: 'IGSScene',
           icon: `${domain}/file/default/dataIcons/MapGIS场景服务.png`,
         },
         {
           id: uuidv4(),
-          label: 'MapGIS M3D模型缓存服务',
+          label: 'M3D服务',
           serviceType: 'ModelCache',
           icon: `${domain}/file/default/dataIcons/M3D.png`,
         },
@@ -67,13 +67,13 @@ export const defaultDataIconsConfig = {
       children: [
         {
           id: uuidv4(),
-          label: 'ArcGIS 地图服务',
+          label: 'ArcGIS地图服务',
           serviceType: 'ArcGISMapImage',
           icon: `${domain}/file/default/dataIcons/ArcGIS地图服务.png`,
         },
         {
           id: uuidv4(),
-          label: 'ArcGIS 瓦片服务',
+          label: 'ArcGIS瓦片服务',
           serviceType: 'ArcGISTile',
           icon: `${domain}/file/default/dataIcons/ArcGIS瓦片服务.png`,
         },
@@ -86,19 +86,19 @@ export const defaultDataIconsConfig = {
       children: [
         {
           id: uuidv4(),
-          label: 'OGC WMS服务',
+          label: 'WMS服务',
           serviceType: 'OGCWMS',
           icon: `${domain}/file/default/dataIcons/OGC WMS服务.png`,
         },
         {
           id: uuidv4(),
-          label: 'OGC WMTS',
+          label: 'WMTS服务',
           serviceType: 'OGCWMTS',
           icon: `${domain}/file/default/dataIcons/OGC WMTS服务.png`,
         },
         {
           id: uuidv4(),
-          label: 'OGC WFS',
+          label: 'WFS服务',
           serviceType: 'OGCWFS',
           icon: `${domain}/file/default/dataIcons/OGC WFS服务.png`,
         },
