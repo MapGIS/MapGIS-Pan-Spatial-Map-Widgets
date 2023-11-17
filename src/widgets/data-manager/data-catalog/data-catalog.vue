@@ -197,41 +197,49 @@
             "
             :id="`tree_${item.guid}`"
           >
-            <span
-              v-if="
-                searchValue !== '' &&
-                item.name.toUpperCase().indexOf(searchValue.toUpperCase()) !==
-                  -1
-              "
-            >
-              <span class="unfilter-words" :title="item.description">
-                {{
-                  item.name.substr(
-                    0,
-                    item.name.toUpperCase().indexOf(searchValue.toUpperCase())
-                  )
-                }}
-              </span>
-              <span class="filter-words" :title="item.description">
-                {{
-                  item.name.substr(
-                    item.name.toUpperCase().indexOf(searchValue.toUpperCase()),
-                    searchValue.length
-                  )
-                }}
-              </span>
-              <span class="unfilter-words" :title="item.description">
-                {{
-                  item.name.substr(
-                    item.name.toUpperCase().indexOf(searchValue.toUpperCase()) +
+            <mapgis-ui-tooltip>
+              <template slot="title">
+                {{ getLeafTooltip(item) }}
+              </template>
+              <span
+                v-if="
+                  searchValue !== '' &&
+                  item.name.toUpperCase().indexOf(searchValue.toUpperCase()) !==
+                    -1
+                "
+              >
+                <span class="unfilter-words" :title="item.description">
+                  {{
+                    item.name.substr(
+                      0,
+                      item.name.toUpperCase().indexOf(searchValue.toUpperCase())
+                    )
+                  }}
+                </span>
+                <span class="filter-words" :title="item.description">
+                  {{
+                    item.name.substr(
+                      item.name
+                        .toUpperCase()
+                        .indexOf(searchValue.toUpperCase()),
                       searchValue.length
-                  )
-                }}
+                    )
+                  }}
+                </span>
+                <span class="unfilter-words" :title="item.description">
+                  {{
+                    item.name.substr(
+                      item.name
+                        .toUpperCase()
+                        .indexOf(searchValue.toUpperCase()) + searchValue.length
+                    )
+                  }}
+                </span>
               </span>
-            </span>
-            <span v-else @click="onClick(item)" :title="item.description">{{
-              item.name
-            }}</span>
+              <span v-else @click="onClick(item)" :title="item.description">{{
+                item.name
+              }}</span>
+            </mapgis-ui-tooltip>
             <mapgis-ui-menu slot="overlay">
               <mapgis-ui-menu-item
                 v-if="
@@ -594,6 +602,83 @@ export default {
     },
   },
   methods: {
+    getLeafTooltip(item) {
+      const text = item.name
+      let str
+      if (item.serverType !== undefined) {
+        switch (item.serverType) {
+          case LayerType.IGSMapImage:
+            str = '地图服务'
+            break
+          case LayerType.IGSTile:
+            str = '栅格瓦片服务'
+            break
+          case LayerType.IGSVector:
+            str = '图层地图服务'
+            break
+          case LayerType.VectorTile:
+            str = '矢量瓦片服务'
+            break
+          case LayerType.IGSPanoramic:
+            str = 'IGSPanoramic服务'
+            break
+          case LayerType.DataFlow:
+            str = '数据流服务'
+            break
+          case LayerType.IGSScene:
+            str = '场景服务'
+            break
+          case LayerType.ModelCache:
+            str = 'M3D服务'
+            break
+          case LayerType.ArcGISMapImage:
+            str = 'ArcGIS地图服务'
+            break
+          case LayerType.ArcGISTile:
+            str = 'ArcGIS瓦片服务'
+            break
+          case LayerType.OGCWMS:
+            str = 'WMS服务'
+            break
+          case LayerType.OGCWMTS:
+            str = 'WMTS服务'
+            break
+          case LayerType.OGCWFS:
+            str = 'WFS服务'
+            break
+          case LayerType.GeoJson:
+            str = 'GEOJSON'
+            break
+          case LayerType.TILE3D:
+            str = '3DTiles'
+            break
+          case LayerType.STKTerrain:
+            str = 'STK地形'
+            break
+          case LayerType.Plot:
+            str = '标绘图层'
+            break
+          case LayerType.KML:
+            str = 'KML'
+            break
+          case LayerType.KMZ:
+            str = 'KMZ'
+            break
+          case LayerType.CZML:
+            str = 'CZML'
+            break
+          case LayerType.OSM:
+            str = 'OSM'
+            break
+          default:
+            break
+        }
+      }
+      if (str && str.length > 0) {
+        return `${text}：${str}`
+      }
+      return text
+    },
     nodeIcon(item) {
       let icon
       if (item.serverType !== undefined) {
