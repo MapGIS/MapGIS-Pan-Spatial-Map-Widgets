@@ -5,6 +5,8 @@
     :fieldInfo="fieldInfo"
     :featureType="featureType"
     :layerFeatureStyle="layerFeatureStyle"
+    :rendererType="rendererType"
+    :featureStyle="featureStyle"
   ></mapgis-ui-feature-edit>
 </template>
 
@@ -30,6 +32,7 @@ export default {
     }
   },
   computed: {
+    // 图层类型，点、线、区
     featureType() {
       // 从LayerFeatureEdit获取已存在的编辑样式
       const layerInfo = this.getFeatureStyle()
@@ -40,8 +43,40 @@ export default {
       }
       return layerInfo.type
     },
+    // 图层要素数据
     layerFeatureStyle() {
-      return this.getFeatureStyle()
+      const { renderer } = this.getFeatureStyle()
+      if (renderer) {
+        if (renderer.type == 'simple') {
+          return renderer.symbol || {}
+        } else if (renderer.type == 'unique-value') {
+          return renderer.uniqueValueInfos.map((item) => {
+            return {
+              sample: item.symbol,
+              class: item.value,
+            }
+          })
+        } else if (renderer.type == 'class-breaks') {
+          return renderer.classBreakInfos.map((item) => {
+            return {
+              sample: item.symbol,
+              max: item.maxValue,
+              min: item.minValue,
+            }
+          })
+        }
+      }
+      return {}
+    },
+    // 图层专题图类型
+    rendererType() {
+      const { renderer } = this.getFeatureStyle()
+      return renderer?.type
+    },
+    // 图层专题图symbol类型
+    featureStyle() {
+      const { symbolType } = this.getFeatureStyle()
+      return symbolType
     },
   },
   mounted() {
@@ -172,7 +207,6 @@ export default {
       callback(result)
     },
     getRenderer(renderer = {}, symbolType) {
-      debugger
       const { layer } = this.layer
       let extend
       const isEdit = Object.keys(renderer).length > 0
