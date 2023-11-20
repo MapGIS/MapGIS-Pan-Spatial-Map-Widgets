@@ -1263,8 +1263,8 @@ export default {
       const targetLayer = val.layer ? val.layer : val
       const { extend } = targetLayer
       const doc = this.layerDocument.clone()
-      const layer = doc.defaultMap.findLayerById(targetLayer.id)
-      layer.extend = extend
+      // const layer = doc.defaultMap.findLayerById(targetLayer.id)
+      // layer.extend = extend
       this.$emit('update:layerDocument', doc)
       // api.updateData({ dataId, extend })
     },

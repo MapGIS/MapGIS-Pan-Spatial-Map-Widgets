@@ -15,7 +15,7 @@ import featureEditUtil from '../../mixin/feature-eidt-util'
 import { LayerFeatureEdit } from '@mapgis/web-app-framework'
 
 export default {
-  name: 'FeatureEdit',
+  name: 'MpFeatureEdit',
   mixins: [featureEditUtil],
   props: {
     layer: {
@@ -216,20 +216,29 @@ export default {
           this.layer.url
         )
         if (hasFeatureStyle) {
-          this.layerFeatureEdit.updateFeatureRenderer(
-            layer.url,
-            this.layer.url,
-            renderer,
-            symbolType
-          )
+          if (isEdit) {
+            this.layerFeatureEdit.updateFeatureRenderer(
+              layer.url,
+              this.layer.url,
+              renderer,
+              symbolType
+            )
+          } else {
+            this.layerFeatureEdit.deleteFeatureRelation(
+              layer.url,
+              this.layer.url
+            )
+          }
         } else {
-          const relation = this.getFeatureRelation(
-            this.layer,
-            symbolType,
-            renderer,
-            true
-          )
-          this.layerFeatureEdit.setFeatureRelation(layer.url, relation)
+          if (isEdit) {
+            const relation = this.getFeatureRelation(
+              this.layer,
+              symbolType,
+              renderer,
+              true
+            )
+            this.layerFeatureEdit.setFeatureRelation(layer.url, relation)
+          }
         }
 
         extend = layer.extend
@@ -238,26 +247,32 @@ export default {
           this.layer.url
         )
         if (hasFeatureStyle) {
-          this.layerFeatureEdit.updateFeatureRenderer(
-            this.layer.url,
-            undefined,
-            renderer,
-            symbolType
-          )
+          if (isEdit) {
+            this.layerFeatureEdit.updateFeatureRenderer(
+              this.layer.url,
+              undefined,
+              renderer,
+              symbolType
+            )
+          } else {
+            this.layerFeatureEdit.deleteFeatureRelation(this.layer.url)
+          }
         } else {
-          const relation = this.getFeatureRelation(
-            this.layer,
-            symbolType,
-            renderer,
-            false
-          )
-          this.layerFeatureEdit.setFeatureRelation(this.layer.url, relation)
+          if (isEdit) {
+            const relation = this.getFeatureRelation(
+              this.layer,
+              symbolType,
+              renderer,
+              false
+            )
+            this.layerFeatureEdit.setFeatureRelation(this.layer.url, relation)
+          }
         }
 
         extend = this.layer.extend
       }
       // 在extend上记录对应子图层的编辑样式
-      this.changeFeatureStyle(extend, renderer, symbolType, isEdit)
+      // this.changeFeatureStyle(extend, renderer, symbolType, isEdit)
       this.$emit('update:layer', this.layer)
     },
     changeFeatureStyle(extend, renderer, symbolType, isEdit) {
