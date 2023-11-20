@@ -169,6 +169,7 @@
           :dataStoreIp="dataStoreIp"
           :dataStorePort="dataStorePort"
           :getProjectorStatus="getProjectorStatus"
+          :exhibition="exhibition"
           v-bind="popupOption"
           @project-screen="projectScreen"
         />
