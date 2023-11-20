@@ -565,8 +565,9 @@ export default {
 
         switch (layer.type) {
           case LayerType.IGSVector:
-            this.quertFeatruesByVector(layer, geometry)
-            break
+          // IGSVector跟IGSMapImage走相同逻辑
+          // this.quertFeatruesByVector(layer, geometry)
+          // break
           case LayerType.IGSMapImage:
             this.queryFeaturesByDoc(layer, geometry)
             break
@@ -806,7 +807,10 @@ export default {
       return ipPortObj
     },
 
-    async queryFeaturesByDoc(layer: IGSMapImageLayer, geometry) {
+    async queryFeaturesByDoc(
+      layer: IGSMapImageLayer | IGSVectorLayer,
+      geometry
+    ) {
       if (!layer.isVisible) {
         return
       }
@@ -884,7 +888,6 @@ export default {
       const ipPortObj = this.getIpPort({
         isDataStoreQuery,
       })
-
       const exhibition: IAttributeTableListExhibition = {
         id: `${layer.id}`,
         name: `${layer.title} 查询结果`,

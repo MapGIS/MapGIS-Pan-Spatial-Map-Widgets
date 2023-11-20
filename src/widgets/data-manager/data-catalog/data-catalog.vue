@@ -995,7 +995,11 @@ export default {
           if (layer.loadStatus === LoadStatus.loaded) {
             // 判断layer的类型是否为矢量地图、图层底图、geojson类型数据，若为此类型则需要处理配置的样式，若配置则在该图层上再叠加一层geojson显示
             if (
-              [LayerType.IGSMapImage, LayerType.GeoJson].includes(layer.type)
+              [
+                LayerType.IGSMapImage,
+                LayerType.GeoJson,
+                LayerType.IGSVector,
+              ].includes(layer.type)
             ) {
               // 将sublayers中的子图层都进行处理,前提是管理平台配置了样式
               const featureStyle = layer.extend?.featureStyle
@@ -1004,7 +1008,7 @@ export default {
                 // LayerNodeToGeoJsonInstance.addLayerNode(layer)
                 LayerFeatureEdit.operateFeatureRelation(
                   layer.type,
-                  layer.allSublayers ? layer.allSublayers : layer,
+                  layer.allSublayers ? layer.allSublayers : [layer],
                   layer.url,
                   featureStyle || {}
                 )

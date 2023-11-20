@@ -45,7 +45,7 @@ export default {
     },
     // 图层要素数据
     layerFeatureStyle() {
-      const { renderer } = this.getFeatureStyle()
+      const renderer = this.getFeatureStyle()?.renderer
       if (renderer) {
         if (renderer.type == 'simple') {
           return renderer.symbol || {}
@@ -70,12 +70,12 @@ export default {
     },
     // 图层专题图类型
     rendererType() {
-      const { renderer } = this.getFeatureStyle()
+      const renderer = this.getFeatureStyle()?.renderer
       return renderer?.type
     },
     // 图层专题图symbol类型
     featureStyle() {
-      const { symbolType } = this.getFeatureStyle()
+      const symbolType = this.getFeatureStyle()?.symbolType
       return symbolType
     },
   },
@@ -85,7 +85,7 @@ export default {
 
   methods: {
     getFeatureStyleByLayer() {
-      const { geomType, source } = this.layer
+      const { geomType, featureStyle } = this.layer
       // geojson数据有geomType为空的情况
       if (!geomType && featureStyle) {
         const transformType = this.getGeometryType(featureStyle.type)
@@ -224,12 +224,12 @@ export default {
           )
         } else {
           const relation = this.getFeatureRelation(
-            layer,
+            this.layer,
             symbolType,
             renderer,
             true
           )
-          this.layerFeatureEdit.setFeatureRelation(this.layer.url, realtion)
+          this.layerFeatureEdit.setFeatureRelation(layer.url, relation)
         }
 
         extend = layer.extend
@@ -246,12 +246,12 @@ export default {
           )
         } else {
           const relation = this.getFeatureRelation(
-            layer,
+            this.layer,
             symbolType,
             renderer,
             false
           )
-          this.layerFeatureEdit.setFeatureRelation(this.layer.url, realtion)
+          this.layerFeatureEdit.setFeatureRelation(this.layer.url, relation)
         }
 
         extend = this.layer.extend
@@ -280,7 +280,7 @@ export default {
     getFeatureRelation(layer, symbolType, renderer, hasParent) {
       let relation = {}
       const sublayer = {
-        id: hasParent ? layer.id : this.layer.id,
+        id: layer.id,
         type: this.featureType,
         symbolType: symbolType,
         renderer: renderer,

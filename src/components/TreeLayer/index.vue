@@ -1099,7 +1099,9 @@ export default {
           layer: this.currentLayerInfo,
         },
         listeners: {
-          'update:layer': (val) => {},
+          'update:layer': (val) => {
+            this.updateDocuement(val)
+          },
         },
       })
     },
@@ -1255,6 +1257,16 @@ export default {
       this.$emit('update:layerDocument', doc)
       this.currentLayerInfo = {}
       api.updateData({ dataId, extend })
+    },
+
+    updateDocuement(val) {
+      const targetLayer = val.layer ? val.layer : val
+      const { extend } = targetLayer
+      const doc = this.layerDocument.clone()
+      const layer = doc.defaultMap.findLayerById(targetLayer.id)
+      layer.extend = extend
+      this.$emit('update:layerDocument', doc)
+      // api.updateData({ dataId, extend })
     },
 
     // updateLuminanceAtZenith(luminanceAtZenith) {

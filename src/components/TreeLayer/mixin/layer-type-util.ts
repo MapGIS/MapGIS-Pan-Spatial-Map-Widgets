@@ -42,8 +42,12 @@ export default {
      * @param item layer图层
      * @returns boolean
      */
-    isIgsVectorLayer({ type }) {
-      return type === LayerType.IGSVector
+    isIgsVectorLayer({ type, layer }) {
+      let layerType = type
+      if (layer) {
+        layerType = layer.type
+      }
+      return layerType === LayerType.IGSVector
     },
     /**
      * 判断是否是IGSVector3D图层
@@ -194,7 +198,7 @@ export default {
           this.isIGSScene(item) &&
           this.includeBindData(item)) ||
         (this.isSubLayer(item) && this.isArcGISMapImage(item)) ||
-        this.isIgsVectorLayer(item) ||
+        (this.isSubLayer(item) && this.isIgsVectorLayer(item)) ||
         this.isDataFlow(item) ||
         (this.isModelCacheLayer(item) && this.includeBindData(item)) ||
         this.isIgsVector3dLayer(item) ||
@@ -404,7 +408,9 @@ export default {
           type: this.isIgsVectorLayer(layer),
           setValue: () => {
             const igsVectorLayer = layer.dataRef
-            const { domain, docName } = igsVectorLayer._parseUrl(layer.url)
+            const { domain, docName } = igsVectorLayer.layer._parseUrl(
+              igsVectorLayer.layer.url
+            )
             // const { isDataStoreQuery, DNSName } =
             //   await FeatureQuery.isDataStoreQuery({
             //     ip,
@@ -425,8 +431,8 @@ export default {
                 ...ipPortObj,
                 isDataStoreQuery,
                 DNSName,
-                serverType: igsVectorLayer.type,
-                gdbp: igsVectorLayer.gdbps,
+                serverType: igsVectorLayer.layer.type,
+                gdbp: igsVectorLayer.url,
                 f: queryType || '',
               },
               popupOption: parent
