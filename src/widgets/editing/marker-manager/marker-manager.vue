@@ -129,7 +129,6 @@
     <marker-export
       :visible="exportModalVisible"
       :markers="markers"
-      :exportConfig="exportConfig"
       @finished="exportModalVisible = false"
     />
   </div>
@@ -287,10 +286,6 @@ export default {
         this.widgetInfo.config.markerShowType === 'default'
         ? this.markers
         : []
-    },
-
-    exportConfig() {
-      return this.widgetInfo.config.exportConfig
     },
 
     popupAnchor() {

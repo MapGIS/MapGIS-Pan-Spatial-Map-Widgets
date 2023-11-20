@@ -14,6 +14,7 @@
         @check="tickedChange"
         :expanded-keys="expandedKeys"
         @expand="onExpand"
+        @select="onSelect"
         checkable
         :tree-data="layers"
         block-node
@@ -24,6 +25,15 @@
       >
         <!-- 原来的图标类型为type="check-circle" -->
         <div slot="custom" slot-scope="item" class="tree-item-handle">
+          <div>
+            <i
+              v-if="nodeIcon(item).isSvg"
+              class="icon"
+              v-html="nodeIcon(item).icon"
+            >
+            </i>
+            <img v-else class="tree-item-icon" :src="nodeIcon(item).icon" />
+          </div>
           <!-- wmts图层的子图层start ：当为wmts图层时，子图层是展示当前选中的图层， -->
           <mapgis-ui-iconfont
             v-if="
@@ -191,6 +201,7 @@ import {
   ExhibitionControllerMixin,
   Exhibition,
   LayerType,
+  IGSSceneSublayerType,
   ModelCacheFormat,
   IGSMapImageLayer,
   IGSVectorLayer,
@@ -221,6 +232,7 @@ import RightPopover from './components/RightPopover/index.vue'
 import ModelStretchUtil from '../ModelStretch/mixin/ModelStretchUtil.js'
 import layerCoordinateGridUtil from './mixin/layer-coordinate-grid-util'
 import featureEditUtil from './mixin/feature-eidt-util'
+import { defaultDataIconsConfig } from '../../theme/dataIconsConfig.js'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
@@ -468,6 +480,77 @@ export default {
     // eventBus.$on(events.ECHO_LAYER_LIST_INFO, this.echoLayerList)
   },
   methods: {
+    nodeIcon(item) {
+      let icon
+      if (item.type !== undefined) {
+        let { type } = item
+        if (item.layer && item.layer.type === LayerType.IGSScene) {
+          // 场景服务里的组图层/子图层
+          if (type === IGSSceneSublayerType.groupLayer3D) {
+            // 场景服务的组图层
+            let { layerIcons } = this.application.baseConfig
+            if (!layerIcons || layerIcons.length == 0) {
+              layerIcons = defaultDataIconsConfig.layerIcons
+            }
+            for (let i = 0; i < layerIcons.length; i++) {
+              for (let j = 0; j < layerIcons[i].children.length; j++) {
+                const child = layerIcons[i].children[j]
+                if (child.layerType === 'Group') {
+                  icon = child.icon
+                  return {
+                    isSvg: icon && icon.indexOf('<svg') >= 0,
+                    icon,
+                  }
+                }
+              }
+            }
+          } else if (type === IGSSceneSublayerType.modelCache) {
+            type = LayerType.ModelCache
+          }
+        }
+        // 服务类型
+        let { serviceIcons } = this.application.baseConfig
+        if (!serviceIcons || serviceIcons.length == 0) {
+          serviceIcons = defaultDataIconsConfig.serviceIcons
+        }
+        for (let i = 0; i < serviceIcons.length; i++) {
+          for (let j = 0; j < serviceIcons[i].children.length; j++) {
+            const child = serviceIcons[i].children[j]
+            if (type === LayerType[child.serviceType]) {
+              icon = child.icon
+              return {
+                isSvg: icon && icon.indexOf('<svg') >= 0,
+                icon,
+              }
+            }
+          }
+        }
+      } else if (item.dataRef && item.dataRef.geomType) {
+        // 图层类型
+        let { layerIcons } = this.application.baseConfig
+        if (!layerIcons || layerIcons.length == 0) {
+          layerIcons = defaultDataIconsConfig.layerIcons
+        }
+        let geomType = item.dataRef.geomType
+        if (item.dataRef.sublayers && item.dataRef.sublayers.length > 0) {
+          geomType = 'Group'
+        }
+        for (let i = 0; i < layerIcons.length; i++) {
+          for (let j = 0; j < layerIcons[i].children.length; j++) {
+            const child = layerIcons[i].children[j]
+            if (geomType === child.layerType) {
+              icon = child.icon
+              return {
+                isSvg: icon && icon.indexOf('<svg') >= 0,
+                icon,
+              }
+            }
+          }
+        }
+      }
+      icon = ''
+      return { isSvg: icon && icon.indexOf('<svg') >= 0, icon }
+    },
     setLayerEditConfig() {
       const doc = this.layerDocument.clone()
       const layers = doc.defaultMap.layers()
@@ -634,6 +717,18 @@ export default {
     //  没有这一步，手动控制展开的位置无法折叠
     onExpand(expandedKeys) {
       this.expandedKeys = expandedKeys
+    },
+
+    // 选中树节点触发展开/收起
+    onSelect(selectedKeys, e) {
+      const flag = this.expandedKeys.includes(e.node.eventKey)
+      if (flag) {
+        this.expandedKeys = this.expandedKeys.filter(
+          (item) => item !== e.node.eventKey
+        )
+      } else {
+        this.expandedKeys.push(e.node.eventKey)
+      }
     },
 
     /**
@@ -828,11 +923,22 @@ export default {
           // vm.$emit('update:layerDocument', doc)
         })
       } else if (layer.type === LayerType.IGSScene) {
-        const layerId = layer.activeScene.sublayers[0].id
+        const layerIdArr = []
+        layer.activeScene.sublayers.forEach((sublayer) => {
+          if (sublayer.sublayers.length > 0) {
+            sublayer.sublayers.forEach((item) => {
+              layerIdArr.push(item.id)
+            })
+          } else {
+            layerIdArr.push(sublayer.id)
+          }
+        })
         setTimeout(() => {
-          source = vm.sceneController.findSource(layerId)
-          if (source) {
-            vm._setBoundingSphereAndExtent(source, layer)
+          const sourceArr = layerIdArr.map((layerId) =>
+            vm.sceneController.findSource(layerId)
+          )
+          if (sourceArr) {
+            vm._setIGSSceneBoundingSphereAndExtent(sourceArr, layer)
             window.layers3D[layer.id] = layer
           }
           // vm.$emit('update:layerDocument', doc)
@@ -840,7 +946,21 @@ export default {
       }
     },
     /**
-     * 设置场景服务、模型缓存、3dTiles 图层的BoundingSphere和Extent
+     * 设置场景服务图层的BoundingSphere和Extent
+     */
+    _setIGSSceneBoundingSphereAndExtent(sourceArr, layer) {
+      const extent = this._getM3DSetArrayRange(sourceArr)
+      if (extent) {
+        layer.fullExtent.xmin = extent.xmin
+        layer.fullExtent.ymin = extent.ymin
+        layer.fullExtent.xmax = extent.xmax
+        layer.fullExtent.ymax = extent.ymax
+        layer.boundingSphere = extent.boundingSphere
+      }
+      return layer
+    },
+    /**
+     * 设置模型缓存、3dTiles 图层的BoundingSphere和Extent
      */
     _setBoundingSphereAndExtent(source, layer) {
       const boundingSphere = source._root.boundingVolume.boundingSphere
@@ -859,6 +979,45 @@ export default {
         layer.boundingSphere = boundingSphere
       }
       return layer
+    },
+    /**
+     * 获取多个M3D的最大包围盒范围(以最大包围盒中心点为原点)
+     */
+    _getM3DSetArrayRange(m3dSetArray) {
+      let xmin
+      let ymin
+      let xmax
+      let ymax
+      let zmin
+      let zmax
+      const boundingSphere =
+        this.Cesium.AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
+      for (let i = 0; i < m3dSetArray.length; i++) {
+        const m3d = m3dSetArray[i]
+        const range = this._getM3DSetRange(m3d)
+        if (!range) {
+          continue
+        }
+        if (xmin == undefined || range.xmin < xmin) {
+          xmin = range.xmin
+        }
+        if (ymin == undefined || range.ymin < ymin) {
+          ymin = range.ymin
+        }
+        if (xmax == undefined || range.xmax > xmax) {
+          xmax = range.xmax
+        }
+        if (ymax == undefined || range.ymax > ymax) {
+          ymax = range.ymax
+        }
+        if (zmin == undefined || range.zmin < zmin) {
+          zmin = range.zmin
+        }
+        if (zmax == undefined || range.zmax > zmax) {
+          zmax = range.zmax
+        }
+      }
+      return { xmin, ymin, xmax, ymax, zmin, zmax, boundingSphere }
     },
     /**
      * 获取m3d经纬度包围盒
@@ -1729,6 +1888,22 @@ export default {
       width: 100%;
       overflow: hidden;
       align-items: center;
+      .tree-item-icon {
+        width: 1em;
+        height: 1em;
+        vertical-align: -0.125em;
+        margin-right: 5px;
+      }
+      .icon {
+        display: flex;
+        fill: currentColor;
+        align-items: center;
+        margin-right: 5px;
+        > svg {
+          width: 100%;
+          height: 100%;
+        }
+      }
       .more {
         font-size: 16px;
         margin-right: 0;
