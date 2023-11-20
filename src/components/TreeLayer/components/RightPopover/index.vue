@@ -99,6 +99,16 @@ export default {
             this.isIGSScene(this.layerItem),
           click: () => this.modelEdit(),
         },
+        {
+          name: '要素编辑',
+          show:
+            (!this.isParentLayer(this.layerItem) &&
+              (this.isIgsDocLayer(this.layerItem) ||
+                this.isFeatureLayer(this.layerItem)) &&
+              this.layerItem.sublayers.length === 0) ||
+            this.isGeoJsonLayer(this.layerItem),
+          click: () => this.featureEdit(),
+        },
       ],
     }
   },
@@ -137,6 +147,10 @@ export default {
 
     modelEdit() {
       this.$emit('model-edit', this.layerItem)
+    },
+
+    featureEdit() {
+      this.$emit('feature-edit', this.layerItem)
     },
 
     enableQuery() {

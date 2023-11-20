@@ -130,6 +130,7 @@
                 @edit-data-flow-style="editDataFlowStyle"
                 @change-m3d-props="changeM3DProps"
                 @model-edit="modelEdit"
+                @feature-edit="featureEdit"
                 @query="queryFeature"
               />
               <!-- <slot
@@ -230,6 +231,7 @@ import layerTypeUtil from './mixin/layer-type-util'
 import RightPopover from './components/RightPopover/index.vue'
 import ModelStretchUtil from '../ModelStretch/mixin/ModelStretchUtil.js'
 import layerCoordinateGridUtil from './mixin/layer-coordinate-grid-util'
+import featureEditUtil from './mixin/feature-eidt-util'
 import { defaultDataIconsConfig } from '../../theme/dataIconsConfig.js'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
@@ -251,6 +253,7 @@ export default {
     layerTypeUtil,
     ModelStretchUtil,
     layerCoordinateGridUtil,
+    featureEditUtil,
   ],
   inject: ['vueCesium'],
   props: {
@@ -1239,6 +1242,28 @@ export default {
         },
       })
     },
+    /**
+     * 打开要素编辑页面
+     */
+    async featureEdit(item) {
+      // 获取属性字段
+      const fieldInfo = await this.getFeatureField(item)
+      this.currentLayerInfo = item.dataRef
+      this.openPage({
+        title: '要素编辑',
+        name: 'MpFeatureEdit',
+        component: () => import('./components/FeatureEdit/FeatureEdit.vue'),
+        props: {
+          fieldInfo: fieldInfo,
+          layer: this.currentLayerInfo,
+        },
+        listeners: {
+          'update:layer': (val) => {
+            this.updateDocuement(val)
+          },
+        },
+      })
+    },
 
     updateModel(type, val) {
       switch (type) {
@@ -1391,6 +1416,16 @@ export default {
       this.$emit('update:layerDocument', doc)
       this.currentLayerInfo = {}
       api.updateData({ dataId, extend })
+    },
+
+    updateDocuement(val) {
+      const targetLayer = val.layer ? val.layer : val
+      const { extend } = targetLayer
+      const doc = this.layerDocument.clone()
+      // const layer = doc.defaultMap.findLayerById(targetLayer.id)
+      // layer.extend = extend
+      this.$emit('update:layerDocument', doc)
+      // api.updateData({ dataId, extend })
     },
 
     // updateLuminanceAtZenith(luminanceAtZenith) {

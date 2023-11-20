@@ -371,6 +371,7 @@ import {
   BaseMapController,
   baseConfigInstance,
   DataCatalogUtil,
+  LayerFeatureEdit,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../../../components/MetadataInfo/MetadataInfo.vue'
 import NonSpatial from './non-spatial.vue'
@@ -1119,6 +1120,27 @@ export default {
         } finally {
           // 2.2判断图层是否载成功。如果成功则将图层添加到documet中。否则，给出提示，并将数据目录树中对应的节点设为未选中状态。
           if (layer.loadStatus === LoadStatus.loaded) {
+            // 判断layer的类型是否为矢量地图、图层底图、geojson类型数据，若为此类型则需要处理配置的样式，若配置则在该图层上再叠加一层geojson显示
+            if (
+              [
+                LayerType.IGSMapImage,
+                LayerType.GeoJson,
+                LayerType.IGSVector,
+              ].includes(layer.type)
+            ) {
+              // 将sublayers中的子图层都进行处理,前提是管理平台配置了样式
+              const featureStyle = layer.extend?.featureStyle
+              // 未配置样式的图层正常加载
+              if (featureStyle) {
+                // LayerNodeToGeoJsonInstance.addLayerNode(layer)
+                LayerFeatureEdit.operateFeatureRelation(
+                  layer.type,
+                  layer.allSublayers ? layer.allSublayers : [layer],
+                  layer.url,
+                  featureStyle || {}
+                )
+              }
+            }
             // 如果处于收藏夹复现则无需设置修改的layerProperty信息
             const currentCheckLayerConfig =
               DataCatalogCheckController.getCurrentCheckLayerConfig()
