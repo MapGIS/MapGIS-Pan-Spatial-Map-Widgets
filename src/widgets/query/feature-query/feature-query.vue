@@ -564,10 +564,8 @@ export default {
         const geometry = this.toQueryGeometry(layer, shape, nearDis)
 
         switch (layer.type) {
-          case LayerType.IGSVector:
           // IGSVector跟IGSMapImage走相同逻辑
-          // this.quertFeatruesByVector(layer, geometry)
-          // break
+          case LayerType.IGSVector:
           case LayerType.IGSMapImage:
             this.queryFeaturesByDoc(layer, geometry)
             break
