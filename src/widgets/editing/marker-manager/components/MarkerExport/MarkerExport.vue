@@ -21,11 +21,9 @@ export default {
   props: {
     visible: { type: Boolean, default: false },
     markers: { type: Array, required: true },
-    exportConfig: { type: Object },
   },
   // @Prop({ type: Boolean, default: false }) visible
   // @Prop({ type: Array, required: true }) readonly markers!: Array< Record<string, any> >
-  // @Prop({ type: Object }) exportConfig: Record<string, any>
 
   data() {
     return {
@@ -107,82 +105,12 @@ export default {
       this.emitFinished()
     },
 
-    // 发送请求创建简单要素类 --> 发送请求将简单要素类保存
-    creatFeature(fileName: string, featureSet: any, featureType: string) {
-      const { projectionName } = baseConfigInstance.config // 获取目标参考系
-      const { username, password } = this.exportConfig
-      const protocol = window.location.protocol
-      const domain = `${protocol}//${this.exportConfig.ip}:${this.exportConfig.port}`
-      const getFeatureUrl = `${domain}/onemap/featureSet/export?path=${fileName}&srsName=${projectionName}&type=${featureType}&f=json&user=${username}&password=${password}`
-
-      // eslint-disable-next-line @typescript-eslint/no-this-alias
-      const self = this
-      const { shpOr6xOption } = this
-      axios.post(getFeatureUrl, JSON.stringify(featureSet)).then(
-        (res) => {
-          const { data } = res
-          let result = data
-          if (data.indexOf('"') > -1) {
-            result = data.replaceAll('"', '')
-          }
-          const url = `${protocol}//${this.exportConfig.ip}:9999/open/download?path=${result}&user=${username}&password=${password}`
-
-          // eslint-disable-next-line no-restricted-globals
-          location.href = url // 下载文件至本地
-
-          setTimeout(() => {
-            if (
-              shpOr6xOption.featureType === '点' &&
-              shpOr6xOption.setOption.featureSet2.SFEleArray.length > 0
-            ) {
-              // 有线要素
-              const fileNameItem =
-                shpOr6xOption.fileType === 'shp'
-                  ? `${shpOr6xOption.fileName}_线.shp`
-                  : `${shpOr6xOption.fileName}_线.wl`
-              shpOr6xOption.featureType = '线'
-              self.creatFeature(
-                fileNameItem,
-                shpOr6xOption.setOption.featureSet2,
-                'Lin'
-              )
-            }
-            if (
-              shpOr6xOption.featureType === '线' &&
-              shpOr6xOption.setOption.featureSet3.SFEleArray.length > 0
-            ) {
-              // 有区要素
-              const fileNameItem =
-                shpOr6xOption.fileType === 'shp'
-                  ? `${shpOr6xOption.fileName}_区.shp`
-                  : `${shpOr6xOption.fileName}_区.wp`
-              shpOr6xOption.featureType = '区'
-              setTimeout(() => {
-                self.creatFeature(
-                  fileNameItem,
-                  shpOr6xOption.setOption.featureSet3,
-                  'Reg'
-                )
-              }, 500)
-            }
-          }, 500)
-        },
-        (error) => {
-          console.log(error)
-        }
-      )
-    },
-
     // 导出形式为shp文件或6x
     ouputToShpOr6x(fileName: string, exportedMarkers, fileType: string) {
-      if (!this.exportConfig) {
-        this.$message.success('请先设置配置数据')
-        return
-      }
       const setOption = this.markers2Features(exportedMarkers) // 获取结果集对象
       let fileNameItem: string
       let exportFormat: string
-      const { projectionName } = baseConfigInstance.config // 获取目标参考系
+      const { projectionName, ip, port } = baseConfigInstance.config // 获取目标参考系
       if (setOption.featureSet1.SFEleArray.length > 0) {
         // 有点要素
         this.shpOr6xOption = {
@@ -194,15 +122,14 @@ export default {
         fileNameItem =
           fileType === 'shp' ? `${fileName}_点.zip` : `${fileName}_点.wt`
         exportFormat = fileType === 'shp' ? 'shp' : 'wp'
-        // this.creatFeature(fileNameItem, setOption.featureSet1, 'Pnt')
         Feature.ExportFeature.downloadFile(
           fileNameItem,
           setOption.featureSet1,
           'Pnt',
           exportFormat,
           projectionName,
-          this.exportConfig.ip,
-          this.exportConfig.port
+          ip,
+          port
         )
       }
       if (setOption.featureSet2.SFEleArray.length > 0) {
@@ -215,15 +142,14 @@ export default {
         fileNameItem =
           fileType === 'shp' ? `${fileName}_线.zip` : `${fileName}_线.wl`
         exportFormat = fileType === 'shp' ? 'shp' : 'wl'
-        // this.creatFeature(fileNameItem, setOption.featureSet2, 'Lin')
         Feature.ExportFeature.downloadFile(
           fileNameItem,
           setOption.featureSet2,
           'Lin',
           exportFormat,
           projectionName,
-          this.exportConfig.ip,
-          this.exportConfig.port
+          ip,
+          port
         )
       }
       if (setOption.featureSet3.SFEleArray.length > 0) {
@@ -236,15 +162,14 @@ export default {
         fileNameItem =
           fileType === 'shp' ? `${fileName}_区.zip` : `${fileName}_区.wp`
         exportFormat = fileType === 'shp' ? 'shp' : 'wp'
-        // this.creatFeature(fileNameItem, setOption.featureSet3, 'Reg')
         Feature.ExportFeature.downloadFile(
           fileNameItem,
           setOption.featureSet3,
           'Reg',
           exportFormat,
           projectionName,
-          this.exportConfig.ip,
-          this.exportConfig.port
+          ip,
+          port
         )
       }
     },
