@@ -200,8 +200,8 @@ export default {
         id: `subject-${UUID.uuid()}`,
         nodeType: 'subject',
         scopedSlots: { title: 'custom' },
-        parentTitle: nodeData.title,
-        parentId: nodeData.id,
+        parentTitle: '新建专题图',
+        parentId: undefined,
         title: undefined,
         visible: true,
       }
