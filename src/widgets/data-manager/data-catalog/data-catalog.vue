@@ -1345,7 +1345,8 @@ export default {
     },
 
     // 选中目录树节点触发展开/收起
-    onSelect(selectedKeys) {
+    onSelect(selectedKeys, info) {
+      this.provideInformation(info.node)
       const flag = this.expandedKeys.includes(selectedKeys[0])
       if (flag) {
         this.expandedKeys = this.expandedKeys.filter(
@@ -2250,6 +2251,18 @@ export default {
       const scrollWidth = targetNode ? targetNode.offsetLeft - 20 : 0
       this.scrollLeft = scrollWidth
       this.reComputed()
+    },
+    provideInformation(node) {
+      const { dataRef } = node
+      if (!dataRef.children) {
+        const checked = this.dataCatalogManager.checkedLayerConfigIDs.includes(
+          dataRef.guid
+        )
+        eventBus.$emit(events.DATA_CATALOG_SELECT_NODE, {
+          node: dataRef,
+          checked,
+        })
+      }
     },
   },
 }
