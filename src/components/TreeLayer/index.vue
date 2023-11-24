@@ -1243,7 +1243,7 @@ export default {
       })
     },
     /**
-     * 打开要素编辑页面
+     * 打开图层样式页面
      */
     async featureEdit(item) {
       // 获取属性字段
@@ -1258,8 +1258,8 @@ export default {
           layer: this.currentLayerInfo,
         },
         listeners: {
-          'update:layer': (val) => {
-            this.updateDocuement(val)
+          'update:layer': (val, isSave) => {
+            this.updateDocuement(val, isSave)
           },
         },
       })
@@ -1418,14 +1418,16 @@ export default {
       api.updateData({ dataId, extend })
     },
 
-    updateDocuement(val) {
+    updateDocuement(val, isSave) {
       const targetLayer = val.layer ? val.layer : val
-      const { extend } = targetLayer
+      const { extend, dataId } = targetLayer
       const doc = this.layerDocument.clone()
-      // const layer = doc.defaultMap.findLayerById(targetLayer.id)
-      // layer.extend = extend
+      if (isSave) {
+        const layer = doc.defaultMap.findLayerById(targetLayer.id)
+        layer.extend = extend
+        api.updateData({ dataId, extend })
+      }
       this.$emit('update:layerDocument', doc)
-      // api.updateData({ dataId, extend })
     },
 
     // updateLuminanceAtZenith(luminanceAtZenith) {
