@@ -1250,7 +1250,7 @@ export default {
       const fieldInfo = await this.getFeatureField(item)
       this.currentLayerInfo = item.dataRef
       this.openPage({
-        title: '要素编辑',
+        title: '图层样式',
         name: 'MpFeatureEdit',
         component: () => import('./components/FeatureEdit/FeatureEdit.vue'),
         props: {

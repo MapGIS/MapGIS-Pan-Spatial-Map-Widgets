@@ -100,7 +100,7 @@ export default {
           click: () => this.modelEdit(),
         },
         {
-          name: '要素编辑',
+          name: '图层样式',
           show:
             (!this.isParentLayer(this.layerItem) &&
               (this.isIgsDocLayer(this.layerItem) ||
