@@ -22,6 +22,7 @@
         ref="draw3d"
         @finished="onDrawFinished"
         :vue-key="vueKey"
+        clearDrawMode
       />
     </template>
   </div>
