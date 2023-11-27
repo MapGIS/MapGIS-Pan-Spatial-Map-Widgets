@@ -174,7 +174,7 @@ export default {
         ip = baseConfigInstance.config.ip
         port = baseConfigInstance.config.port
       }
-      const domain = `http://${ip}:${port}`
+      const domain = `${protocol}//${ip}:${port}`
       return domain
     },
     action() {

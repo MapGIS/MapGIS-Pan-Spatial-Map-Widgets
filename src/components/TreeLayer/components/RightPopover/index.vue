@@ -30,9 +30,9 @@ export default {
       default: () => [],
     },
   },
-  data() {
-    return {
-      listData: [
+  computed: {
+    listData() {
+      return [
         {
           name: '图层元数据',
           show: this.isMetaData(this.layerItem),
@@ -81,7 +81,8 @@ export default {
           name: '置顶',
           show:
             this.isParentLayer(this.layerItem) &&
-            !this.isIGSScene(this.layerItem),
+            !this.isIGSScene(this.layerItem) &&
+            !this.isModelCacheLayer(this.layerItem),
           click: () => this.toTop(),
         },
         {
@@ -109,8 +110,8 @@ export default {
             this.isGeoJsonLayer(this.layerItem),
           click: () => this.featureEdit(),
         },
-      ],
-    }
+      ]
+    },
   },
   created() {
     console.log(this.$root, 'rightpopover', this)

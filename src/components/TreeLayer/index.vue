@@ -91,14 +91,22 @@
             }}</span>
           </mapgis-ui-tooltip>
           <mapgis-ui-iconfont
-            v-if="isParentLayer(item) && !isIGSScene(item)"
+            v-if="
+              isParentLayer(item) &&
+              !isIGSScene(item) &&
+              !isModelCacheLayer(item)
+            "
             class="mapgis-ui-iconfont"
             :disabled="getIndex(item) <= 0"
             type="mapgis-shang"
             @click="lower(item)"
           />
           <mapgis-ui-iconfont
-            v-if="isParentLayer(item) && !isIGSScene(item)"
+            v-if="
+              isParentLayer(item) &&
+              !isIGSScene(item) &&
+              !isModelCacheLayer(item)
+            "
             class="mapgis-ui-iconfont"
             :disabled="getIndex(item) >= layers.length - 1"
             type="mapgis-xia"
