@@ -542,9 +542,9 @@ export default {
     }
 
     this.dataCatalogManager.init(this.widgetInfo.config)
-
+    const filtTree = this.widgetInfo.config.otherConfig.filtTree || false
     this.dataCatalogTreeData =
-      await this.dataCatalogManager.getDataCatalogTreeData(true)
+      await this.dataCatalogManager.getDataCatalogTreeData(filtTree)
     const _allTreeDataConfigs = []
     const { treeData, allTreeDataConfigs } = this.handleTreeData(
       this.dataCatalogTreeData,
