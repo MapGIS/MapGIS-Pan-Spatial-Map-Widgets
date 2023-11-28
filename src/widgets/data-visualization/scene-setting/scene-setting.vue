@@ -9,6 +9,7 @@
       :baseLayerIds="baseLayerIds"
       :publicPath="publicPath"
       :isWidgetOpen="isWidgetOpen"
+      :stuffWidth="stuffWidth"
       ref="sceneSetting"
     >
     </mapgis-3d-scene-setting>
@@ -44,6 +45,7 @@ export default {
       boundingSphereRadius: 0,
       baseLayerIds: [],
       isWidgetOpen: false,
+      stuffWidth: 0,
     }
   },
 
@@ -78,10 +80,36 @@ export default {
     },
   },
   created() {
+    this.getStuffWidth()
     eventBus.$on(events.SCENE_CONFIG_INFO, this.getSceneConfig)
   },
 
   methods: {
+    /**
+     * 动态获取左侧板宽度
+     */
+    getStuffWidth() {
+      const dom = document.querySelector('.mp-side-widget-panel').childNodes[0]
+      const domSideMenu = document.querySelector('.side-menu-wrapper')
+      this.observerStuffWidth = new ResizeObserver(() => {
+        if (dom !== null) {
+          this.stuffWidth =
+            this.getWidthNum(dom.style.width) +
+            this.getWidthNum(domSideMenu.style.width)
+          // 控制罗盘随左侧微件内容面板宽度改变而改变
+          const compassDiv = document.querySelector('.compass')
+          if (compassDiv) {
+            compassDiv.style.left = `${this.stuffWidth}px`
+          }
+        }
+      }).observe(dom)
+    },
+    /**
+     * 去掉px将宽度转成数字
+     */
+    getWidthNum(width) {
+      return Number(width.slice(0, width.length - 2))
+    },
     /**
      * 动态获取基础目录树上已勾选的三维数据
      */
