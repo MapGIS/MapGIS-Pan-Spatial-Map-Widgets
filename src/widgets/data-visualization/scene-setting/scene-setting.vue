@@ -66,6 +66,7 @@ export default {
       if (window.localStorage.sceneSetting) {
         config = JSON.parse(window.localStorage.sceneSetting)
       }
+      config.basicSetting.zoom = undefined
       this.dataCatalogCheckController.setInitSceneConfig(config)
       return config
     },
