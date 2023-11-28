@@ -206,10 +206,11 @@ export default {
       }
       callback(result)
     },
-    getRenderer(renderer = {}, symbolType) {
+    getRenderer(renderer = {}, symbolType, isSave) {
       const { layer } = this.layer
       let extend
       const isEdit = Object.keys(renderer).length > 0
+      // 记录设置信息到layerFeatureEdit中
       if (layer) {
         const hasFeatureStyle = this.layerFeatureEdit.getFeatureRelation(
           layer.url,
@@ -272,8 +273,8 @@ export default {
         extend = this.layer.extend
       }
       // 在extend上记录对应子图层的编辑样式
-      // this.changeFeatureStyle(extend, renderer, symbolType, isEdit)
-      this.$emit('update:layer', this.layer)
+      this.changeFeatureStyle(extend, renderer, symbolType, isEdit)
+      this.$emit('update:layer', this.layer, isSave)
     },
     changeFeatureStyle(extend, renderer, symbolType, isEdit) {
       if (isEdit) {
@@ -289,6 +290,13 @@ export default {
       } else {
         if (extend.featureStyle && extend.featureStyle[this.layer.url]) {
           delete extend.featureStyle[this.layer.url]
+        }
+        // 如果extend.featureStyle为空则直接删除
+        if (
+          extend.featureStyle &&
+          Object.keys(extend.featureStyle).length === 0
+        ) {
+          delete extend.featureStyle
         }
       }
     },
