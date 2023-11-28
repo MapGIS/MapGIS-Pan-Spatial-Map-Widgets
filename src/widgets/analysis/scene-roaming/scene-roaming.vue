@@ -56,7 +56,7 @@ export default {
           value: '',
         },
       ]
-    }
+    },
   },
 
   methods: {
@@ -75,7 +75,7 @@ export default {
 
     // 微件失活时
     onDeActive() {
-      this.sceneRoaming.unmount()
+      // this.sceneRoaming.unmount()
     },
 
     onSaveConfig(paths) {
