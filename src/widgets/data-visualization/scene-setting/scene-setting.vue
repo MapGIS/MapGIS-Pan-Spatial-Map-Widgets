@@ -277,8 +277,15 @@ export default {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="less">
 .full-width {
   width: 100%;
+}
+
+.cesium-performanceDisplay-defaultContainer {
+  position: absolute;
+  top: 90%;
+  right: 25%;
+  text-align: right;
 }
 </style>
