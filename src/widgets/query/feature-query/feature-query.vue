@@ -603,7 +603,10 @@ export default {
       }
       const url = new URL(layer.url)
       const domain = url.origin
-      const { extend } = layer
+      const {
+        extend,
+        searchParams: { searchName, searchServiceType },
+      } = layer
       const queryPrefix = extend.queryPrefix || ''
       const querySuffix = extend.querySuffix || ''
 
@@ -666,6 +669,8 @@ export default {
             gdbp: map.URL,
             geometry,
             is3dBind2dData: true,
+            serverName: searchName,
+            searchServiceType,
           }
           exhibition.options.push(options)
           /**
@@ -1165,7 +1170,13 @@ export default {
       let { fullExtent } = layer
       let { ymax, ymin, xmax, xmin } = fullExtent
       if (type === LayerType.IGSScene || type === LayerType.ModelCache) {
-        if (xmax > 180 || xmin < -180 || ymax > 90 || ymin < -90) {
+        if (
+          xmax > 180 ||
+          xmin < -180 ||
+          ymax > 90 ||
+          ymin < -90 ||
+          (xmax === 0 && xmin === 0 && ymax === 0 && ymin === 0)
+        ) {
           // 在TreeLayer/index.vue里会定义window.layers3D，并设置三维模型的fullExtent和boundingSphere
           if (window.layers3D && window.layers3D[layer.id]) {
             fullExtent = window.layers3D[layer.id].fullExtent

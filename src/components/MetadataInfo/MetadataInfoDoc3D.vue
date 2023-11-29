@@ -48,6 +48,7 @@
                       :columns="getTableColumns(mapInfo[mapInfoItem][0])"
                       :scroll="{
                         x: '100%',
+                        y: 400,
                       }"
                       :rowKey="
                         (record, index) => {
