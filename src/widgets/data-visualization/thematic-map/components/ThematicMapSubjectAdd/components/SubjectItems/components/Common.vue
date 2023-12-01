@@ -77,7 +77,7 @@
             layerServiceType === layerServiceTypeEnum.geojson
           "
           v-model="field"
-          :options="fields"
+          :options="fieldList"
           placeholder="请选择统计属性"
         />
         <mapgis-ui-input v-else v-model="field" placeholder="请输入统计属性" />
@@ -123,9 +123,6 @@ export default {
   },
   data() {
     return {
-      // 属性列表
-      fields: [],
-
       // 目录树
       catalogTreeData: [],
 
@@ -230,12 +227,25 @@ export default {
     // 统计属性
     field: {
       get() {
-        return this.subjectConfig.field || this.fields[0]?.value
+        return this.subjectConfig.field || this.fieldList[0]?.value
       },
       set(nV) {
         this.$emit('change', {
           ...this.subjectConfig,
           field: nV,
+        })
+      },
+    },
+
+    // 属性列表
+    fieldList: {
+      get() {
+        return this.subjectConfig.fieldList || []
+      },
+      set(nV) {
+        this.$emit('change', {
+          ...this.subjectConfig,
+          fieldList: nV,
         })
       },
     },
@@ -511,11 +521,11 @@ export default {
           serverParams
 
         FieldInstance.fetchFields(serverParams).then((fields) => {
-          this.fields = fields.map(({ alias, value }) => ({
+          this.fieldList = fields.map(({ alias, value }) => ({
             label: alias,
             value,
           }))
-          this.field = this.fields[0]?.value
+          this.field = this.fieldList[0]?.value
         })
       }
     },
