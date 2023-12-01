@@ -184,7 +184,7 @@ export default {
       if (this.fieldList && this.fieldList.length > 0) {
         value = this.fieldList[0].value
       }
-      this.field = value
+      this.field = this.field ? this.field : value
     },
   },
 

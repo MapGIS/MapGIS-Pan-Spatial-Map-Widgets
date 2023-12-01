@@ -134,8 +134,8 @@ export default {
      */
     setFields() {
       FieldInstance.getFields(this.subjectConfig).then((fields) => {
-        this.fieldList = fields.map(({ value }) => ({
-          label: value,
+        this.fieldList = fields.map(({ alias, value }) => ({
+          label: alias,
           value,
         }))
         this.$emit('fields-loaded', this.fieldList)

@@ -147,8 +147,6 @@ export default {
      */
     onCancel() {
       this.visible = false
-      this.subjectNodeBase = {}
-      this.subjectNodeConfig = []
     },
 
     /**

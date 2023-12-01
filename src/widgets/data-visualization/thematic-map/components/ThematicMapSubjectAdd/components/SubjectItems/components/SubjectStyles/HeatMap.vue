@@ -1,7 +1,7 @@
 <template>
   <div class="heat-map">
     <mapgis-ui-row-flex label="类型选择" :label-width="76">
-      <mapgis-ui-radio-group v-model="type">
+      <mapgis-ui-radio-group v-model="themeStyle.type">
         <mapgis-ui-radio value="CESIUM">原生</mapgis-ui-radio>
         <mapgis-ui-radio value="MAPV">mapv</mapgis-ui-radio>
       </mapgis-ui-radio-group>
@@ -56,18 +56,16 @@ export default {
     },
   },
   data() {
-    return {
-      type: HeatMapType.CESIUM,
-    }
+    return {}
   },
   watch: {
-    type(t) {
+    'themeStyle.type'(t) {
       this.themeStyle = this.getThemeStyle(t)
     },
   },
   computed: {
     isCesium() {
-      return this.type === HeatMapType.CESIUM
+      return this.themeStyle.type === HeatMapType.CESIUM
     },
     themeStyle: {
       get() {
@@ -107,7 +105,9 @@ export default {
   },
 
   created() {
-    this.emitChange(this.getThemeStyle())
+    if (!this.value || !this.value.themeStyle) {
+      this.emitChange(this.getThemeStyle())
+    }
   },
 }
 </script>
