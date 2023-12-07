@@ -15,7 +15,8 @@
   </div>
 </template>
 <script lang="ts">
-import { Feature, AppMixin } from '@mapgis/web-app-framework'
+import * as turf from '@turf/turf'
+import { Feature, AppMixin, FitBound } from '@mapgis/web-app-framework'
 import { getMarker, IMarker } from '../../utils'
 import {
   subjectTypeList,
@@ -93,7 +94,7 @@ export default {
       this.onHighlight(fid)
     },
   },
-  inject: ['map'],
+  inject: ['map', 'viewer', 'Cesium'],
   data() {
     return {
       // 高亮选项的标注点
@@ -113,13 +114,30 @@ export default {
         if (nV) {
           this.setFeaturesQuery({
             isCache: false,
-            onSuccess: (geojson) => (this.geojson = geojson),
+            onSuccess: (geojson) => {
+              this.geojson = geojson
+              if (nV.layerServiceType === LayerServiceType.igsScene) {
+                if (this.is2DMapMode) {
+                  this.switchMapMode()
+                }
+              }
+              const box = turf.bbox(geojson)
+              const bbox = {
+                xmin: box[0],
+                ymin: box[1],
+                xmax: box[2],
+                ymax: box[3],
+              }
+              const { map, viewer, Cesium } = this
+              if (this.is2DMapMode) {
+                const mapParam = { map }
+                FitBound.fitBound2D(bbox, mapParam)
+              } else {
+                const mapParam = { viewer, Cesium }
+                FitBound.fitBound3D(bbox, mapParam)
+              }
+            },
           })
-          if (nV.layerServiceType === LayerServiceType.igsScene) {
-            if (this.is2DMapMode) {
-              this.switchMapMode()
-            }
-          }
         }
       },
     },
