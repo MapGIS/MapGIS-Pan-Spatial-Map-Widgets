@@ -99,7 +99,7 @@ class Fields {
         ...subjectConfig,
       })
       this.isFetched = true
-      this.src = src
+      this.src = src || ''
     }
     return this.fields
   }

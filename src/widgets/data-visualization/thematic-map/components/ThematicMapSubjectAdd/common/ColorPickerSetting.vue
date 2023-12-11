@@ -263,4 +263,7 @@ export default {
     }
   }
 }
+.mapgis-ui-card {
+  background: $body-background-without-opacity;
+}
 </style>
