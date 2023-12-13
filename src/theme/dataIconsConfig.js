@@ -106,7 +106,7 @@ export const defaultDataIconsConfig = {
     },
     {
       id: `folder_${uuidv4()}`,
-      label: '其他',
+      label: '未分组',
       type: 'other',
       children: [
         {
