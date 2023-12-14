@@ -95,34 +95,32 @@ export default {
         })
         sourceArr.push(entity)
       } else if (type === 'LineString') {
+        let lineArr = []
         coordinates.forEach((item, index) => {
-          let lineArr = []
-          item.forEach((lines) => {
-            lineArr = lineArr.concat(lines)
-          })
-          const fillColor = this.Cesium.Color.fromCssColorString(color)
-          const entity = this.sceneOverlays.addLine(
-            `sourceArr-${index}`,
-            lineArr,
-            3,
-            fillColor,
-            // 是否识别带高度的坐标
-            false,
-            // 是否贴地形
-            true,
-            // 附加属性
-            {}
-          )
-          this.viewer.camera.flyTo({
-            destination: this.Cesium.Rectangle.fromDegrees(
-              bound[0][0],
-              bound[0][1],
-              bound[1][0],
-              bound[1][1]
-            ),
-          })
-          sourceArr.push(entity)
+          lineArr = lineArr.concat(item)
         })
+        const fillColor = this.Cesium.Color.fromCssColorString(color)
+        const entity = this.sceneOverlays.addLine(
+          'source-line',
+          lineArr,
+          3,
+          fillColor,
+          // 是否识别带高度的坐标
+          false,
+          // 是否贴地形
+          true,
+          // 附加属性
+          {}
+        )
+        this.viewer.camera.flyTo({
+          destination: this.Cesium.Rectangle.fromDegrees(
+            bound[0][0],
+            bound[0][1],
+            bound[1][0],
+            bound[1][1]
+          ),
+        })
+        sourceArr.push(entity)
       } else if (type === 'Polygon') {
         coordinates.forEach((item, index) => {
           let lineArr = []
