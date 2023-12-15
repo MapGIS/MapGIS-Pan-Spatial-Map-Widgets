@@ -5,8 +5,17 @@
       :label-col="{ span: 14 }"
       :wrapper-col="{ span: 10 }"
     >
-      <mapgis-ui-form-item label="平移至" />
-      <mapgis-ui-form-item label="经度">
+      <mapgis-ui-form-item :colon="false">
+        <span slot="label" style="font-size: 20px"><strong>平移</strong></span>
+        <mapgis-ui-button
+          type="primary"
+          size="small"
+          @click="() => $emit('model-edit', 'moveTo', coordinate)"
+        >
+          开始移动
+        </mapgis-ui-button></mapgis-ui-form-item
+      >
+      <mapgis-ui-form-item label="经度（°）">
         <mapgis-ui-input-number
           v-model="coordinate.longitude"
           :min="0"
@@ -15,7 +24,7 @@
           style="width: 100%"
         />
       </mapgis-ui-form-item>
-      <mapgis-ui-form-item label="纬度">
+      <mapgis-ui-form-item label="纬度（°）">
         <mapgis-ui-input-number
           v-model="coordinate.latitude"
           :min="0"
@@ -24,7 +33,7 @@
           style="width: 100%"
         />
       </mapgis-ui-form-item>
-      <mapgis-ui-form-item label="高度">
+      <mapgis-ui-form-item label="高度（m）">
         <mapgis-ui-input-number
           v-model="coordinate.height"
           :min="0"
@@ -33,16 +42,18 @@
           style="width: 100%"
         />
       </mapgis-ui-form-item>
-      <div style="textalign: right">
+
+      <mapgis-ui-form-item :colon="false">
+        <span slot="label" style="font-size: 20px"><strong>旋转</strong></span>
         <mapgis-ui-button
           type="primary"
-          @click="() => $emit('model-edit', 'moveTo', coordinate)"
+          size="small"
+          @click="() => $emit('model-edit', 'rotateTo', rotate)"
         >
-          开始移动
-        </mapgis-ui-button>
-      </div>
-      <mapgis-ui-form-item label="旋转模型" />
-      <mapgis-ui-form-item label="角度">
+          开始旋转
+        </mapgis-ui-button></mapgis-ui-form-item
+      >
+      <mapgis-ui-form-item label="角度（°）">
         <mapgis-ui-input-number
           v-model="rotate.degree"
           :min="0"
@@ -56,15 +67,17 @@
           <mapgis-ui-select-option value="Y"> 绕Y轴 </mapgis-ui-select-option>
         </mapgis-ui-select>
       </mapgis-ui-form-item>
-      <div style="textalign: right">
+
+      <mapgis-ui-form-item :colon="false">
+        <span slot="label" style="font-size: 20px"><strong>缩放</strong></span>
         <mapgis-ui-button
           type="primary"
-          @click="() => $emit('model-edit', 'rotateTo', rotate)"
+          size="small"
+          @click="() => $emit('model-edit', 'zoomTo', scale)"
         >
-          开始旋转
-        </mapgis-ui-button>
-      </div>
-      <mapgis-ui-form-item label="缩放至" />
+          开始缩放
+        </mapgis-ui-button></mapgis-ui-form-item
+      >
       <mapgis-ui-form-item label="X轴">
         <mapgis-ui-input-number
           v-model="scale.xScale"
@@ -86,15 +99,12 @@
           style="width: 100%"
         />
       </mapgis-ui-form-item>
-      <div style="textalign: right">
-        <mapgis-ui-button
-          type="primary"
-          @click="() => $emit('model-edit', 'zoomTo', scale)"
-        >
-          开始缩放
-        </mapgis-ui-button>
-      </div>
-      <mapgis-ui-form-item label="图形化编辑工具" />
+
+      <mapgis-ui-form-item :colon="false">
+        <span slot="label" style="font-size: 20px"
+          ><strong>图形化编辑工具</strong></span
+        ></mapgis-ui-form-item
+      >
       <div class="edit-tools">
         <mapgis-ui-button
           class="edit-tool-button"
