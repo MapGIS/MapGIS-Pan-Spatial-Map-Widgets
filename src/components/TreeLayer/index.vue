@@ -378,6 +378,7 @@ export default {
                   row.layout.visibility === undefined ||
                   row.layout.visibility === 'visible',
                 id: `${item.id}~${row.id}`,
+                sublayerId: row.id,
                 title: row.description || row.id,
               }))
             }
