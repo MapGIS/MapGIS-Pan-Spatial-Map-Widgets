@@ -344,7 +344,7 @@ export default {
             }
             this.tableColumns = columns
           }
-          this.pagination.total = totalCount
+          // this.pagination.total = totalCount
           this.removeMarkers()
           // 如果当前是激活状态，则添加markers
           if (this.isExhibitionActive) {

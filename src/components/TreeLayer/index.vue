@@ -1231,8 +1231,13 @@ export default {
         window.transformEditor = window.modelEditControlList[item.id]
       } else {
         const { Cesium, viewer } = this
-        const g3dLayer = this.getG3dLayer(item.id)
-        window.transformEditor = new Cesium.ModelTransformTool(g3dLayer)
+        let layerOption
+        if (this.isIGSScene(item)) {
+          layerOption = this.getG3dLayer(item.id)
+        } else if (this.isModelCacheLayer(item)) {
+          layerOption = this.getM3DSet(item.id)
+        }
+        window.transformEditor = new Cesium.ModelTransformTool(layerOption)
         window.transformEditor.initModelEditor(viewer)
         window.modelEditControlList[item.id] = window.transformEditor
       }
