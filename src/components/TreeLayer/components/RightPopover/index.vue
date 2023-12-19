@@ -97,7 +97,8 @@ export default {
           name: '模型编辑',
           show:
             this.isParentLayer(this.layerItem) &&
-            this.isIGSScene(this.layerItem),
+            (this.isIGSScene(this.layerItem) ||
+              this.isModelCacheLayer(this.layerItem)),
           click: () => this.modelEdit(),
         },
         {
