@@ -808,7 +808,8 @@ export default {
       if (
         serverType === LayerType.IGSMapImage ||
         serverType === LayerType.IGSVector ||
-        serverType === LayerType.IGSScene
+        serverType === LayerType.IGSScene ||
+        serverType === LayerType.IGSTile
       ) {
         let domain
         if (!!serverUrl && serverUrl.length > 0) {

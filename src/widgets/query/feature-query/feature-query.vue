@@ -670,6 +670,8 @@ export default {
             geometry,
             is3dBind2dData: true,
             serverName: searchName,
+            serverUrl: layer.url,
+            layerIndex: sublayer.id,
             searchServiceType,
           }
           exhibition.options.push(options)
