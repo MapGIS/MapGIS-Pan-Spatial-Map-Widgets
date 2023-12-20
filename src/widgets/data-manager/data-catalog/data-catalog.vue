@@ -631,6 +631,13 @@ export default {
             break
           case LayerType.ModelCache:
             str = 'M3D服务'
+            if (!!item.customParameters && item.customParameters.length > 0) {
+              item.customParameters.forEach((param) => {
+                if (!!param.format && param.format === 'cesium3dTileset') {
+                  str = '3DTiles服务'
+                }
+              })
+            }
             break
           case LayerType.ArcGISMapImage:
             str = 'ArcGIS地图服务'
