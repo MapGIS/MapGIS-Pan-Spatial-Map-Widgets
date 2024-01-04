@@ -24,6 +24,9 @@
         :tree-data="thematicMapTree"
         :checkedKeys="checkedThematicMapKeys"
         :replace-fields="{ key: 'id' }"
+        :expanded-keys="expandedKeys"
+        @expand="onExpand"
+        @select="onSelect"
         checkable
       >
         <span slot="custom" slot-scope="node" class="tree-node">
@@ -135,6 +138,7 @@ export default {
 
       // 当前操作的专题图节点
       currentThematicMapNode: {},
+      expandedKeys: [],
     }
   },
   methods: {
@@ -196,8 +200,8 @@ export default {
         id: `subject-${UUID.uuid()}`,
         nodeType: 'subject',
         scopedSlots: { title: 'custom' },
-        parentTitle: nodeData.title,
-        parentId: nodeData.id,
+        parentTitle: '新建专题图',
+        parentId: undefined,
         title: undefined,
         visible: true,
       }
@@ -315,6 +319,21 @@ export default {
         this.setModulesHide(ModuleType.TOOLS)
       } else {
         this.setModulesShow()
+      }
+    },
+    //  没有这一步，手动控制展开的位置无法折叠
+    onExpand(expandedKeys) {
+      this.expandedKeys = expandedKeys
+    },
+    // 选中树节点触发展开/收起
+    onSelect(selectedKeys, e) {
+      const flag = this.expandedKeys.includes(e.node.eventKey)
+      if (flag) {
+        this.expandedKeys = this.expandedKeys.filter(
+          (item) => item !== e.node.eventKey
+        )
+      } else {
+        this.expandedKeys.push(e.node.eventKey)
       }
     },
 

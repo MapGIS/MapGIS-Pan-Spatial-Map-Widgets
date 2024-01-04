@@ -116,7 +116,7 @@ export default {
     },
 
     changeNode(node) {
-      this.settingLayerId = node['source-layer']
+      this.settingLayerId = node.sublayerId || node['source-layer']
       this.showStyleSetting = true
       console.log(node)
     },

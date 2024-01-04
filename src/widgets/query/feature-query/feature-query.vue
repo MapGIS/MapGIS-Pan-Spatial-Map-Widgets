@@ -202,6 +202,7 @@ export default {
       ],
       defaultQueryTypes3d: [
         QueryType.Point,
+        QueryType.Circle,
         QueryType.Polygon,
         QueryType.LineString,
         QueryType.Rectangle,
@@ -563,21 +564,139 @@ export default {
         const geometry = this.toQueryGeometry(layer, shape, nearDis)
 
         switch (layer.type) {
+          // IGSVector跟IGSMapImage走相同逻辑
           case LayerType.IGSVector:
-            this.quertFeatruesByVector(layer, geometry)
-            break
           case LayerType.IGSMapImage:
             this.queryFeaturesByDoc(layer, geometry)
             break
           case LayerType.IGSScene:
           case LayerType.ModelCache:
-            this.queryFeaturesByIGSScene(layer, geometry)
+            if (
+              layer.searchParams &&
+              layer.searchParams.mapList &&
+              layer.searchParams.mapList.length > 0
+            ) {
+              this.queryFeaturesByBindDoc(layer, geometry)
+            } else {
+              this.queryFeaturesByIGSScene(layer, geometry)
+            }
+
             break
           case LayerType.ArcGISMapImage:
             this.queryFeaturesByArcgis(layer, geometry)
             break
+          case LayerType.IGSTile:
+            if (layer.sublayers && layer.sublayers.length > 0) {
+              this.queryFeaturesByBindDoc(layer, geometry)
+            }
+            break
           default:
             break
+        }
+      })
+    },
+
+    // 关联二维地图文档的三维服务或瓦片服务走这个查询
+    async queryFeaturesByBindDoc(layer, geometry) {
+      if (!layer.isVisible) {
+        return
+      }
+      const url = new URL(layer.url)
+      const domain = url.origin
+      const {
+        extend,
+        searchParams: { searchName, searchServiceType },
+      } = layer
+      const queryPrefix = extend.queryPrefix || ''
+      const querySuffix = extend.querySuffix || ''
+
+      const exhibition: IAttributeTableListExhibition = {
+        id: `${layer.id}`,
+        name: `${layer.title} 查询结果`,
+        description: '',
+        options: [],
+        popupOption: extend.popupOption,
+      }
+      let activeOptionId = ''
+      const allSublayers = []
+      switch (layer.type) {
+        case LayerType.IGSScene:
+          this.getAllSublayer(allSublayers, layer.activeScene.sublayers)
+          break
+
+        case LayerType.ModelCache:
+          allSublayers.push({
+            title: layer.title,
+          })
+          break
+        case LayerType.IGSTile:
+          this.getAllSublayer(allSublayers, layer.sublayers)
+          break
+        default:
+          break
+      }
+
+      for (let index = 0; index < allSublayers.length; index++) {
+        const sublayer = allSublayers[index]
+        let map = {}
+        switch (layer.type) {
+          case LayerType.IGSScene:
+          case LayerType.ModelCache:
+            map = layer.searchParams.mapList.find(
+              (map) =>
+                `${queryPrefix}${map.LayerName}${querySuffix}` ===
+                sublayer.title
+            )
+            break
+          case LayerType.IGSTile:
+            map.URL = sublayer.url
+            break
+          default:
+            break
+        }
+
+        if (map) {
+          const isDataStoreQuery = false
+          const ipPortObj = this.getIpPort({
+            isDataStoreQuery,
+          })
+          const options = {
+            id: sublayer.id,
+            name: sublayer.title,
+            domain,
+            ...ipPortObj,
+            serverType: layer.type,
+            gdbp: map.URL,
+            geometry,
+            is3dBind2dData: true,
+            serverName: searchName,
+            serverUrl: layer.url,
+            layerIndex: sublayer.id,
+            searchServiceType,
+          }
+          exhibition.options.push(options)
+          /**
+           * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
+           * 修改人：龚跃健
+           * 修改时间：2023/1/31
+           */
+          const { TotalCount } = await this.queryCount(options, true)
+          if (TotalCount > 0) {
+            activeOptionId = sublayer.id
+          }
+        }
+      }
+      if (exhibition.options.length > 0) {
+        this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
+      }
+    },
+
+    getAllSublayer(allSublayers, sublayers) {
+      sublayers.forEach((sublayer) => {
+        if (sublayer.sublayers && sublayer.sublayers.length === 0) {
+          allSublayers.push(sublayer)
+        } else {
+          this.getAllSublayer(allSublayers, sublayer.sublayers)
         }
       })
     },
@@ -588,6 +707,8 @@ export default {
       }
       const url = new URL(layer.url)
       const domain = url.origin
+      const ip = url.hostname
+      const port = url.port
       const { extend } = layer
 
       const exhibition: IAttributeTableListExhibition = {
@@ -601,19 +722,18 @@ export default {
       const sublayers = this.isShowLayerList
         ? this.getSublayers(layer.id)
         : layer.activeScene?.sublayers
-      const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
-        layer.id
-      )
-      if (layerConfig && layerConfig.bindData) {
+      if (
+        layer.searchParams &&
+        layer.searchParams.searchName?.includes('gdbp')
+      ) {
         exhibition.options.push({
-          id: layerConfig.bindData.id || layer.id,
-          name: layerConfig.title || layerConfig.name,
-          ip: layerConfig.bindData.ip || baseConfigInstance.config.ip,
-          port:
-            layerConfig.bindData.port || Number(baseConfigInstance.config.port),
+          id: `${layer.id}:0`,
+          name: layer.title,
+          ip: ip || baseConfigInstance.config.ip,
+          port: port || Number(baseConfigInstance.config.port),
           domain,
           serverType: layer.type,
-          gdbp: layerConfig.bindData.gdbps,
+          gdbp: layer.searchParams.searchName,
           geometry: geometry,
         })
         const { xmin, ymin, xmax, ymax, zmin, zmax } = geometry
@@ -626,17 +746,16 @@ export default {
           zmax
         )
         const json = await FeatureQuery.igsQueryResourceServer({
-          ip: layerConfig.bindData.ip || baseConfigInstance.config.ip,
-          port:
-            layerConfig.bindData.port || Number(baseConfigInstance.config.port),
+          ip: ip || baseConfigInstance.config.ip,
+          port: port || Number(baseConfigInstance.config.port),
           domain,
           geometry: queryGeometry,
-          url: layerConfig.bindData.gdbps,
+          url: layer.searchParams.searchName,
           returnCountOnly: true,
         })
         const TotalCount = json.count
         if (TotalCount > 0) {
-          activeOptionId = layerConfig.bindData.id || layer.id
+          activeOptionId = `${layer.id}:0`
         }
         this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
       }
@@ -693,7 +812,10 @@ export default {
       return ipPortObj
     },
 
-    async queryFeaturesByDoc(layer: IGSMapImageLayer, geometry) {
+    async queryFeaturesByDoc(
+      layer: IGSMapImageLayer | IGSVectorLayer,
+      geometry
+    ) {
       if (!layer.isVisible) {
         return
       }
@@ -771,7 +893,6 @@ export default {
       const ipPortObj = this.getIpPort({
         isDataStoreQuery,
       })
-
       const exhibition: IAttributeTableListExhibition = {
         id: `${layer.id}`,
         name: `${layer.title} 查询结果`,
@@ -798,7 +919,7 @@ export default {
       this.setActiveExhibitionIdAndOptionId(exhibition, null, TotalCount)
     },
 
-    // IGSMapImage、IGSVector图层获取总页数
+    // IGSMapImage、IGSVector图层获取总页数,关联二维地图文档的三维服务也调用这个函数获取总页数
     async queryCount(optionVal, isScence = false) {
       const {
         ip,
@@ -811,23 +932,15 @@ export default {
         geometry,
       } = optionVal
       if (isScence) {
-        const { xmin, ymin, xmax, ymax, zmin, zmax } = geometry
-        const queryGeometry = new Rectangle3D(
-          xmin,
-          ymin,
-          zmin,
-          xmax,
-          ymax,
-          zmax
-        )
         const json = await FeatureQuery.igsQueryResourceServer({
           ip,
           port: port.toString(),
           domain,
-          geometry: queryGeometry,
+          geometry,
           url: gdbp,
           returnCountOnly: true,
         })
+        return { TotalCount: json.count }
       }
       const featureSet = await FeatureQuery.query(
         {
@@ -1058,18 +1171,22 @@ export default {
       const { type } = layer
       let { fullExtent } = layer
       let { ymax, ymin, xmax, xmin } = fullExtent
-      if (
-        xmin === 0 &&
-        ymin === 0 &&
-        (type === LayerType.IGSScene || type === LayerType.ModelCache)
-      ) {
-        // 在TreeLayer/index.vue里会定义window.layers3D，并设置三维模型的fullExtent和boundingSphere
-        if (window.layers3D && window.layers3D[layer.id]) {
-          fullExtent = window.layers3D[layer.id].fullExtent
-          xmin = fullExtent.xmin
-          ymin = fullExtent.ymin
-          xmax = fullExtent.xmax
-          ymax = fullExtent.ymax
+      if (type === LayerType.IGSScene || type === LayerType.ModelCache) {
+        if (
+          xmax > 180 ||
+          xmin < -180 ||
+          ymax > 90 ||
+          ymin < -90 ||
+          (xmax === 0 && xmin === 0 && ymax === 0 && ymin === 0)
+        ) {
+          // 在TreeLayer/index.vue里会定义window.layers3D，并设置三维模型的fullExtent和boundingSphere
+          if (window.layers3D && window.layers3D[layer.id]) {
+            fullExtent = window.layers3D[layer.id].fullExtent
+            xmin = fullExtent.xmin
+            ymin = fullExtent.ymin
+            xmax = fullExtent.xmax
+            ymax = fullExtent.ymax
+          }
         }
       }
 

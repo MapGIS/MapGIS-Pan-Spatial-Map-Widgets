@@ -6,45 +6,61 @@
         <mapgis-ui-form-model-item label="叠加图层1" :colon="false">
           <mapgis-ui-row>
             <mapgis-ui-col>
-              <mapgis-ui-select v-model="tDataIndex" @change="tchangeTarget">
-                <mapgis-ui-select-option
-                  v-for="(item, index) in layerArrOption"
-                  :key="index"
-                  :value="index"
-                  >{{ item.title }}</mapgis-ui-select-option
-                >
-              </mapgis-ui-select>
+              <mapgis-ui-tree-select
+                v-model="tDataIndex"
+                placeholder="请选择图层"
+                :tree-data="layerArrOption"
+                :getPopupContainer="
+                  (e) => {
+                    return e.parentNode
+                  }
+                "
+                tree-default-expand-all
+                :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
+                :replace-fields="replaceFields"
+                @select="tSelectTarget"
+                @change="tchangeTarget"
+                :showSearch="true"
+              >
+              </mapgis-ui-tree-select>
             </mapgis-ui-col>
           </mapgis-ui-row>
         </mapgis-ui-form-model-item>
         <mapgis-ui-form-model-item label="叠加图层2" :colon="false">
           <mapgis-ui-row>
             <mapgis-ui-col>
-              <mapgis-ui-select
+              <mapgis-ui-tree-select
                 v-model="dDataIndex"
+                placeholder="请选择图层"
+                tree-default-expand-all
+                :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
+                @select="dSelectTarget"
                 @change="dchangeTarget"
+                :tree-data="layerArrOption"
+                :getPopupContainer="
+                  (e) => {
+                    return e.parentNode
+                  }
+                "
+                :replace-fields="replaceFields"
                 v-if="!selectLevel"
+                :showSearch="true"
               >
-                <mapgis-ui-select-option
-                  v-for="(item, index) in layerArrOption"
-                  :key="index"
-                  :value="index"
-                  >{{ item.title }}</mapgis-ui-select-option
-                >
-              </mapgis-ui-select>
-              <mapgis-ui-select
+              </mapgis-ui-tree-select>
+              <mapgis-ui-tree-select
                 v-model="dDataIndex"
+                :tree-data="layerArrOption"
+                :getPopupContainer="
+                  (e) => {
+                    return e.parentNode
+                  }
+                "
+                :replace-fields="replaceFields"
                 @change="dchangeTarget"
                 v-if="selectLevel"
                 disabled
               >
-                <mapgis-ui-select-option
-                  v-for="(item, index) in layerArrOption"
-                  :key="index"
-                  :value="index"
-                  >{{ item.title }}</mapgis-ui-select-option
-                >
-              </mapgis-ui-select>
+              </mapgis-ui-tree-select>
             </mapgis-ui-col>
           </mapgis-ui-row>
           <mapgis-ui-checkbox
@@ -58,7 +74,7 @@
       </mapgis-ui-form-model>
     </div>
     <mapgis-3d-analysis-overlay
-      v-if="dataType !== 'Model'"
+      v-show="dataType !== 'Model'"
       :layout="layout"
       :baseUrl="baseOverlayUrl"
       :srcType="srcType"
@@ -73,7 +89,7 @@
       @deleteResult="deleteResult"
     />
     <mapgis-3d-analysis-model-overlay
-      v-else
+      v-show="dataType === 'Model'"
       :layout="layout"
       :baseUrl="baseOverlayUrl"
       :srcType="srcType"
@@ -136,6 +152,13 @@ export default {
       finishFeature: false,
       visible: false,
       resultData: {},
+      replaceFields: {
+        children: 'sublayers',
+        title: 'title',
+        key: 'layerIndex',
+        value: 'title',
+      },
+      layerArrOption: [],
     }
   },
 
@@ -155,19 +178,6 @@ export default {
   },
 
   computed: {
-    // 获取当前下拉框中的图层对象和索引值
-    tData() {
-      if (this.tDataIndex !== null) {
-        return this.layerArrOption[this.tDataIndex]
-      }
-      return null
-    },
-    dData() {
-      if (this.dDataIndex !== null) {
-        return this.layerArrOption[this.dDataIndex]
-      }
-      return null
-    },
     ip() {
       if (!!this.baseOverlayUrl && this.baseOverlayUrl.length > 0) {
         return this.baseOverlayUrl.split('/')[2].split(':')[0]
@@ -196,35 +206,99 @@ export default {
       this.dDataIndex = null
       this.layerArrOption = []
       const arr = []
-      val.layers().forEach((data) => {
-        if (data.type === LayerType.IGSVector) {
-          arr.push(data)
-        } else if (data.type === LayerType.IGSMapImage) {
-          arr.push(...data.sublayers)
-        } else if (
-          data.type === LayerType.IGSScene ||
-          data.type === LayerType.ModelCache
+      const layers: Array<unknown> = this.document.clone().defaultMap.layers()
+      for (let i = 0; i < layers.length; i++) {
+        const layer = layers[i]
+        if (
+          layer.type === LayerType.IGSVector ||
+          layer.type === LayerType.IGSMapImage ||
+          layer.type === LayerType.IGSTile
         ) {
-          const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
-            data.id
-          )
-          if (layerConfig && layerConfig.bindData) {
-            if (!layerConfig.bindData.title) {
-              layerConfig.bindData.title =
-                layerConfig.bindData.serverName || data.title
+          const treeNodeData = {
+            id: layer.id,
+            layerIndex: `${i}`,
+            sublayers: [],
+            title: layer.title,
+            url: layer.url,
+            serverURL: layer.serverURL,
+            type: layer.type,
+            serverType: layer.serverType,
+            layer,
+          }
+          if (layer.sublayers && layer.sublayers.length > 0) {
+            treeNodeData.disabled = true
+            this.formatTreeNodeData(
+              treeNodeData.sublayers,
+              layer.sublayers,
+              treeNodeData.layerIndex,
+              layer
+            )
+          }
+          arr.push(treeNodeData)
+        } else if (
+          layer.type === LayerType.IGSScene ||
+          layer.type === LayerType.ModelCache
+        ) {
+          // 只支持使用绑定的简单要素类进行分析，绑定二维地图文档无法分析
+          if (
+            layer.searchParams &&
+            layer.searchParams.searchName &&
+            layer.searchParams.searchName.includes('gdbp')
+          ) {
+            const treeNodeData = {
+              id: layer.id,
+              layerIndex: `${i}`,
+              sublayers: [],
+              title: layer.title,
+              url: layer.searchParams.searchName,
+              serverURL: layer.serverURL,
+              type: layer.type,
+              serverType: layer.serverType,
+              layer,
             }
-            layerConfig.bindData.id = `${data.id}:0`
-            arr.push(layerConfig.bindData)
+            arr.push(treeNodeData)
           }
         }
-      })
+      }
+
       if (arr.length > 0) {
         this.layerArrOption = arr
-        this.tDataIndex = 0
-        this.dDataIndex = 0
       }
-      this.tchangeTarget()
-      this.dchangeTarget()
+    },
+
+    formatTreeNodeData(arr, sublayers, index, parantLayer) {
+      for (let i = 0; i < sublayers.length; i++) {
+        const layer = sublayers[i]
+        const treeNodeData = {
+          id: layer.id,
+          layerIndex: `${index}-${i}`,
+          sublayers: [],
+          title: layer.title,
+          url: layer.url,
+          serverURL: layer.serverURL,
+          type: layer.type,
+          serverType: layer.serverType,
+          layer: parantLayer,
+        }
+        if (layer.sublayers && layer.sublayers.length > 0) {
+          treeNodeData.disabled = true
+          this.formatTreeNodeData(
+            treeNodeData.sublayers,
+            layer.sublayers,
+            treeNodeData.layerIndex,
+            parantLayer
+          )
+        }
+        arr.push(treeNodeData)
+      }
+    },
+
+    tSelectTarget(value, node) {
+      this.tData = node.dataRef
+    },
+
+    dSelectTarget(value, node) {
+      this.dData = node.dataRef
     },
 
     changeSelectLevel() {

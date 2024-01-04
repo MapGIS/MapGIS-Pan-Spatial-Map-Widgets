@@ -9,11 +9,22 @@
 </template>
 
 <script lang="ts">
-import { WidgetMixin, api } from '@mapgis/web-app-framework'
+import { WidgetMixin, api, baseConfigInstance } from '@mapgis/web-app-framework'
 
 export default {
   name: 'MpSceneRoaming',
   mixins: [WidgetMixin],
+  provide() {
+    const self = this
+    return {
+      get ip() {
+        return self.ip
+      },
+      get port() {
+        return self.port
+      },
+    }
+  },
   data() {
     return {
       setting: {
@@ -31,6 +42,8 @@ export default {
         modelUrl: '',
       },
       sceneRoaming: null,
+      ip: baseConfigInstance.config.ip,
+      port: baseConfigInstance.config.port,
     }
   },
   computed: {
@@ -56,7 +69,7 @@ export default {
           value: '',
         },
       ]
-    }
+    },
   },
 
   methods: {
@@ -75,7 +88,7 @@ export default {
 
     // 微件失活时
     onDeActive() {
-      this.sceneRoaming.unmount()
+      // this.sceneRoaming.unmount()
     },
 
     onSaveConfig(paths) {

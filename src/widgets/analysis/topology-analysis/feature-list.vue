@@ -103,7 +103,10 @@ export default {
           const url = new URL(serverUrl)
           domain = url.origin
         }
-        if (serverType === LayerType.IGSMapImage) {
+        if (
+          serverType === LayerType.IGSMapImage ||
+          serverType === LayerType.IGSTile
+        ) {
           const options = {
             f: 'json',
             ip,
@@ -317,8 +320,8 @@ export default {
     overflow-y: auto;
   }
   .feature-list-pagination-container {
-    padding: 5px 10px;
-    text-align: right;
+    padding: 5px 0px;
+    text-align: left;
     border-top: 1px solid $border-color;
     white-space: nowrap;
     overflow-x: auto;

@@ -31,6 +31,8 @@ module.exports = {
         '@mapgis/mapbox-gl-draw-static-mode',
       '@mapgis/mapbox-gl-inspect': '@mapgis/mapbox-gl-inspect',
       '@mapgis/supercluster': '@mapgis/supercluster',
+      '@mapgis/webclient-cesium-plugin': '@mapgis/webclient-cesium-plugin',
+      '@mapgis/webclient-common': '@mapgis/webclient-common',
       '@mapgis/webclient-es6-mapboxgl': '@mapgis/webclient-es6-mapboxgl',
       '@mapgis/webclient-es6-service': '@mapgis/webclient-es6-service',
       '@mapgis/webclient-plot': '@mapgis/webclient-plot',

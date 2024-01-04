@@ -42,8 +42,12 @@ export default {
      * @param item layer图层
      * @returns boolean
      */
-    isIgsVectorLayer({ type }) {
-      return type === LayerType.IGSVector
+    isIgsVectorLayer({ type, layer }) {
+      let layerType = type
+      if (layer) {
+        layerType = layer.type
+      }
+      return layerType === LayerType.IGSVector
     },
     /**
      * 判断是否是IGSVector3D图层
@@ -95,7 +99,8 @@ export default {
         key.indexOf('-') > -1
       ) {
         const index = key.split('-')[0]
-        return this.layers[index]?.type === LayerType.VectorTile
+
+        return this.layers && this.layers[index]?.type === LayerType.VectorTile
       }
       return type === LayerType.VectorTile
     },
@@ -147,6 +152,18 @@ export default {
     isWMSLayer({ type }) {
       return type === LayerType.OGCWMS
     },
+
+    /**
+     * 判断是否是要素图层
+     * @param item layer图层
+     * @returns boolean
+     */
+    isFeatureLayer({ layer }) {
+      return [LayerType.IGSVector, LayerType.IGSFeature].includes(layer.type)
+    },
+    isGeoJsonLayer({ type }) {
+      return type === LayerType.GeoJson
+    },
     /**
      * 判断是否展示列表右侧操作菜单（在在线制图组件中需要打开左侧弹框组件）
      * @param item 图层
@@ -181,12 +198,26 @@ export default {
           this.isIGSScene(item) &&
           this.includeBindData(item)) ||
         (this.isSubLayer(item) && this.isArcGISMapImage(item)) ||
-        this.isIgsVectorLayer(item) ||
+        (this.isSubLayer(item) && this.isIgsVectorLayer(item)) ||
         this.isDataFlow(item) ||
         (this.isModelCacheLayer(item) && this.includeBindData(item)) ||
-        this.isIgsVector3dLayer(item)
+        this.isIgsVector3dLayer(item) ||
+        this.isIgsTileLayerBindIgsMapImageData(item)
 
       return bool
+    },
+
+    /**
+     * 判断是否为瓦片服务关联的二维地图文档的子图层
+     * @param item layer图层
+     * @returns boolean
+     */
+    isIgsTileLayerBindIgsMapImageData({ layer, sublayers }) {
+      let layerType
+      if (layer) {
+        layerType = layer.type
+      }
+      return layerType === LayerType.IGSTile && sublayers.length === 0
     },
     /**
      * 判断是否是绑定BindData
@@ -197,14 +228,42 @@ export default {
       const layer = item.layer || item
       if (layer) {
         const { id } = layer
-        const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(id)
-        if (layerConfig && layerConfig.bindData) {
-          return true
+        if (layer && layer.searchParams) {
+          if (
+            layer.searchParams.searchName &&
+            layer.searchParams.searchName.includes('gdbp')
+          ) {
+            return true
+          } else if (
+            layer.searchParams &&
+            layer.searchParams.mapList &&
+            layer.searchParams.mapList.length > 0
+          ) {
+            const queryPrefix = layer.extend.queryPrefix || ''
+            const querySuffix = layer.extend.querySuffix || ''
+
+            return layer.searchParams.mapList.some((map) => {
+              return (
+                `${queryPrefix}${map.LayerName}${querySuffix}` === item.title
+              )
+            })
+          } else {
+            return false
+          }
         } else {
           return false
         }
       }
       return false
+    },
+    /**
+     * 判断是否是展示自定义查询按钮
+     * @param item layer图层
+     * @returns boolean
+     */
+    isCustomQuery(item) {
+      const bool = this.isAttributes(item)
+      return bool
     },
     /**
      * 判断是否是展示元数据按钮
@@ -214,15 +273,17 @@ export default {
     isMetaData(item) {
       const bool =
         // this.isParentLayer(item) &&
-        this.isIGSScene(item) ||
-        this.isIgsDocLayer(item) ||
-        this.isIgsVectorLayer(item) ||
-        this.isIgsTileLayer(item) ||
-        this.isWMTSLayer(item) ||
-        this.isWMSLayer(item) ||
-        this.isArcGISMapImage(item) ||
-        this.isArcGISTile(item) ||
-        this.isVectorTile(item)
+        (this.isIGSScene(item) ||
+          this.isIgsDocLayer(item) ||
+          this.isIgsVectorLayer(item) ||
+          this.isIgsTileLayer(item) ||
+          this.isWMTSLayer(item) ||
+          this.isWMSLayer(item) ||
+          this.isArcGISMapImage(item) ||
+          this.isArcGISTile(item) ||
+          this.isVectorTile(item) ||
+          this.isIgsTileLayerBindIgsMapImageData(item)) &&
+        this.isParentLayer(item)
       return bool
     },
     /**
@@ -347,7 +408,9 @@ export default {
           type: this.isIgsVectorLayer(layer),
           setValue: () => {
             const igsVectorLayer = layer.dataRef
-            const { domain, docName } = igsVectorLayer._parseUrl(layer.url)
+            const { domain, docName } = igsVectorLayer.layer._parseUrl(
+              igsVectorLayer.layer.url
+            )
             // const { isDataStoreQuery, DNSName } =
             //   await FeatureQuery.isDataStoreQuery({
             //     ip,
@@ -368,8 +431,8 @@ export default {
                 ...ipPortObj,
                 isDataStoreQuery,
                 DNSName,
-                serverType: igsVectorLayer.type,
-                gdbp: igsVectorLayer.gdbps,
+                serverType: igsVectorLayer.layer.type,
+                gdbp: igsVectorLayer.url,
                 f: queryType || '',
               },
               popupOption: parent
@@ -402,26 +465,43 @@ export default {
           setValue: () => {
             const sceneLayer = layer.dataRef
             const { domain, docName } = parent._parseUrl(parent.url)
+            const queryPrefix = parent.extend.queryPrefix || ''
+            const querySuffix = parent.extend.querySuffix || ''
             const { id, name, title } = sceneLayer
-            const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
-              parent.id
-            )
-            if (layerConfig && layerConfig.bindData) {
-              exhibition = {
-                id: `${title} ${id}`,
-                name: `${title} ${titleType}`,
-                option: {
-                  id: `${id}`,
-                  domain,
-                  ip: baseConfigInstance.config.ip,
-                  port: Number(baseConfigInstance.config.port),
-                  serverType: parent.type,
-                  searchServiceType: layerConfig.bindData.serverType,
-                  gdbp: layerConfig.bindData.gdbps,
-                  f: queryType || '',
-                },
-                popupOption: parent.extend?.popupOption,
-              }
+
+            let gdbp
+            const is3dBind2dData =
+              parent.searchParams &&
+              parent.searchParams.mapList &&
+              parent.searchParams.mapList.length > 0
+            if (is3dBind2dData) {
+              const map = parent.searchParams.mapList.find(
+                (map) =>
+                  `${queryPrefix}${map.LayerName}${querySuffix}` === layer.title
+              )
+              if (!map) return
+              gdbp = map.URL
+            } else if (parent.searchParams.searchName.includes('gdbp')) {
+              gdbp = parent.searchParams.searchName
+            } else {
+              return
+            }
+
+            exhibition = {
+              id: `${title} ${id}`,
+              name: `${title} ${titleType}`,
+              option: {
+                id: `${id}`,
+                domain,
+                ip: baseConfigInstance.config.ip,
+                port: Number(baseConfigInstance.config.port),
+                serverType: parent.type,
+                searchServiceType: parent.searchParams.searchServiceType,
+                gdbp,
+                f: queryType || '',
+                is3dBind2dData,
+              },
+              popupOption: parent.extend?.popupOption,
             }
           },
         },
@@ -432,25 +512,42 @@ export default {
             const url = new URL(layer.url)
             const domain = url.origin
             const { id, name, title } = sceneLayer
-            const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
-              layer.id
-            )
-            if (layerConfig && layerConfig.bindData) {
-              exhibition = {
-                id: `${title} ${id}`,
-                name: `${title} ${titleType}`,
-                option: {
-                  id: `${id}`,
-                  domain,
-                  ip: baseConfigInstance.config.ip,
-                  port: Number(baseConfigInstance.config.port),
-                  serverType: layer.type,
-                  searchServiceType: layerConfig.bindData.serverType,
-                  gdbp: layerConfig.bindData.gdbps,
-                  f: queryType || '',
-                },
-                popupOption: layer.extend?.popupOption,
-              }
+            const queryPrefix = layer.extend.queryPrefix || ''
+            const querySuffix = layer.extend.querySuffix || ''
+
+            let gdbp
+            const is3dBind2dData =
+              layer.searchParams &&
+              layer.searchParams.mapList &&
+              layer.searchParams.mapList.length > 0
+            if (is3dBind2dData) {
+              const map = layer.searchParams.mapList.find(
+                (map) =>
+                  `${queryPrefix}${map.LayerName}${querySuffix}` === layer.title
+              )
+              if (!map) return
+              gdbp = map.URL
+            } else if (layer.searchParams.searchName.includes('gdbp')) {
+              gdbp = layer.searchParams.searchName
+            } else {
+              return
+            }
+
+            exhibition = {
+              id: `${title} ${id}`,
+              name: `${title} ${titleType}`,
+              option: {
+                id: `${id}`,
+                domain,
+                ip: baseConfigInstance.config.ip,
+                port: Number(baseConfigInstance.config.port),
+                serverType: layer.type,
+                searchServiceType: layer.searchParams.searchServiceType,
+                gdbp,
+                f: queryType || '',
+                is3dBind2dData,
+              },
+              popupOption: layer.extend?.popupOption,
             }
           },
         },
@@ -495,6 +592,35 @@ export default {
               popupOption: parent
                 ? parent.extend?.popupOption
                 : layer.extend?.popupOption,
+            }
+          },
+        },
+        {
+          type: parent && this.isIgsTileLayer(parent),
+          setValue: () => {
+            const { domain } = parent._parseUrl(parent.url)
+            const isDataStoreQuery = false
+            const DNSName = undefined
+            const ipPortObj = this.getIpPort({ isDataStoreQuery })
+            exhibition = {
+              id: `${parent.title} ${layer.title} ${layer.id}`,
+              name: `${layer.title} ${titleType}`,
+              description: `${parent.title} ${layer.title}`,
+              option: {
+                id: layer.id,
+                name: layer.title,
+                isDataStoreQuery,
+                DNSName,
+                domain,
+                ...ipPortObj,
+                serverType: LayerType.IGSMapImage,
+                layerIndex: layer.id,
+                gdbp: layer.url,
+                serverName: parent.searchParams.searchName,
+                serverUrl: parent.url,
+                f: queryType || '',
+              },
+              popupOption: parent.extend?.popupOption,
             }
           },
         },

@@ -7,7 +7,12 @@
       :splitScreen="splitScreen"
     />
     <!-- 二维地图绘制组件 -->
-    <mp-draw-pro v-if="isMapLoaded" ref="draw" @finished="onDrawFinished" />
+    <mp-draw-pro
+      v-if="isMapLoaded"
+      ref="draw"
+      @finished="onDrawFinished"
+      clearDrawMode
+    />
   </div>
 </template>
 <script lang="ts">
@@ -83,8 +88,12 @@ export default {
       this.isMapLoaded = true
       this.$emit('load', payload)
       // 禁用鼠标右键事件
-      document.getElementsByClassName('mapbox-view').forEach((element) => {
-        element.oncontextmenu = () => false
+      this.$nextTick(() => {
+        const elements = document.getElementsByClassName('mapbox-view')
+        for (let i = 0; i < elements.length; i++) {
+          const element = elements[i]
+          element.oncontextmenu = () => false
+        }
       })
     },
   },

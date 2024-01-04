@@ -112,11 +112,16 @@
             lastSelect === item.guid && !item.children ? 'check-light' : '',
           ]"
         >
-          <img
-            v-if="widgetInfo.config.iconConfig[nodeLevel(item)]"
-            :src="baseUrl + widgetInfo.config.iconConfig[nodeLevel(item)]"
-            class="tree-item-icon"
-          />
+          <div v-if="widgetInfo.config.iconConfig[nodeLevel(item)]">
+            <i
+              v-if="nodeIcon(item).isSvg"
+              class="icon"
+              v-html="nodeIcon(item).icon"
+            >
+            </i>
+            <img v-else class="tree-item-icon" :src="nodeIcon(item).icon" />
+          </div>
+
           <mapgis-ui-dropdown
             v-if="item.children && item.children.length > 0"
             :trigger="['contextmenu']"
@@ -192,41 +197,49 @@
             "
             :id="`tree_${item.guid}`"
           >
-            <span
-              v-if="
-                searchValue !== '' &&
-                item.name.toUpperCase().indexOf(searchValue.toUpperCase()) !==
-                  -1
-              "
-            >
-              <span class="unfilter-words" :title="item.description">
-                {{
-                  item.name.substr(
-                    0,
-                    item.name.toUpperCase().indexOf(searchValue.toUpperCase())
-                  )
-                }}
-              </span>
-              <span class="filter-words" :title="item.description">
-                {{
-                  item.name.substr(
-                    item.name.toUpperCase().indexOf(searchValue.toUpperCase()),
-                    searchValue.length
-                  )
-                }}
-              </span>
-              <span class="unfilter-words" :title="item.description">
-                {{
-                  item.name.substr(
-                    item.name.toUpperCase().indexOf(searchValue.toUpperCase()) +
+            <mapgis-ui-tooltip>
+              <template slot="title">
+                {{ getLeafTooltip(item) }}
+              </template>
+              <span
+                v-if="
+                  searchValue !== '' &&
+                  item.name.toUpperCase().indexOf(searchValue.toUpperCase()) !==
+                    -1
+                "
+              >
+                <span class="unfilter-words" :title="item.description">
+                  {{
+                    item.name.substr(
+                      0,
+                      item.name.toUpperCase().indexOf(searchValue.toUpperCase())
+                    )
+                  }}
+                </span>
+                <span class="filter-words" :title="item.description">
+                  {{
+                    item.name.substr(
+                      item.name
+                        .toUpperCase()
+                        .indexOf(searchValue.toUpperCase()),
                       searchValue.length
-                  )
-                }}
+                    )
+                  }}
+                </span>
+                <span class="unfilter-words" :title="item.description">
+                  {{
+                    item.name.substr(
+                      item.name
+                        .toUpperCase()
+                        .indexOf(searchValue.toUpperCase()) + searchValue.length
+                    )
+                  }}
+                </span>
               </span>
-            </span>
-            <span v-else @click="onClick(item)" :title="item.description">{{
-              item.name
-            }}</span>
+              <span v-else @click="onClick(item)" :title="item.description">{{
+                item.name
+              }}</span>
+            </mapgis-ui-tooltip>
             <mapgis-ui-menu slot="overlay">
               <mapgis-ui-menu-item
                 v-if="
@@ -358,10 +371,12 @@ import {
   BaseMapController,
   baseConfigInstance,
   DataCatalogUtil,
+  LayerFeatureEdit,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../../../components/MetadataInfo/MetadataInfo.vue'
 import NonSpatial from './non-spatial.vue'
 import * as turf from '@turf/turf'
+import { defaultDataIconsConfig } from '../../../theme/dataIconsConfig.js'
 
 export default {
   name: 'MpDataCatalog',
@@ -527,9 +542,9 @@ export default {
     }
 
     this.dataCatalogManager.init(this.widgetInfo.config)
-
+    const filtTree = this.widgetInfo.config.otherConfig.filtTree || false
     this.dataCatalogTreeData =
-      await this.dataCatalogManager.getDataCatalogTreeData(true)
+      await this.dataCatalogManager.getDataCatalogTreeData(filtTree)
     const _allTreeDataConfigs = []
     const { treeData, allTreeDataConfigs } = this.handleTreeData(
       this.dataCatalogTreeData,
@@ -588,6 +603,126 @@ export default {
     },
   },
   methods: {
+    getLeafTooltip(item) {
+      const text = item.name
+      let str
+      if (item.serverType !== undefined) {
+        switch (item.serverType) {
+          case LayerType.IGSMapImage:
+            str = '地图服务'
+            break
+          case LayerType.IGSTile:
+            str = '栅格瓦片服务'
+            break
+          case LayerType.IGSVector:
+            str = '图层地图服务'
+            break
+          case LayerType.VectorTile:
+            str = '矢量瓦片服务'
+            break
+          case LayerType.IGSPanoramic:
+            str = 'IGSPanoramic服务'
+            break
+          case LayerType.DataFlow:
+            str = '数据流服务'
+            break
+          case LayerType.IGSScene:
+            str = '场景服务'
+            break
+          case LayerType.ModelCache:
+            str = 'M3D服务'
+            if (!!item.customParameters && item.customParameters.length > 0) {
+              item.customParameters.forEach((param) => {
+                if (!!param.format && param.format === 'cesium3dTileset') {
+                  str = '3DTiles服务'
+                }
+              })
+            }
+            break
+          case LayerType.ArcGISMapImage:
+            str = 'ArcGIS地图服务'
+            break
+          case LayerType.ArcGISTile:
+            str = 'ArcGIS瓦片服务'
+            break
+          case LayerType.OGCWMS:
+            str = 'WMS服务'
+            break
+          case LayerType.OGCWMTS:
+            str = 'WMTS服务'
+            break
+          case LayerType.OGCWFS:
+            str = 'WFS服务'
+            break
+          case LayerType.GeoJson:
+            str = 'GEOJSON'
+            break
+          case LayerType.TILE3D:
+            str = '3DTiles'
+            break
+          case LayerType.STKTerrain:
+            str = 'STK地形'
+            break
+          case LayerType.Plot:
+            str = '标绘图层'
+            break
+          case LayerType.KML:
+            str = 'KML'
+            break
+          case LayerType.KMZ:
+            str = 'KMZ'
+            break
+          case LayerType.CZML:
+            str = 'CZML'
+            break
+          case LayerType.OSM:
+            str = 'OSM'
+            break
+          default:
+            break
+        }
+      }
+      if (str && str.length > 0) {
+        return `${text}：${str}`
+      }
+      return text
+    },
+    nodeIcon(item) {
+      let icon
+      if (item.serverType !== undefined) {
+        const { useLocalDataNodeIcon, dataNodeIcon } =
+          this.widgetConfig.treeConfig
+        if (
+          useLocalDataNodeIcon !== undefined &&
+          !useLocalDataNodeIcon &&
+          dataNodeIcon !== undefined
+        ) {
+          return {
+            isSvg: dataNodeIcon && dataNodeIcon.indexOf('<svg') >= 0,
+            icon: dataNodeIcon,
+          }
+        }
+        let { serviceIcons } = this.application.baseConfig
+        if (!serviceIcons || serviceIcons.length == 0) {
+          serviceIcons = defaultDataIconsConfig.serviceIcons
+        }
+        for (let i = 0; i < serviceIcons.length; i++) {
+          for (let j = 0; j < serviceIcons[i].children.length; j++) {
+            const child = serviceIcons[i].children[j]
+            if (LayerType[child.serviceType] === item.serverType) {
+              icon = child.icon
+              return {
+                isSvg: icon && icon.indexOf('<svg') >= 0,
+                icon,
+              }
+            }
+          }
+        }
+      }
+      icon =
+        this.baseUrl + this.widgetInfo.config.iconConfig[this.nodeLevel(item)]
+      return { isSvg: icon && icon.indexOf('<svg') >= 0, icon }
+    },
     onClose() {
       this.currentNode = null
     },
@@ -992,6 +1127,27 @@ export default {
         } finally {
           // 2.2判断图层是否载成功。如果成功则将图层添加到documet中。否则，给出提示，并将数据目录树中对应的节点设为未选中状态。
           if (layer.loadStatus === LoadStatus.loaded) {
+            // 判断layer的类型是否为矢量地图、图层底图、geojson类型数据，若为此类型则需要处理配置的样式，若配置则在该图层上再叠加一层geojson显示
+            if (
+              [
+                LayerType.IGSMapImage,
+                LayerType.GeoJson,
+                LayerType.IGSVector,
+              ].includes(layer.type)
+            ) {
+              // 将sublayers中的子图层都进行处理,前提是管理平台配置了样式
+              const featureStyle = layer.extend?.featureStyle
+              // 未配置样式的图层正常加载
+              if (featureStyle) {
+                // LayerNodeToGeoJsonInstance.addLayerNode(layer)
+                LayerFeatureEdit.operateFeatureRelation(
+                  layer.type,
+                  layer.allSublayers ? layer.allSublayers : [layer],
+                  layer.url,
+                  featureStyle || {}
+                )
+              }
+            }
             // 如果处于收藏夹复现则无需设置修改的layerProperty信息
             const currentCheckLayerConfig =
               DataCatalogCheckController.getCurrentCheckLayerConfig()
@@ -1196,7 +1352,8 @@ export default {
     },
 
     // 选中目录树节点触发展开/收起
-    onSelect(selectedKeys) {
+    onSelect(selectedKeys, info) {
+      this.provideInformation(info.node)
       const flag = this.expandedKeys.includes(selectedKeys[0])
       if (flag) {
         this.expandedKeys = this.expandedKeys.filter(
@@ -2102,6 +2259,18 @@ export default {
       this.scrollLeft = scrollWidth
       this.reComputed()
     },
+    provideInformation(node) {
+      const { dataRef } = node
+      if (!dataRef.children) {
+        const checked = this.dataCatalogManager.checkedLayerConfigIDs.includes(
+          dataRef.guid
+        )
+        eventBus.$emit(events.DATA_CATALOG_SELECT_NODE, {
+          node: dataRef,
+          checked,
+        })
+      }
+    },
   },
 }
 </script>
@@ -2121,6 +2290,16 @@ export default {
       align-items: center;
       font-size: 17px;
       padding-left: 12px;
+    }
+  }
+  .icon {
+    display: flex;
+    fill: currentColor;
+    align-items: center;
+    margin-right: 5px;
+    > svg {
+      width: 100%;
+      height: 100%;
     }
   }
   .tree-container {

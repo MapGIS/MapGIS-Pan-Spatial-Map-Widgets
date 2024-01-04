@@ -83,50 +83,50 @@ export default {
       loaded: false,
       commonDataTypes: [
         {
-          text: 'OGC WMS 服务',
+          text: 'WMS服务',
           value: 'OGCWMS',
           example: 'http://<server>:<port>/igs/rest/ogc/doc/beijing/WMSServer',
         },
         {
-          text: 'OGC WMTS 服务',
+          text: 'WMTS服务',
           value: 'OGCWMTS',
           example: 'http://<server>:<port>/igs/rest/ogc/beijing/WMTSServer',
         },
         {
-          text: 'MapGIS 矢量瓦片地图服务',
+          text: '矢量瓦片服务',
           value: 'VectorTile',
           example:
             'http://<server>:<port>/igs/rest/mrms/vtiles/styles/街道-墨卡托.json',
         },
         {
-          text: 'ArcGIS 地图服务',
+          text: 'ArcGIS地图服务',
           value: 'ArcGISMapImage',
           example:
             'http://<server>:<port>/arcgis/rest/services/ServiceRequest/MapServer',
         },
         {
-          text: 'ArcGIS 瓦片服务',
+          text: 'ArcGIS瓦片服务',
           value: 'ArcGISTile',
           example:
             'http://<server>:<port>/arcgis/rest/services/ServiceRequest/MapServer',
         },
         {
-          text: 'MapGIS 瓦片服务',
+          text: '栅格瓦片服务',
           value: 'IGSTile',
           example: 'http://<server>:<port>/igs/rest/mrms/tile/{tileName}',
         },
         {
-          text: 'MapGIS 地图服务',
+          text: '地图服务',
           value: 'IGSMapImage',
           example: 'http://<server>:<port>/igs/rest/mrms/docs/{docName}',
         },
         {
-          text: 'MapGIS 图层地图服务',
+          text: '图层地图服务',
           value: 'IGSVector',
           example: 'http://<server>:<port>/igs/rest/mrms/layers?gdbps={gdbps}',
         },
         {
-          text: 'GeoJson 服务',
+          text: 'GEOJSON',
           value: 'GeoJson',
           example:
             'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson',
@@ -144,9 +144,10 @@ export default {
 
     fileDataTypes2D() {
       return [
-        { text: 'GeoTIFF 数据', value: 'TIF' },
+        { text: 'GeoTIFF数据', value: 'TIF' },
         { text: 'Esri Shapefile', value: 'SHP' },
         { text: 'MapGIS 6X 工作区文件', value: '6X' },
+        { text: 'GeoJSON数据', value: 'GeoJson' },
       ]
     },
 
@@ -169,14 +170,29 @@ export default {
     cesiumDataTypes3D() {
       return [
         {
-          text: 'MapGIS 三维场景服务',
+          text: '场景服务',
           value: 'IGSScene',
           example: 'http://<server>:<port>/igs/rest/g3d/{modelName}',
         },
         {
-          text: 'MapGIS 三维图层地图服务',
+          text: '三维图层地图服务',
           value: 'IGSVector3D',
-          example: '',
+          example: 'http://<server>:<port>/igs/rest/mrms/layers?gdbps={gdbps}',
+        },
+        {
+          text: 'KML',
+          value: 'KML',
+          example: 'http://<server>:<port>/FileName.kml',
+        },
+        {
+          text: 'KMZ',
+          value: 'KMZ',
+          example: 'http://<server>:<port>/FileName.kmz',
+        },
+        {
+          text: 'CZML',
+          value: 'CZML',
+          example: 'http://<server>:<port>/FileName.czml',
         },
       ]
     },
@@ -195,8 +211,10 @@ export default {
 
     fileDataTypes() {
       // 目前暂不支持kml、kmz、czml类型文件上传出图、所以暂时隐藏这三种上传文件类型
-      // return this.is2DMapMode ? this.fileDataTypes2D : this.fileDataTypes3D
-      return this.fileDataTypes2D
+      return this.is2DMapMode
+        ? this.fileDataTypes2D
+        : [...this.fileDataTypes2D, ...this.fileDataTypes3D]
+      // return this.fileDataTypes2D
     },
 
     dataList() {

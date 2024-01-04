@@ -81,6 +81,25 @@ export default {
       const g3dLayer = viewer.scene.layers.getLayer(g3dLayerIndex)
       return g3dLayer
     },
+    getM3DSet(id) {
+      const { vueKey, viewer, vueCesium } = this
+      let layerId = id
+      if (id.includes(':')) {
+        layerId = id.split(':')[0]
+      }
+      const m3dLayer = vueCesium.M3DIgsManager.findSource(
+        vueKey || 'default',
+        layerId
+      )
+      if (!m3dLayer) {
+        const Tiles3DLayer = vueCesium.Tileset3DManager.findSource(
+          vueKey || 'default',
+          layerId
+        )
+        return Tiles3DLayer.source
+      }
+      return m3dLayer.source[0]
+    },
     changeScaleZ(scaleZ, offset, id) {
       if (window.transformEditor) {
         window.transformEditor.setScala(1, 1, scaleZ)

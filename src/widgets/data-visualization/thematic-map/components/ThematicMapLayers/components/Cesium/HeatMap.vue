@@ -7,7 +7,7 @@
   />
   <mapgis-3d-cesium-heater-layer
     v-else-if="bound"
-    :geojson="selfGeojson"
+    :dataSource="selfGeojson"
     :options="options"
     :field="field"
     :bound="bound"

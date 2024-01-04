@@ -6,6 +6,9 @@
       :defaultExpandAll="true"
       :showLine="true"
       :replaceFields="replaceFields"
+      :expanded-keys="expandedKeys"
+      @expand="onExpand"
+      @select="onSelect"
     >
       <mapgis-ui-iconfont slot="switcherIcon" type="mapgis-down" />
       <template #custom="item">
@@ -58,6 +61,7 @@ export default {
       baseTreeData: null,
       // 判断是否是批量添加
       isBatAdd: false,
+      expandedKeys: [],
     }
   },
 
@@ -99,6 +103,22 @@ export default {
       )
       this.treeData[0].children.splice(index, 1)
       this.saveBookmarks()
+    },
+    //  没有这一步，手动控制展开的位置无法折叠
+    onExpand(expandedKeys) {
+      this.expandedKeys = expandedKeys
+    },
+
+    // 选中树节点触发展开/收起
+    onSelect(selectedKeys, e) {
+      const flag = this.expandedKeys.includes(e.node.eventKey)
+      if (flag) {
+        this.expandedKeys = this.expandedKeys.filter(
+          (item) => item !== e.node.eventKey
+        )
+      } else {
+        this.expandedKeys.push(e.node.eventKey)
+      }
     },
     // 遍历所勾选节点中所有的叶子节点
     addAllSelectedToMark(type, checkedKeys, treeData) {

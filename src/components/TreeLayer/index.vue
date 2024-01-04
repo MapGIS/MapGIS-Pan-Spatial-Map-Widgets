@@ -14,6 +14,7 @@
         @check="tickedChange"
         :expanded-keys="expandedKeys"
         @expand="onExpand"
+        @select="onSelect"
         checkable
         :tree-data="layers"
         block-node
@@ -24,6 +25,15 @@
       >
         <!-- 原来的图标类型为type="check-circle" -->
         <div slot="custom" slot-scope="item" class="tree-item-handle">
+          <div>
+            <i
+              v-if="nodeIcon(item).isSvg"
+              class="icon"
+              v-html="nodeIcon(item).icon"
+            >
+            </i>
+            <img v-else class="tree-item-icon" :src="nodeIcon(item).icon" />
+          </div>
           <!-- wmts图层的子图层start ：当为wmts图层时，子图层是展示当前选中的图层， -->
           <mapgis-ui-iconfont
             v-if="
@@ -81,14 +91,22 @@
             }}</span>
           </mapgis-ui-tooltip>
           <mapgis-ui-iconfont
-            v-if="isParentLayer(item) && !isIGSScene(item)"
+            v-if="
+              isParentLayer(item) &&
+              !isIGSScene(item) &&
+              !isModelCacheLayer(item)
+            "
             class="mapgis-ui-iconfont"
             :disabled="getIndex(item) <= 0"
             type="mapgis-shang"
             @click="lower(item)"
           />
           <mapgis-ui-iconfont
-            v-if="isParentLayer(item) && !isIGSScene(item)"
+            v-if="
+              isParentLayer(item) &&
+              !isIGSScene(item) &&
+              !isModelCacheLayer(item)
+            "
             class="mapgis-ui-iconfont"
             :disabled="getIndex(item) >= layers.length - 1"
             type="mapgis-xia"
@@ -109,6 +127,7 @@
                 v-if="!isVectorTileSubLayer(item)"
                 ref="rightPopover"
                 :layer-item="item"
+                :map-list="mapList"
                 @meta-data-info="metaDataInfo"
                 @attributes="attributes"
                 @custom-query="customQuery"
@@ -119,6 +138,7 @@
                 @edit-data-flow-style="editDataFlowStyle"
                 @change-m3d-props="changeM3DProps"
                 @model-edit="modelEdit"
+                @feature-edit="featureEdit"
                 @query="queryFeature"
               />
               <!-- <slot
@@ -189,6 +209,7 @@ import {
   ExhibitionControllerMixin,
   Exhibition,
   LayerType,
+  IGSSceneSublayerType,
   ModelCacheFormat,
   IGSMapImageLayer,
   IGSVectorLayer,
@@ -217,6 +238,9 @@ import MpUnifyModify from './components/UnifyModify/UnifyModify.vue'
 import layerTypeUtil from './mixin/layer-type-util'
 import RightPopover from './components/RightPopover/index.vue'
 import ModelStretchUtil from '../ModelStretch/mixin/ModelStretchUtil.js'
+import layerCoordinateGridUtil from './mixin/layer-coordinate-grid-util'
+import featureEditUtil from './mixin/feature-eidt-util'
+import { defaultDataIconsConfig } from '../../theme/dataIconsConfig.js'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
@@ -236,6 +260,8 @@ export default {
     ExhibitionControllerMixin,
     layerTypeUtil,
     ModelStretchUtil,
+    layerCoordinateGridUtil,
+    featureEditUtil,
   ],
   inject: ['vueCesium'],
   props: {
@@ -278,6 +304,8 @@ export default {
       modelPickController: ModelPickController,
       // 保存OGC元数据信息
       currentOGCMetadata: {},
+      // 记录当前编辑的图层id
+      currentEditLayerId: '',
     }
   },
   computed: {
@@ -287,6 +315,23 @@ export default {
       }
 
       return []
+    },
+    mapList() {
+      if (this.layers && this.layers.length > 0) {
+        return this.layers.map((layer) => {
+          if (
+            layer.searchParams &&
+            layer.searchParams.mapList &&
+            layer.searchParams.mapList.length > 0
+          ) {
+            return layer.searchParams.mapList
+          } else {
+            return []
+          }
+        })
+      } else {
+        return []
+      }
     },
   },
   watch: {
@@ -333,10 +378,11 @@ export default {
                   row.layout.visibility === undefined ||
                   row.layout.visibility === 'visible',
                 id: `${item.id}~${row.id}`,
+                sublayerId: row.id,
                 title: row.description || row.id,
               }))
             }
-            if (this.isWMTSLayer(item)) {
+            if (this.isWMTSLayer(item) || this.isIgsTileLayer(item)) {
               if (item.isVisible || item.visible) {
                 arr.push(item.key)
               }
@@ -411,6 +457,22 @@ export default {
         this.parseModelPick()
       },
     },
+    widgetRouters: {
+      handler(val) {
+        if (val.length === 1) {
+          const targetId = this.currentLayerInfo.id || this.currentEditLayerId
+          const layer = this.getTargetLayer(targetId)
+          // 模型包围盒
+          const modelBoundingBox = layer ? layer.debugShowBoundingVolume : false
+          if (modelBoundingBox) {
+            this.updateModelBoundingBox(false, targetId)
+          }
+          // 清除模型坐标网格
+          this.removeAllGraphicLayers()
+          this.currentEditLayerId = ''
+        }
+      },
+    },
   },
   created() {
     this.sceneController = Objects.SceneController.getInstance(
@@ -427,6 +489,77 @@ export default {
     // eventBus.$on(events.ECHO_LAYER_LIST_INFO, this.echoLayerList)
   },
   methods: {
+    nodeIcon(item) {
+      let icon
+      if (item.type !== undefined) {
+        let { type } = item
+        if (item.layer && item.layer.type === LayerType.IGSScene) {
+          // 场景服务里的组图层/子图层
+          if (type === IGSSceneSublayerType.groupLayer3D) {
+            // 场景服务的组图层
+            let { layerIcons } = this.application.baseConfig
+            if (!layerIcons || layerIcons.length == 0) {
+              layerIcons = defaultDataIconsConfig.layerIcons
+            }
+            for (let i = 0; i < layerIcons.length; i++) {
+              for (let j = 0; j < layerIcons[i].children.length; j++) {
+                const child = layerIcons[i].children[j]
+                if (child.layerType === 'Group') {
+                  icon = child.icon
+                  return {
+                    isSvg: icon && icon.indexOf('<svg') >= 0,
+                    icon,
+                  }
+                }
+              }
+            }
+          } else if (type === IGSSceneSublayerType.modelCache) {
+            type = LayerType.ModelCache
+          }
+        }
+        // 服务类型
+        let { serviceIcons } = this.application.baseConfig
+        if (!serviceIcons || serviceIcons.length == 0) {
+          serviceIcons = defaultDataIconsConfig.serviceIcons
+        }
+        for (let i = 0; i < serviceIcons.length; i++) {
+          for (let j = 0; j < serviceIcons[i].children.length; j++) {
+            const child = serviceIcons[i].children[j]
+            if (type === LayerType[child.serviceType]) {
+              icon = child.icon
+              return {
+                isSvg: icon && icon.indexOf('<svg') >= 0,
+                icon,
+              }
+            }
+          }
+        }
+      } else if (item.dataRef && item.dataRef.geomType) {
+        // 图层类型
+        let { layerIcons } = this.application.baseConfig
+        if (!layerIcons || layerIcons.length == 0) {
+          layerIcons = defaultDataIconsConfig.layerIcons
+        }
+        let geomType = item.dataRef.geomType
+        if (item.dataRef.sublayers && item.dataRef.sublayers.length > 0) {
+          geomType = 'Group'
+        }
+        for (let i = 0; i < layerIcons.length; i++) {
+          for (let j = 0; j < layerIcons[i].children.length; j++) {
+            const child = layerIcons[i].children[j]
+            if (geomType === child.layerType) {
+              icon = child.icon
+              return {
+                isSvg: icon && icon.indexOf('<svg') >= 0,
+                icon,
+              }
+            }
+          }
+        }
+      }
+      icon = ''
+      return { isSvg: icon && icon.indexOf('<svg') >= 0, icon }
+    },
     setLayerEditConfig() {
       const doc = this.layerDocument.clone()
       const layers = doc.defaultMap.layers()
@@ -595,6 +728,18 @@ export default {
       this.expandedKeys = expandedKeys
     },
 
+    // 选中树节点触发展开/收起
+    onSelect(selectedKeys, e) {
+      const flag = this.expandedKeys.includes(e.node.eventKey)
+      if (flag) {
+        this.expandedKeys = this.expandedKeys.filter(
+          (item) => item !== e.node.eventKey
+        )
+      } else {
+        this.expandedKeys.push(e.node.eventKey)
+      }
+    },
+
     /**
      * 该函数，是为了处理，当父节点为visible可见性false，子节点visible为true，
      * 这边递归讲父节点visible为false的子节点visible全部修改为false
@@ -737,6 +882,13 @@ export default {
           item.checkable = false
           return
         }
+        if (item.layer && this.isIgsTileLayer(item.layer)) {
+          item.checkable = false
+          if (item.sublayers && item.sublayers.length > 0) {
+            this.setSublayers(item.sublayers, item.key, arr, layerSublayers)
+          }
+          continue
+        }
         if (
           (item.sublayers && item.sublayers.length === 0) ||
           !item.sublayers
@@ -780,11 +932,22 @@ export default {
           // vm.$emit('update:layerDocument', doc)
         })
       } else if (layer.type === LayerType.IGSScene) {
-        const layerId = layer.activeScene.sublayers[0].id
+        const layerIdArr = []
+        layer.activeScene.sublayers.forEach((sublayer) => {
+          if (sublayer.sublayers.length > 0) {
+            sublayer.sublayers.forEach((item) => {
+              layerIdArr.push(item.id)
+            })
+          } else {
+            layerIdArr.push(sublayer.id)
+          }
+        })
         setTimeout(() => {
-          source = vm.sceneController.findSource(layerId)
-          if (source) {
-            vm._setBoundingSphereAndExtent(source, layer)
+          const sourceArr = layerIdArr.map((layerId) =>
+            vm.sceneController.findSource(layerId)
+          )
+          if (sourceArr) {
+            vm._setIGSSceneBoundingSphereAndExtent(sourceArr, layer)
             window.layers3D[layer.id] = layer
           }
           // vm.$emit('update:layerDocument', doc)
@@ -792,7 +955,21 @@ export default {
       }
     },
     /**
-     * 设置场景服务、模型缓存、3dTiles 图层的BoundingSphere和Extent
+     * 设置场景服务图层的BoundingSphere和Extent
+     */
+    _setIGSSceneBoundingSphereAndExtent(sourceArr, layer) {
+      const extent = this._getM3DSetArrayRange(sourceArr)
+      if (extent) {
+        layer.fullExtent.xmin = extent.xmin
+        layer.fullExtent.ymin = extent.ymin
+        layer.fullExtent.xmax = extent.xmax
+        layer.fullExtent.ymax = extent.ymax
+        layer.boundingSphere = extent.boundingSphere
+      }
+      return layer
+    },
+    /**
+     * 设置模型缓存、3dTiles 图层的BoundingSphere和Extent
      */
     _setBoundingSphereAndExtent(source, layer) {
       const boundingSphere = source._root.boundingVolume.boundingSphere
@@ -811,6 +988,45 @@ export default {
         layer.boundingSphere = boundingSphere
       }
       return layer
+    },
+    /**
+     * 获取多个M3D的最大包围盒范围(以最大包围盒中心点为原点)
+     */
+    _getM3DSetArrayRange(m3dSetArray) {
+      let xmin
+      let ymin
+      let xmax
+      let ymax
+      let zmin
+      let zmax
+      const boundingSphere =
+        this.Cesium.AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
+      for (let i = 0; i < m3dSetArray.length; i++) {
+        const m3d = m3dSetArray[i]
+        const range = this._getM3DSetRange(m3d)
+        if (!range) {
+          continue
+        }
+        if (xmin == undefined || range.xmin < xmin) {
+          xmin = range.xmin
+        }
+        if (ymin == undefined || range.ymin < ymin) {
+          ymin = range.ymin
+        }
+        if (xmax == undefined || range.xmax > xmax) {
+          xmax = range.xmax
+        }
+        if (ymax == undefined || range.ymax > ymax) {
+          ymax = range.ymax
+        }
+        if (zmin == undefined || range.zmin < zmin) {
+          zmin = range.zmin
+        }
+        if (zmax == undefined || range.zmax > zmax) {
+          zmax = range.zmax
+        }
+      }
+      return { xmin, ymin, xmax, ymax, zmin, zmax, boundingSphere }
     },
     /**
      * 获取m3d经纬度包围盒
@@ -939,6 +1155,7 @@ export default {
             this.updateM3DProps(val, false)
             this.changeLayer(val)
             const layer = val.layer ? val.layer : val
+            this.currentEditLayerId = val.id
             const { dataId, layerProperty } = layer
             // api.updateData({ dataId, layerProperty })
           },
@@ -974,6 +1191,12 @@ export default {
               this.changeTextureScale(1, 1, item.id)
             }
           },
+          'update:modelBoundingBox': (val, layerId) => {
+            this.updateModelBoundingBox(val, layerId)
+          },
+          'update:modelCoordinateGrid': (val, type, layerId) => {
+            this.updateModelCoordinateGrid(val, type, layerId)
+          },
         },
       })
     },
@@ -1008,8 +1231,13 @@ export default {
         window.transformEditor = window.modelEditControlList[item.id]
       } else {
         const { Cesium, viewer } = this
-        const g3dLayer = this.getG3dLayer(item.id)
-        window.transformEditor = new Cesium.ModelTransformTool(g3dLayer)
+        let layerOption
+        if (this.isIGSScene(item)) {
+          layerOption = this.getG3dLayer(item.id)
+        } else if (this.isModelCacheLayer(item)) {
+          layerOption = this.getM3DSet(item.id)
+        }
+        window.transformEditor = new Cesium.ModelTransformTool(layerOption)
         window.transformEditor.initModelEditor(viewer)
         window.modelEditControlList[item.id] = window.transformEditor
       }
@@ -1024,6 +1252,28 @@ export default {
         listeners: {
           'model-edit': (type, val) => {
             this.updateModel(type, val)
+          },
+        },
+      })
+    },
+    /**
+     * 打开图层样式页面
+     */
+    async featureEdit(item) {
+      // 获取属性字段
+      const fieldInfo = await this.getFeatureField(item)
+      this.currentLayerInfo = item.dataRef
+      this.openPage({
+        title: '图层样式',
+        name: 'MpFeatureEdit',
+        component: () => import('./components/FeatureEdit/FeatureEdit.vue'),
+        props: {
+          fieldInfo: fieldInfo,
+          layer: this.currentLayerInfo,
+        },
+        listeners: {
+          'update:layer': (val, isSave) => {
+            this.updateDocuement(val, isSave)
           },
         },
       })
@@ -1182,6 +1432,18 @@ export default {
       api.updateData({ dataId, extend })
     },
 
+    updateDocuement(val, isSave) {
+      const targetLayer = val.layer ? val.layer : val
+      const { extend, dataId } = targetLayer
+      const doc = this.layerDocument.clone()
+      if (isSave) {
+        const layer = doc.defaultMap.findLayerById(targetLayer.id)
+        layer.extend = extend
+        api.updateData({ dataId, extend })
+      }
+      this.$emit('update:layerDocument', doc)
+    },
+
     // updateLuminanceAtZenith(luminanceAtZenith) {
     //   const { key, luminanceAtZenith } = val
     //   const indexArr: Array<string> = key.split('-')
@@ -1283,6 +1545,23 @@ export default {
       this.currentLayerInfo = {}
     },
 
+    updateModelBoundingBox(val, layerId) {
+      const targetLayer = this.getTargetLayer(layerId)
+      targetLayer.debugShowBoundingVolume = val
+    },
+    updateModelCoordinateGrid(val, type, layerId) {
+      this.removeAllGraphicLayers()
+      if (val) {
+        const targetLayer = this.getTargetLayer(layerId)
+        this.initCoordinateGrid(targetLayer, type)
+      }
+    },
+    getTargetLayer(id) {
+      const targetLayer =
+        this.sceneController.findSource(id) ||
+        this.sceneController.findM3DIgsSource(id)
+      return targetLayer
+    },
     // 模型拾取微件统一开启/关闭拾取
     updateM3DEnablePopupEnable(isOpenPick) {
       this.isOpenPick = isOpenPick
@@ -1625,6 +1904,22 @@ export default {
       width: 100%;
       overflow: hidden;
       align-items: center;
+      .tree-item-icon {
+        width: 1em;
+        height: 1em;
+        vertical-align: -0.125em;
+        margin-right: 5px;
+      }
+      .icon {
+        display: flex;
+        fill: currentColor;
+        align-items: center;
+        margin-right: 5px;
+        > svg {
+          width: 100%;
+          height: 100%;
+        }
+      }
       .more {
         font-size: 16px;
         margin-right: 0;

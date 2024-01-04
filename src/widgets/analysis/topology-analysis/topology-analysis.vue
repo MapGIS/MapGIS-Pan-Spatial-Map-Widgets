@@ -147,6 +147,7 @@ import {
   UUID,
   IGSMapImageLayer,
   IGSVectorLayer,
+  IGSTileLayer,
   IGSScene,
   ModelCache,
   baseConfigInstance,
@@ -182,6 +183,7 @@ export default {
       geoJSONTarget: null,
       geoJSONAnalysis: null,
       isWidgetOpen: false,
+      baseTopologyUrl: '',
     }
   },
 
@@ -197,6 +199,9 @@ export default {
     // 目标类
     tData() {
       if (this.tDataIndex !== null) {
+        this.baseTopologyUrl =
+          this.layerArrOption[this.tDataIndex].url ||
+          this.layerArrOption[this.tDataIndex].serverURL
         return this.layerArrOption[this.tDataIndex]
       }
       return null
@@ -205,9 +210,26 @@ export default {
     // 分析类
     aData() {
       if (this.aDataIndex !== null) {
+        this.baseTopologyUrl =
+          this.layerArrOption[this.tDataIndex].url ||
+          this.layerArrOption[this.tDataIndex].serverURL
         return this.layerArrOption[this.aDataIndex]
       }
       return null
+    },
+
+    ip() {
+      if (!!this.baseTopologyUrl && this.baseTopologyUrl.length > 0) {
+        return this.baseTopologyUrl.split('/')[2].split(':')[0]
+      }
+      return baseConfigInstance.config.ip
+    },
+
+    port() {
+      if (!!this.baseTopologyUrl && this.baseTopologyUrl.length > 0) {
+        return this.baseTopologyUrl.split('/')[2].split(':')[1]
+      }
+      return baseConfigInstance.config.port
     },
   },
 
@@ -239,11 +261,24 @@ export default {
       val.layers().forEach((data) => {
         if (
           data.type === LayerType.IGSMapImage ||
-          data.type === LayerType.IGSVector ||
+          data.type === LayerType.IGSVector
+        ) {
+          arr.push(data)
+        } else if (data.type === LayerType.IGSTile) {
+          if (data.sublayers && data.sublayers.length > 0) {
+            arr.push(data)
+          }
+        } else if (
           data.type === LayerType.IGSScene ||
           data.type === LayerType.ModelCache
         ) {
-          arr.push(data)
+          if (
+            data.searchParams &&
+            data.searchParams.searchName &&
+            data.searchParams.searchName.includes('gdbp')
+          ) {
+            arr.push(data)
+          }
         }
       })
       if (arr.length > 0) {
@@ -307,7 +342,58 @@ export default {
           layer.type === LayerType.ModelCache
         ) {
           this.queryFeaturesByIGSScene(layer, geo)
+        } else if (layer.type === LayerType.IGSTile) {
+          this.queryFeaturesByIGSTile(layer, geo)
         }
+      }
+    },
+
+    getAllSublayer(allSublayers, sublayers) {
+      sublayers.forEach((sublayer) => {
+        if (sublayer.sublayers && sublayer.sublayers.length === 0) {
+          allSublayers.push(sublayer)
+        } else {
+          this.getAllSublayer(allSublayers, sublayer.sublayers)
+        }
+      })
+    },
+
+    queryFeaturesByIGSTile(layer: IGSTileLayer, geometry) {
+      if (!layer.isVisible) {
+        return
+      }
+      const { domain } = layer._parseUrl(layer.url)
+      const docName = layer.searchParams.searchName
+
+      const arr = []
+      const allSublayers = []
+      this.getAllSublayer(allSublayers, layer.sublayers)
+      allSublayers.forEach((sublayer) => {
+        if (
+          !sublayer.visible ||
+          (sublayer.sublayers && sublayer.sublayers.length > 0)
+        ) {
+          return
+        }
+        arr.push({
+          id: sublayer.id,
+          name: sublayer.title,
+          domain,
+          ip: baseConfigInstance.config.ip,
+          port: Number(baseConfigInstance.config.port),
+          serverType: layer.type,
+          layerIndex: sublayer.id,
+          serverName: docName,
+          serverUrl: layer.url,
+          geometry: geometry,
+        })
+      })
+      if (this.queryType === 'target') {
+        this.tDataArr = arr
+        this.tDataTab = arr.length > 0 ? arr[0].id : ''
+      } else {
+        this.aDataArr = arr
+        this.aDataTab = arr.length > 0 ? arr[0].id : ''
       }
     },
 
@@ -380,18 +466,18 @@ export default {
       }
       const { domain, docName } = layer._parseUrl(layer.url)
 
-      const layerConfig = dataCatalogManagerInstance.getLayerConfigByID(
-        layer.id
-      )
       let arr = []
-      if (layerConfig && layerConfig.bindData) {
+      if (
+        layer.searchParams &&
+        layer.searchParams.searchName?.includes('gdbp')
+      ) {
         arr = [
           {
             ip: baseConfigInstance.config.ip,
             port: Number(baseConfigInstance.config.port),
             domain,
             serverType: layer.type,
-            gdbp: layerConfig.bindData.gdbps,
+            gdbp: layer.searchParams.searchName,
             geometry: geometry,
             name: layer.title,
           },
@@ -419,7 +505,7 @@ export default {
           const FID2 = analysis.FID
           await this.topology3d(srcInfo1, srcInfo2, FID1, FID2)
         } else {
-          const { ip, port } = baseConfigInstance.config
+          const { ip, port } = this
           let analysisService
           if (target.ftype === 1) {
             const targetGeom = target.fGeom.PntGeom[0]
@@ -435,7 +521,7 @@ export default {
               ip,
               port,
             })
-          } else if (analysis.ftype === 3) {
+          } else if (target.ftype === 3) {
             const targetGeom = target.fGeom.RegGeom[0]
             analysisService = new Zondy.MRGS.TopAnalysis({
               relativeObj: targetGeom,

@@ -25,15 +25,17 @@ export default {
       type: Object,
       default: () => ({}),
     },
+    mapList: {
+      type: Array,
+      default: () => [],
+    },
   },
-  data() {
-    return {
-      listData: [
+  computed: {
+    listData() {
+      return [
         {
           name: '图层元数据',
-          show:
-            this.isMetaData(this.layerItem) &&
-            this.isParentLayer(this.layerItem),
+          show: this.isMetaData(this.layerItem),
           click: () => this.metaDataInfo(),
         },
         {
@@ -44,9 +46,10 @@ export default {
         {
           name: '自定义查询',
           show:
-            this.isMetaData(this.layerItem) &&
-            !this.isDataFlow(this.layerItem) &&
-            !this.isParentLayer(this.layerItem),
+            (this.isMetaData(this.layerItem) &&
+              !this.isDataFlow(this.layerItem) &&
+              this.isSubLayer(this.layerItem)) ||
+            this.isCustomQuery(this.layerItem),
           click: () => this.customQuery(),
         },
         {
@@ -78,7 +81,8 @@ export default {
           name: '置顶',
           show:
             this.isParentLayer(this.layerItem) &&
-            !this.isIGSScene(this.layerItem),
+            !this.isIGSScene(this.layerItem) &&
+            !this.isModelCacheLayer(this.layerItem),
           click: () => this.toTop(),
         },
         {
@@ -93,11 +97,22 @@ export default {
           name: '模型编辑',
           show:
             this.isParentLayer(this.layerItem) &&
-            this.isIGSScene(this.layerItem),
+            (this.isIGSScene(this.layerItem) ||
+              this.isModelCacheLayer(this.layerItem)),
           click: () => this.modelEdit(),
         },
-      ],
-    }
+        {
+          name: '图层样式',
+          show:
+            (!this.isParentLayer(this.layerItem) &&
+              (this.isIgsDocLayer(this.layerItem) ||
+                this.isFeatureLayer(this.layerItem)) &&
+              this.layerItem.sublayers.length === 0) ||
+            this.isGeoJsonLayer(this.layerItem),
+          click: () => this.featureEdit(),
+        },
+      ]
+    },
   },
   created() {
     console.log(this.$root, 'rightpopover', this)
@@ -134,6 +149,10 @@ export default {
 
     modelEdit() {
       this.$emit('model-edit', this.layerItem)
+    },
+
+    featureEdit() {
+      this.$emit('feature-edit', this.layerItem)
     },
 
     enableQuery() {

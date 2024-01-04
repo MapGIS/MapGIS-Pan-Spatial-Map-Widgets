@@ -18,6 +18,29 @@
       <mapgis-ui-form-item label="开启多模态切换">
         <mapgis-ui-switch v-model="enableModelSwitch" />
       </mapgis-ui-form-item>
+      <mapgis-ui-form-item label="开启模型包围盒">
+        <mapgis-ui-switch
+          v-model="enableModelBoundingBox"
+          @change="enableModelBoundingBoxChange"
+        />
+      </mapgis-ui-form-item>
+      <mapgis-ui-form-item label="开启模型坐标网格">
+        <mapgis-ui-switch
+          v-model="enableModelCoordinateGrid"
+          @change="enableModelCoordinateGridChange"
+        />
+      </mapgis-ui-form-item>
+      <mapgis-ui-form-item v-if="enableModelCoordinateGrid">
+        <mapgis-ui-radio-group
+          v-model="coordinateGridType"
+          :options="[
+            { label: '坐标类型', value: 'coordinate' },
+            { label: '网格类型', value: 'grid' },
+          ]"
+          @change="coordinateGridTypeChange"
+        >
+        </mapgis-ui-radio-group>
+      </mapgis-ui-form-item>
       <mapgis-ui-input-number-panel
         size="large"
         label="模型阴影区域亮度调节"
@@ -61,6 +84,9 @@ export default {
       offset: -2,
       // 是否开启纹理拉伸
       textureScale: false,
+      enableModelBoundingBox: false,
+      enableModelCoordinateGrid: false,
+      coordinateGridType: 'coordinate',
     }
   },
   computed: {
@@ -220,6 +246,25 @@ export default {
         this.layer.layerProperty.luminanceAtZenith = this.luminanceAtZenith
       }
       this.$emit('update:luminanceAtZenith', this.layer)
+    },
+    enableModelBoundingBoxChange(val) {
+      this.$emit('update:modelBoundingBox', val, this.layer.id)
+    },
+    enableModelCoordinateGridChange(val) {
+      this.$emit(
+        'update:modelCoordinateGrid',
+        val,
+        this.coordinateGridType,
+        this.layer.id
+      )
+    },
+    coordinateGridTypeChange(val) {
+      this.$emit(
+        'update:modelCoordinateGrid',
+        true,
+        val.target.value,
+        this.layer.id
+      )
     },
   },
 }

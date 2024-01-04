@@ -55,6 +55,11 @@
         :exhibition="exhibition"
       />
     </div>
+    <mapgis-ui-mask
+      :parentDivClass="'map-wrapper'"
+      :loading="maskShow"
+      :text="maskText"
+    ></mapgis-ui-mask>
   </div>
 </template>
 
@@ -64,6 +69,7 @@ import {
   Exhibition,
   LayerType,
 } from '@mapgis/web-app-framework'
+import axios from 'axios'
 
 const { IAttributeTableListExhibition } = Exhibition
 
@@ -76,6 +82,12 @@ export default {
       type: IAttributeTableListExhibition,
       required: true,
     },
+  },
+  data() {
+    return {
+      maskText: '导出中，请稍候...',
+      maskShow: false,
+    }
   },
   computed: {
     activeOptionId: {
@@ -168,7 +180,7 @@ export default {
     },
 
     exportAllCSV() {
-      const { serverType, serverUrl, gdbp } = this.options[0]
+      const { serverType, serverUrl, gdbp, is3dBind2dData } = this.options[0]
       let { serverName } = this.options[0]
       let { domain } = this.options[0]
       if (!domain && !!serverUrl && serverUrl.length > 0) {
@@ -185,7 +197,15 @@ export default {
           dataUrl = `${domain}/igs/rest/services/${serverName}/MapServer/query?f=csv&resultRecordCount=1000`
           break
         case LayerType.IGSScene:
-          dataUrl = `${domain}/igs/rest/services/system/ResourceServer/tempData/features/query?url=${gdbp}&f=csv&resultRecordCount=1000`
+          if (is3dBind2dData) {
+            if (serverName.indexOf(':') > -1) {
+              serverName = serverName.replace(':', '/')
+            }
+            dataUrl = `${domain}/igs/rest/services/${serverName}/MapServer/query?f=csv&resultRecordCount=1000`
+          } else {
+            dataUrl = `${domain}/igs/rest/services/system/ResourceServer/tempData/features/query?url=${gdbp}&f=csv&resultRecordCount=1000`
+          }
+
           break
         default:
           break
@@ -193,11 +213,43 @@ export default {
       if (!dataUrl) {
         return this.$message.error('此服务不支持导出')
       }
-      const a = document.createElement('a')
-      a.style.display = 'none'
-      a.href = dataUrl
-      a.click()
-      a.remove()
+      this.maskShow = true
+      axios({
+        method: 'get',
+        url: dataUrl,
+        responseType: 'blob',
+      })
+        .then((res) => {
+          this.downloadCsv(res.data)
+        })
+        .catch((err) => {
+          this.maskShow = false
+          this.$message.error('导出失败')
+          console.log(err)
+        })
+    },
+
+    downloadCsv(data) {
+      if (!data) {
+        return this.$message.error('解析数据为空！')
+      }
+      const blob = new Blob([`\uFEFF${data}`], {
+        type: 'text/csv',
+      })
+      // 创建一个新的url，此url指向新建的Blob对象
+      const url = URL.createObjectURL(data)
+      // 创建a标签，并隐藏a标签
+      const link = document.createElement('a')
+      link.style.display = 'none'
+      // a标签的href属性指定下载链接
+      link.href = url
+      const datetime = Date.now()
+      link.download = `attrData_${datetime}.csv`
+      link.click()
+      link.remove()
+      // URL.revokeObjectURL() 静态方法用来释放一个之前已经存在的、通过调用
+      URL.revokeObjectURL(url)
+      this.maskShow = false
       this.$message.success('导出成功')
     },
   },

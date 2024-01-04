@@ -1,6 +1,6 @@
 {
   "name": "@mapgis/mapgis-pan-spatial-map-widgets",
-  "version": "16.6.0",
+  "version": "16.8.0",
   "description": "一个更易于帮助全行业构建全空间一张图专业GIS应用的平台",
   "productName": "MapGIS Pan-Spatial Map",
   "author": "MapGIS",
@@ -11,13 +11,13 @@
     "build": "node --max_old_space_size=12288 ./node_modules/@vue/cli-service/bin/vue-cli-service build --target lib --name mapgis-pan-spatial-map-widgets src/index.ts"
   },
   "dependencies": {
-    "@mapgis/mapbox-gl": "~16.6.0",
-    "@mapgis/web-app-framework": "~16.6.0",
+    "@mapgis/mapbox-gl": "^16.6.0",
+    "@mapgis/web-app-framework": "^16.6.0",
     "@mapgis/webclient-es6-mapboxgl": "~16.2.0",
     "@mapgis/webclient-es6-service": "~16.2.0",
-    "@mapgis/webclient-vue-cesium": "~16.6.0",
-    "@mapgis/webclient-vue-mapboxgl": "~16.6.0",
-    "@mapgis/webclient-vue-ui": "~16.6.0",
+    "@mapgis/webclient-vue-cesium": "^16.6.0",
+    "@mapgis/webclient-vue-mapboxgl": "^16.6.0",
+    "@mapgis/webclient-vue-ui": "^16.6.0",
     "ant-design-vue": "1.7.2",
     "json2csv": "^5.0.6",
     "vue": "2.6.14",
