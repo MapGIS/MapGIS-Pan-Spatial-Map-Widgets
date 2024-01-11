@@ -126,11 +126,5 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.split-screen-map {
-  background-color: $base-bg-color;
-}
-</style>
-
-<style lang="less" scoped>
-@import './index.less';
+@import './index.scss';
 </style>

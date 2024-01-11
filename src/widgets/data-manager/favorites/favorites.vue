@@ -303,7 +303,7 @@ export default {
       const transferRelation = {}
       Object.keys(layerInfo).forEach((item) => {
         // 兼容guid的情况
-        if (item.indexOf('://') > -1) {
+        if (item.includes('://')) {
           const find = this.dataCatalogLayerArr.find(
             (config) => config.serverURL === item
           )
@@ -315,7 +315,7 @@ export default {
         }
       })
       Object.keys(relation).forEach((item) => {
-        if (item.indexOf('://') > -1) {
+        if (item.includes('://')) {
           const find = this.dataCatalogLayerArr.find(
             (config) => config.serverURL === item
           )
@@ -466,7 +466,7 @@ export default {
                 (layer) => layer.guid === frist
               )
             }
-            let parentData = fristData ? this.getParent(fristData) : null
+            const parentData = fristData ? this.getParent(fristData) : null
 
             const transferSubArr = []
             subArr.forEach((item) => {

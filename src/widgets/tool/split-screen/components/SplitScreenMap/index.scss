@@ -1,0 +1,20 @@
+@import '../../../../../theme/index.scss';
+
+.split-screen-map {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: $base-bg-color;
+  ::v-deep {
+    .mapgis-ui-row {
+      width: 100%;
+      height: 100%;
+    }
+    .table-marker {
+      @include hoverScrollbar();
+    }
+  }
+}
