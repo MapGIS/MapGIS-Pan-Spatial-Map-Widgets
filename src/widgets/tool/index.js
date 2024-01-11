@@ -1,8 +1,5 @@
-export { default as MpBimComponent } from './bim-component/bim-component.vue'
 export { default as MpMeasurement } from './measurement/measurement.vue'
 export { default as MpOutputImage } from './output-image/output-image.vue'
 export { default as MpSplitScreen } from './split-screen/split-screen.vue'
-export { default as MpStratifiedHousehold } from './stratified-household/stratified-household.vue'
 export { default as MpModelPick } from './model-pick/model-pick.vue'
 export { default as MpOpacityFactor } from './opacity-factor/opacity-factor.vue'
-export { default as MpModelStretch } from './model-stretch/model-stretch.vue'
