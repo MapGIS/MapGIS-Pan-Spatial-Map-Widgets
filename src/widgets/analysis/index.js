@@ -1,7 +1,4 @@
 export { default as MpBufferAnalysis } from './buffer-analysis/buffer-analysis.vue'
-export { default as MpDynamicSectionAnalysis } from './dynamic-section-analysis/dynamic-section-analysis.vue'
-export { default as MpHeightLimitedAnalysis } from './height-limited-analysis/height-limited-analysis.vue'
-export { default as MpModelFlatten } from './model-flatten/model-flatten.vue'
 export { default as MpNetworkAnalysis } from './network-analysis/network-analysis.vue'
 export { default as MpOverlayAnalysis } from './overlay-analysis/overlay-analysis.vue'
 export { default as MpProfileAnalysis } from './profile-analysis/profile-analysis.vue'
@@ -14,4 +11,4 @@ export { default as MpTerrainAnalysis } from './terrain-analysis/terrain-analysi
 export { default as MpTopologyAnalysis } from './topology-analysis/topology-analysis.vue'
 export { default as MpVisibilityAnalysis } from './visibility-analysis/visibility-analysis.vue'
 export { default as MpVisualAnalysis } from './visual-analysis/visual-analysis.vue'
-export { default as MpExplosionAnalysis } from './explosion-analysis/explosion-analysis.vue'
+
