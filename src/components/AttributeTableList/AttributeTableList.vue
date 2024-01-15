@@ -70,12 +70,14 @@ import {
   LayerType,
 } from '@mapgis/web-app-framework'
 import axios from 'axios'
+import MpAttributeTable  from '../AttributeTable/AttributeTable.vue'
 
 const { IAttributeTableListExhibition } = Exhibition
 
 export default {
   name: 'MpAttributeTableList',
   mixins: [ExhibitionMixin],
+  components:{MpAttributeTable},
   props: {
     // 属性表选项
     exhibition: {

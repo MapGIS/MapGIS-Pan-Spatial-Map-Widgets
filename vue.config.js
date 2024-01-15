@@ -57,10 +57,11 @@ module.exports = {
       .tap((options) =>
         Object.assign(options, { limit: 2000, esModule: false })
       )
-    config.plugin('fork-ts-checker').tap((args) => {
-      args[0].memoryLimit = 12288
-      return args
-    })
+      config.plugins.delete('fork-ts-checker') // 解决打包时候ts类型检测报错
+    // config.plugin('fork-ts-checker').tap((args) => {
+    //   args[0].memoryLimit = 12288
+    //   return args
+    // })
   },
   css: {
     loaderOptions: {
