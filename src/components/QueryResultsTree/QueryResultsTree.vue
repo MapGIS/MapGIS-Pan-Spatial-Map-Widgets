@@ -740,11 +740,13 @@ export default {
   },
 }
 </script>
-<style scoped lang="less">
+<style scoped lang="scss">
+@import '../../theme/index.scss';
+
 .mp-query-result-tree {
   padding: 4px 8px;
   overflow: auto;
-  .hoverScrollbar();
+  @include hoverScrollbar();
   .mapgis-ui-tree > li:first-child {
     padding-top: 0;
   }

@@ -1,0 +1,13 @@
+@mixin scrollbar($width: 0, $height: 0) {
+  &::-webkit-scrollbar {
+    width: $width;
+    height: $height;
+  }
+}
+
+@mixin hoverScrollbar($width: 4px, $height: 4px) {
+  @include scrollbar();
+  &:hover {
+    @include scrollbar($width, $height);
+  }
+}

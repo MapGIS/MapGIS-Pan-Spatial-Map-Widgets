@@ -255,6 +255,17 @@ export default {
 
 <style lang="scss" scoped>
 .mp-widget-swipe {
+  width: 100%;
+  height: 100%;
+  :v-deep .mapboxgl-compare {
+    user-select: none;
+    border: 1px solid $primary-color;
+    background-color: $border-color;
+    .compare-swiper-vertical,
+    .compare-swiper-horizontal {
+      background-color: $primary-color;
+    }
+  }
   // 有穿透
   .mapboxgl-compare {
     border: 1px solid $primary-color;
@@ -265,8 +276,4 @@ export default {
     }
   }
 }
-</style>
-
-<style lang="less" scoped>
-@import './swipe.less';
 </style>
