@@ -256,14 +256,14 @@ export default {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .mp-attribute-table-list {
   padding-top: 2px;
   .exportClass {
-    color: var(--text-color);
+    color: $text-color;
     margin-right: 14px;
     &:hover {
-      color: @primary-color;
+      color: $primary-color;
     }
   }
   .mp-attribute-table-tag-container {
