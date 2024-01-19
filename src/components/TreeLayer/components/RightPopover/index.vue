@@ -15,7 +15,8 @@
 <script>
 import layerTypeUtil from '../../mixin/layer-type-util'
 import { DataFlowList } from '@mapgis/web-app-framework'
-import * as turf from '@turf/turf'
+import { lineString } from '@turf/helpers'
+import bbox from '@turf/bbox'
 
 export default {
   name: 'RightPopover',
@@ -168,8 +169,8 @@ export default {
           } = item
           return coordinates
         })
-        const line = turf.lineString(lineArr)
-        const [xmin, ymin, xmax, ymax] = turf.bbox(line)
+        const line = lineString(lineArr)
+        const [xmin, ymin, xmax, ymax] = bbox(line)
         return {
           xmin,
           ymin,

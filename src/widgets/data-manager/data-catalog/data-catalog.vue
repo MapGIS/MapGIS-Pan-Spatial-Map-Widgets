@@ -375,7 +375,8 @@ import {
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../../../components/MetadataInfo/MetadataInfo.vue'
 import NonSpatial from './non-spatial.vue'
-import * as turf from '@turf/turf'
+import { lineString } from '@turf/helpers'
+import bbox from '@turf/bbox'
 import { defaultDataIconsConfig } from '../../../theme/dataIconsConfig.js'
 
 export default {
@@ -1408,8 +1409,8 @@ export default {
           } = item
           return coordinates
         })
-        const line = turf.lineString(lineArr)
-        const [xmin, ymin, xmax, ymax] = turf.bbox(line)
+        const line = lineString(lineArr)
+        const [xmin, ymin, xmax, ymax] = bbox(line)
         return {
           xmin,
           ymin,

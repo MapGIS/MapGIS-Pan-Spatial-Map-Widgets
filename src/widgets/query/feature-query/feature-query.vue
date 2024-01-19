@@ -132,16 +132,9 @@ import {
   eventBus,
 } from '@mapgis/web-app-framework'
 import * as Zondy from '@mapgis/webclient-es6-service'
-import {
-  lineString,
-  polygon,
-  point,
-  multiPolygon,
-  booleanCrosses,
-  booleanPointInPolygon,
-  booleanDisjoint,
-  booleanContains,
-} from '@turf/turf'
+import { lineString, polygon, point, multiPolygon } from '@turf/helpers'
+import booleanDisjoint from '@turf/boolean-disjoint'
+import booleanContains from '@turf/boolean-contains'
 import MpGeoJsonInputDraw from './components/MpGeoJsonInputDraw/MpGeoJsonInputDraw.vue'
 import MpPolygonInputDraw from './components/MpPolygonInputDraw/MpPolygonInputDraw.vue'
 import MpUploadFileDraw from './components/MpUploadFileDraw/MpUploadFileDraw.vue'
