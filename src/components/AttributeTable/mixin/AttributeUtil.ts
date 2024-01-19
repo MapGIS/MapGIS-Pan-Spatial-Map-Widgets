@@ -1,4 +1,6 @@
-import * as turf from '@turf/turf'
+import { point, polygon } from '@turf/helpers'
+import rhumbDistance from '@turf/rhumb-distance'
+import centerOfMass from '@turf/center-of-mass'
 import {
   DomUtil,
   AppMixin,
@@ -185,13 +187,13 @@ export default {
       if (geoJSONExtent) {
         const { geometry } = geoJSONExtent
         const { coordinates } = geometry
-        const from = turf.point(coordinates[0][0])
-        const to = turf.point(coordinates[0][3])
+        const from = point(coordinates[0][0])
+        const to = point(coordinates[0][3])
         const options = { units: 'kilometers' }
 
-        const distance = turf.rhumbDistance(from, to, options)
+        const distance = rhumbDistance(from, to, options)
 
-        const center = turf.centerOfMass(geoJSONExtent)
+        const center = centerOfMass(geoJSONExtent)
         return {
           lon: center.geometry.coordinates[0],
           lat: center.geometry.coordinates[1],
@@ -791,12 +793,12 @@ export default {
      * 获取屏幕范围
      */
     getBounds() {
-      let polygon
+      let polygonBound
       if (this.is2DMapMode) {
         const { _ne, _sw } = this.map.getBounds()
         const { lng: xmax, lat: ymax } = _ne
         const { lng: xmin, lat: ymin } = _sw
-        polygon = turf.polygon(
+        polygonBound = polygon(
           [
             [
               [xmin, ymax],
@@ -814,7 +816,7 @@ export default {
         const ymax = (Rectangle.north / Math.PI) * 180
         const xmax = (Rectangle.east / Math.PI) * 180
         const ymin = (Rectangle.south / Math.PI) * 180
-        polygon = turf.polygon(
+        polygonBound = polygon(
           [
             [
               [xmin, ymax],
@@ -827,7 +829,7 @@ export default {
           { name: 'bounds' }
         )
       }
-      return polygon
+      return polygonBound
     },
     // 通过geoJson设置table标题数组
     setGeoJsonColums(geojson) {
