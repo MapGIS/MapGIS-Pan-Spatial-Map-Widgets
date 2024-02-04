@@ -91,7 +91,8 @@ import {
   api,
   baseConfigInstance,
 } from '@mapgis/web-app-framework'
-import { bboxPolygon, lineString, bbox } from '@turf/turf'
+import bboxPolygon from '@turf/bbox-polygon'
+import bbox from '@turf/bbox'
 import ZoneFrameMapbox from './ZoneFrameMapbox.vue'
 import ZoneFrameCesium from './ZoneFrameCesium.vue'
 

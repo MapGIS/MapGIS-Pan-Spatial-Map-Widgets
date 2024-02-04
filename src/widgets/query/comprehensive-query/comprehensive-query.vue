@@ -93,7 +93,7 @@ import Coordinate from './components/Coordinate/Coordinate.vue'
 import Frame from './components/ZoneFrame/Frame.vue'
 import PlaceNameMapbox from './components/PlaceName/PlaceNameMapbox.vue'
 import PlaceNameCesium from './components/PlaceName/PlaceNameCesium.vue'
-import * as turf from '@turf/turf'
+import { polygon } from '@turf/helpers'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
@@ -295,12 +295,12 @@ export default {
      * 获取屏幕范围
      */
     getBounds() {
-      let polygon
+      let polygonBound
       if (this.is2DMapMode) {
         const { _ne, _sw } = this.map.getBounds()
         const { lng: xmax, lat: ymax } = _ne
         const { lng: xmin, lat: ymin } = _sw
-        polygon = turf.polygon(
+        polygonBound = polygon(
           [
             [
               [xmin, ymax],
@@ -318,7 +318,7 @@ export default {
         const ymax = (Rectangle.north / Math.PI) * 180
         const xmax = (Rectangle.east / Math.PI) * 180
         const ymin = (Rectangle.south / Math.PI) * 180
-        polygon = turf.polygon(
+        polygonBound = polygon(
           [
             [
               [xmin, ymax],
@@ -331,7 +331,7 @@ export default {
           { name: 'bounds' }
         )
       }
-      return polygon
+      return polygonBound
     },
 
     /**

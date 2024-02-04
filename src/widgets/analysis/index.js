@@ -2,7 +2,6 @@ export { default as MpBufferAnalysis } from './buffer-analysis/buffer-analysis.v
 export { default as MpNetworkAnalysis } from './network-analysis/network-analysis.vue'
 export { default as MpOverlayAnalysis } from './overlay-analysis/overlay-analysis.vue'
 export { default as MpProfileAnalysis } from './profile-analysis/profile-analysis.vue'
-export { default as MpRetrospect } from './retrospect/retrospect.vue'
 export { default as MpSceneRoaming } from './scene-roaming/scene-roaming.vue'
 export { default as MpShadowAnalysis } from './shadow-analysis/shadow-analysis.vue'
 export { default as MpSkylineAnalysis } from './skyline-analysis/skyline-analysis.vue'
