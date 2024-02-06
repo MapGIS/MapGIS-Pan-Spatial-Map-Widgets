@@ -1,7 +1,13 @@
 <template>
   <div class="marker-add-wrapper">
-    <mp-draw-pro ref="draw" @start="onDrawStart" @finished="onDrawFinished" />
+    <mp-draw-pro
+      ref="draw"
+      @start="onDrawStart"
+      @finished="onDrawFinished"
+      v-if="is2DMapMode && hasMapDisplay"
+    />
     <mp-3d-draw-pro
+      v-if="!is2DMapMode && hasGlobeDisplay"
       ref="draw3d"
       :featureConfig="featureConfig"
       @start="onDrawStart"
@@ -24,13 +30,14 @@ import {
   UUID,
   markerIconInstance,
   baseConfigInstance,
+  DisplayModeMixin,
 } from '@mapgis/web-app-framework'
 import moment from 'moment'
 import MarkerEditWindow from '../MarkerWindow/MarkerEditWindow'
 
 export default {
   name: 'MapboxMarkerAdd',
-  mixins: [AppMixin],
+  mixins: [AppMixin, DisplayModeMixin],
   components: { MarkerEditWindow },
   props: {
     isActive: {
@@ -74,7 +81,15 @@ export default {
 
     // 关闭标注
     closeMark() {
-      this.drawComponent && this.drawComponent.closeDraw()
+      /** 
+       因为marker-manager.vue组件中对mapRender的监听会导致在二三维切换的时候触发计算属性drawComponent
+       此时未获取到绘制组件导致计算属性drawComponent返回值是undefined，造成后续绘制功能无法使用
+       因此这里修改成用单独的变量存放绘制组件
+      */
+      const drawComponent = this.is2DMapMode
+        ? this.$refs.draw
+        : this.$refs.draw3d
+      drawComponent && drawComponent.closeDraw()
     },
 
     // 'start'响应事件(开始绘制)
