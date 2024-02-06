@@ -130,8 +130,14 @@
           :geoJSONAnalysis="geoJSONAnalysis"
         ></cesium-layer>
       </template>
-      <mp-draw-pro ref="draw" :clearDrawMode="true" @finished="clickFunciton" />
+      <mp-draw-pro
+        v-if="is2DMapMode && hasMapDisplay"
+        ref="draw"
+        :clearDrawMode="true"
+        @finished="clickFunciton"
+      />
       <mp-3d-draw-pro
+        v-if="!is2DMapMode && hasGlobeDisplay"
         ref="draw3d"
         :clearDrawMode="true"
         @finished="clickFunciton"
@@ -152,6 +158,7 @@ import {
   ModelCache,
   baseConfigInstance,
   dataCatalogManagerInstance,
+  DisplayModeMixin,
 } from '@mapgis/web-app-framework'
 import mapboxLayer from './map-layer/mapbox-layer.vue'
 import cesiumLayer from './map-layer/cesium-layer'
@@ -161,7 +168,7 @@ import axios from 'axios'
 
 export default {
   name: 'MpTopologyAnalysis',
-  mixins: [WidgetMixin],
+  mixins: [WidgetMixin, DisplayModeMixin],
   components: {
     mapboxLayer,
     cesiumLayer,
@@ -615,7 +622,7 @@ export default {
     // 面板关闭时候触发函数
     onClose() {
       this.isWidgetOpen = false
-      this.drawComponent.clear()
+      this.drawComponent && this.drawComponent.closeDraw()
       this.reset()
     },
 
