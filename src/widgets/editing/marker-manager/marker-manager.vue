@@ -78,7 +78,7 @@
       <mapgis-ui-empty v-else :image="simpleImage" />
     </div>
     <mp-marker-plotting
-      v-if="is2DMapMode"
+      v-if="is2DMapMode && hasMapDisplay"
       :markers="shownMarkers"
       :center="currentMarkerCenter"
       :highlight-style="highlightStyle"
@@ -92,7 +92,7 @@
       </template>
     </mp-marker-plotting>
     <mp-3d-marker-plotting
-      v-else
+      v-if="!is2DMapMode && hasGlobeDisplay"
       :markers="shownMarkers"
       :center="currentMarkerCenter"
       :highlight-style="highlightStyle"
@@ -142,6 +142,7 @@ import {
   baseConfigInstance,
   markerIconInstance,
   eventBus,
+  DisplayModeMixin,
 } from '@mapgis/web-app-framework'
 
 import MarkerAdd from './components/MarkerAdd/MarkerAdd'
@@ -154,7 +155,7 @@ import { MapgisUiEmpty } from '@mapgis/webclient-vue-ui'
 
 export default {
   name: 'MpMarkerManager',
-  mixins: [WidgetMixin],
+  mixins: [WidgetMixin, DisplayModeMixin],
   components: {
     MarkerAdd,
     MarkerInput,
@@ -390,14 +391,16 @@ export default {
     // 微件激活时
     onActive() {
       this.doDeActive = false
-      this.map.getCanvas().style.cursor = this.widgetInfo.config.cursorType
+      if (this.map) {
+        this.map.getCanvas().style.cursor = this.widgetInfo.config.cursorType
+      }
     },
 
     // 微件关闭时
     onClose() {
       this.stateClosed = true
       this.onClearMark()
-      if (!this.doDeActive) {
+      if (!this.doDeActive && this.map) {
         this.map.getCanvas().style.cursor = 'grab'
       }
     },
@@ -406,7 +409,9 @@ export default {
     onDeActive() {
       this.closeMark()
       this.doDeActive = true
-      this.map.getCanvas().style.cursor = 'grab'
+      if (this.map) {
+        this.map.getCanvas().style.cursor = 'grab'
+      }
     },
 
     // 点击不同类型标注图标回调事件

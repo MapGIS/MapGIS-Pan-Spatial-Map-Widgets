@@ -127,18 +127,21 @@ export default {
           initPositionMode === 'initExtent'
         ) {
           const { xmin, ymin, xmax, ymax } = baseConfigInstance.config
-          this.map.fitBounds([
-            [xmin, ymin],
-            [xmax, ymax],
-          ])
-          this.viewer.camera.flyTo({
-            destination: this.Cesium.Rectangle.fromDegrees(
-              xmin,
-              ymin,
-              xmax,
-              ymax
-            ),
-          })
+          this.map &&
+            this.map.fitBounds([
+              [xmin, ymin],
+              [xmax, ymax],
+            ])
+          this.viewer &&
+            this.viewer &&
+            this.viewer.camera.flyTo({
+              destination: this.Cesium.Rectangle.fromDegrees(
+                xmin,
+                ymin,
+                xmax,
+                ymax
+              ),
+            })
         } else if (
           // 以默认中心点为初始范围
           initPositionMode === 'initPosition'
@@ -148,17 +151,19 @@ export default {
             initZoom: zoom,
             initAltitude,
           } = baseConfigInstance.config
-          this.map.flyTo({
-            center: [center.split(',')[0], center.split(',')[1]],
-            zoom,
-          })
-          this.viewer.camera.flyTo({
-            destination: this.Cesium.Cartesian3.fromDegrees(
-              center.split(',')[0],
-              center.split(',')[1],
-              initAltitude
-            ),
-          })
+          this.map &&
+            this.map.flyTo({
+              center: [center.split(',')[0], center.split(',')[1]],
+              zoom,
+            })
+          this.viewer &&
+            this.viewer.camera.flyTo({
+              destination: this.Cesium.Cartesian3.fromDegrees(
+                center.split(',')[0],
+                center.split(',')[1],
+                initAltitude
+              ),
+            })
         } else {
           // 以索引底图的范围为初始范围
           if (this.defaultSelect[i].guid == indexBaseMapGUID) {
