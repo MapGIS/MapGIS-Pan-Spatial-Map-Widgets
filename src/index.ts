@@ -1,4 +1,8 @@
-import { MpAttributeTable, MpAttributeTableList } from './components'
+import {
+  MpAttributeTable,
+  MpAttributeTableList,
+  MpTreeLayer,
+} from './components'
 
 import {
   MpBufferAnalysis,
@@ -62,6 +66,7 @@ import {
 const components = [
   MpAttributeTable,
   MpAttributeTableList,
+  MpTreeLayer,
   // analysis
   MpBufferAnalysis,
   MpNetworkAnalysis,
