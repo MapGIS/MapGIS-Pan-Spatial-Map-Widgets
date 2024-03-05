@@ -1,6 +1,4 @@
-import {
-  MpAttributeTableList,
-} from './components'
+import { MpAttributeTable, MpAttributeTableList } from './components'
 
 import {
   MpBufferAnalysis,
@@ -62,6 +60,7 @@ import {
 } from './widgets/tool'
 
 const components = [
+  MpAttributeTable,
   MpAttributeTableList,
   // analysis
   MpBufferAnalysis,
