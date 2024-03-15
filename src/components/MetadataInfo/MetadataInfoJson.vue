@@ -2,15 +2,20 @@
   <div class="json-viewer-container">
     <mapgis-ui-tabs>
       <mapgis-ui-tab-pane
-        v-for="(item, key) in metadata"
+        v-for="(item, key) in metadataCopy"
         :key="key"
         :tab="item.label"
       >
         <div v-for="(item, key) in item.items" :key="key">
           <mapgis-ui-row type="flex">
             <mapgis-ui-col :span="4"> {{ item.key }}: </mapgis-ui-col>
-            <mapgis-ui-col :span="20">
+            <mapgis-ui-col :span="20" v-if="typeof item.value === 'string'">
               {{ FormatBoolen(item.value) }}
+            </mapgis-ui-col>
+            <mapgis-ui-col :span="20" v-else>
+              <metadata-info-component
+                :value="item.value"
+              ></metadata-info-component>
             </mapgis-ui-col>
           </mapgis-ui-row>
         </div>
@@ -20,12 +25,20 @@
 </template>
 
 <script>
+import MetadataInfoComponent from './MetadataInfoComponent.vue'
+
 export default {
   name: 'MpMetadataInfoJson',
+  components: { MetadataInfoComponent },
   props: {
     metadata: {
       type: Array,
       default: () => [],
+    },
+  },
+  computed: {
+    metadataCopy() {
+      return this.metadata.filter((data) => data.items.length > 0)
     },
   },
   methods: {

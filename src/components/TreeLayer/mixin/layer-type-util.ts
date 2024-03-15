@@ -78,6 +78,19 @@ export default {
       return type === LayerType.IGSTile
     },
     /**
+     * 判断是否是栅格体元图层
+     * @param item layer图层
+     * @returns boolean
+     */
+    isVoxelLayer({ type, metaData }) {
+      if (metaData) {
+        const { dataContentType } = metaData
+        return type === LayerType.ModelCache && dataContentType === 'VoxelGrid'
+      } else {
+        return false
+      }
+    },
+    /**
      * 判断是否是ModelCache图层
      * @param item layer图层
      * @returns boolean
@@ -200,7 +213,9 @@ export default {
         (this.isSubLayer(item) && this.isArcGISMapImage(item)) ||
         (this.isSubLayer(item) && this.isIgsVectorLayer(item)) ||
         this.isDataFlow(item) ||
-        (this.isModelCacheLayer(item) && this.includeBindData(item)) ||
+        (this.isModelCacheLayer(item) &&
+          this.includeBindData(item) &&
+          !this.isVoxelLayer(item)) ||
         this.isIgsVector3dLayer(item) ||
         this.isIgsTileLayerBindIgsMapImageData(item)
 
@@ -274,6 +289,7 @@ export default {
       const bool =
         // this.isParentLayer(item) &&
         (this.isIGSScene(item) ||
+          this.isModelCacheLayer(item) ||
           this.isIgsDocLayer(item) ||
           this.isIgsVectorLayer(item) ||
           this.isIgsTileLayer(item) ||
@@ -328,7 +344,7 @@ export default {
 
     isFitbound(layer) {
       if (this.isParentLayer(layer)) {
-        if (this.isIgsVector3dLayer(layer)) {
+        if (this.isIgsVector3dLayer(layer) || this.isVoxelLayer(layer)) {
           return false
         }
         // if (this.isIGSScene(layer) && this.is2DMapMode === false) {
@@ -506,7 +522,7 @@ export default {
           },
         },
         {
-          type: this.isModelCacheLayer(layer),
+          type: this.isModelCacheLayer(layer) && !this.isVoxelLayer(layer),
           setValue: () => {
             const sceneLayer = layer.dataRef
             const url = new URL(layer.url)
@@ -621,6 +637,29 @@ export default {
                 f: queryType || '',
               },
               popupOption: parent.extend?.popupOption,
+            }
+          },
+        },
+        {
+          // 时间轴
+          type: this.isVoxelLayer(layer),
+          setValue: () => {
+            const sceneLayer = layer.dataRef
+            const url = new URL(layer.url)
+            const domain = url.origin
+            const { id, name, title } = sceneLayer
+            exhibition = {
+              id: `${title} ${id}`,
+              name: `${title} ${titleType}`,
+              component: 'MpTimeline',
+              option: {
+                id: `${id}`,
+                ip: baseConfigInstance.config.ip,
+                port: Number(baseConfigInstance.config.port),
+                serverType: layer.type,
+                f: queryType || '',
+              },
+              popupOption: layer.extend?.popupOption,
             }
           },
         },

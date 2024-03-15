@@ -128,7 +128,7 @@
           >
             <mapgis-ui-menu slot="overlay">
               <mapgis-ui-menu-item
-                v-if="item.metaData"
+                v-if="item.metaData && !isModelCacheLayer(item)"
                 key="1"
                 @click="showMetaDataInfo(item)"
               >
@@ -243,7 +243,10 @@
             <mapgis-ui-menu slot="overlay">
               <mapgis-ui-menu-item
                 v-if="
-                  item.serverType && !isNonSpatial(item) && !isDataFlow(item)
+                  item.serverType &&
+                  !isNonSpatial(item) &&
+                  !isDataFlow(item) &&
+                  !isModelCacheLayer(item)
                 "
                 key="1"
                 @click="showMetaDataInfo(item)"
@@ -344,6 +347,12 @@
         </template>
       </mp-window>
     </mp-window-wrapper>
+    <mapgis-ui-mask
+      :loading="loading"
+      :showSvg="true"
+      text="Loading..."
+      parentDivClass="mp-map-container"
+    ></mapgis-ui-mask>
   </div>
 </template>
 
@@ -495,6 +504,7 @@ export default {
       // 保存OGC元数据信息
       currentOGCMetadata: {},
       dataType: undefined,
+      loading: false,
     }
   },
   computed: {
@@ -1194,6 +1204,10 @@ export default {
             // loadAllLayer.push(layer)
           } else {
             this.$message.error(`图层:${layer.title}加载失败`)
+            if (this.is3DLayer(layer)) {
+              // 图层加载完毕，恢复checkbox可选状态
+              this.setCheckBoxEnable(recordCheckLayer, false)
+            }
             // checkedNodeKeys.splice(layer.id)
             this.checkedNodeKeys = this.getCheckedLayerConfigIDs(layer.id)
             this.filterCheckNodeKeys()
@@ -1296,6 +1310,9 @@ export default {
 
     // 设置tree的checkbox是否可以点击
     setCheckBoxEnable(treeDataConfig, disable) {
+      if (!disable) {
+        this.loading = false
+      }
       this.$set(treeDataConfig, 'disableCheckbox', disable)
     },
 
@@ -1344,6 +1361,8 @@ export default {
     onCheck(checkedKeys, info) {
       this.currentNode = info.node.dataRef
       this.layerAutoResetManager.setUnAutoResetArr([])
+      // 如果是勾选状态则开启进度条
+      if (info.checked) this.loading = true
       // 如果取消收藏夹中的图层则再次勾选不再使用收藏夹的记录状态
       !info.checked && DataCatalogCheckController.operateCheck(checkedKeys)
       if (this.isClassify) {
@@ -2040,6 +2059,15 @@ export default {
 
     isDataFlow(item) {
       return item.serverType === LayerType.DataFlow
+    },
+
+    /**
+     * 判断是否是ModelCache图层
+     * @param item layer图层
+     * @returns boolean
+     */
+    isModelCacheLayer({ serverType }) {
+      return serverType === LayerType.ModelCache
     },
 
     /**

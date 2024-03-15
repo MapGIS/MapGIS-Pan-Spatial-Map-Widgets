@@ -23,7 +23,8 @@
     "vue": "2.6.14",
     "vue-color": "^2.8.1",
     "vue-property-decorator": "^8.3.0",
-    "vue-json-editor": "^1.4.3"
+    "vue-json-editor": "^1.4.3",
+    "vue-slider-component": "^3.2.24"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^2.17.0",

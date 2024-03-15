@@ -2,6 +2,7 @@ import {
   MpAttributeTable,
   MpAttributeTableList,
   MpTreeLayer,
+  MpTimeline,
 } from './components'
 
 import {
@@ -67,6 +68,7 @@ const components = [
   MpAttributeTable,
   MpAttributeTableList,
   MpTreeLayer,
+  MpTimeline,
   // analysis
   MpBufferAnalysis,
   MpNetworkAnalysis,

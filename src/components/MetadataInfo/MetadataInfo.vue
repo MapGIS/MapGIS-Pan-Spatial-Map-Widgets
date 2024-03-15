@@ -7,7 +7,7 @@
     </mp-metadata-info-cloud>
     <mapgis-ui-spin :spinning="spinning" size="small">
       <template v-if="metadata">
-        <div v-if="isCloudData">
+        <div v-if="isCloudData || isModelCache(currentLayer || currentConfig)">
           <mp-metadata-info-json :metadata="metadata"></mp-metadata-info-json>
         </div>
         <div v-else>
@@ -52,6 +52,7 @@ import {
   Layer,
   Metadata,
   baseConfigInstance,
+  Voxel,
 } from '@mapgis/web-app-framework'
 
 import MpMetadataInfoDoc from './MetadataInfoDoc'
@@ -101,6 +102,10 @@ export default {
 
     isIGSMapImage(item) {
       return item.type === LayerType.IGSMapImage
+    },
+
+    isModelCache(item) {
+      return item.type === LayerType.ModelCache
     },
 
     isArcgis(item) {
@@ -172,13 +177,34 @@ export default {
           }
           const defaultToken = baseConfigInstance.config.token
           let option: Metadata.MetadataQueryParam = {}
+          // 栅格体元本身的元数据信息
+          const metaDataOfVoxel = []
+          // 云管配置的元数据信息
+          let metaDataOfCloud = []
           switch (type) {
-            case LayerType.STKTerrain:
-            case LayerType.ModelCache: {
-              const serverName = this.currentConfig.serverName
-              const ip = this.currentConfig.ip
-              const port = this.currentConfig.port
+            case LayerType.STKTerrain: {
+              const serverName = this.currentLayer.serverName
+              const ip = this.currentLayer.ip
+              const port = this.currentLayer.port
               option = { ip, port, docName: serverName }
+              break
+            }
+            case LayerType.ModelCache: {
+              if (
+                this.currentLayer.metaData &&
+                this.currentLayer.metaData.dataContentType === 'VoxelGrid'
+              ) {
+                const { metadata } = Voxel.getMetaData(this.currentLayer.id)
+                for (const key in metadata) {
+                  metaDataOfVoxel.push({ key, value: metadata[key] })
+                }
+              } else {
+                // metaDataOfVoxel = this.currentLayer.metaData
+              }
+              const res = this.currentLayer._parseUrl(this.currentLayer.url)
+
+              const { domain, docName } = res
+              option = { domain, docName }
               break
             }
             case LayerType.IGSScene: {
@@ -244,12 +270,18 @@ export default {
           if (defaultToken) {
             option.token = defaultToken
             const metadata = await Metadata.CloudMetaDataQuery.query(option)
+
             if (metadata) {
-              const metadataCopy = JSON.parse(JSON.stringify(metadata))
-              this.metadata = this.formatMetadata(metadataCopy)
-              this.spinning = false
-              this.isCloudData = true
-              return
+              if (type === LayerType.ModelCache) {
+                const metadataCopy = JSON.parse(JSON.stringify(metadata))
+                metaDataOfCloud = this.formatMetadata(metadataCopy)
+              } else {
+                const metadataCopy = JSON.parse(JSON.stringify(metadata))
+                this.metadata = this.formatMetadata(metadataCopy)
+                this.spinning = false
+                this.isCloudData = true
+                return
+              }
             }
           }
           if (
@@ -262,6 +294,11 @@ export default {
           } else if (type === LayerType.VectorTile) {
             this.metadata =
               await Metadata.VectorTileMetadataQuery.getServiceInfo(option.url)
+          } else if (type === LayerType.ModelCache) {
+            this.metadata = [
+              { label: '基础信息', items: metaDataOfVoxel },
+              ...metaDataOfCloud,
+            ]
           } else {
             this.metadata = await Metadata.MetaDataQuery.query(option)
           }
