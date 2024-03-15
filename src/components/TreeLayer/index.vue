@@ -139,6 +139,8 @@
                 @change-m3d-props="changeM3DProps"
                 @model-edit="modelEdit"
                 @feature-edit="featureEdit"
+                @symbolization="symbolization"
+                @timeline="timeline"
                 @query="queryFeature"
               />
               <!-- <slot
@@ -303,7 +305,7 @@ export default {
       layerConfig: null,
       modelPickController: ModelPickController,
       // 保存OGC元数据信息
-      currentOGCMetadata: {},
+      currentOGCMetadata: undefined,
       // 记录当前编辑的图层id
       currentEditLayerId: '',
     }
@@ -920,7 +922,10 @@ export default {
       const layer = doc.defaultMap.findLayerById(id)
       const vm = this
       let source
-      if (layer.type === LayerType.ModelCache) {
+      if (
+        layer.type === LayerType.ModelCache &&
+        !layer.metaData.dataContentType
+      ) {
         if (layer.format === ModelCacheFormat.m3d) {
           source = vm.sceneController.findM3DIgsSource(id)
         } else if (layer.format === ModelCacheFormat.cesium3dTileset) {
@@ -1243,7 +1248,7 @@ export default {
       }
 
       this.openPage({
-        title: '模型编辑',
+        title: '模型变换',
         name: 'MpModelEdit',
         component: () => import('./components/ModelEdit/ModelEdit.vue'),
         props: {
@@ -1277,6 +1282,28 @@ export default {
           },
         },
       })
+    },
+
+    // 打开符号化样式页面
+    symbolization(layer) {
+      this.openPage({
+        title: '符号化设置',
+        name: 'MpSymbolization',
+        component: () => import('./components/Symbolization/Symbolization.vue'),
+        props: {
+          id: layer.id,
+        },
+      })
+    },
+
+    // 打开时间轴
+    async timeline(layer) {
+      this.clickPopover(layer, false)
+      const exhibition = await this.getExhibition(layer, '时间轴')
+      if (exhibition) {
+        this.addExhibition(new AttributeTableExhibition(exhibition))
+        this.openExhibitionPanel()
+      }
     },
 
     updateModel(type, val) {
