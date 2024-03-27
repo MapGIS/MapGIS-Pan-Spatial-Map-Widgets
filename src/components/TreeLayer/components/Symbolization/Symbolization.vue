@@ -168,11 +168,7 @@ export default {
       deep: true,
       handler() {
         this.voxel &&
-          this.voxel.setFilterRange(
-            this.currentProperty,
-            this.numberData[0],
-            this.numberData[1]
-          )
+          this.voxel.setFilterRange(this.numberData[0], this.numberData[1])
       },
     },
   },
@@ -181,25 +177,25 @@ export default {
     initData() {
       const voxelMetaData = Voxel.getMetaData(this.id)
       this.voxel = Voxel.getPrimitives(this.id)
-      const {
-        dimensions: {
-          time: { size },
-        },
-        variables,
-      } = voxelMetaData
+      const { variables } = voxelMetaData
       const excludeArr = ['lat', 'level', 'lon', 'time']
       for (const key in variables) {
         if (!excludeArr.includes(key)) {
           this.variablesArr.push({
             label: key,
-            value: variables[key].unpacked_valid_range.join(','),
+            value: variables[key].variable_range
+              ? variables[key].variable_range.join(',')
+              : variables[key].actual_range.join(','),
           })
         }
       }
       const data = this.variablesArr[0].value.split(',')
-      this.numberData = [Number(data[0]), Number(data[1])]
-      this.minValue = Number(data[0])
-      this.maxValue = Number(data[1])
+      this.numberData = [
+        Number(Number(data[0]).toFixed(2)),
+        Number(Number(data[1]).toFixed(2)),
+      ]
+      this.minValue = Number(Number(data[0]).toFixed(2))
+      this.maxValue = Number(Number(data[1]).toFixed(2))
       this.currentProperty = this.variablesArr[0].label
     },
     // 初始化绘板
@@ -345,8 +341,7 @@ export default {
         0
       )
       const range = this.maxValue - this.minValue
-      const colorsLength = colors.length
-      colors.forEach(({ num, color }, index) => {
+      colors.forEach(({ num, color }) => {
         linearGradient.addColorStop((num - this.minValue) / range, color)
       })
       this.ctx.fillStyle = linearGradient
@@ -384,9 +379,12 @@ export default {
     },
     onSelect(val, option) {
       const data = val.split(',')
-      this.numberData = [Number(data[0]), Number(data[1])]
-      this.minValue = Number(data[0])
-      this.maxValue = Number(data[1])
+      this.numberData = [
+        Number(Number(data[0]).toFixed(2)),
+        Number(Number(data[1]).toFixed(2)),
+      ]
+      this.minValue = Number(Number(data[0]).toFixed(2))
+      this.maxValue = Number(Number(data[1]).toFixed(2))
       this.formatTableData()
       const colors = this.getAllColors()
       this.getCanvasColors(colors)
