@@ -78,7 +78,7 @@ import VueSlider from 'vue-slider-component'
 import 'vue-slider-component/theme/default.css'
 import { ExhibitionMixin, Exhibition, Voxel } from '@mapgis/web-app-framework'
 
-const { IAttributeTableOption, IAttributeTableExhibition } = Exhibition
+const { IAttributeTableExhibition } = Exhibition
 
 export default {
   name: 'MpTimeline',
@@ -92,7 +92,7 @@ export default {
   data() {
     return {
       // 基准时间时间戳
-      baseDate: new Date('0001-01-01T00:00:00Z').getTime(),
+      baseDate: undefined,
       isPlay: false,
       playTime: [0, 10],
       // 开始时间时间戳
@@ -115,6 +115,34 @@ export default {
     }
   },
   computed: {
+    timeScale() {
+      switch (this.unit) {
+        case 'years': {
+          return 31536000000
+        }
+        case 'months': {
+          return 259200000
+        }
+        case 'weeks': {
+          return 604800000
+        }
+        case 'days': {
+          return 86400000
+        }
+        case 'hours': {
+          return 3600000
+        }
+        case 'minutes': {
+          return 60000
+        }
+        case 'seconds': {
+          return 1000
+        }
+        default: {
+          return 1
+        }
+      }
+    },
     startTime() {
       return this.formatter(this.startTimestamp, false)
     },
@@ -156,23 +184,33 @@ export default {
         time: { size },
       },
       variables: {
-        time: { values },
+        time: { values, units },
       },
     } = voxelMetaData
+    const unitsArr = units.split(' since ')
+    this.baseDate = new Date(unitsArr[1]).getTime() // 获取基准时间
+    this.unit = unitsArr[0] // 获取时间单位
     this.maxSize = size - 1
     this.voxel = Voxel.getPrimitives(this.exhibition.option.id)
     this.playTime = [0, this.maxSize]
     // 保存元数据当中的时间信息
     this.values = values
-    this.startTimestamp = values[0] * 3600000 + this.baseDate
-    this.endTimestamp = values[values.length - 1] * 3600000 + this.baseDate
+    this.startTimestamp = values[0] * this.timeScale + this.baseDate
+    this.endTimestamp =
+      values[values.length - 1] * this.timeScale + this.baseDate
   },
   methods: {
+    /**
+     * @description 将时间戳标准化成 year-month-day hour-min-second的形式
+     * @param value  时间戳
+     * @param format 是否需要计算基准时间，默认为true
+     * @returns String
+     */
     formatter(value, format = true) {
       this.test = value
       let time
       if (format) {
-        time = this.values[value] * 3600000 + this.baseDate
+        time = this.values[value] * this.timeScale + this.baseDate
       } else {
         time = value
       }
@@ -180,10 +218,48 @@ export default {
       const year = date.getFullYear()
       const month = date.getMonth() + 1
       const day = date.getDate()
-      return `${year}-${month < 10 ? `0${month}` : month}-${
-        day < 10 ? `0${day}` : day
-      }`
+      const hour = date.getHours()
+      const min = date.getMinutes()
+      const second = date.getSeconds()
+      switch (this.unit) {
+        case 'years': {
+          return `${year}`
+        }
+        case 'month': {
+          return `${year}-${month < 10 ? `0${month}` : month}`
+        }
+        case 'weeks':
+        case 'days': {
+          return `${year}-${month < 10 ? `0${month}` : month}-${
+            day < 10 ? `0${day}` : day
+          }`
+        }
+        case 'hours': {
+          return `${year}-${month < 10 ? `0${month}` : month}-${
+            day < 10 ? `0${day}` : day
+          }  ${hour < 10 ? `0${hour}` : hour}`
+        }
+        case 'minutes': {
+          return `${year}-${month < 10 ? `0${month}` : month}-${
+            day < 10 ? `0${day}` : day
+          }  ${hour < 10 ? `0${hour}` : hour}:${min < 10 ? `0${min}` : min}`
+        }
+        case 'seconds': {
+          return `${year}-${month < 10 ? `0${month}` : month}-${
+            day < 10 ? `0${day}` : day
+          }  ${hour < 10 ? `0${hour}` : hour}:${min < 10 ? `0${min}` : min}:${
+            second < 10 ? `0${second}` : second
+          }`
+        }
+        default: {
+          break
+        }
+      }
     },
+    /**
+     * @description 开始或暂停
+     * @returns
+     */
     startOrPause() {
       if (!this.isPlay) {
         this.isPlay = true
@@ -207,7 +283,11 @@ export default {
         clearInterval(this.timer)
       }
     },
-    onSpeedChange(val) {
+    /**
+     * @description 改变速率
+     * @returns
+     */
+    onSpeedChange() {
       this.activateExhibition()
       if (this.isPlay) {
         this.timer && clearInterval(this.timer)
@@ -221,6 +301,10 @@ export default {
         }, 1000 / this.speed)
       }
     },
+    /**
+     * @description 拖拽时间轴上的游标
+     * @returns
+     */
     onDragend(index) {
       if (this.playTime.length > 2) {
         if (index === 1) {
