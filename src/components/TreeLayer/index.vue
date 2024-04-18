@@ -486,7 +486,7 @@ export default {
     window.modelEditControlList = new Object()
   },
   mounted() {
-    this.$root.$on(events.SCENE_LOADEN_ON_MAP, this.sceneLoadedCallback)
+    this.$root.$on(events.SCENE_LOADED_ON_MAP, this.sceneLoadedCallback)
     eventBus.$on(events.MODEL_PICK, this.updateM3DEnablePopupEnable)
     // eventBus.$on(events.ECHO_LAYER_LIST_INFO, this.echoLayerList)
   },
