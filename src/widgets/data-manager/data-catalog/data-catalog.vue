@@ -580,7 +580,7 @@ export default {
 
     eventBus.$on(events.OPEN_DATA_BOOKMARK_EVENT, this.bookMarkClick)
     eventBus.$on(events.IMPOSE_SERVICE_PREVIEW_EVENT, this.imposeService)
-    this.$root.$on(events.SCENE_LOADEN_ON_MAP, this.sceneLoadedCallback)
+    this.$root.$on(events.SCENE_LOADED_ON_MAP, this.sceneLoadedCallback)
     eventBus.$emit(events.DATA_CATALOG_ON_IMPOSE_SERVICE_EVENT)
     // eventBus.$on(events.DATA_CATALOG_TAB, this.changeDataCatalog)
     // eventBus.$on(events.BOOKMARK_TAB, this.changeBookmark)
