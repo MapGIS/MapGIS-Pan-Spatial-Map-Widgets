@@ -70,14 +70,14 @@ import {
   LayerType,
 } from '@mapgis/web-app-framework'
 import axios from 'axios'
-import MpAttributeTable  from '../AttributeTable/AttributeTable.vue'
+import MpAttributeTable from '../AttributeTable/AttributeTable.vue'
 
 const { IAttributeTableListExhibition } = Exhibition
 
 export default {
   name: 'MpAttributeTableList',
   mixins: [ExhibitionMixin],
-  components:{MpAttributeTable},
+  components: { MpAttributeTable },
   props: {
     // 属性表选项
     exhibition: {
@@ -92,6 +92,7 @@ export default {
     }
   },
   computed: {
+    // 当前激活的面板id
     activeOptionId: {
       get() {
         return this.exhibition.activeOptionId
@@ -100,9 +101,11 @@ export default {
         this.exhibition.activeOptionId = id
       },
     },
+    // 内容组件
     attributeTableComponent() {
       return 'MpAttributeTable'
     },
+    // 当前内容组件的配置信息
     options() {
       return this.exhibition.options
     },
@@ -115,6 +118,7 @@ export default {
         }
       }
     },
+    // 当前展示tab项的配置信息
     currentOption() {
       return this.options.find((item) => item.id === this.activeOptionId)
     },
@@ -122,18 +126,25 @@ export default {
   watch: {
     activeOptionId: {
       handler(newVal, oldVal) {
+        // 查询的属性表中包含9个以上的tab项时使用标签样式展示tab项
         if (this.options.length > 9) {
+          // 调用对应组件的deActivateExhibition方法将之前处于展示状态的tab项清除
           this.$refs.activeTag.deActivateExhibition()
+          // 调用对应组件的activateExhibition方法将需要展示的tab项激活
           this.$refs.activeTag.activateExhibition()
+          // 调用对应组件的resizeExhibition方法重新计算展示内容高度
           this.$refs.activeTag.resizeExhibition()
         } else {
           // 延迟10毫秒执行
           setTimeout(() => {
             if (this.$refs[oldVal] && this.$refs[oldVal][0]) {
+              // 将之前处于展示状态的tab项清除
               this.$refs[oldVal][0].deActivateExhibition()
             }
             if (this.$refs[newVal] && this.$refs[newVal][0]) {
+              // 将需要展示的tab项激活
               this.$refs[newVal][0].activateExhibition()
+              // 重新计算展示内容高度
               this.$refs[newVal][0].resizeExhibition()
             }
           }, 10)
@@ -142,45 +153,53 @@ export default {
     },
   },
   methods: {
+    // 父组件通过ref调用该组件的deActivateExhibition方法时触发
     onResize() {
       if (this.$refs[this.activeOptionId]) {
+        // 通过ref调用子组件的resizeExhibition方法，即子组件的onResize方法
         this.$refs[this.activeOptionId][0] &&
           this.$refs[this.activeOptionId][0].resizeExhibition()
       }
     },
-
+    // 父组件通过ref调用该组件的activateExhibition方法时触发
     onActive() {
       if (
         this.$refs[this.activeOptionId] &&
         this.$refs[this.activeOptionId][0]
       ) {
+        // 通过ref调用子组件的activateExhibition方法，即子组件的onActive方法
         this.$refs[this.activeOptionId][0].activateExhibition()
+        // 通过ref调用子组件的resizeExhibition方法，即子组件的onResize方法
         this.$refs[this.activeOptionId][0].resizeExhibition()
       }
     },
-
+    // 父组件通过ref调用该组件的deActivateExhibition方法时触发
     onDeActive() {
       if (
         this.$refs[this.activeOptionId] &&
         this.$refs[this.activeOptionId][0]
       ) {
+        // 通过ref调用子组件的deActivateExhibition方法，即子组件的onDeActive方法
         this.$refs[this.activeOptionId][0].deActivateExhibition()
       }
     },
-
+    // 父组件通过ref调用该组件的closeExhibition方法时触发
     onClose() {
       if (
         this.$refs[this.activeOptionId] &&
         this.$refs[this.activeOptionId][0]
       ) {
+        // 通过ref调用子组件的closeExhibition方法，即子组件的onClose方法
         this.$refs[this.activeOptionId][0].closeExhibition()
       }
     },
+    // tab项标签展示时，选中标签时
     changeCheckTag(tag) {
       if (tag.id === this.activeOptionId) return
+      // 设置当前激活的tab项
       this.exhibition.activeOptionId = tag.id
     },
-
+    // 导出所有属性表
     exportAllCSV() {
       const { serverType, serverUrl, gdbp, is3dBind2dData } = this.options[0]
       let { serverName } = this.options[0]

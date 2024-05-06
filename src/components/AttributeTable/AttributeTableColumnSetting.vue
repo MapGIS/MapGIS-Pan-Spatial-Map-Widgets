@@ -58,29 +58,42 @@ export default {
   props: ['columns'],
   data() {
     return {
+      // ‘列配置’是否展示
       visible: false,
+      // 是否展示checkbox的半选状态
       indeterminate: false,
+      // 是否勾选全部
       checkAll: true,
+      // ‘列配置’勾选的数量
       checkedCounts: this.columns.length,
+      // 初始化时展示的‘列配置’
       backColumns: cloneDeep(this.columns),
     }
   },
   watch: {
+    // ‘列配置’勾选的数量变化
     checkedCounts(val) {
+      // 是否全选
       this.checkAll = val === this.columns.length
+      // 是否展示半选
       this.indeterminate = val > 0 && val < this.columns.length
     },
+    // 属性表表格展示的列变化
     columns(newVal, oldVal) {
       if (newVal != oldVal) {
+        // 改变勾选的列数量
         this.checkedCounts = newVal.length
+        // 重新设置表格的列
         this.formatColumns(newVal)
       }
     },
   },
   created() {
+    // 初始化设置表格的列
     this.formatColumns(this.columns)
   },
   methods: {
+    // 勾选/取消勾选列
     onCheckChange(e, col) {
       if (!col.visible) {
         this.checkedCounts -= 1
@@ -88,9 +101,11 @@ export default {
         this.checkedCounts += 1
       }
     },
+    // 重置‘列配置’
     resetColumns() {
       const { columns, backColumns } = this
       let counts = columns.length
+      // 重置成初始化时的‘列配置’
       backColumns.forEach((back, index) => {
         const column = columns[index]
         column.visible = back.visible === undefined || back.visible
@@ -99,9 +114,11 @@ export default {
         }
       })
       this.checkedCounts = counts
+      // 关闭‘列配置’
       this.visible = false
       this.$emit('reset')
     },
+    // 勾选/取消勾选全部列
     onCheckAllChange(e) {
       if (e.target.checked) {
         this.checkedCounts = this.columns.length
@@ -111,6 +128,7 @@ export default {
         this.columns.forEach((col) => (col.visible = false))
       }
     },
+    // 初始化‘列配置’的勾选
     formatColumns(columns) {
       for (const col of columns) {
         if (col.visible === undefined) {

@@ -261,11 +261,12 @@ export default {
   mixins: [AttributeUtil],
   provide() {
     return {
+      // 三维气泡框展示位置
       popupShowType: baseConfigInstance.config.popupShowType,
     }
   },
   props: {
-    // 属性表选项
+    // 属性表信息
     exhibition: {
       type: IAttributeTableExhibition,
     },
@@ -275,71 +276,89 @@ export default {
     },
   },
   computed: {
+    // 表格所有勾选的行组成的rowKey数组
     selectedRowKeys() {
       return this.selection.map(
         (item) => (item as GFeature).properties[this.rowKey]
       )
     },
+    // datastore的ip
     dataStoreIp() {
       return baseConfigInstance.config.DataStoreIp
     },
+    // datastore的端口
     dataStorePort() {
       return baseConfigInstance.config.DataStorePort
     },
+    // 气泡框偏移量
     popupAnchor() {
       return baseConfigInstance.config.colorConfig.label.image.popupAnchor
     },
+    // 气泡框激活方式
     popupToggleType() {
       return baseConfigInstance.config.colorConfig.label.image.popupToggleType
     },
+    // 勾选行数提示信息
     selectedDescription() {
       const length = this.selectedRowKeys.length
 
       return `${length} 已选择`
     },
+    // 属性表的配置信息
     optionVal() {
       return this.option || this.exhibition.option
     },
+    // 有效的表头数据
     visibleColumns() {
       return this.tableColumns.filter((col) => col.visible)
     },
+    // 要素高亮样式
     highlightStyle() {
       return baseConfigInstance.config.colorConfig
     },
+    // 处于不同地图模式下的组件ref引用
     markerPlottingComponent() {
       return this.is2DMapMode
         ? this.$refs.refMarkerPlotting
         : this.$refs.ref3dMarkerPlotting
     },
+    // 流图层
     dataFlowList() {
       return DataFlowList
     },
     getDataFLowList() {
       const { serverType } = this.optionVal
       if (serverType === LayerType.DataFlow) {
+        // 获取当前属性表展示的流图层所有要素
         const features = this.dataFlowList.getDataFlowById(this.optionVal.id)
         return features || []
       }
       return []
     },
+    // 是否是场景服务图层类型
     isIGSScence() {
       const { serverType } = this.optionVal
       return serverType === LayerType.IGSScene
     },
+    // 是否是模型缓存图层类型
     isModelCacheLayer() {
       const { serverType } = this.optionVal
       return serverType === LayerType.ModelCache
     },
+    // 是否是IGServer三维简单要素类图层类型
     isIGSVector3dLayer() {
       const { serverType } = this.optionVal
       return serverType === LayerType.IGSVector3D
     },
+    // 气泡框宽度
     popupWidth() {
       return Number(this.exhibition?.popupOption?.componentWidth || 280)
     },
+    // 气泡框组件
     popupComponent() {
       return this.exhibition?.popupOption?.component || 'mapgis-3d-popup-iot'
     },
+    // 气泡框配置信息
     popupOption() {
       return this.exhibition?.popupOption
     },
@@ -349,45 +368,55 @@ export default {
     },
   },
   watch: {
+    // 监听流图层要素的变化
     getDataFLowList: {
       deep: true,
       handler(newVal, oldVal) {
         if (!newVal || !newVal.length) {
           return
         }
+        // 清除表格勾选
         this.clearSelection()
+        // 清除地图上对应的标注
         this.removeMarkers()
+        // 清除表格数据
         this.tableData = []
+        // 清除表头数据
         this.tableColumns = []
+        // 重新查询数据
         this.query()
       },
     },
+    // 属性表配置信息变化
     optionVal: {
       deep: true,
       immediate: true,
       handler() {
+        // 清除表格勾选
         this.clearSelection()
+        // 清除地图上对应的标注
         this.removeMarkers()
+        // 清除表格数据
         this.tableData = []
+        // 清除表头数据
         this.tableColumns = []
+        // 重新查询数据
         this.query()
       },
     },
   },
 
   created() {
+    // 创建全屏事件的监听
     DomUtil.addFullScreenListener(this.fullScreenListener)
-    // this.sceneController = Objects.SceneController.getInstance(
-    //   this.Cesium,
-    //   this.vueCesium,
-    //   this.viewer
-    // )
   },
 
   beforeDestroy() {
+    // 移除全屏事件的监听
     DomUtil.removeFullScreenListener(this.fullScreenListener)
   },
   methods: {
+    // 父组件面板宽高变化后重新计算table表格的高度
     onResize() {
       this.calcTableScrollY()
     },
@@ -395,11 +424,16 @@ export default {
       await this.addMarkers()
       await this.hightlightSelectionMarkers()
     },
+    // 父组件中tab项切换时处关闭一个tab项中的操作
     onDeActive() {
+      // 关闭过滤器窗口
       this.showFilter = false
+      // 关闭统计窗口
       this.showAttrStatistics = false
+      // 移除标注
       this.removeMarkers()
     },
+    // 父组件中tab项被关闭
     onClose() {
       // 下面无法隐藏窗口
       // this.showFilter = false
@@ -407,11 +441,13 @@ export default {
       // 直接设置窗口的style
       document.getElementById(this.filterId).style.display = 'none'
       document.getElementById(this.statisticsId).style.display = 'none'
-
+      // 移除标注
       this.removeMarkers()
     },
+    // 勾选/取消勾线某一行或多行
     async onSelectChange(selectedRowKeys, selectedRows) {
       this.selection = selectedRows
+      // 无勾选项时置空ActiveResultSet和SelectedResultSet
       if (this.selectedRowKeys.length == 0) {
         ActiveResultSet.activeResultSet = {}
         SelectedResultSet.selectedResultSet =
@@ -419,12 +455,14 @@ export default {
             (item) => item.id != ActiveResultSet.activeResultSet.id
           )
       } else {
+        // 构建geojson对象
         ActiveResultSet.activeResultSet = {
           type: 'FeatureCollection',
           features: selectedRows,
           id: this.optionVal.id,
         }
         let hasActiveResultSet = false
+        // 保存对应tab页的selectedResultSet值
         for (let i = 0; i < SelectedResultSet.selectedResultSet.length; i++) {
           if (SelectedResultSet.selectedResultSet[i].id == this.optionVal.id) {
             SelectedResultSet.selectedResultSet[i] =
@@ -432,18 +470,22 @@ export default {
             hasActiveResultSet = true
           }
         }
+        // 保存新的tab页的selectedResultSet值
         if (!hasActiveResultSet) {
           SelectedResultSet.selectedResultSet.push(
             ActiveResultSet.activeResultSet
           )
         }
       }
+      // 将marker图标变成高亮状态
       await this.hightlightSelectionMarkers()
     },
+    // 切换分页
     onPaginationChange(page, pageSize) {
       this.pagination.current = page
       this.query(undefined, true)
     },
+    // 切换当前表格每页展示数量
     onPaginationShowSizeChange(current, size) {
       this.pagination.pageSize = size
       this.pagination.current = 1
@@ -453,15 +495,18 @@ export default {
     onRowClick(row: unknown) {
       // 单击行定位到要素
       const feature = row as GFeature
+      // 鼠标单击表格中某一行时，将相关信息发出
       eventBus.$emit(events.ATTRIBUTE_TABLE_CLICK_ROW, {
         fid: feature.properties[this.rowKey],
         feature,
         exhibition: this.exhibition,
       })
+      // 获取当前点击行要素的边界信息
       let bound = feature.properties.specialLayerBound
       if (bound === undefined) {
         bound = Feature.getGeoJSONFeatureBound(feature)
       }
+      // 获取当前行要素的中心点坐标
       this.panToCenter = [
         (bound.xmin + bound.xmax) / 2,
         (bound.ymin + bound.ymax) / 2,
@@ -471,15 +516,18 @@ export default {
     onRowDblclick(row: unknown) {
       // 双击缩放至要素
       const feature = row as GFeature
+      // 鼠标双击表格中某一行时，将相关信息发出
       eventBus.$emit(events.ATTRIBUTE_TABLE_DOUBLE_CLICK_ROW, {
         fid: feature.properties[this.rowKey],
         feature,
         exhibition: this.exhibition,
       })
+      // 获取当前双击行要素的边界信息
       let bound = feature.properties.specialLayerBound
       if (bound === undefined) {
         bound = Feature.getGeoJSONFeatureBound(feature)
       }
+      // 获取当前行要素的中心点坐标
       const width = bound.xmax - bound.xmin
       const height = bound.ymax - bound.ymin
       if (width == 0 || height == 0) {
@@ -500,9 +548,11 @@ export default {
           ymax: center.y + (height || 0.1),
         }
       }
+      // 跳转范围
       this.fitBound = { ...(bound as Record<string, number>) }
     },
 
+    // 刷新按钮
     onRefresh() {
       this.query()
     },
@@ -554,7 +604,7 @@ export default {
       await FileSaver.saveAs(blob, `attrData_${datetime}.csv`)
       this.$message.success('导出成功')
     },
-
+    // 全屏按钮
     onToggleScreen() {
       if (this.fullScreen) {
         this.outFullScreen()
@@ -562,14 +612,15 @@ export default {
         this.inFullScreen()
       }
     },
-
+    // 缩放至已选择按钮
     onZoomTo() {
       if (this.selection.length == 0) return
 
+      // 调用对应的标注组件
       this.markerPlottingComponent &&
         this.markerPlottingComponent.zoomTo(this.selectionBound)
     },
-
+    // 清除已选择按钮
     onClearSelection() {
       this.clearSelection()
       SelectedResultSet.selectedResultSet =
@@ -579,21 +630,31 @@ export default {
       ActiveResultSet.activeResultSet = {}
     },
 
+    // 统计窗口打开按钮
     onStatistics() {
+      // 打开统计窗口
       this.showAttrStatistics = true
+      // 获取查询和统计参数
       this.updateStatisticAndFilterParamas()
     },
 
+    // 过滤窗口打开按钮
     onFilter() {
+      // 打开过滤窗口
       this.showFilter = true
+      // 获取查询和统计参数
       this.updateStatisticAndFilterParamas()
     },
 
+    // 过滤器-应用按钮
     async onUpdateWhere(val) {
+      // 根据条件调用查询接口
       await this.query(val)
+      // 关闭过滤器窗口
       this.showFilter = false
     },
 
+    // 当前地图范围变化事件
     async onGetGeometry(val: Record<string, any>) {
       const { xmin, ymin, xmax, ymax, height = 0 } = val
       this.geometry = new Zondy.Common.Rectangle(xmin, ymin, xmax, ymax)
@@ -611,22 +672,20 @@ export default {
       // 记录当前选中的行（避免双击定位同时根据范围过滤时导致信息刷新）
       await this.query()
     },
-
+    // 分页信息
     showPaginationTotal(total, range) {
       return `显示${range[0]}-${range[1]}条，共有 ${total}条`
     },
 
+    // 属性表查询接口
     async query(where?: string, isPageChange?: boolean) {
       this.loading = true
-      this.sceneController = Objects.SceneController.getInstance(
-        this.Cesium,
-        this.vueCesium,
-        this.viewer
-      )
       // 当并非页码改变，即重新拉框查询时，将查询页码置为1，否则可能会出现查询的页码很大而查询结果总条数很小导致查询不到数据的情况
       this.pagination.current = isPageChange ? this.pagination.current : 1
       try {
+        // 清除已勾选的表格数据
         this.clearSelection()
+        // 重新查询表格数据
         const attrGeoJson = await this.queryGeoJSON(
           this.filterWithMap ? this.geometry : undefined,
           where,
@@ -634,11 +693,13 @@ export default {
         )
       } catch (error) {
         const e = error as Error
+        // 将表头展示的列字段置空
         this.tableColumns = []
         console.error('属性表请求失败：', e)
         this.$message.warning('请求失败！')
       } finally {
         this.loading = false
+        // 重新计算table表格的高度
         this.calcTableScrollY()
       }
     },
@@ -646,19 +707,22 @@ export default {
     // 清除选择集
     async clearSelection() {
       this.selection = []
+      // 展示标注信息
       await this.hightlightSelectionMarkers()
     },
 
-    // 高亮选择集对应的标注图标
+    // 展示标注信息
     async hightlightSelectionMarkers() {
       const selectIcon = await markerIconInstance.selectIcon()
       const unSelectIcon = await markerIconInstance.unSelectIcon()
       this.selectedMarkers = []
       this.markers.forEach((marker) => {
         if (this.selectedRowKeys.includes(marker.fid)) {
+          // 表格勾选行对应的标注图标
           marker.img = selectIcon
           this.selectedMarkers.push(marker)
         } else {
+          // 表格未勾选行对应的标注图标
           marker.img = unSelectIcon
         }
       })
@@ -676,6 +740,7 @@ export default {
           if (bound === undefined) {
             bound = Feature.getGeoJSONFeatureBound(feature)
           }
+          // 返回最大的边界范围
           return {
             xmin: bound.xmin < prev.xmin ? bound.xmin : prev.xmin,
             ymin: bound.ymin < prev.ymin ? bound.ymin : prev.ymin,
@@ -694,13 +759,14 @@ export default {
 
     // 添加标注
     async addMarkers() {
-      const { serverType } = this.optionVal
-
+      // 获取未被选中的标注样式
       const unSelectIcon = await markerIconInstance.unSelectIcon()
       const tempMarkers: Record<string, any>[] = []
+      // 遍历表格中的数据组装标注信息
       for (let i = 0; i < this.tableData.length; i += 1) {
         const feature = this.tableData[i]
         let center = []
+        // 三维图层的要素
         if (
           this.isIGSScence ||
           this.isModelCacheLayer ||
@@ -710,7 +776,6 @@ export default {
             feature.properties.specialLayerBound
           const longitude = (xmin + xmax) / 2
           const latitude = (ymin + ymax) / 2
-          // const height = await this.getModelHeight(longitude, latitude)
           center = [longitude, latitude]
         } else {
           center = Feature.getGeoJSONFeatureCenter(feature)
@@ -721,7 +786,7 @@ export default {
             coordinates: center,
             fid: feature.properties[this.rowKey],
             img: unSelectIcon,
-            properties: this.setPropertiesAlias(feature.properties),
+            properties: this.setPropertiesAlias(feature.properties), // 将properties中设置了别名的字段替换成别名
             feature: feature,
           }
           tempMarkers.push(marker)
@@ -733,6 +798,7 @@ export default {
           this.isIGSVector3dLayer) &&
         tempMarkers.length > 0
       ) {
+        // 获取中心点的高度再设置到对应的标注信息中
         const arr = await this.getModelHeight(tempMarkers)
         if (arr.length === tempMarkers.length) {
           arr.forEach((item, index) => {
@@ -764,6 +830,7 @@ export default {
       return obj
     },
 
+    // 获取三维模型高度方法
     getModelHeight(tempMarkers: Array<unknown>) {
       return new Promise((resolve, reject) => {
         const positions = tempMarkers.map((item) => {
@@ -772,11 +839,13 @@ export default {
             item.coordinates[1]
           )
         })
+        // 构造采样高程工具类
         const sampleElevationTool = new this.Cesium.SampleElevationTool(
           this.viewer,
           positions,
           'model',
           (elevationPosition) => {
+            // 采用高程结果回调
             if (elevationPosition && elevationPosition.length > 0) {
               resolve(elevationPosition)
             } else {
@@ -784,6 +853,7 @@ export default {
             }
           }
         )
+        // 执行高程采样
         sampleElevationTool.start()
       })
     },
@@ -803,6 +873,7 @@ export default {
         document.body.clientHeight - boundingClientRect.top - 30 - 35
     },
 
+    // 组装统计表和过滤器的查询参数
     updateStatisticAndFilterParamas() {
       const { serverType, gdbp, serverUrl, name } = this.optionVal
       if (
@@ -837,12 +908,14 @@ export default {
       }
     },
 
+    // 全屏/取消全屏的监听事件
     fullScreenListener(e) {
       if (e.target.id === this.id) {
         this.fullScreen = !this.fullScreen
       }
     },
 
+    // 全屏
     inFullScreen() {
       const el = this.$refs.attributeTable
       el.classList.add('beauty-scroll')
@@ -852,11 +925,13 @@ export default {
       }
     },
 
+    // 取消全屏
     outFullScreen() {
       DomUtil.outFullScreen()
       this.$refs.attributeTable.classList.remove('beauty-scroll')
     },
 
+    // 更新当前选中的标注信息id
     updateCurrentMarkerId(id) {
       this.currentId = id
     },
@@ -864,7 +939,7 @@ export default {
 }
 </script>
 
-<style lang="less">
+<style lang="scss">
 .mp-attribute-table {
   .mapgis-ui-table-tbody > tr > td,
   .mapgis-ui-table-thead > tr > th {
@@ -886,7 +961,7 @@ export default {
 }
 </style>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .mp-attribute-table {
   height: 100%;
   background-color: transparent;
