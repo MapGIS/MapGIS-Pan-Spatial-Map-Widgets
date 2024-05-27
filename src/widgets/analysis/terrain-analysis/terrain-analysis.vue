@@ -133,6 +133,28 @@ export default {
       if (this.tab === 'flooding') return
       this.currentAnalysisComponent.onDeActive()
     },
+
+    // 微件关闭之前
+    onBeforeClose() {
+      const that = this
+      const floodAnalysisCloseRemind =
+        this.$refs.floodingAnalysis.progressVisible
+      if (floodAnalysisCloseRemind) {
+        this.$confirm({
+          content: '淹没分析正在模拟中，确认要关闭该微件吗？',
+          okText: '确认',
+          cancelText: '取消',
+          onOk() {
+            that.closeWidget()
+          },
+          onCancel() {
+            that.backActivateWidget()
+          },
+        })
+      } else {
+        this.closeWidget()
+      }
+    },
   },
 }
 </script>
