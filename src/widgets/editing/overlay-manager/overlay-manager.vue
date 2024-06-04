@@ -35,7 +35,7 @@ export default {
 
   computed: {
     uploadUrl() {
-      return `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`
+      return `${this.baseUrl}/${this.appProductName}/rest/services/system/ResourceServer/files/pictures`
     },
     featureConfig() {
       return baseConfigInstance.config.colorConfig
