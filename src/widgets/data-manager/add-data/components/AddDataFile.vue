@@ -181,7 +181,7 @@ export default {
       if (['TIF', 'SHP', '6X'].includes(this.fileDataType.value)) {
         return `${this.domain}/igs/rest/services/system/ResourceServer/files`
       } else {
-        return `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files`
+        return `${this.baseUrl}/${this.appProductName}/rest/services/system/ResourceServer/files`
       }
     },
   },
