@@ -31,7 +31,10 @@ export default {
         if (image.startsWith('http') || image.startsWith('https')) {
           return image
         }
-        return this.baseUrl + image
+        const targetUrl = this.isDefaultAppProductName
+          ? `${this.baseUrl}${image}`
+          : `${this.baseUrl}/${this.appProductName}${image}`
+        return targetUrl
       }
     },
     /**

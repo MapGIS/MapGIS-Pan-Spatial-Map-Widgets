@@ -535,7 +535,7 @@ export default {
     this.widgetConfig = this.widgetInfo.config
   },
   async mounted() {
-    this.uploadUrl = `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`
+    this.uploadUrl = `${this.baseUrl}/${this.appProductName}/rest/services/system/ResourceServer/files/pictures`
 
     // 使用新的app.json中的规范，判断this.application.data是否有且有值就替换this.widgetInfo.config.treeConfig.treeData
     if (this.application.data && this.application.data.length > 0) {

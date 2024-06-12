@@ -139,7 +139,11 @@ export default {
     },
     regionsUrl: {
       type: String,
-      default: '/file/default/countrynation.json',
+      default: () => {
+        return window._CONFIG.productName === 'psmap'
+          ? '/file/default/countrynation.json'
+          : `/${window._CONFIG.productName}/file/default/countrynation.json`
+      },
     },
   },
   data() {
