@@ -1,5 +1,7 @@
 import {
+  MpAttributeTable,
   MpAttributeTableList,
+  MpTreeLayer,
 } from './components'
 
 import {
@@ -62,7 +64,9 @@ import {
 } from './widgets/tool'
 
 const components = [
+  MpAttributeTable,
   MpAttributeTableList,
+  MpTreeLayer,
   // analysis
   MpBufferAnalysis,
   MpNetworkAnalysis,

@@ -31,7 +31,7 @@ import axios from 'axios'
 
 export default {
   name: 'MpFavorites',
-  mixins: [AppMixin, MapMixin, WidgetMixin],
+  mixins: [WidgetMixin],
   data() {
     return {
       dataList: [], // 初始化从接口获取的数据
@@ -41,6 +41,7 @@ export default {
       currentId: '', // 再次点击相同的收藏时需要重置一次场景设置信息再设置触发computed
       isAgain: false,
       dataCatalogManager: dataCatalogManagerInstance,
+      visible: false,
     }
   },
   computed: {
@@ -65,9 +66,14 @@ export default {
     baseUrl() {
       return window._CONFIG.domainURL
     },
+    filePathPrefix() {
+      return this.isDefaultAppProductName
+        ? this.baseUrl
+        : `${this.baseUrl}/${this.appProductName}`
+    },
     imagesUploadApi() {
       // return `${this.baseUrl}/psmap/rest/manager/file/upload`
-      return `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`
+      return `${this.filePathPrefix}/rest/services/system/ResourceServer/files/pictures`
     },
     dataCatalogLayerArr() {
       return this.dataCatalogManager.getAllLayerConfigItems()

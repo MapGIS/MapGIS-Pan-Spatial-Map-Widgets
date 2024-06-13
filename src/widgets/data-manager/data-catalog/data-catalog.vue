@@ -535,7 +535,7 @@ export default {
     this.widgetConfig = this.widgetInfo.config
   },
   async mounted() {
-    this.uploadUrl = `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`
+    this.uploadUrl = `${this.baseUrl}/${this.appProductName}/rest/services/system/ResourceServer/files/pictures`
 
     // 使用新的app.json中的规范，判断this.application.data是否有且有值就替换this.widgetInfo.config.treeConfig.treeData
     if (this.application.data && this.application.data.length > 0) {
@@ -580,7 +580,7 @@ export default {
 
     eventBus.$on(events.OPEN_DATA_BOOKMARK_EVENT, this.bookMarkClick)
     eventBus.$on(events.IMPOSE_SERVICE_PREVIEW_EVENT, this.imposeService)
-    this.$root.$on(events.SCENE_LOADEN_ON_MAP, this.sceneLoadedCallback)
+    this.$root.$on(events.SCENE_LOADED_ON_MAP, this.sceneLoadedCallback)
     eventBus.$emit(events.DATA_CATALOG_ON_IMPOSE_SERVICE_EVENT)
     // eventBus.$on(events.DATA_CATALOG_TAB, this.changeDataCatalog)
     // eventBus.$on(events.BOOKMARK_TAB, this.changeBookmark)

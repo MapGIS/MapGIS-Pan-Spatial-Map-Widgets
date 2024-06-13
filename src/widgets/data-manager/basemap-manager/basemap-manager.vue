@@ -117,62 +117,62 @@ export default {
     let initBaseMap = { isShow, indexBaseMapGUID }
     const selectBaseMap = this.defaultSelect.map((item) => item.guid)
     initBaseMap = { ...initBaseMap, selectBaseMap }
+    // 设置默认跳转位置
+    if (
+      // 以默认范围为初始范围
+      initPositionMode === 'initExtent'
+    ) {
+      const { xmin, ymin, xmax, ymax } = baseConfigInstance.config
+
+      this.$nextTick(() => {
+        this.map.fitBounds([
+          [xmin, ymin],
+          [xmax, ymax],
+        ])
+
+        this.viewer.camera.flyTo({
+          destination: this.Cesium.Rectangle.fromDegrees(
+            xmin,
+            ymin,
+            xmax,
+            ymax
+          ),
+        })
+      })
+    } else if (
+      // 以默认中心点为初始范围
+      initPositionMode === 'initPosition'
+    ) {
+      const { center, initZoom: zoom, initAltitude } = baseConfigInstance.config
+
+      this.$nextTick(() => {
+        this.map.flyTo({
+          center: [center.split(',')[0], center.split(',')[1]],
+          zoom,
+        })
+
+        this.viewer.camera.flyTo({
+          destination: this.Cesium.Cartesian3.fromDegrees(
+            center.split(',')[0],
+            center.split(',')[1],
+            initAltitude
+          ),
+        })
+      })
+    }
+
     // 加载显示配置里已设置默认选中的底图
     if (this.defaultSelect && this.defaultSelect.length > 0) {
       for (let i = 0; i < this.defaultSelect.length; i++) {
         let isZoomTo = false
-        let init // 判断是否为初始化加载
+        let init = false
+        // 以索引底图的范围为初始范围
         if (
-          // 以默认范围为初始范围
-          initPositionMode === 'initExtent'
+          initPositionMode === 'basemapExtent' &&
+          this.defaultSelect[i].guid === indexBaseMapGUID
         ) {
-          const { xmin, ymin, xmax, ymax } = baseConfigInstance.config
-
-          this.$nextTick(() => {
-            this.map.fitBounds([
-              [xmin, ymin],
-              [xmax, ymax],
-            ])
-
-            this.viewer.camera.flyTo({
-              destination: this.Cesium.Rectangle.fromDegrees(
-                xmin,
-                ymin,
-                xmax,
-                ymax
-              ),
-            })
-          })
-        } else if (
-          // 以默认中心点为初始范围
-          initPositionMode === 'initPosition'
-        ) {
-          const {
-            center,
-            initZoom: zoom,
-            initAltitude,
-          } = baseConfigInstance.config
-
-          this.$nextTick(() => {
-            this.map.flyTo({
-              center: [center.split(',')[0], center.split(',')[1]],
-              zoom,
-            })
-
-            this.viewer.camera.flyTo({
-              destination: this.Cesium.Cartesian3.fromDegrees(
-                center.split(',')[0],
-                center.split(',')[1],
-                initAltitude
-              ),
-            })
-          })
-        } else {
-          // 以索引底图的范围为初始范围
-          if (this.defaultSelect[i].guid == indexBaseMapGUID) {
-            isZoomTo = true
-            init = true
-          }
+          isZoomTo = true
+          init = true
         }
         this.onSelect(this.defaultSelect[i].guid, isZoomTo, init)
       }
