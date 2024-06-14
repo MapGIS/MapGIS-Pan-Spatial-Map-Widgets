@@ -12,6 +12,13 @@
           style="width: 100%"
         />
       </mapgis-ui-form-item>
+      <mapgis-ui-form-item label="最大内存使用量">
+        <mapgis-ui-input-number
+          v-model="maximumMemoryUsage"
+          :min="0"
+          style="width: 100%"
+        />
+      </mapgis-ui-form-item>
       <mapgis-ui-form-item label="开启拾取">
         <mapgis-ui-switch v-model="enablePopup" />
       </mapgis-ui-form-item>
@@ -76,6 +83,7 @@ export default {
   data() {
     return {
       maximumScreenSpaceError: 16,
+      maximumMemoryUsage: 512,
       enableModelSwitch: false,
       enablePopup: false,
       luminanceAtZenith: 10,
@@ -156,6 +164,7 @@ export default {
       const layer = this.layer.layer ? this.layer.layer : this.layer
       if (layer) {
         const { layerProperty } = layer
+        // 后续这些属性直接取layerProperty中的属性
         let {
           enablePopup,
           enableModelSwitch,
@@ -191,6 +200,12 @@ export default {
         }
         this.maximumScreenSpaceError =
           maximumScreenSpaceError !== undefined ? maximumScreenSpaceError : 16
+
+        this.maximumMemoryUsage =
+          layerProperty.maximumMemoryUsage !== undefined
+            ? layerProperty.maximumMemoryUsage
+            : this.maximumMemoryUsage
+
         this.enablePopup = enablePopup !== undefined ? enablePopup : false
         this.enableModelSwitch =
           enableModelSwitch !== undefined ? enableModelSwitch : false
@@ -227,6 +242,7 @@ export default {
         const { layerProperty } = layer
         if (layerProperty) {
           layerProperty.maximumScreenSpaceError = this.maximumScreenSpaceError
+          layerProperty.maximumMemoryUsage = this.maximumMemoryUsage
           layerProperty.luminanceAtZenith = this.luminanceAtZenith
           layerProperty.enablePopup = this.enablePopup
           layerProperty.enableModelSwitch = this.enableModelSwitch
