@@ -1536,6 +1536,8 @@ export default {
           }
           const m3d = this.sceneController.findSource(id)
           m3d.maximumScreenSpaceError = maximumScreenSpaceError
+          // @ts-ignore
+          m3d.maximumMemoryUsage = layerProperty.maximumMemoryUsage
           // m3d.enablePopup = enablePopup
           if (onlyUpdateLuminanceAtZenith) {
             // 模型阴影区亮度设置，如果是g3d，则对里面的图层都进行设置
@@ -1564,6 +1566,18 @@ export default {
           if (m3d) {
             m3d.maximumScreenSpaceError = maximumScreenSpaceError
             m3d.luminanceAtZenith = luminanceAtZenith
+            // @ts-ignore
+            m3d.maximumMemoryUsage = layerProperty.maximumMemoryUsage
+          } else {
+            const cesium3DTileset = this.sceneController.findSource(MC.id)
+            if (cesium3DTileset) {
+              cesium3DTileset.maximumScreenSpaceError = maximumScreenSpaceError
+              cesium3DTileset.luminanceAtZenith = luminanceAtZenith
+
+              cesium3DTileset.maximumMemoryUsage =
+                // @ts-ignore
+                layerProperty.maximumMemoryUsage
+            }
           }
           if (!onlyUpdateLuminanceAtZenith) {
             this.$emit('update:layerDocument', doc)
