@@ -1119,10 +1119,29 @@ export default {
                 autoResetArr.includes(layer.id) &&
                 !unAutoResetArr.includes(layer.id)
               ) {
-                // 自动定位到图层所在位置
-                setTimeout(() => {
-                  this.fitBounds(layer, this.getDataFlowExtent(layer))
-                }, 1000)
+                // 三维模式下的二维图层若extend中的engineType为Mapbox则不加载也不做跳转
+                const engineType = layer.extend?.engineType
+                if (this.is2DMapMode) {
+                  if (
+                    ['All', 'Mapbox', 'Leaflet', 'Openlayers'].includes(
+                      engineType
+                    ) ||
+                    !engineType
+                  ) {
+                    setTimeout(() => {
+                      this.fitBounds(layer, this.getDataFlowExtent(layer))
+                    }, 1000)
+                  }
+                } else {
+                  // 三维模式下加载的图层设置了engineType属性为二维展示时，不做跳转操作
+                  if (
+                    !['Mapbox', 'Leaflet', 'Openlayers'].includes(engineType)
+                  ) {
+                    setTimeout(() => {
+                      this.fitBounds(layer, this.getDataFlowExtent(layer))
+                    }, 1000)
+                  }
+                }
               }
             }
           } else {
