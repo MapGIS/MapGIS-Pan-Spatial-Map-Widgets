@@ -73,6 +73,7 @@ export default {
       },
       cameraView: null,
       mapBounds: null,
+      enableZoomSnap: true, // 是否开启级别吸附
     }
   },
 
@@ -82,6 +83,24 @@ export default {
       this.vueCesium,
       this.viewer
     )
+  },
+
+  mounted() {
+    this.$nextTick(() => {
+      // 新增是否开启级别吸附，默认为true
+      // 修改人:龚跃健，2024年6月20日
+      if (this.map) {
+        const { enableZoomSnap } = baseConfigInstance.config
+        if (enableZoomSnap || enableZoomSnap == undefined) {
+          this.enableZoomSnap = true
+        }
+        if (this.enableZoomSnap) {
+          this.map.scrollZoom.setWheelZoomRate(1)
+          this.map.scrollZoom.setZoomRate(1)
+          this.map.transform.resetZoomScale = false
+        }
+      }
+    })
   },
 
   methods: {
@@ -219,7 +238,13 @@ export default {
     onZoomIn() {
       if (this.is2DMapMode) {
         if (this.map) {
-          this.map.zoomIn()
+          let currentZoom = this.map.getZoom()
+          // 新增是否开启级别吸附，默认为true
+          // 修改人:龚跃健，2024年6月20日
+          if (this.enableZoomSnap) {
+            currentZoom = Math.ceil(currentZoom)
+          }
+          this.map.setZoom(currentZoom + 1)
         }
       } else {
         this.ZoomCesiumView('zoomIn')
@@ -229,7 +254,13 @@ export default {
     onZoomOut() {
       if (this.is2DMapMode) {
         if (this.map) {
-          this.map.zoomOut()
+          let currentZoom = this.map.getZoom()
+          // 新增是否开启级别吸附，默认为true
+          // 修改人:龚跃健，2024年6月20日
+          if (this.enableZoomSnap) {
+            currentZoom = Math.floor(currentZoom)
+          }
+          this.map.setZoom(currentZoom - 1)
         }
       } else {
         this.ZoomCesiumView('zoomOut')
