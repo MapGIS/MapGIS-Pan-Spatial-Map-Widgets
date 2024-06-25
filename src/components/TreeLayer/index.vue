@@ -844,6 +844,9 @@ export default {
               if (this.isIGSScene(layerItem)) {
                 if (layerItem.activeScene) {
                   layerItem = layerItem.activeScene.sublayers[i]
+                } else {
+                  // 子图层没有activeScene
+                  layerItem = layerItem.sublayers[i]
                 }
               } else {
                 layerItem = layerItem.sublayers[i]
