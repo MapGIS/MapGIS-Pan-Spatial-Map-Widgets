@@ -143,21 +143,43 @@ export default {
       // 以默认中心点为初始范围
       initPositionMode === 'initPosition'
     ) {
-      const { center, initZoom: zoom, initAltitude } = baseConfigInstance.config
-
+      const {
+        center,
+        initZoom: zoom,
+        initAltitude,
+        initOrientation,
+      } = baseConfigInstance.config
       this.$nextTick(() => {
         this.map.flyTo({
           center: [center.split(',')[0], center.split(',')[1]],
           zoom,
         })
-
-        this.viewer.camera.flyTo({
-          destination: this.Cesium.Cartesian3.fromDegrees(
-            center.split(',')[0],
-            center.split(',')[1],
-            initAltitude
-          ),
-        })
+        if (initOrientation) {
+          // 获取基础配置中相机视角信息，并设置
+          const { heading, pitch, roll } = initOrientation
+          this.viewer.camera.flyTo({
+            destination: this.Cesium.Cartesian3.fromDegrees(
+              center.split(',')[0],
+              center.split(',')[1],
+              initAltitude
+            ),
+            orientation: {
+              heading: Cesium.Math.toRadians(heading),
+              pitch: Cesium.Math.toRadians(pitch),
+              roll: Cesium.Math.toRadians(roll),
+            },
+            duration: 0.1,
+          })
+        } else {
+          this.viewer.camera.flyTo({
+            destination: this.Cesium.Cartesian3.fromDegrees(
+              center.split(',')[0],
+              center.split(',')[1],
+              initAltitude
+            ),
+            duration: 0.1,
+          })
+        }
       })
     }
 
@@ -330,7 +352,6 @@ export default {
     },
     saveConfig() {
       const config = this.getSaveConfig(this.basemaps)
-      console.log(config, 'config')
       api
         .saveWidgetConfig({
           name: 'basemap-manager',
