@@ -150,27 +150,46 @@ export default {
         initOrientation,
       } = baseConfigInstance.config
       this.$nextTick(() => {
-        this.map.flyTo({
-          center: [center.split(',')[0], center.split(',')[1]],
-          zoom,
-        })
+        this.map &&
+          this.map.flyTo({
+            center: [center.split(',')[0], center.split(',')[1]],
+            zoom,
+          })
         if (initOrientation) {
           // 获取基础配置中相机视角信息，并设置
           const { heading, pitch, roll } = initOrientation
-          this.viewer.camera.flyTo({
-            destination: this.Cesium.Cartesian3.fromDegrees(
-              center.split(',')[0],
-              center.split(',')[1],
-              initAltitude
-            ),
-            orientation: {
-              heading: Cesium.Math.toRadians(heading),
-              pitch: Cesium.Math.toRadians(pitch),
-              roll: Cesium.Math.toRadians(roll),
-            },
-            duration: 0.1,
-          })
+          this.viewer &&
+            this.viewer.camera.flyTo({
+              destination: this.Cesium.Cartesian3.fromDegrees(
+                center.split(',')[0],
+                center.split(',')[1],
+                initAltitude
+              ),
+              orientation: {
+                heading: Cesium.Math.toRadians(heading),
+                pitch: Cesium.Math.toRadians(pitch),
+                roll: Cesium.Math.toRadians(roll),
+              },
+              duration: 0.1,
+            })
         } else {
+          this.viewer &&
+            this.viewer.camera.flyTo({
+              destination: this.Cesium.Cartesian3.fromDegrees(
+                center.split(',')[0],
+                center.split(',')[1],
+                initAltitude
+              ),
+              duration: 0.1,
+            })
+        }
+        this.map &&
+          this.map.flyTo({
+            center: [center.split(',')[0], center.split(',')[1]],
+            zoom,
+          })
+
+        this.viewer &&
           this.viewer.camera.flyTo({
             destination: this.Cesium.Cartesian3.fromDegrees(
               center.split(',')[0],
