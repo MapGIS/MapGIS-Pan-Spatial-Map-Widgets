@@ -198,7 +198,6 @@ export default {
             ),
             duration: 0.1,
           })
-        }
       })
     }
 
