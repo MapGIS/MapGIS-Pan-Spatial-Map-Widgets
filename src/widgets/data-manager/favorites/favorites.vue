@@ -41,7 +41,6 @@ export default {
       currentId: '', // 再次点击相同的收藏时需要重置一次场景设置信息再设置触发computed
       isAgain: false,
       dataCatalogManager: dataCatalogManagerInstance,
-      visible: false,
     }
   },
   computed: {
@@ -67,9 +66,7 @@ export default {
       return window._CONFIG.domainURL
     },
     filePathPrefix() {
-      return this.isDefaultAppProductName
-        ? this.baseUrl
-        : `${this.baseUrl}/${this.appProductName}`
+      return `${this.baseUrl}/${this.appProductName}`
     },
     imagesUploadApi() {
       // return `${this.baseUrl}/psmap/rest/manager/file/upload`
