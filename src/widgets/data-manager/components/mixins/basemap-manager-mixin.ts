@@ -32,7 +32,7 @@ export default {
           return image
         }
         let targetUrl
-        if (!this.isDefaultAppProductName && image.startsWith('/file')) {
+        if (image.startsWith('/file')) {
           targetUrl = `${this.baseUrl}/${this.appProductName}${image}`
         } else {
           targetUrl = `${this.baseUrl}${image}`
