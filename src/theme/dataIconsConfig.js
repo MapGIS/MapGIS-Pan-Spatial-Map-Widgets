@@ -1,10 +1,9 @@
 import { v4 as uuidv4 } from 'uuid'
 
-const domain = window.location.origin
 const isDefaultAppProductName = window._CONFIG.productName === 'psmap'
 const filePathPrefix = isDefaultAppProductName
-  ? domain
-  : `${domain}/${window._CONFIG.productName}`
+  ? ''
+  : `/${window._CONFIG.productName}`
 // const domain = 'http://localhost:8015'
 
 export const defaultDataIconsConfig = {
