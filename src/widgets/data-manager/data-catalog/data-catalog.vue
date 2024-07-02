@@ -724,6 +724,9 @@ export default {
             const child = serviceIcons[i].children[j]
             if (LayerType[child.serviceType] === item.serverType) {
               icon = child.icon
+              if (icon.startsWith('/file')) {
+                icon = `${this.baseUrl}/${this.appProductName}${icon}`
+              }
               return {
                 isSvg: icon && icon.indexOf('<svg') >= 0,
                 icon,
@@ -732,8 +735,19 @@ export default {
           }
         }
       }
-      icon =
-        this.baseUrl + this.widgetInfo.config.iconConfig[this.nodeLevel(item)]
+      if (
+        this.widgetInfo.config.iconConfig[this.nodeLevel(item)].startsWith(
+          '/file'
+        )
+      ) {
+        icon = `${this.baseUrl}/${this.appProductName}${
+          this.widgetInfo.config.iconConfig[this.nodeLevel(item)]
+        }`
+      } else {
+        icon =
+          this.baseUrl + this.widgetInfo.config.iconConfig[this.nodeLevel(item)]
+      }
+
       return { isSvg: icon && icon.indexOf('<svg') >= 0, icon }
     },
     onClose() {
