@@ -1,6 +1,7 @@
 <template>
   <div class="mp-widget-feature-query">
     <mp-draw-pro
+      v-if="is2DMapMode && hasMapDisplay"
       ref="draw"
       :clearDrawMode="clearDrawMode"
       :featureConfig="featureConfig"
@@ -8,6 +9,7 @@
       @finished="onDrawFinished"
     />
     <mp-3d-draw-pro
+      v-if="!is2DMapMode && hasGlobeDisplay"
       ref="draw3d"
       :clearDrawMode="clearDrawMode"
       :featureConfig="featureConfig"
@@ -130,18 +132,12 @@ import {
   Overlay,
   events,
   eventBus,
+  DisplayModeMixin,
 } from '@mapgis/web-app-framework'
 import * as Zondy from '@mapgis/webclient-es6-service'
-import {
-  lineString,
-  polygon,
-  point,
-  multiPolygon,
-  booleanCrosses,
-  booleanPointInPolygon,
-  booleanDisjoint,
-  booleanContains,
-} from '@turf/turf'
+import { lineString, polygon, point, multiPolygon } from '@turf/helpers'
+import booleanDisjoint from '@turf/boolean-disjoint'
+import booleanContains from '@turf/boolean-contains'
 import MpGeoJsonInputDraw from './components/MpGeoJsonInputDraw/MpGeoJsonInputDraw.vue'
 import MpPolygonInputDraw from './components/MpPolygonInputDraw/MpPolygonInputDraw.vue'
 import MpUploadFileDraw from './components/MpUploadFileDraw/MpUploadFileDraw.vue'
@@ -172,7 +168,7 @@ enum QueryType {
 
 export default {
   name: 'MpFeatureQuery',
-  mixins: [WidgetMixin, ExhibitionControllerMixin],
+  mixins: [WidgetMixin, ExhibitionControllerMixin, DisplayModeMixin],
   components: {
     MpGeoJsonInputDraw,
     MpPolygonInputDraw,
@@ -297,7 +293,7 @@ export default {
       this.onClearDraw()
       if (!this.is2DMapMode) {
         // 在切到三维视图后，销毁mapboxgl的绘制组件，每次切回二维，maoboxgl的绘制组件都会初始化。
-        this.$refs.draw.removeDraw()
+        this.$refs.draw && this.$refs.draw.removeDraw()
       }
     },
     'document.defaultMap': {
@@ -308,14 +304,16 @@ export default {
     },
     currentId(newVal, oldVal) {
       if (oldVal) {
-        if (this.map.getLayer(`${oldVal}fill`)) {
-          this.map.removeLayer(`${oldVal}fill`)
-        }
-        if (this.map.getLayer(`${oldVal}line`)) {
-          this.map.removeLayer(`${oldVal}line`)
-        }
-        if (this.map.getSource(oldVal)) {
-          this.map.removeSource(oldVal)
+        if (this.map) {
+          if (this.map.getLayer(`${oldVal}fill`)) {
+            this.map.removeLayer(`${oldVal}fill`)
+          }
+          if (this.map.getLayer(`${oldVal}line`)) {
+            this.map.removeLayer(`${oldVal}line`)
+          }
+          if (this.map.getSource(oldVal)) {
+            this.map.removeSource(oldVal)
+          }
         }
         this.sceneOverlays.removeEntityByName(oldVal)
       }
@@ -328,16 +326,18 @@ export default {
         type.id = QueryType.Rectangle
       }
     })
-    this.sceneController = Objects.SceneController.getInstance(
-      this.Cesium,
-      this.vueCesium,
-      this.viewer
-    )
-    this.sceneOverlays = Overlay.SceneOverlays.getInstance(
-      this.Cesium,
-      this.vueCesium,
-      this.viewer
-    )
+    if (this.hasGlobeDisplay) {
+      this.sceneController = Objects.SceneController.getInstance(
+        this.Cesium,
+        this.vueCesium,
+        this.viewer
+      )
+      this.sceneOverlays = Overlay.SceneOverlays.getInstance(
+        this.Cesium,
+        this.vueCesium,
+        this.viewer
+      )
+    }
   },
   mounted() {
     eventBus.$on(events.MARKER_CLICK, this.markerClick)
@@ -385,10 +385,11 @@ export default {
     },
     onDrawShape(shapeInfo) {
       this.currentId = shapeInfo.id
-      this.map.addSource(shapeInfo.id, {
-        type: 'geojson',
-        data: shapeInfo.geometry,
-      })
+      this.map &&
+        this.map.addSource(shapeInfo.id, {
+          type: 'geojson',
+          data: shapeInfo.geometry,
+        })
       let style
       const { coordinates, type } = shapeInfo.geometry
       if (type === 'MultiPolygon' || type === 'Polygon') {
@@ -400,11 +401,12 @@ export default {
           type: 'fill',
           ...fillStyle.toMapboxStyle(),
         }
-        this.map.addLayer({
-          id: `${shapeInfo.id}fill`,
-          source: shapeInfo.id,
-          ...style,
-        })
+        this.map &&
+          this.map.addLayer({
+            id: `${shapeInfo.id}fill`,
+            source: shapeInfo.id,
+            ...style,
+          })
       }
 
       const lineStyle = new LineStyle({
@@ -415,22 +417,24 @@ export default {
         type: 'line',
         ...lineStyle.toMapboxStyle(),
       }
-      this.map.addLayer({
-        id: `${shapeInfo.id}line`,
-        source: shapeInfo.id,
-        ...style,
-      })
+      this.map &&
+        this.map.addLayer({
+          id: `${shapeInfo.id}line`,
+          source: shapeInfo.id,
+          ...style,
+        })
       const { xmin, ymin, xmax, ymax } =
         Feature.getGeoJSONFeatureBound(shapeInfo)
-      this.map.fitBounds(
-        [
-          [xmin, ymin],
-          [xmax, ymax],
-        ],
-        {
-          padding: { top: 100, bottom: 100, left: 200, right: 200 },
-        }
-      )
+      this.map &&
+        this.map.fitBounds(
+          [
+            [xmin, ymin],
+            [xmax, ymax],
+          ],
+          {
+            padding: { top: 100, bottom: 100, left: 200, right: 200 },
+          }
+        )
       this.doQuery({ type, coordinates })
     },
     doQuery(obj) {
@@ -464,14 +468,17 @@ export default {
     },
     // 微件激活时
     onActive() {
-      this.map.getCanvas().style.cursor = this.widgetInfo.config.cursorType
+      if (this.map) {
+        this.map.getCanvas().style.cursor = this.widgetInfo.config.cursorType
+      }
+
       this.doDeActive = false
     },
 
     // 微件关闭时
     onClose() {
       this.onClearDraw()
-      if (!this.doDeActive) {
+      if (!this.doDeActive && this.map) {
         this.map.getCanvas().style.cursor = 'grab'
       }
     },
@@ -485,7 +492,9 @@ export default {
       this.isQueryFeatures = false
       this.clearDrawMode && this.onClearDraw()
       this.doDeActive = true
-      this.map.getCanvas().style.cursor = 'grab'
+      if (this.map) {
+        this.map.getCanvas().style.cursor = 'grab'
+      }
     },
 
     // 打开绘制，点击图标激活对应类型的绘制功能
@@ -504,7 +513,10 @@ export default {
     onClearDraw() {
       this.currentId = ''
       this.queryType = ''
-      this.drawComponent && this.drawComponent.closeDraw()
+      const drawComponent = this.is2DMapMode
+        ? this.$refs.draw
+        : this.$refs.draw3d
+      drawComponent && drawComponent.closeDraw()
     },
 
     // 'start'响应事件(开始绘制)

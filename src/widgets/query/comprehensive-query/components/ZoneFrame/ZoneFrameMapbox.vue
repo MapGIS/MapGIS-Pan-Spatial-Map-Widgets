@@ -4,7 +4,6 @@
 
 <script lang="ts">
 import { MapMixin, Feature } from '@mapgis/web-app-framework'
-import { bboxPolygon, lineString, bbox } from '@turf/turf'
 import { Style } from '@mapgis/webclient-es6-service'
 
 const { LineStyle, PointStyle, FillStyle, TextStyle } = Style

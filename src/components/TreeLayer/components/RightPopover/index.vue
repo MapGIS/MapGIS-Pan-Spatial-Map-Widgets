@@ -15,7 +15,8 @@
 <script>
 import layerTypeUtil from '../../mixin/layer-type-util'
 import { DataFlowList } from '@mapgis/web-app-framework'
-import * as turf from '@turf/turf'
+import { lineString } from '@turf/helpers'
+import bbox from '@turf/bbox'
 
 export default {
   name: 'RightPopover',
@@ -39,7 +40,7 @@ export default {
           click: () => this.metaDataInfo(),
         },
         {
-          name: '查看属性',
+          name: '查看属性表',
           show: this.isAttributes(this.layerItem),
           click: () => this.attributes(),
         },
@@ -48,7 +49,8 @@ export default {
           show:
             (this.isMetaData(this.layerItem) &&
               !this.isDataFlow(this.layerItem) &&
-              this.isSubLayer(this.layerItem)) ||
+              this.isSubLayer(this.layerItem) &&
+              !this.isVoxelLayer(this.layerItem)) ||
             this.isCustomQuery(this.layerItem),
           click: () => this.customQuery(),
         },
@@ -86,19 +88,21 @@ export default {
           click: () => this.toTop(),
         },
         {
-          name: '属性设置',
+          name: '高级选项',
           show:
             (!this.isParentLayer(this.layerItem) &&
               this.isIGSScene(this.layerItem)) ||
-            this.isModelCacheLayer(this.layerItem),
+            (this.isModelCacheLayer(this.layerItem) &&
+              !this.isVoxelLayer(this.layerItem)),
           click: () => this.changeM3DProps(),
         },
         {
-          name: '模型编辑',
+          name: '模型变换',
           show:
             this.isParentLayer(this.layerItem) &&
             (this.isIGSScene(this.layerItem) ||
-              this.isModelCacheLayer(this.layerItem)),
+              (this.isModelCacheLayer(this.layerItem) &&
+                !this.isVoxelLayer(this.layerItem))),
           click: () => this.modelEdit(),
         },
         {
@@ -111,6 +115,16 @@ export default {
             this.isGeoJsonLayer(this.layerItem),
           click: () => this.featureEdit(),
         },
+        {
+          name: '符号化',
+          show: this.isVoxelLayer(this.layerItem),
+          click: () => this.symbolization(),
+        },
+        {
+          name: '时间轴',
+          show: this.isVoxelLayer(this.layerItem),
+          click: () => this.timeline(),
+        },
       ]
     },
   },
@@ -118,6 +132,14 @@ export default {
     console.log(this.$root, 'rightpopover', this)
   },
   methods: {
+    // 打开符号化界面
+    symbolization() {
+      this.$emit('symbolization', this.layerItem)
+    },
+    // 打开时间轴界面
+    timeline() {
+      this.$emit('timeline', this.layerItem)
+    },
     metaDataInfo() {
       this.$emit('meta-data-info', this.layerItem)
     },
@@ -168,8 +190,8 @@ export default {
           } = item
           return coordinates
         })
-        const line = turf.lineString(lineArr)
-        const [xmin, ymin, xmax, ymax] = turf.bbox(line)
+        const line = lineString(lineArr)
+        const [xmin, ymin, xmax, ymax] = bbox(line)
         return {
           xmin,
           ymin,

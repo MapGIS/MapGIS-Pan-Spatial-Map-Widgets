@@ -19,7 +19,7 @@ import {
 } from '@mapgis/web-app-framework'
 
 export default {
-  name: 'MpMetadataInfo',
+  name: 'MpExportLayer',
   props: {
     ip: {
       type: String,

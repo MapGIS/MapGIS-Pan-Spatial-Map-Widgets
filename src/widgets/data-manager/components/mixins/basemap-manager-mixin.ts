@@ -31,7 +31,13 @@ export default {
         if (image.startsWith('http') || image.startsWith('https')) {
           return image
         }
-        return this.baseUrl + image
+        let targetUrl
+        if (image.startsWith('/file')) {
+          targetUrl = `${this.baseUrl}/${this.appProductName}${image}`
+        } else {
+          targetUrl = `${this.baseUrl}${image}`
+        }
+        return targetUrl
       }
     },
     /**

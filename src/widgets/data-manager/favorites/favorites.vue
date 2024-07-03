@@ -31,7 +31,7 @@ import axios from 'axios'
 
 export default {
   name: 'MpFavorites',
-  mixins: [AppMixin, MapMixin, WidgetMixin],
+  mixins: [WidgetMixin],
   data() {
     return {
       dataList: [], // 初始化从接口获取的数据
@@ -65,9 +65,12 @@ export default {
     baseUrl() {
       return window._CONFIG.domainURL
     },
+    filePathPrefix() {
+      return `${this.baseUrl}/${this.appProductName}`
+    },
     imagesUploadApi() {
       // return `${this.baseUrl}/psmap/rest/manager/file/upload`
-      return `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`
+      return `${this.filePathPrefix}/rest/services/system/ResourceServer/files/pictures`
     },
     dataCatalogLayerArr() {
       return this.dataCatalogManager.getAllLayerConfigItems()
@@ -303,7 +306,7 @@ export default {
       const transferRelation = {}
       Object.keys(layerInfo).forEach((item) => {
         // 兼容guid的情况
-        if (item.indexOf('://') > -1) {
+        if (item.includes('://')) {
           const find = this.dataCatalogLayerArr.find(
             (config) => config.serverURL === item
           )
@@ -315,7 +318,7 @@ export default {
         }
       })
       Object.keys(relation).forEach((item) => {
-        if (item.indexOf('://') > -1) {
+        if (item.includes('://')) {
           const find = this.dataCatalogLayerArr.find(
             (config) => config.serverURL === item
           )
@@ -466,7 +469,7 @@ export default {
                 (layer) => layer.guid === frist
               )
             }
-            let parentData = fristData ? this.getParent(fristData) : null
+            const parentData = fristData ? this.getParent(fristData) : null
 
             const transferSubArr = []
             subArr.forEach((item) => {

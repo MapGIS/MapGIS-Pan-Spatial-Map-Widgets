@@ -117,54 +117,102 @@ export default {
     let initBaseMap = { isShow, indexBaseMapGUID }
     const selectBaseMap = this.defaultSelect.map((item) => item.guid)
     initBaseMap = { ...initBaseMap, selectBaseMap }
-    // 加载显示配置里已设置默认选中的底图
-    if (this.defaultSelect && this.defaultSelect.length > 0) {
-      for (let i = 0; i < this.defaultSelect.length; i++) {
-        let isZoomTo = false
-        let init // 判断是否为初始化加载
-        if (
-          // 以默认范围为初始范围
-          initPositionMode === 'initExtent'
-        ) {
-          const { xmin, ymin, xmax, ymax } = baseConfigInstance.config
-          this.map.fitBounds([
-            [xmin, ymin],
-            [xmax, ymax],
-          ])
-          this.viewer.camera.flyTo({
-            destination: this.Cesium.Rectangle.fromDegrees(
-              xmin,
-              ymin,
-              xmax,
-              ymax
-            ),
-          })
-        } else if (
-          // 以默认中心点为初始范围
-          initPositionMode === 'initPosition'
-        ) {
-          const {
-            center,
-            initZoom: zoom,
-            initAltitude,
-          } = baseConfigInstance.config
+    // 设置默认跳转位置
+    if (
+      // 以默认范围为初始范围
+      initPositionMode === 'initExtent'
+    ) {
+      const { xmin, ymin, xmax, ymax } = baseConfigInstance.config
+
+      this.$nextTick(() => {
+        this.map.fitBounds([
+          [xmin, ymin],
+          [xmax, ymax],
+        ])
+
+        this.viewer.camera.flyTo({
+          destination: this.Cesium.Rectangle.fromDegrees(
+            xmin,
+            ymin,
+            xmax,
+            ymax
+          ),
+        })
+      })
+    } else if (
+      // 以默认中心点为初始范围
+      initPositionMode === 'initPosition'
+    ) {
+      const {
+        center,
+        initZoom: zoom,
+        initAltitude,
+        initOrientation,
+      } = baseConfigInstance.config
+      this.$nextTick(() => {
+        this.map &&
           this.map.flyTo({
             center: [center.split(',')[0], center.split(',')[1]],
             zoom,
           })
+        if (initOrientation) {
+          // 获取基础配置中相机视角信息，并设置
+          const { heading, pitch, roll } = initOrientation
+          this.viewer &&
+            this.viewer.camera.flyTo({
+              destination: this.Cesium.Cartesian3.fromDegrees(
+                center.split(',')[0],
+                center.split(',')[1],
+                initAltitude
+              ),
+              orientation: {
+                heading: Cesium.Math.toRadians(heading),
+                pitch: Cesium.Math.toRadians(pitch),
+                roll: Cesium.Math.toRadians(roll),
+              },
+              duration: 0.1,
+            })
+        } else {
+          this.viewer &&
+            this.viewer.camera.flyTo({
+              destination: this.Cesium.Cartesian3.fromDegrees(
+                center.split(',')[0],
+                center.split(',')[1],
+                initAltitude
+              ),
+              duration: 0.1,
+            })
+        }
+        this.map &&
+          this.map.flyTo({
+            center: [center.split(',')[0], center.split(',')[1]],
+            zoom,
+          })
+
+        this.viewer &&
           this.viewer.camera.flyTo({
             destination: this.Cesium.Cartesian3.fromDegrees(
               center.split(',')[0],
               center.split(',')[1],
               initAltitude
             ),
+            duration: 0.1,
           })
-        } else {
-          // 以索引底图的范围为初始范围
-          if (this.defaultSelect[i].guid == indexBaseMapGUID) {
-            isZoomTo = true
-            init = true
-          }
+      })
+    }
+
+    // 加载显示配置里已设置默认选中的底图
+    if (this.defaultSelect && this.defaultSelect.length > 0) {
+      for (let i = 0; i < this.defaultSelect.length; i++) {
+        let isZoomTo = false
+        let init = false
+        // 以索引底图的范围为初始范围
+        if (
+          initPositionMode === 'basemapExtent' &&
+          this.defaultSelect[i].guid === indexBaseMapGUID
+        ) {
+          isZoomTo = true
+          init = true
         }
         this.onSelect(this.defaultSelect[i].guid, isZoomTo, init)
       }
@@ -322,7 +370,6 @@ export default {
     },
     saveConfig() {
       const config = this.getSaveConfig(this.basemaps)
-      console.log(config, 'config')
       api
         .saveWidgetConfig({
           name: 'basemap-manager',

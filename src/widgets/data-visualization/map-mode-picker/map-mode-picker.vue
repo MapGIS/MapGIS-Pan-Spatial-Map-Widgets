@@ -1,5 +1,5 @@
 <template>
-  <div class="mp-widget-map-mode-picker">
+  <div class="mp-widget-map-mode-picker" v-show="bothDisplay">
     <mapgis-ui-tooltip
       title="二三维切换"
       placement="right"
@@ -18,6 +18,7 @@ import WebAppFrameworkUI, {
   Layer3D,
   Objects,
   baseConfigInstance,
+  DisplayModeMixin,
 } from '@mapgis/web-app-framework'
 
 const A = 40487.57
@@ -27,7 +28,7 @@ const D = -40467.74
 
 export default {
   name: 'MpMapModePicker',
-  mixins: [WidgetMixin],
+  mixins: [WidgetMixin, DisplayModeMixin],
   data() {
     return {
       rectBounds: null,

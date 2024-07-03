@@ -73,6 +73,7 @@ export default {
       },
       cameraView: null,
       mapBounds: null,
+      enableZoomSnap: true, // 是否开启级别吸附
     }
   },
 
@@ -82,6 +83,24 @@ export default {
       this.vueCesium,
       this.viewer
     )
+  },
+
+  mounted() {
+    this.$nextTick(() => {
+      // 新增是否开启级别吸附，默认为true
+      // 修改人:龚跃健，2024年6月20日
+      if (this.map) {
+        const { enableZoomSnap } = baseConfigInstance.config
+        if (enableZoomSnap || enableZoomSnap == undefined) {
+          this.enableZoomSnap = true
+        }
+        if (this.enableZoomSnap) {
+          this.map.scrollZoom.setWheelZoomRate(1)
+          this.map.scrollZoom.setZoomRate(1)
+          this.map.transform.resetZoomScale = false
+        }
+      }
+    })
   },
 
   methods: {
@@ -118,6 +137,7 @@ export default {
             center,
             initZoom: zoom,
             initAltitude: cameraHeight,
+            initOrientation,
           } = baseConfigInstance.config
           const x = center.split(',')[0]
           const y = center.split(',')[1]
@@ -129,10 +149,25 @@ export default {
               })
             }, 300)
           } else {
+            // 获取基础配置中相机视角信息，并设置
             const center = new Cesium.Cartesian3.fromDegrees(x, y, cameraHeight)
-            viewer.camera.flyTo({
-              destination: center,
-            })
+            if (initOrientation) {
+              const { heading, pitch, roll } = initOrientation
+              viewer.camera.flyTo({
+                destination: center,
+                orientation: {
+                  heading: Cesium.Math.toRadians(heading),
+                  pitch: Cesium.Math.toRadians(pitch),
+                  roll: Cesium.Math.toRadians(roll),
+                },
+                duration: 1.0,
+              })
+            } else {
+              viewer.camera.flyTo({
+                destination: center,
+                duration: 1.0,
+              })
+            }
           }
           break
         case 'basemapExtent':
@@ -219,7 +254,13 @@ export default {
     onZoomIn() {
       if (this.is2DMapMode) {
         if (this.map) {
-          this.map.zoomIn()
+          let currentZoom = this.map.getZoom()
+          // 新增是否开启级别吸附，默认为true
+          // 修改人:龚跃健，2024年6月20日
+          if (this.enableZoomSnap) {
+            currentZoom = Math.ceil(currentZoom)
+          }
+          this.map.setZoom(currentZoom + 1)
         }
       } else {
         this.ZoomCesiumView('zoomIn')
@@ -229,7 +270,13 @@ export default {
     onZoomOut() {
       if (this.is2DMapMode) {
         if (this.map) {
-          this.map.zoomOut()
+          let currentZoom = this.map.getZoom()
+          // 新增是否开启级别吸附，默认为true
+          // 修改人:龚跃健，2024年6月20日
+          if (this.enableZoomSnap) {
+            currentZoom = Math.floor(currentZoom)
+          }
+          this.map.setZoom(currentZoom - 1)
         }
       } else {
         this.ZoomCesiumView('zoomOut')
@@ -254,22 +301,35 @@ export default {
       const centerLat = parseFloat(
         this.Cesium.Math.toDegrees(cartographic.latitude).toFixed(8)
       )
+      const { heading, pitch, roll } = this.viewer.camera
       if (type === 'zoomIn') {
+        // 保持相机视角不变
         this.viewer.camera.flyTo({
           destination: this.Cesium.Cartesian3.fromDegrees(
             centerLon,
             centerLat,
             height / 1.8
           ),
+          orientation: {
+            heading,
+            pitch,
+            roll,
+          },
           duration: 1.0,
         })
       } else if (type === 'zoomOut') {
+        // 保持相机视角不变
         this.viewer.camera.flyTo({
           destination: this.Cesium.Cartesian3.fromDegrees(
             centerLon,
             centerLat,
             height * 1.8
           ),
+          orientation: {
+            heading,
+            pitch,
+            roll,
+          },
           duration: 1.0,
         })
       }

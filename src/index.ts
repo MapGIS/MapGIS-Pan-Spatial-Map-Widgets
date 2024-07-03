@@ -2,17 +2,14 @@ import {
   MpAttributeTable,
   MpAttributeTableList,
   MpTreeLayer,
+  MpTimeline,
 } from './components'
 
 import {
   MpBufferAnalysis,
-  MpDynamicSectionAnalysis,
-  MpHeightLimitedAnalysis,
-  MpModelFlatten,
   MpNetworkAnalysis,
   MpOverlayAnalysis,
   MpProfileAnalysis,
-  MpRetrospect,
   MpSceneRoaming,
   MpShadowAnalysis,
   MpSkylineAnalysis,
@@ -21,7 +18,6 @@ import {
   MpTopologyAnalysis,
   MpVisibilityAnalysis,
   MpVisualAnalysis,
-  MpExplosionAnalysis,
 } from './widgets/analysis'
 
 import {
@@ -38,18 +34,13 @@ import {
   MpLayerListContainer,
   MpLegend,
   MpMapModePicker,
-  MpMapStory,
   MpParticleEffects,
   MpProjectorManager,
   MpRotate,
   MpScalebar,
   MpSceneSetting,
-  MpThematicMap,
-  MpVectorTileCarto,
   MpViewpointManager,
   MpZoom,
-  MpPlotAnimation,
-  MpPlotManager,
   MpSceneModePicker,
 } from './widgets/data-visualization'
 
@@ -66,35 +57,23 @@ import {
 import { MpComprehensiveQuery, MpFeatureQuery } from './widgets/query'
 
 import {
-  MpBuildingGrow,
-  MpCityGrow,
-  MpPondingSimulation,
-} from './widgets/simulation'
-
-import {
-  MpBimComponent,
   MpMeasurement,
   MpOutputImage,
   MpSplitScreen,
-  MpStratifiedHousehold,
   MpModelPick,
   MpOpacityFactor,
-  MpModelStretch,
 } from './widgets/tool'
 
 const components = [
   MpAttributeTable,
   MpAttributeTableList,
   MpTreeLayer,
+  MpTimeline,
   // analysis
   MpBufferAnalysis,
-  MpDynamicSectionAnalysis,
-  MpHeightLimitedAnalysis,
-  MpModelFlatten,
   MpNetworkAnalysis,
   MpOverlayAnalysis,
   MpProfileAnalysis,
-  MpRetrospect,
   MpSceneRoaming,
   MpShadowAnalysis,
   MpSkylineAnalysis,
@@ -103,7 +82,6 @@ const components = [
   MpTopologyAnalysis,
   MpVisibilityAnalysis,
   MpVisualAnalysis,
-  MpExplosionAnalysis,
   // data-manager
   MpAddData,
   MpBasemapManager,
@@ -115,18 +93,13 @@ const components = [
   MpLayerListContainer,
   MpLegend,
   MpMapModePicker,
-  MpMapStory,
   MpParticleEffects,
   MpProjectorManager,
   MpRotate,
   MpScalebar,
   MpSceneSetting,
-  MpThematicMap,
-  MpVectorTileCarto,
   MpViewpointManager,
   MpZoom,
-  MpPlotAnimation,
-  MpPlotManager,
   MpSceneModePicker,
   // editing
   MpMarkerManager,
@@ -140,26 +113,16 @@ const components = [
   // query
   MpComprehensiveQuery,
   MpFeatureQuery,
-  // simulation
-  MpBuildingGrow,
-  MpCityGrow,
-  MpPondingSimulation,
   // tool
-  MpBimComponent,
   MpMeasurement,
   MpOutputImage,
   MpSplitScreen,
-  MpStratifiedHousehold,
   MpModelPick,
   MpOpacityFactor,
-  MpModelStretch,
   MpFavorites,
 ]
 
-import { thematicMapStore } from './widgets/data-visualization/thematic-map/store'
-
 const install = (Vue) => {
-  Vue.observable(thematicMapStore)
   components.forEach((component) => {
     Vue.component(
       (component.options && component.options.name) || component.name,

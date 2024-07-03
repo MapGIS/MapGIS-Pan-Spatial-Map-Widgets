@@ -139,6 +139,8 @@
                 @change-m3d-props="changeM3DProps"
                 @model-edit="modelEdit"
                 @feature-edit="featureEdit"
+                @symbolization="symbolization"
+                @timeline="timeline"
                 @query="queryFeature"
               />
               <!-- <slot
@@ -303,7 +305,7 @@ export default {
       layerConfig: null,
       modelPickController: ModelPickController,
       // 保存OGC元数据信息
-      currentOGCMetadata: {},
+      currentOGCMetadata: undefined,
       // 记录当前编辑的图层id
       currentEditLayerId: '',
     }
@@ -484,7 +486,7 @@ export default {
     window.modelEditControlList = new Object()
   },
   mounted() {
-    this.$root.$on(events.SCENE_LOADEN_ON_MAP, this.sceneLoadedCallback)
+    this.$root.$on(events.SCENE_LOADED_ON_MAP, this.sceneLoadedCallback)
     eventBus.$on(events.MODEL_PICK, this.updateM3DEnablePopupEnable)
     // eventBus.$on(events.ECHO_LAYER_LIST_INFO, this.echoLayerList)
   },
@@ -842,6 +844,9 @@ export default {
               if (this.isIGSScene(layerItem)) {
                 if (layerItem.activeScene) {
                   layerItem = layerItem.activeScene.sublayers[i]
+                } else {
+                  // 子图层没有activeScene
+                  layerItem = layerItem.sublayers[i]
                 }
               } else {
                 layerItem = layerItem.sublayers[i]
@@ -920,7 +925,11 @@ export default {
       const layer = doc.defaultMap.findLayerById(id)
       const vm = this
       let source
-      if (layer.type === LayerType.ModelCache) {
+      if (
+        layer.type === LayerType.ModelCache &&
+        layer.metaData &&
+        !layer.metaData.dataContentType
+      ) {
         if (layer.format === ModelCacheFormat.m3d) {
           source = vm.sceneController.findM3DIgsSource(id)
         } else if (layer.format === ModelCacheFormat.cesium3dTileset) {
@@ -1243,7 +1252,7 @@ export default {
       }
 
       this.openPage({
-        title: '模型编辑',
+        title: '模型变换',
         name: 'MpModelEdit',
         component: () => import('./components/ModelEdit/ModelEdit.vue'),
         props: {
@@ -1277,6 +1286,28 @@ export default {
           },
         },
       })
+    },
+
+    // 打开符号化样式页面
+    symbolization(layer) {
+      this.openPage({
+        title: '符号化设置',
+        name: 'MpSymbolization',
+        component: () => import('./components/Symbolization/Symbolization.vue'),
+        props: {
+          id: layer.id,
+        },
+      })
+    },
+
+    // 打开时间轴
+    async timeline(layer) {
+      this.clickPopover(layer, false)
+      const exhibition = await this.getExhibition(layer, '时间轴')
+      if (exhibition) {
+        this.addExhibition(new AttributeTableExhibition(exhibition))
+        this.openExhibitionPanel()
+      }
     },
 
     updateModel(type, val) {
@@ -1508,6 +1539,8 @@ export default {
           }
           const m3d = this.sceneController.findSource(id)
           m3d.maximumScreenSpaceError = maximumScreenSpaceError
+          // @ts-ignore
+          m3d.maximumMemoryUsage = layerProperty.maximumMemoryUsage
           // m3d.enablePopup = enablePopup
           if (onlyUpdateLuminanceAtZenith) {
             // 模型阴影区亮度设置，如果是g3d，则对里面的图层都进行设置
@@ -1536,6 +1569,18 @@ export default {
           if (m3d) {
             m3d.maximumScreenSpaceError = maximumScreenSpaceError
             m3d.luminanceAtZenith = luminanceAtZenith
+            // @ts-ignore
+            m3d.maximumMemoryUsage = layerProperty.maximumMemoryUsage
+          } else {
+            const cesium3DTileset = this.sceneController.findSource(MC.id)
+            if (cesium3DTileset) {
+              cesium3DTileset.maximumScreenSpaceError = maximumScreenSpaceError
+              cesium3DTileset.luminanceAtZenith = luminanceAtZenith
+
+              cesium3DTileset.maximumMemoryUsage =
+                // @ts-ignore
+                layerProperty.maximumMemoryUsage
+            }
           }
           if (!onlyUpdateLuminanceAtZenith) {
             this.$emit('update:layerDocument', doc)

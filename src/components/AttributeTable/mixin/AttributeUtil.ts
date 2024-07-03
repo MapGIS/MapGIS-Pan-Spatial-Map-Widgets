@@ -1,4 +1,6 @@
-import * as turf from '@turf/turf'
+import { point, polygon } from '@turf/helpers'
+import rhumbDistance from '@turf/rhumb-distance'
+import centerOfMass from '@turf/center-of-mass'
 import {
   DomUtil,
   AppMixin,
@@ -32,15 +34,23 @@ export default {
       tableData: [],
       // 表头数据
       tableColumns: [],
+      // 标绘组件展示所需数据
       markers: [],
+      // 跳转范围
       fitBound: {},
+      // 要素的中心点坐标
       panToCenter: [0, 0],
+      // 表格勾选项的边界范围
       selectionBound: {},
       // 是否正在加载
       loading: false,
+      // 当前表格的参数
       currentTableParams: {},
+      // 是否打开过滤器窗口
       showFilter: false,
+      // 是否打开统计窗口
       showAttrStatistics: false,
+      // 过滤器和统计功能的查询参数
       statisticAndFilterParamas: {},
       // 是否随地图范围过滤
       filterWithMap: false,
@@ -60,36 +70,46 @@ export default {
         total: 0,
         pageSizeOptions: ['5', '10', '20', '30', '50'], // 这里注意只能是字符串，不能是数字
       },
+      // 组件的唯一id
       id: `${new Date().getTime()}-${Math.floor(
         Math.random() * 10
       )}-table-wrapper`,
+      // 表格的唯一id
       tableId: `${new Date().getTime()}-${Math.floor(
         Math.random() * 10
       )}-table`,
+      // 过滤器窗口的唯一id
       filterId: `${new Date().getTime()}-${Math.floor(
         Math.random() * 10
       )}-filter`,
+      // 统计窗口的唯一id
       statisticsId: `${new Date().getTime()}-${Math.floor(
         Math.random() * 10
       )}-statistics`,
       /* 属性表数据转为json数据的暂存属性 */
       attrTableToJsonData: null,
+      // 是否全屏
       fullScreen: false,
+      // 表格是否有x轴的滚动
       useScrollX: false,
+      // 表格y轴高度
       scrollY: 0,
-      isActive: true,
+      // 表格的rowKey字段
       rowKey: 'fid',
+      // 当前选中的标注id
       currentId: '',
       // 被选中行对应的markers集合
       selectedMarkers: [],
     }
   },
   computed: {
+    // 属性表的配置信息
     optionVal() {
       return {}
     },
   },
   methods: {
+    // 设置表格的rowKey
     setRowKey() {
       const { serverType, isDataStoreQuery } = this.optionVal
 
@@ -165,12 +185,14 @@ export default {
         this.setProjectorStatus(file.name)
       }
     },
+    // 获取视频的投放状态
     getProjectorStatus(projectorId) {
       return ProjectorManager.getProjectorStatus(
         projectorId,
         this.exhibition.id
       )
     },
+    // 设置视频的投放状态
     setProjectorStatus(projectorId, isProjected = false) {
       return ProjectorManager.setProjectorStatus(
         projectorId,
@@ -185,13 +207,13 @@ export default {
       if (geoJSONExtent) {
         const { geometry } = geoJSONExtent
         const { coordinates } = geometry
-        const from = turf.point(coordinates[0][0])
-        const to = turf.point(coordinates[0][3])
+        const from = point(coordinates[0][0])
+        const to = point(coordinates[0][3])
         const options = { units: 'kilometers' }
 
-        const distance = turf.rhumbDistance(from, to, options)
+        const distance = rhumbDistance(from, to, options)
 
-        const center = turf.centerOfMass(geoJSONExtent)
+        const center = centerOfMass(geoJSONExtent)
         return {
           lon: center.geometry.coordinates[0],
           lat: center.geometry.coordinates[1],
@@ -587,6 +609,7 @@ export default {
           break
       }
     },
+    // 设置表格的列字段
     setTableScroll(AttStruct) {
       const columns = []
       const {
@@ -636,6 +659,7 @@ export default {
 
       return columns
     },
+    // 设置表格的列字段
     setTableScroll20(fields) {
       if (!fields) {
         return
@@ -704,14 +728,17 @@ export default {
         'BINARY',
       ]
       const timeArr: Array<string> = ['TIME', 'DATE', 'TIMESTAMP']
+      // 数字类型的排序
       if (numberArr.includes(type.toUpperCase())) {
         return a - b
       }
+      // 时间类型的排序
       if (timeArr.includes(type.toUpperCase())) {
         return moment(a) - moment(b)
       }
       return false
     },
+    // 获取模型的包围盒坐标
     getGeometry3D(source) {
       const { xmin, ymin, xmax, ymax, zmin, zmax } = this.geometry3D
       return new Rectangle3D(xmin, ymin, zmin, xmax, ymax, zmax)
@@ -739,6 +766,7 @@ export default {
         }
       })
     },
+    // 设置属性表table数据
     setTable20(features, source, fields, is3dBind2dData) {
       return (features || []).map(
         ({ attributes = {}, bound = {}, geometry = {} }) => {
@@ -791,12 +819,12 @@ export default {
      * 获取屏幕范围
      */
     getBounds() {
-      let polygon
+      let polygonBound
       if (this.is2DMapMode) {
         const { _ne, _sw } = this.map.getBounds()
         const { lng: xmax, lat: ymax } = _ne
         const { lng: xmin, lat: ymin } = _sw
-        polygon = turf.polygon(
+        polygonBound = polygon(
           [
             [
               [xmin, ymax],
@@ -814,7 +842,7 @@ export default {
         const ymax = (Rectangle.north / Math.PI) * 180
         const xmax = (Rectangle.east / Math.PI) * 180
         const ymin = (Rectangle.south / Math.PI) * 180
-        polygon = turf.polygon(
+        polygonBound = polygon(
           [
             [
               [xmin, ymax],
@@ -827,7 +855,7 @@ export default {
           { name: 'bounds' }
         )
       }
-      return polygon
+      return polygonBound
     },
     // 通过geoJson设置table标题数组
     setGeoJsonColums(geojson) {

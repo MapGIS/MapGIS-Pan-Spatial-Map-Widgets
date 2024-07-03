@@ -128,7 +128,7 @@
           >
             <mapgis-ui-menu slot="overlay">
               <mapgis-ui-menu-item
-                v-if="item.metaData"
+                v-if="item.metaData && !isModelCacheLayer(item)"
                 key="1"
                 @click="showMetaDataInfo(item)"
               >
@@ -243,21 +243,16 @@
             <mapgis-ui-menu slot="overlay">
               <mapgis-ui-menu-item
                 v-if="
-                  item.serverType && !isNonSpatial(item) && !isDataFlow(item)
+                  item.serverType &&
+                  !isNonSpatial(item) &&
+                  !isDataFlow(item) &&
+                  !isModelCacheLayer(item)
                 "
                 key="1"
                 @click="showMetaDataInfo(item)"
               >
                 元数据信息
               </mapgis-ui-menu-item>
-              <mapgis-ui-menu-item
-                key="2"
-                v-if="item.serverType"
-                @click="addToMark(item)"
-                >{{
-                  isChangeDataCatalog ? '收藏' : '取消收藏'
-                }}</mapgis-ui-menu-item
-              >
               <mapgis-ui-menu-item
                 v-if="!isNonSpatial(item) && !isDataFlow(item)"
                 key="3"
@@ -344,6 +339,12 @@
         </template>
       </mp-window>
     </mp-window-wrapper>
+    <mapgis-ui-mask
+      :loading="loading"
+      :showSvg="true"
+      text="Loading..."
+      parentDivClass="mp-map-container"
+    ></mapgis-ui-mask>
   </div>
 </template>
 
@@ -351,7 +352,6 @@
 import {
   AppManager,
   WidgetMixin,
-  AppMixin,
   Document,
   Map,
   LayerType,
@@ -375,12 +375,13 @@ import {
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../../../components/MetadataInfo/MetadataInfo.vue'
 import NonSpatial from './non-spatial.vue'
-import * as turf from '@turf/turf'
+import { lineString } from '@turf/helpers'
+import bbox from '@turf/bbox'
 import { defaultDataIconsConfig } from '../../../theme/dataIconsConfig.js'
 
 export default {
   name: 'MpDataCatalog',
-  mixins: [WidgetMixin, AppMixin],
+  mixins: [WidgetMixin],
   components: {
     MpMetadataInfo,
     NonSpatial,
@@ -452,13 +453,11 @@ export default {
       // 目录树配置
       widgetConfig: {},
 
+      // 服务叠加节点
       imposeNode: {},
 
       // 目录树更多按钮展示/隐藏
       isChangeDataCatalog: true,
-
-      // 存放从接口获取到的书签信息
-      bookmarkData: [],
 
       // 存放数据目录勾选key
       checkedNodeKeysCopy: [],
@@ -473,27 +472,32 @@ export default {
       activeTreeTab: '',
       // 当前选中的key
       activeKey: '',
+      // 目录树分类展示下的左右移动箭头
       showTabsIcon: true,
-      isPreClick: true,
+      // 目录树分类展示下的左移动箭头是否可点击
+      isPreClick: false,
+      // 目录树分类展示下的右移动箭头是否可点击
       isSuffixClick: false,
       // 记录每个tabs中勾选的key
       activeTreeTabRelRelation: {},
+      // 目录树分类展示下的勾选标识
       setKeys: false,
       // 滚动距离
       scrollLeft: 0,
-      // 列表模式下tab与勾选节点的对应关系
-      bookMarkRelationForTab: {},
-      // 默认模式下勾选节点数组
-      // bookMarkRelationForDefault: [],
-      // checkData: [],
-      preCheckedKeysDel: [],
+      // 图层勾选跳转管理类
       layerAutoResetManager: LayerAutoResetManager,
+      // 扩展图层id数组
       extendLayerRemoveIds: [],
+      // 最后一次点击的节点，用于高亮
       lastSelect: '',
+      // 存储节点的id与节点的下级节点数量的对应关系
       leafLengthMap: {},
       // 保存OGC元数据信息
       currentOGCMetadata: {},
+      // 非空间数据的数据类型
       dataType: undefined,
+      // 图层加载时的loading状态
+      loading: false,
     }
   },
   computed: {
@@ -504,25 +508,24 @@ export default {
       }
       return []
     },
+    // 获取节点在目录树中的级别
     nodeLevel() {
       return function (node) {
         return node.pos.split('-').length - 1
       }
     },
+    // 是否使用分类展示
     isClassify() {
       return this.widgetInfo.config.otherConfig.isClassify
     },
+    // 勾选的图层节点id
     checkKeys() {
       return this.dataCatalogManager.checkedLayerConfigIDs
     },
+    // 单次可勾选的最大数量
     selectedMaxCount() {
       return this.widgetInfo.config.otherConfig.selectedMaxCount || 20
     },
-    // lastCheck() {
-    //   return this.dataCatalogManager.checkedLayerConfigIDs[
-    //     this.dataCatalogManager.checkedLayerConfigIDs.length - 1
-    //   ]
-    // },
   },
   created() {
     this.$message.config({
@@ -530,19 +533,22 @@ export default {
       duration: 2,
       maxCount: 1,
     })
-
+    // 获取目录树配置
     this.widgetConfig = this.widgetInfo.config
   },
   async mounted() {
-    this.uploadUrl = `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`
+    this.uploadUrl = `${this.baseUrl}/${this.appProductName}/rest/services/system/ResourceServer/files/pictures`
 
     // 使用新的app.json中的规范，判断this.application.data是否有且有值就替换this.widgetInfo.config.treeConfig.treeData
     if (this.application.data && this.application.data.length > 0) {
       this.widgetInfo.config.treeConfig.treeData = this.application.data
     }
 
+    // 初始化目录树数据
     this.dataCatalogManager.init(this.widgetInfo.config)
+    // 是否对图层节点进行过滤
     const filtTree = this.widgetInfo.config.otherConfig.filtTree || false
+    // 组装目录树数据
     this.dataCatalogTreeData =
       await this.dataCatalogManager.getDataCatalogTreeData(filtTree)
     const _allTreeDataConfigs = []
@@ -551,10 +557,13 @@ export default {
       _allTreeDataConfigs
     )
     this.dataCatalogTreeData = treeData
+    // 记录将目录树转化为一维数组的所有数据
     this.allTreeDataConfigs = allTreeDataConfigs
+    // 目录树分类展示
     if (this.isClassify) {
       this.dataCatalogTreeDataCopy = treeData
       this.dataCatalogTabData = this.getTabsData(treeData)
+      // 分类展示默认选中的tab
       this.activeTreeTab =
         this.dataCatalogTabData.length > 0
           ? this.dataCatalogTabData[0].guid
@@ -577,24 +586,26 @@ export default {
       }
     }).observe(targetNode)
 
-    eventBus.$on(events.OPEN_DATA_BOOKMARK_EVENT, this.bookMarkClick)
-    eventBus.$on(events.IMPOSE_SERVICE_PREVIEW_EVENT, this.imposeService)
-    this.$root.$on(events.SCENE_LOADEN_ON_MAP, this.sceneLoadedCallback)
-    eventBus.$emit(events.DATA_CATALOG_ON_IMPOSE_SERVICE_EVENT)
-    // eventBus.$on(events.DATA_CATALOG_TAB, this.changeDataCatalog)
-    // eventBus.$on(events.BOOKMARK_TAB, this.changeBookmark)
+    // 接收三维图层加载完成时发送的事件
+    this.$root.$on(events.SCENE_LOADED_ON_MAP, this.sceneLoadedCallback)
+    // 发送数据目录微件配置信息的事件
     eventBus.$emit(events.DATA_CATALOG_DATA_INFO, this.widgetConfig)
+    // 接收扩展图层移除事件
     eventBus.$on(events.EXTEND_LAYER_REMOVE, this.changeCheckedKeys)
+    // 接收目录树节点勾选/取消勾选变化事件
     eventBus.$on(events.DATA_CATALOG_CHANGE_NODES, this.dataCatalogChangeNodes)
+    // 接收目录树勾选节点事件
     eventBus.$on(events.DATA_CATALOG_CHECK_NODES, this.dataCatalogCheckNodes)
   },
   watch: {
+    // 监听目录树节点变化
     checkedNodeKeys: {
       deep: false,
       handler() {
         this.onCheckedNodeKeysChanged()
       },
     },
+    // 监听dataCatalogManagerInstance管理类中记录的目录树勾选id的变化
     'dataCatalogManager.checkedLayerConfigIDs': {
       deep: false,
       handler() {
@@ -603,6 +614,7 @@ export default {
     },
   },
   methods: {
+    // 获取图层节点的服务类型
     getLeafTooltip(item) {
       const text = item.name
       let str
@@ -687,6 +699,7 @@ export default {
       }
       return text
     },
+    // 获取目录树各级节点对应的图标
     nodeIcon(item) {
       let icon
       if (item.serverType !== undefined) {
@@ -711,6 +724,9 @@ export default {
             const child = serviceIcons[i].children[j]
             if (LayerType[child.serviceType] === item.serverType) {
               icon = child.icon
+              if (icon.startsWith('/file')) {
+                icon = `${this.baseUrl}/${this.appProductName}${icon}`
+              }
               return {
                 isSvg: icon && icon.indexOf('<svg') >= 0,
                 icon,
@@ -719,40 +735,64 @@ export default {
           }
         }
       }
-      icon =
-        this.baseUrl + this.widgetInfo.config.iconConfig[this.nodeLevel(item)]
+      if (
+        this.widgetInfo.config.iconConfig[this.nodeLevel(item)].startsWith(
+          '/file'
+        )
+      ) {
+        icon = `${this.baseUrl}/${this.appProductName}${
+          this.widgetInfo.config.iconConfig[this.nodeLevel(item)]
+        }`
+      } else {
+        icon =
+          this.baseUrl + this.widgetInfo.config.iconConfig[this.nodeLevel(item)]
+      }
+
       return { isSvg: icon && icon.indexOf('<svg') >= 0, icon }
     },
     onClose() {
       this.currentNode = null
     },
     initLoadKeys() {
+      // 获取所有图层节点
       const allLayerNodes = this.dataCatalogManager.getAllLayerConfigItems()
+      // 获取初始化需要加载的图层id数组
       const initKeys =
         DataCatalogCheckController.getInitLoadLayerKeys(allLayerNodes)
+      // 勾选对应的图层节点
       this.dataCatalogChangeNodes(initKeys, true)
     },
     initLocationKeys() {
+      // 获取所有图层节点
       const allLayerNodes = this.dataCatalogManager.getAllLayerConfigItems()
+      // 设置勾选目录树后需要自动定位到图层所在位置的节点id数组到layerAutoResetManager类中
       this.layerAutoResetManager.dealLocationArr(allLayerNodes)
     },
+    // 控制数据目录图层节点勾选
     dataCatalogCheckNodes(keys, checkKeysRelation) {
+      // 清空已勾选的图层节点
       if (this.checkedNodeKeys && this.checkedNodeKeys.length > 0) {
         this.dataCatalogCheckNode([], {})
       }
 
+      // 设置需要勾选的图层节点
       setTimeout(() => {
         this.dataCatalogCheckNode(keys, checkKeysRelation)
       }, 1000)
     },
     dataCatalogCheckNode(keys, checkKeysRelation) {
+      // 清空勾选节点
       this.checkedNodeKeys = []
+      // 目录树分类展示时记录各tab项中的节点勾选关系
       if (this.isClassify) {
         this.activeTreeTabRelRelation = checkKeysRelation
       }
+      // 通过该方法添加的图层id记录到layerAutoResetManager类中，勾选后不会执行自动定位到图层所在位置的逻辑
       this.layerAutoResetManager.setUnAutoResetArr(keys)
+      // 对checkedNodeKeys重新赋值
       this.checkedNodeKeys = keys
     },
+    // 获取当前的目录树结构
     getCurrentData() {
       let currentData = []
       if (this.isClassify) {
@@ -793,8 +833,9 @@ export default {
         this.extendLayerRemoveIds = []
         return
       }
-
+      // 新增勾选的图层节点id数组
       let newChecked = []
+      // 取消勾选的图层节点id数组
       let newUnChecked = []
 
       if (this.isChangeDataCatalog && !this.isClassify) {
@@ -835,7 +876,6 @@ export default {
             }
           }
         }
-
         // 给dataCatalogManager中的变量赋值
         const checkedLayerConfigIDs = this.getCheckedLayerConfigIDs()
 
@@ -911,21 +951,26 @@ export default {
       ) {
         this.checkedNodeKeys = this.dataCatalogManager.checkedLayerConfigIDs
       }
+      // 将checkedNodeKeys的值记录到DataCatalogCheckController类中
       DataCatalogCheckController.setCheckKeys(this.checkedNodeKeys)
+      // 将当前目录树数据记录到DataCatalogCheckController类中
       DataCatalogCheckController.setCheckData(this.getCurrentData())
     },
     getCheckedLayerConfigIDs(id) {
       let checkedLayerConfigIDs = []
+      // 获取当前勾选的图层节点id数组
       const allCheck = this.isClassify
         ? this.getDataCatalogCheckedNodeKeys()
         : this.checkedNodeKeys
       allCheck.forEach((key) => {
+        // 根据id找到图层节点
         const layerConfig = this.dataCatalogManager.getLayerConfigByID(key)
 
         if (layerConfig) checkedLayerConfigIDs.push(key)
       })
 
       if (id) {
+        // 从勾选的图层节点id数组中移除符合条件的id
         checkedLayerConfigIDs = checkedLayerConfigIDs.filter(
           (item) => item !== id
         )
@@ -936,6 +981,7 @@ export default {
       // 获取选中节点中的图层节点。
       const layerConfigNodeList: [] = []
       nodekeys.forEach((key) => {
+        // 根据id获取图层节点
         const layerConfig = this.dataCatalogManager.getLayerConfigByID(key)
         if (layerConfig) {
           layerConfigNodeList.push(layerConfig)
@@ -951,11 +997,11 @@ export default {
           const promiseAll = []
           for (let i = 0; i < layerConfigNodeList.length; i++) {
             const layerConfigNode = layerConfigNodeList[i]
+            // 将图层节点对象转为图层对象
             promiseAll.push(this.generateLayer(layerConfigNode))
           }
           Promise.all(promiseAll).then((result) => {
             const appendLayer = []
-            let isAddLayer3D
             // 调整图层顺序
             layerConfigNodeList.forEach((item) => {
               if (item) {
@@ -963,16 +1009,14 @@ export default {
                 sortLayer && appendLayer.push(sortLayer)
               }
             })
+            // 将图层对象添加到document中
             appendLayer.forEach((item) => {
-              if (item instanceof Layer3D) {
-                isAddLayer3D = true
-              }
               doc.defaultMap.add(item)
             })
-            isAddLayer3D && eventBus.$emit(events.MODEL_PICK_ADD)
           })
         } else {
           layerConfigNodeList.forEach((layerConfigNode) => {
+            // 如果是扩展图层只需要发送eventBus事件
             if (
               Object.prototype.hasOwnProperty.call(
                 layerConfigNode,
@@ -987,118 +1031,17 @@ export default {
               return
             }
             // 如果是取消选中了节点
-            // 1.通过节点的key,将图层从document中移除。
+            // 1.通过节点的id,将图层从document中移除。
             doc.defaultMap.remove(
               doc.defaultMap.findLayerById(layerConfigNode.guid)
             )
           })
         }
 
+        // 发送勾选/取消勾选的图层节点信息
         layerConfigNodeList.forEach((item) => {
           eventBus.$emit(events.DATA_SELECTION_CHANGE_EVENT, item, isChecked)
         })
-
-        // layerConfigNodeList.forEach(async (layerConfigNode): Layer => {
-        //   if (isChecked) {
-        //     // 如果是扩展图层，直接发送事件
-        //     if (
-        //       Object.prototype.hasOwnProperty.call(
-        //         layerConfigNode,
-        //         'serverType'
-        //       ) &&
-        //       !layerConfigNode.serverType
-        //     ) {
-        //       eventBus.$emit(
-        //         events.DATA_CATALOG_EXTEND_DATA_CHECK,
-        //         layerConfigNode
-        //       )
-        //       return
-        //     }
-        //     // 如果是选中了节点
-        //     // 1.根据图层节点的配置,生成webclient-store中定义的图层.
-        //     const layer =
-        //       DataCatalogManager.generateLayerByConfig(layerConfigNode)
-        //     layer.description = this.setDescription(layer)
-
-        //     // 2.将图层添加到全局的document中。
-        //     if (layer) {
-        //       const recordCheckLayer = this.disableTreeNodeCheckBox(layer.id)
-        //       // 2.1加载图层
-        //       try {
-        //         if (layer.loadStatus === LoadStatus.notLoaded) {
-        //           await layer.load()
-        //         }
-        //       } catch (error) {
-        //       } finally {
-        //         // 2.2判断图层是否载成功。如果成功则将图层添加到documet中。否则，给出提示，并将数据目录树中对应的节点设为未选中状态。
-        //         if (layer.loadStatus === LoadStatus.loaded) {
-        //           DataCatalogCheckController.dealLayers(
-        //             layer,
-        //             this.is3DLayer(layer)
-        //           )
-        //           const unAntoResetArr =
-        //             this.layerAutoResetManager.getUnAutoResetArr()
-        //           if (
-        //             this.is3DLayer(layer) &&
-        //             this.is2DMapMode === true &&
-        //             !unAntoResetArr.includes(layer.id)
-        //           ) {
-        //             this.switchMapMode()
-        //           }
-
-        //           // 二维图层如果配置了extend中的location为true则在加载后要执行缩放至操作，三维图层的跳转逻辑则在WebScenePro组件中通过autoReset控制是否跳转
-        //           if (!this.is3DLayer(layer)) {
-        //             const autoResetArr =
-        //               this.layerAutoResetManager.getInitLayerAutoResetArr()
-
-        //             if (
-        //               autoResetArr.includes(layer.id) &&
-        //               !unAntoResetArr.includes(layer.id)
-        //             ) {
-        //               setTimeout(() => {
-        //                 this.fitBounds(layer, this.getDataFlowExtent(layer))
-        //               }, 1000)
-        //             }
-        //           }
-        //           doc.defaultMap.add(layer)
-        //         } else {
-        //           this.$message.error(`图层:${layer.title}加载失败`)
-        //           // checkedNodeKeys.splice(layer.id)
-        //           this.checkedNodeKeys = this.getCheckedLayerConfigIDs(layer.id)
-        //           this.filterCheckNodeKeys()
-        //         }
-        //         if (!this.is3DLayer(layer)) {
-        //           // 图层加载完毕，恢复checkbox可选状态
-        //           this.setCheckBoxEnable(recordCheckLayer, false)
-        //         }
-        //       }
-        //     }
-        //   } else {
-        //     if (
-        //       Object.prototype.hasOwnProperty.call(
-        //         layerConfigNode,
-        //         'serverType'
-        //       ) &&
-        //       !layerConfigNode.serverType
-        //     ) {
-        //       eventBus.$emit(
-        //         events.DATA_CATALOG_EXTEND_DATA_UNCHECK,
-        //         layerConfigNode
-        //       )
-        //       return
-        //     }
-        //     // 如果是取消选中了节点
-        //     // 1.通过节点的key,将图层从document中移除。
-        //     doc.defaultMap.remove(
-        //       doc.defaultMap.findLayerById(layerConfigNode.guid)
-        //     )
-        //   }
-        //   eventBus.$emit(
-        //     events.DATA_SELECTION_CHANGE_EVENT,
-        //     layerConfigNode,
-        //     isChecked
-        //   )
-        // })
       }
     },
     async generateLayer(layerConfigNode) {
@@ -1111,12 +1054,14 @@ export default {
         return
       }
       // 如果是选中了节点
-      // 1.根据图层节点的配置,生成webclient-store中定义的图层.
+      // 1.根据图层节点的配置,生成定义的图层对象.
       const layer = DataCatalogManager.generateLayerByConfig(layerConfigNode)
+      // 设置目录树中节点的title
       layer.description = this.setDescription(layer)
 
       // 2.将图层添加到全局的document中。
       if (layer) {
+        // 将目录树对应节点设置为不可勾选
         const recordCheckLayer = this.disableTreeNodeCheckBox(layer.id)
         // 2.1加载图层
         try {
@@ -1127,7 +1072,7 @@ export default {
         } finally {
           // 2.2判断图层是否载成功。如果成功则将图层添加到documet中。否则，给出提示，并将数据目录树中对应的节点设为未选中状态。
           if (layer.loadStatus === LoadStatus.loaded) {
-            // 判断layer的类型是否为矢量地图、图层底图、geojson类型数据，若为此类型则需要处理配置的样式，若配置则在该图层上再叠加一层geojson显示
+            // 判断layer的类型是否为矢量地图、图层底图、geojson类型数据，若为此类型则需要处理配置的样式
             if (
               [
                 LayerType.IGSMapImage,
@@ -1139,7 +1084,7 @@ export default {
               const featureStyle = layer.extend?.featureStyle
               // 未配置样式的图层正常加载
               if (featureStyle) {
-                // LayerNodeToGeoJsonInstance.addLayerNode(layer)
+                // 设置配置样式
                 LayerFeatureEdit.operateFeatureRelation(
                   layer.type,
                   layer.allSublayers ? layer.allSublayers : [layer],
@@ -1155,6 +1100,7 @@ export default {
             // 是否属于收藏夹
             const isFavoritesLayer = relation && relation[layer.id]
 
+            // 还原已修改过的layerProperty信息（非收藏夹场景复现）
             if (this.is3DLayer(layer) && !isFavoritesLayer) {
               const editConfigArr = LayerPropertyEdit.propertyConfigArr
               if (editConfigArr && editConfigArr.length > 0) {
@@ -1166,13 +1112,15 @@ export default {
             }
             // 收藏夹复现处理opacity和layerProperty
             DataCatalogCheckController.dealLayers(layer, this.is3DLayer(layer))
-            const unAntoResetArr =
+            // 获取不会自动定位到图层所在位置的图层id
+            const unAutoResetArr =
               this.layerAutoResetManager.getUnAutoResetArr()
             if (
               this.is3DLayer(layer) &&
-              this.is2DMapMode === true &&
-              !unAntoResetArr.includes(layer.id)
+              this.is2DMapMode &&
+              !unAutoResetArr.includes(layer.id)
             ) {
+              // 处于二维模式时切换到三维模式
               this.switchMapMode()
             }
 
@@ -1183,18 +1131,43 @@ export default {
 
               if (
                 autoResetArr.includes(layer.id) &&
-                !unAntoResetArr.includes(layer.id)
+                !unAutoResetArr.includes(layer.id)
               ) {
-                setTimeout(() => {
-                  this.fitBounds(layer, this.getDataFlowExtent(layer))
-                }, 1000)
+                // 三维模式下的二维图层若extend中的engineType为Mapbox则不加载也不做跳转
+                const engineType = layer.extend?.engineType
+                if (this.is2DMapMode) {
+                  if (
+                    ['All', 'Mapbox', 'Leaflet', 'Openlayers'].includes(
+                      engineType
+                    ) ||
+                    !engineType
+                  ) {
+                    setTimeout(() => {
+                      this.fitBounds(layer, this.getDataFlowExtent(layer))
+                    }, 1000)
+                  }
+                } else {
+                  // 三维模式下加载的图层设置了engineType属性为二维展示时，不做跳转操作
+                  if (
+                    !['Mapbox', 'Leaflet', 'Openlayers'].includes(engineType)
+                  ) {
+                    setTimeout(() => {
+                      this.fitBounds(layer, this.getDataFlowExtent(layer))
+                    }, 1000)
+                  }
+                }
               }
             }
-            // loadAllLayer.push(layer)
           } else {
             this.$message.error(`图层:${layer.title}加载失败`)
+            if (this.is3DLayer(layer)) {
+              // 图层加载完毕，恢复checkbox可选状态
+              this.setCheckBoxEnable(recordCheckLayer, false)
+            }
             // checkedNodeKeys.splice(layer.id)
+            // 清除选中的节点check状态
             this.checkedNodeKeys = this.getCheckedLayerConfigIDs(layer.id)
+            // 分类展示情况下清除选中的节点check状态
             this.filterCheckNodeKeys()
           }
           if (!this.is3DLayer(layer)) {
@@ -1205,6 +1178,7 @@ export default {
         return layer.loadStatus === LoadStatus.loaded ? layer : null
       }
     },
+    // 分类展示情况下清除选中的节点check状态
     filterCheckNodeKeys() {
       if (this.isClassify) {
         if (this.checkedNodeKeys.length === 0) {
@@ -1218,6 +1192,7 @@ export default {
         }
       }
     },
+    // 处理图层layerProperty属性
     dealLayers(layer, config) {
       let sublayers
       if (this.isIGSScene(layer)) {
@@ -1241,6 +1216,7 @@ export default {
         layer.layerProperty = { ...config.layerProperty }
       }
     },
+    // 判断是不是三维场景服务图层类型
     isIGSScene({ type, layer }) {
       let layerType = type
       if (layer) {
@@ -1295,9 +1271,12 @@ export default {
 
     // 设置tree的checkbox是否可以点击
     setCheckBoxEnable(treeDataConfig, disable) {
+      if (!disable) {
+        this.loading = false
+      }
       this.$set(treeDataConfig, 'disableCheckbox', disable)
     },
-
+    // 设置节点的title提示信息
     setDescription(item) {
       const parentName = ''
       const arr = []
@@ -1309,7 +1288,7 @@ export default {
       }
       return ''
     },
-
+    // 组装节点description属性信息
     findParentName(id, parentName, dataCatalog, arr) {
       dataCatalog.forEach((item) => {
         let copy = parentName
@@ -1339,12 +1318,17 @@ export default {
     onExpand(expandedKeys) {
       this.expandedKeys = expandedKeys
     },
-
+    // 目录树节点勾选事件
     onCheck(checkedKeys, info) {
+      // 当前节点信息
       this.currentNode = info.node.dataRef
+      // 设置layerAutoResetManager类中记录的unAutoReset属性为空（收藏夹场景复现使用）
       this.layerAutoResetManager.setUnAutoResetArr([])
+      // 如果是勾选状态则开启进度条
+      if (info.checked) this.loading = true
       // 如果取消收藏夹中的图层则再次勾选不再使用收藏夹的记录状态
       !info.checked && DataCatalogCheckController.operateCheck(checkedKeys)
+      // 保持分类展示情况下数据的同步
       if (this.isClassify) {
         const preCheckedKeys = this.activeTreeTabRelRelation[this.activeTreeTab]
         this.activeTreeTabRelRelation[this.activeTreeTab] = checkedKeys
@@ -1353,8 +1337,11 @@ export default {
 
     // 选中目录树节点触发展开/收起
     onSelect(selectedKeys, info) {
+      // 将节点信息通过eventBus发送
       this.provideInformation(info.node)
+      // 判断当前节点是否展开
       const flag = this.expandedKeys.includes(selectedKeys[0])
+      // 通过节点的展开/收起状态让节点收起/展开
       if (flag) {
         this.expandedKeys = this.expandedKeys.filter(
           (item) => item !== selectedKeys[0]
@@ -1369,19 +1356,18 @@ export default {
         const layer = this.document.defaultMap.findLayerById(selectedKeys[0])
         if (layer) {
           this.lastSelect = selectedKeys[0]
-          // if (!this.is3DLayer(layer)) {
-          //   !this.is2DMapMode && this.switchMapMode()
-          // }
-
+          // 三维图层在二维模式下需要先切换到三维模式
           if (this.is3DLayer(layer)) {
             this.is2DMapMode && this.switchMapMode()
           }
           setTimeout(() => {
+            // 自动定位至图层所在位置
             this.fitBounds(layer, this.getDataFlowExtent(layer))
           }, 1000)
         }
       }
     },
+    // 图层自动定位方法
     fitBounds(item, layeExtent) {
       const { Cesium, map, viewer, vueCesium } = this
       const isOutOfRange = FitBound.fitBoundByLayer(
@@ -1392,24 +1378,28 @@ export default {
           viewer,
           vueCesium,
         },
-        this.is2DMapMode === true,
+        this.is2DMapMode,
         layeExtent
       )
       if (isOutOfRange) {
         this.$message.error('地图范围有误，已调整为经纬度最大范围')
       }
     },
+    // 获取流图层范围
     getDataFlowExtent(layerItem) {
       if (layerItem.type === LayerType.DataFlow) {
+        // 获取当前流图层
         const dataList = DataFlowList.getDataFlowById(layerItem.id)
+        // 处理流图层数据格式
         const lineArr = dataList.map((item) => {
           const {
             geometry: { coordinates },
           } = item
           return coordinates
         })
-        const line = turf.lineString(lineArr)
-        const [xmin, ymin, xmax, ymax] = turf.bbox(line)
+        // 获取流图层的边界范围
+        const line = lineString(lineArr)
+        const [xmin, ymin, xmax, ymax] = bbox(line)
         return {
           xmin,
           ymin,
@@ -1450,16 +1440,20 @@ export default {
         : this.dataCatalogManager.checkedLayerConfigIDs.filter(
             (item) => !ids.includes(item)
           )
+      // 将当前勾选的相关信息通过DataCatalogCheckController类记录
       DataCatalogCheckController.setCheckData(this.getCurrentData())
     },
 
     dataCatalogChangeNodesForClassify(ids, isChecked) {
+      // 获取目录树所有节点
       const allTreeNodes = this.dataCatalogManager.getAllConfigItems()
+      // 获取通过节点勾选变化后的目录树
       const treeData = DataCatalogCheckController.getDataCatalogRelation(
         ids,
         allTreeNodes
       )
       treeData.forEach((item) => {
+        // 处理分类展示情况下节点勾选变化
         this.operateTabRelRelation(item, isChecked)
       })
     },
@@ -1472,6 +1466,7 @@ export default {
           !this.dataCatalogManager.checkedLayerConfigIDs.includes(id) &&
             checkIds.push(id)
         })
+        // 重新给this.dataCatalogManager.checkedLayerConfigIDs赋值，更新目录树节点勾选
         this.dataCatalogManager.checkedLayerConfigIDs = [
           ...this.dataCatalogManager.checkedLayerConfigIDs,
           ...checkIds,
@@ -1483,25 +1478,31 @@ export default {
           )
       }
     },
-
+    // 处理分类展示情况下节点勾选变化
     operateTabRelRelation(data, isAdd) {
+      // 获取父节点
       const parent = data.find((item) => !item.parentId)
       const child = []
+      // 获取所有子节点
       data.forEach((item) => {
         if (item.parentId) {
           child.push(item.guid)
         }
       })
       let currentCheckKeys
+      // 判断是否是‘其他’分组的数据
       const relationKey = data.length > 1 ? parent.guid : 'ungrouped-data'
+      // 获取当前展示的tab页中的勾选节点id
       if (data.length > 1) {
         currentCheckKeys = this.activeTreeTabRelRelation[parent.guid] || []
       } else {
         currentCheckKeys = this.activeTreeTabRelRelation['ungrouped-data'] || []
+        // ‘其他’分组中的节点没有parentId，此处将该节点当子节点加入到‘其他’分组中
         data.forEach((item) => {
           child.push(item.guid)
         })
       }
+      // 获取最新的勾选节点
       if (isAdd) {
         const newCheckKeys = [...new Set([...currentCheckKeys, ...child])]
         this.activeTreeTabRelRelation[relationKey] = newCheckKeys
@@ -1553,12 +1554,15 @@ export default {
       this.expandedKeys = []
       const keyword: string = value
       if (keyword !== '') {
+        // 递归展开所有和搜索条件的节点
         this.hasKeyWord(this.dataCatalogTreeData, keyword)
         this.hasKeywordArr = JSON.parse(JSON.stringify(this.expandedKeys))
+        // 递归展开与搜索条件关联的上级节点
         this.getAllKeys(this.dataCatalogTreeData)
       } else {
         this.hasKeywordArr = []
       }
+      // 搜索条件没有变化的情况下再次搜索时目录树滚动至下一个符合条件的搜索结果
       if (this.lastSearchVal === value) {
         if (!this.timer) {
           this.setSearchIndex()
@@ -1584,6 +1588,7 @@ export default {
           `#tree_${this.hasKeywordArr[this.searchIndex]}`
         )
         if (element) {
+          // 滚动至对应元素
           element.scrollIntoView()
         }
         this.timer = null
@@ -1592,7 +1597,9 @@ export default {
 
     // 刷新按钮
     async refreshTree() {
+      // 获取数据目录微件的配置信息
       const config = await api.getWidgetConfig('data-catalog')
+      // 获取一张图的应用信息
       const appConfig = await AppManager.getInstance().getRequest()({
         url: this.application.appConfigPath,
         method: 'get',
@@ -1602,12 +1609,13 @@ export default {
       if (appConfig.data && appConfig.data.length > 0) {
         config.treeConfig.treeData = appConfig.data
       }
-
+      // 初始化数据目录
       this.dataCatalogManager.init(config)
 
       this.dataCatalogTreeData =
         await this.dataCatalogManager.getDataCatalogTreeData(true)
       const _allTreeDataConfigs = []
+      // 组装tree组件展示需要的属性
       const { treeData, allTreeDataConfigs } = this.handleTreeData(
         this.dataCatalogTreeData,
         _allTreeDataConfigs
@@ -1623,26 +1631,29 @@ export default {
 
     // 收藏按钮
     bookMarksCheck() {
-      // eventBus.$emit(
-      //   events.ADD_ALL_SELECTED_DATA_BOOKMARK_EVENT,
-      //   this.widgetInfo.label,
-      //   this.checkedNodeKeys,
-      //   this.dataCatalogTreeData
-      // )
       eventBus.$emit(events.DATA_CATALOG_ADD_COLLECT)
     },
 
     resizeCheck() {
+      // 将目录树勾选节点置空
       this.dataCatalogCheckNode([], {})
+      // 将DataCatalogCheckController类中的当前图层勾选信息属性设置为空
       DataCatalogCheckController.setCurrentCheckLayerConfig(null)
+      // 将DataCatalogCheckController类中的当前勾选图层的变化信息设置为空数组
       DataCatalogCheckController.setCurrentLayerChangeConfig([])
+      // 将DataCatalogCheckController类中当前勾选图层中无子图层的图层设置为空数组
       DataCatalogCheckController.setCurrentLayerNoChildList([])
+      // 将DataCatalogCheckController类中当前勾选图层时的场景设置信息设置为空对象
       DataCatalogCheckController.setCurrentCheckSceneSettingConfig({})
+      // 将DataCatalogCheckController类中记录场景设置信息的配置还原成初始化状态
       DataCatalogCheckController.restoreSceneConfig()
+      // 将BaseMapController类中的是否重置标识设置为true
       BaseMapController.isResize = true
+      // 将BaseMapController类中的底图信息设置为空
       BaseMapController.setBaseMapInfo = null
     },
 
+    // 非空间数据加载
     onClick(item) {
       const widgetConfig = this.widgetInfo.config
       this.nonSpatialType = item.data
@@ -1705,6 +1716,7 @@ export default {
     handleTreeData(data: object[], allTreeDataConfigs: []) {
       const this_ = this
       const treeData = data.map((item: any) => {
+        // 设置目录树展示所需的slot和checkbox
         this_.$set(item, 'scopedSlots', { title: 'custom' })
         this_.$set(item, 'disableCheckbox', false)
         /**
@@ -1719,9 +1731,11 @@ export default {
           (!item.children &&
             !Object.prototype.hasOwnProperty.call(item, 'serverType'))
         ) {
+          // 非空间数据的节点不展示checkbox
           this_.$set(item, 'checkable', false)
         }
         allTreeDataConfigs.push(item)
+        // 递归处理children节点
         if (item.children) {
           this_.handleTreeData(item.children, allTreeDataConfigs)
         }
@@ -1731,21 +1745,6 @@ export default {
         treeData,
         allTreeDataConfigs,
       }
-    },
-
-    // 是否显示上传图例
-    hasLegend(node) {
-      // const nodeParentLevel = node.pos
-      //   .split('-')
-      //   .slice(1)
-      //   .map((item) => +item)
-      // const LabelArr = []
-      // this.getNodeLabel(this.dataCatalogTreeData, 0, LabelArr, nodeParentLevel)
-      // if (LabelArr.some((item) => item.indexOf('专题') !== -1)) {
-      //   return true
-      // } else {
-      //   return false
-      // }
     },
 
     // 串联该节点所在层级的description
@@ -1863,39 +1862,6 @@ export default {
       }
     },
 
-    // 右键菜单收藏按钮响应事件
-    addToMark(item) {
-      // isChangeDataCatalog值为true时处于数据目录中，进行收藏。反之则在收藏夹中，取消收藏
-      if (this.isChangeDataCatalog) {
-        eventBus.$emit(
-          events.ADD_DATA_BOOKMARK_EVENT,
-          { params: item, type: this.widgetInfo.label },
-          this.dataCatalogTreeData
-        )
-      } else {
-        this.dataCatalogTreeData = this.dataCatalogTreeData.filter(
-          (mark) => mark.guid !== item.guid
-        )
-        const index = this.bookmarkData[0].children.findIndex(
-          (mark) => mark.guid === item.guid
-        )
-        this.bookmarkData[0].children.splice(index, 1)
-        this.saveBookmarks()
-      }
-    },
-
-    // 监听书签项点击事件
-    bookMarkClick(node) {
-      if (this.dataCatalogManager.checkedLayerConfigIDs.includes(node.guid)) {
-        const index = this.dataCatalogManager.checkedLayerConfigIDs.findIndex(
-          (item) => item === node.guid
-        )
-        this.dataCatalogManager.checkedLayerConfigIDs.splice(index, 1)
-      } else {
-        this.dataCatalogManager.checkedLayerConfigIDs.push(node.guid)
-      }
-    },
-
     // 点击上传图例响应事件
     onUploadLegend(item) {
       this.showUploader = true
@@ -1936,109 +1902,25 @@ export default {
       }
     },
 
-    // 监听服务叠加事件
-    imposeService(params) {
-      this.imposeNode = {}
-      const { Cesium, map, viewer, vueCesium } = this
-      let node = {}
-
-      if (params.type === 'WMS' || params.type === 'WMTS') {
-        // 若服务类型是WMS/WMTS，则通过serverURL和serverType来查找符合条件的节点
-        node = this.dataCatalogManager.getLayerConfigByServerUrlAndType(
-          params.url,
-          params.type
-        )
-      } else {
-        // 否则，则通过serverName和serverType来查找符合条件的节点
-        node = this.dataCatalogManager.getLayerConfigByServerNameAndType(
-          params.name,
-          params.type
-        )
-      }
-
-      if (node !== undefined) {
-        if (this.dataCatalogManager.checkedLayerConfigIDs.includes(node.guid)) {
-          return false
-        } else {
-          eventBus.$once(events.DATA_SELECTION_CHANGE_EVENT, () => {
-            const doc: Document = this.document
-
-            if (doc.defaultMap && doc.defaultMap.allLayers.length > 0) {
-              const imposeLayer = doc.defaultMap.allLayers.find(
-                (item) => item.id === node.guid
-              )
-
-              if (imposeLayer.type !== LayerType.IGSScene) {
-                FitBound.fitBoundByLayer(
-                  imposeLayer,
-                  {
-                    Cesium,
-                    map,
-                    viewer,
-                    vueCesium,
-                  },
-                  this.is2DMapMode === true
-                )
-              } else if (this.is2DMapMode === true) {
-                this.switchMapMode()
-              }
-            }
-          })
-          this.dataCatalogManager.checkedLayerConfigIDs.push(node.guid)
-        }
-      } else {
-        const serviceType = this.dataCatalogManager.convertLayerServiceType(
-          params.type
-        )
-        let url = ''
-        let type = ''
-        const protocol = window.location.protocol
-        switch (serviceType) {
-          case LayerType.IGSTile:
-            url = `${protocol}//${params.ip}:${params.port}/igs/rest/mrms/tile/${params.name}`
-            type = 'IGSTile'
-            break
-          case LayerType.IGSMapImage:
-            url = `${protocol}//${params.ip}:${params.port}/igs/rest/mrms/docs/${params.name}`
-            type = 'IGSMapImage'
-            break
-          case LayerType.IGSScene:
-            url = `${protocol}//${params.ip}:${params.port}/igs/rest/g3d/${params.name}`
-            type = 'IGSScene'
-            break
-          case LayerType.OGCWMTS:
-            url = params.url
-            type = 'OGCWMTS'
-            break
-          case LayerType.OGCWMS:
-            url = params.url
-            type = 'OGCWMS'
-            break
-          default:
-            break
-        }
-
-        const data = {
-          name: '服务叠加',
-          description: '',
-          data: {
-            type: type,
-            url: url,
-            name: params.name || 'OGCWMTS/OGCWMS',
-          },
-          isZoom: true,
-        }
-
-        eventBus.$emit(events.ADD_DATA_EVENT, data)
-      }
-    },
-
+    // 判断节点是否为非空间数据
     isNonSpatial(item) {
-      return item.description.indexOf('非空间数据') > -1
+      return (
+        item.description.indexOf('非空间数据') > -1 ||
+        item.serverType === LayerType.NOSPATIALDATA
+      )
     },
-
+    // 判断节点是否为流图层
     isDataFlow(item) {
       return item.serverType === LayerType.DataFlow
+    },
+
+    /**
+     * 判断是否是ModelCache图层
+     * @param item layer图层
+     * @returns boolean
+     */
+    isModelCacheLayer({ serverType }) {
+      return serverType === LayerType.ModelCache
     },
 
     /**
@@ -2061,6 +1943,7 @@ export default {
         if (!children.children || children.children.length === 0) {
           leafTotal++
           const id = children.guid
+          // 判断该节点是否被勾选
           if (this.dataCatalogManager.checkedLayerConfigIDs.includes(id)) {
             leafChecked++
           }
@@ -2072,62 +1955,8 @@ export default {
       }
       return { leafTotal, leafChecked }
     },
-    async changeBookmark() {
-      this.isChangeDataCatalog = false
-      this.checkedNodeKeysCopy = JSON.parse(
-        JSON.stringify(this.checkedNodeKeys)
-      )
-      const config = await api.getWidgetConfig('bookmark')
-      this.bookmarkData = config
-      const bookmarkData = config.length > 0 ? config[0].children : []
-      const treeData = []
-      bookmarkData.forEach((item) => {
-        const find = this.allTreeDataConfigs.find(
-          (mark) => mark.guid === item.guid
-        )
-        find && treeData.push(find)
-      })
-      this.dataCatalogTreeData = treeData
-    },
 
-    /**
-     * 收藏夹中勾选会给checkedNodeKeys重新赋值，因为在数据目录中的勾选如果在收藏夹中没有的key则会消失，导致数据目录中的勾选不正确
-     *
-     * 1.数据未改变
-     *
-     * 2.收藏夹中取消勾选
-     *
-     * 3.收藏夹中新增勾选
-     *
-     * */
-    getCheckedNodeKeys() {
-      const notInBookmarkKeys = []
-      // 获取收藏夹列表的所有key值
-      const bookmarkKeys = this.bookmarkData[0].children.map(
-        (item) => item.guid
-      )
-      // 获取不在bookmarkKeys中但已被勾选的值
-      this.checkedNodeKeysCopy.forEach((item) => {
-        !bookmarkKeys.includes(item) && notInBookmarkKeys.push(item)
-      })
-      return [...new Set([...notInBookmarkKeys, ...this.checkedNodeKeys])]
-    },
-
-    saveBookmarks() {
-      api
-        .saveWidgetConfig({
-          name: 'bookmark',
-          config: JSON.stringify(this.bookmarkData),
-        })
-        .catch(() => {
-          this.$message.config({
-            top: '100px',
-            duration: 1,
-            maxCount: 3,
-          })
-          this.$message.error('配置文件更新失败')
-        })
-    },
+    // 组装分类展示的目录树数据
     getTabsData(treeData) {
       const tabsData = []
       const tab = {
@@ -2142,6 +1971,7 @@ export default {
       tabsData.push(tab)
       return tabsData
     },
+    // 分类展示切换tab
     treeTabChange(val) {
       this.activeTreeTab = val
       this.dataCatalogTreeData = this.dataCatalogTabData.find(
@@ -2179,9 +2009,9 @@ export default {
       this.isPreClick = targetNode.scrollLeft === 0
       // 控制后置箭头是否可以点击
       this.isSuffixClick =
-        targetNode.scrollWidth - targetNode.offsetWidth ===
-        targetNode.scrollLeft
+        targetNode.scrollWidth - targetNode.offsetWidth <= targetNode.scrollLeft
     },
+    // 分类展示下点击向左箭头
     goback() {
       const targetNode = document.getElementById('tree-tabs-list')
       // 定义滚动距离
@@ -2194,6 +2024,7 @@ export default {
       this.scrollLeft = targetNode.scrollLeft
       this.computedIconClick(targetNode)
     },
+    // 分类展示下点击向右箭头
     goforward() {
       const targetNode = document.getElementById('tree-tabs-list')
       // 定义滚动距离
@@ -2206,6 +2037,7 @@ export default {
       this.scrollLeft = targetNode.scrollLeft
       this.computedIconClick(targetNode)
     },
+    // 获取目录树勾选的节点id数组
     getDataCatalogCheckedNodeKeys() {
       if (!this.isClassify) {
         return [...this.checkedNodeKeys]
@@ -2220,6 +2052,7 @@ export default {
         return allCheck
       }
     },
+    // 移除this.activeTreeTabRelRelation中记录的对应节点id
     filterRemoveKeys(ids) {
       Object.keys(this.activeTreeTabRelRelation).forEach((item) => {
         const keys = this.activeTreeTabRelRelation[item]
@@ -2228,6 +2061,7 @@ export default {
         )
       })
     },
+    // 关闭当前微件后再次打开自动滚动到上一次记录的位置（分类展示）
     scrollTargetPosition() {
       // this.$nextTick在收藏夹切换回数据目录时会失效
       // this.$nextTick(() => {
@@ -2242,14 +2076,17 @@ export default {
         }
       }, 500)
     },
+    // 在微件的onActive函数中执行滚动方法（分类展示）
     onActive() {
       this.scrollTargetPosition()
     },
+    // 计算滚动距离以及是否存在/可点击左右箭头（分类展示）
     reComputed() {
       const targetNode = document.getElementById('tree-tabs-list')
       if (targetNode) targetNode.scrollLeft = this.scrollLeft
       this.computedIconClick(targetNode)
     },
+    // 点击右侧箭头展示所有tab项后对应的点击逻辑（分类展示）
     srcollToSelect(data) {
       if (this.activeTreeTab === data.guid) return
       this.treeTabChange(data.guid)
@@ -2261,6 +2098,7 @@ export default {
     },
     provideInformation(node) {
       const { dataRef } = node
+      // 当前节点为叶子节点并且处于勾选状态时将该节点通过eventBus发出
       if (!dataRef.children) {
         const checked = this.dataCatalogManager.checkedLayerConfigIDs.includes(
           dataRef.guid

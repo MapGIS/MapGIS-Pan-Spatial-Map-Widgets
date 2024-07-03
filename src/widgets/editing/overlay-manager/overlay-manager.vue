@@ -35,7 +35,7 @@ export default {
 
   computed: {
     uploadUrl() {
-      return `${this.baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`
+      return `${this.baseUrl}/${this.appProductName}/rest/services/system/ResourceServer/files/pictures`
     },
     featureConfig() {
       return baseConfigInstance.config.colorConfig
@@ -53,8 +53,20 @@ export default {
       const vm = this
       Object.keys(vm.models).forEach(function (key) {
         for (let i = 0; i < vm.models[key].length; i++) {
-          vm.models[key][i].img = vm.baseUrl + vm.models[key][i].img
-          vm.models[key][i].model = vm.baseUrl + vm.models[key][i].model
+          if (vm.models[key][i].img.startsWith('/file')) {
+            vm.models[key][
+              i
+            ].img = `${vm.baseUrl}/${vm.appProductName}${vm.models[key][i].img}`
+          } else {
+            vm.models[key][i].img = vm.baseUrl + vm.models[key][i].img
+          }
+          if (vm.models[key][i].model.startsWith('/file')) {
+            vm.models[key][
+              i
+            ].model = `${vm.baseUrl}/${vm.appProductName}${vm.models[key][i].model}`
+          } else {
+            vm.models[key][i].model = vm.baseUrl + vm.models[key][i].model
+          }
         }
       })
     }

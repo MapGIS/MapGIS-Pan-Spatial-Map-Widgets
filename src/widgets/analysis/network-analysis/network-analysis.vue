@@ -152,8 +152,16 @@
         :color="color"
       ></cesium-layer>
     </template>
-    <mp-draw-pro ref="draw" @finished="clickFunciton" />
-    <mp-3d-draw-pro ref="draw3d" @finished="clickFunciton" />
+    <mp-draw-pro
+      v-if="is2DMapMode && hasMapDisplay"
+      ref="draw"
+      @finished="clickFunciton"
+    />
+    <mp-3d-draw-pro
+      v-if="!is2DMapMode && hasGlobeDisplay"
+      ref="draw3d"
+      @finished="clickFunciton"
+    />
     <mapgis-ui-modal
       v-model="settingDialog"
       title="设置参数"
@@ -172,6 +180,7 @@ import {
   Analysis,
   UUID,
   markerIconInstance,
+  DisplayModeMixin,
 } from '@mapgis/web-app-framework'
 import MpHinderTable from './hinder-table'
 import MpCoordinateTable from './coordinate-table'
@@ -182,7 +191,7 @@ import cesiumLayer from './map-layer/cesium-layer'
 
 export default {
   name: 'MpNetworkAnalysis',
-  mixins: [WidgetMixin],
+  mixins: [WidgetMixin, DisplayModeMixin],
   components: {
     MpHinderTable,
     MpCoordinateTable,

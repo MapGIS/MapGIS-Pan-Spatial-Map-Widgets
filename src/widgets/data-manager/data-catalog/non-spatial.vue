@@ -173,11 +173,11 @@
         :customRow="rowClick"
         :loading="loading"
       >
-        <template slot="fileType" slot-scope="text, record">
+        <template slot="fileType" slot-scope="text">
           {{ text === 'DIRECTORY' ? '文件夹' : '文件' }}
         </template>
 
-        <template slot="fileSize" slot-scope="text, record">
+        <template slot="fileSize" slot-scope="text">
           {{ text }}
         </template>
         <template slot="operation" slot-scope="text, record">
@@ -199,7 +199,7 @@
             >
           </div>
         </template>
-        <template slot="title" slot-scope="currentPageData">
+        <template slot="title">
           <mapgis-ui-breadcrumb>
             <a-breadcrumb-item
               v-for="(item, index) in breadcrumbList"

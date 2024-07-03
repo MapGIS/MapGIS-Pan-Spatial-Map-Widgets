@@ -35,7 +35,7 @@
             <mapgis-ui-textarea v-model="item.value" autoSize allowClear>
             </mapgis-ui-textarea>
             <mapgis-ui-upload-image
-              :uploadUrl="`${baseUrl}/psmap/rest/services/system/ResourceServer/files/pictures`"
+              :uploadUrl="`${baseUrl}/${productName}/rest/services/system/ResourceServer/files/pictures`"
               :showUploadList="false"
               :baseUrl="prefixUrl"
               :hasPrefix="false"
@@ -91,6 +91,9 @@ export default {
     },
     prefixUrl() {
       return window._CONFIG.domainURL
+    },
+    productName() {
+      return window._CONFIG.productName
     },
   },
   watch: {
