@@ -927,8 +927,7 @@ export default {
       let source
       if (
         layer.type === LayerType.ModelCache &&
-        layer.metaData &&
-        !layer.metaData.dataContentType
+        (!layer.metaData || !layer.metaData.dataContentType)
       ) {
         if (layer.format === ModelCacheFormat.m3d) {
           source = vm.sceneController.findM3DIgsSource(id)
