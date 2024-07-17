@@ -142,6 +142,18 @@ export default {
       return layerType === LayerType.IGSMapImage
     },
     /**
+     * 判断是否是ArcGIS地图服务
+     * @param item layer图层
+     * @returns boolean
+     */
+    isArcgisMapLayer({ type, layer }) {
+      let layerType = type
+      if (layer) {
+        layerType = layer.type
+      }
+      return layerType === LayerType.ArcGISMapImage
+    },
+    /**
      * 判断是否是wmts选中图层
      * @param item layer图层
      * @returns boolean

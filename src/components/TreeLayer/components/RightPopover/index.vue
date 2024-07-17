@@ -87,14 +87,19 @@ export default {
             !this.isModelCacheLayer(this.layerItem),
           click: () => this.toTop(),
         },
+        // 新增地图文档和arcgis地图服务图层属性设置，只是设置图层渲染模式
+        // 龚跃健-202407017
         {
           name: '高级选项',
           show:
             (!this.isParentLayer(this.layerItem) &&
               this.isIGSScene(this.layerItem)) ||
             (this.isModelCacheLayer(this.layerItem) &&
-              !this.isVoxelLayer(this.layerItem)),
-          click: () => this.changeM3DProps(),
+              !this.isVoxelLayer(this.layerItem)) ||
+            (this.isParentLayer(this.layerItem) &&
+              (this.isIgsDocLayer(this.layerItem) ||
+                this.isArcgisMapLayer(this.layerItem))),
+          click: () => this.showAdvancedSetting(),
         },
         {
           name: '模型变换',
@@ -165,8 +170,23 @@ export default {
       )
     },
 
-    changeM3DProps() {
-      this.$emit('change-m3d-props', this.layerItem)
+    showAdvancedSetting() {
+      if (
+        (!this.isParentLayer(this.layerItem) &&
+          this.isIGSScene(this.layerItem)) ||
+        (this.isModelCacheLayer(this.layerItem) &&
+          !this.isVoxelLayer(this.layerItem))
+      ) {
+        this.$emit('change-m3d-props', this.layerItem)
+      } else if (
+        this.isParentLayer(this.layerItem) &&
+        (this.isIgsDocLayer(this.layerItem) ||
+          this.isArcgisMapLayer(this.layerItem))
+      ) {
+        // 新增地图文档和arcgis地图服务图层属性设置，只是设置图层渲染模式
+        // 龚跃健-202407017
+        this.$emit('change-layer-props', this.layerItem)
+      }
     },
 
     modelEdit() {
