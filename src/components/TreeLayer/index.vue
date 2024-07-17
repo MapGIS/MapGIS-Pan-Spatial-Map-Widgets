@@ -137,6 +137,7 @@
                 @to-top="toTop"
                 @edit-data-flow-style="editDataFlowStyle"
                 @change-m3d-props="changeM3DProps"
+                @change-layer-props="changeLayerProps"
                 @model-edit="modelEdit"
                 @feature-edit="featureEdit"
                 @symbolization="symbolization"
@@ -1204,6 +1205,38 @@ export default {
           },
           'update:modelCoordinateGrid': (val, type, layerId) => {
             this.updateModelCoordinateGrid(val, type, layerId)
+          },
+        },
+      })
+    },
+
+    /**
+     * 新增地图文档和arcgis地图服务图层属性设置，只是设置图层渲染模式
+     * 龚跃健-202407017
+     * 打开图层属性编辑页面
+     */
+    changeLayerProps(item) {
+      this.currentLayerInfo = item.dataRef
+      this.clickPopover(item, false)
+      this.openPage({
+        title: '属性编辑',
+        name: 'MpChangeLayerProps',
+        component: () =>
+          import('./components/ChangeLayerProps/ChangeLayerProps.vue'),
+        props: {
+          layer: this.currentLayerInfo,
+        },
+        listeners: {
+          'update:layer': (val) => {
+            const layer = val.layer ? val.layer : val
+            const { dataId, layerProperty } = layer
+            // 更新数据库信息
+            api.updateData({ dataId, layerProperty })
+            const doc = this.layerDocument.clone()
+            const docLayer = doc.defaultMap.findLayerById(layer.id)
+            docLayer.layerProperty = layerProperty
+            // 更新document
+            this.$emit('update:layerDocument', doc)
           },
         },
       })
