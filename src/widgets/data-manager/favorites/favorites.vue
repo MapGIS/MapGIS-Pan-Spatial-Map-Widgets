@@ -62,15 +62,9 @@ export default {
     showType() {
       return this.widgetInfo.config.showType
     },
-    baseUrl() {
-      return window._CONFIG.domainURL
-    },
-    filePathPrefix() {
-      return `${this.baseUrl}/${this.appProductName}`
-    },
     imagesUploadApi() {
       // return `${this.baseUrl}/psmap/rest/manager/file/upload`
-      return `${this.filePathPrefix}/rest/services/system/ResourceServer/files/pictures`
+      return `${this.baseUrl}/${this.appProductName}/rest/services/system/ResourceServer/files/pictures`
     },
     dataCatalogLayerArr() {
       return this.dataCatalogManager.getAllLayerConfigItems()
