@@ -183,21 +183,6 @@ export default {
               duration: 0.1,
             })
         }
-        this.map &&
-          this.map.flyTo({
-            center: [center.split(',')[0], center.split(',')[1]],
-            zoom,
-          })
-
-        this.viewer &&
-          this.viewer.camera.flyTo({
-            destination: this.Cesium.Cartesian3.fromDegrees(
-              center.split(',')[0],
-              center.split(',')[1],
-              initAltitude
-            ),
-            duration: 0.1,
-          })
       })
     }
 
