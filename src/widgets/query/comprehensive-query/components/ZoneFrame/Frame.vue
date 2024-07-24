@@ -253,6 +253,7 @@ export default {
 
   async mounted() {
     this.frameConfig = await api.getConfig('sheet')
+    this.onSearch()
   },
 }
 </script>
