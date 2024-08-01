@@ -62,6 +62,7 @@ import { Rectangle } from '@mapgis/webclient-es6-service/common/Rectangle'
 import {
   Document,
   Layer,
+  LayerType,
   Layer3D,
   Rectangle3D,
   Objects,
@@ -157,7 +158,10 @@ export default {
   computed: {
     // 是否是二维图层
     is2dLayer() {
-      return !(this.mapViewLayer instanceof Layer3D)
+      return (
+        !(this.mapViewLayer instanceof Layer3D) &&
+        this.mapViewLayer.type !== LayerType.OSM
+      )
     },
 
     // 二维或三维地图组件
