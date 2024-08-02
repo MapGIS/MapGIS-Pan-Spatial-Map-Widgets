@@ -5,6 +5,7 @@
       @map-load="onMapLoad"
       :document="document"
       :splitScreen="splitScreen"
+      :crs="crs"
     />
     <!-- 二维地图绘制组件 -->
     <mp-draw-pro
@@ -16,7 +17,7 @@
   </div>
 </template>
 <script lang="ts">
-import { Document, Layer, Objects } from '@mapgis/web-app-framework'
+import { Document, Layer, LayerType, Objects } from '@mapgis/web-app-framework'
 
 export default {
   name: 'MapboxView',
@@ -40,6 +41,12 @@ export default {
   computed: {
     drawComponent() {
       return this.$refs.draw
+    },
+    crs() {
+      if (this.layer.type === LayerType.OSM) {
+        return `EPSG:${this.layer.spatialReference.wkid}`
+      }
+      return 'EPSG:4326'
     },
   },
 
