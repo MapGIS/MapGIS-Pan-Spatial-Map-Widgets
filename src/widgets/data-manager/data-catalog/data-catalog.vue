@@ -355,6 +355,7 @@ import {
   Document,
   Map,
   LayerType,
+  ModelCacheFormat,
   LoadStatus,
   Metadata,
   Layer3D,
@@ -723,10 +724,17 @@ export default {
           for (let j = 0; j < serviceIcons[i].children.length; j++) {
             const child = serviceIcons[i].children[j]
             if (LayerType[child.serviceType] === item.serverType) {
-              icon = child.icon
+              // 模型缓存包含3dtiles
+              const formatType = this.getFormatType(item.customParameters)
+              if (!formatType) {
+                icon = child.icon
+              } else {
+                icon = this.findFormatTypeIcon(formatType, serviceIcons)
+              }
               if (icon.startsWith('/file')) {
                 icon = `${this.baseUrl}/${this.appProductName}${icon}`
               }
+
               return {
                 isSvg: icon && icon.indexOf('<svg') >= 0,
                 icon,
@@ -749,6 +757,33 @@ export default {
       }
 
       return { isSvg: icon && icon.indexOf('<svg') >= 0, icon }
+    },
+    getFormatType(customParameters) {
+      let type
+      customParameters.forEach((item) => {
+        if (
+          ModelCacheFormat[item.format] === ModelCacheFormat.cesium3dTileset
+        ) {
+          type = 'TILE3D'
+        }
+      })
+      return type
+    },
+    findFormatTypeIcon(type, serviceIcons) {
+      let icon
+      serviceIcons.forEach((item) => {
+        if (item.children) {
+          item.children.forEach((child) => {
+            if (
+              child.serviceType === type ||
+              LayerType[child.serviceType] === type
+            ) {
+              icon = child.icon
+            }
+          })
+        }
+      })
+      return icon
     },
     onClose() {
       this.currentNode = null
