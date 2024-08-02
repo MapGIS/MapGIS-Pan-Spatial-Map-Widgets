@@ -246,7 +246,7 @@
                   item.serverType &&
                   !isNonSpatial(item) &&
                   !isDataFlow(item) &&
-                  !isModelCacheLayer(item)
+                  !isModelCacheLayer(item) & !isOSM(item)
                 "
                 key="1"
                 @click="showMetaDataInfo(item)"
@@ -1947,6 +1947,15 @@ export default {
     // 判断节点是否为流图层
     isDataFlow(item) {
       return item.serverType === LayerType.DataFlow
+    },
+
+    /**
+     * 判断是否是OSM图层
+     * @param item layer图层
+     * @returns boolean
+     */
+    isOSM(item) {
+      return item.serverType === LayerType.OSM
     },
 
     /**
