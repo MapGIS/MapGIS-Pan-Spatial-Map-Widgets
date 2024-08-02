@@ -95,10 +95,10 @@ export default {
     }
   }
   &.active {
-    background-color: fade($primary-color, 50%);
+    background: var(--primary-2);
   }
   &:hover {
-    background-color: fade($primary-color, 20%);
+    background: var(--primary-2);
     .actions {
       display: block;
     }
