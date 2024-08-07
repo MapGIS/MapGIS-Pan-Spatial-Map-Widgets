@@ -497,6 +497,7 @@ export default {
       currentOGCMetadata: {},
       // 非空间数据的数据类型
       dataType: undefined,
+      iconArrCache: {},
       // 图层加载时的loading状态
       loading: false,
     }
@@ -720,27 +721,17 @@ export default {
         if (!serviceIcons || serviceIcons.length == 0) {
           serviceIcons = defaultDataIconsConfig.serviceIcons
         }
-        for (let i = 0; i < serviceIcons.length; i++) {
-          for (let j = 0; j < serviceIcons[i].children.length; j++) {
-            const child = serviceIcons[i].children[j]
-            if (LayerType[child.serviceType] === item.serverType) {
-              // 模型缓存包含3dtiles
-              const formatType = this.getFormatType(item.customParameters)
-              if (!formatType) {
-                icon = child.icon
-              } else {
-                icon = this.findFormatTypeIcon(formatType, serviceIcons)
-              }
-              if (icon.startsWith('/file')) {
-                icon = `${this.baseUrl}/${this.appProductName}${icon}`
-              }
 
-              return {
-                isSvg: icon && icon.indexOf('<svg') >= 0,
-                icon,
-              }
-            }
-          }
+        const serviceType = this.getServiceType(item, serviceIcons)
+        icon = this.findFormatTypeIcon(serviceType, serviceIcons)
+        if (icon.startsWith('/file')) {
+          icon = `${this.baseUrl}/${this.appProductName}${icon}`
+        } else {
+          icon = `${this.baseUrl}${icon}`
+        }
+        return {
+          isSvg: icon && icon.indexOf('<svg') >= 0,
+          icon,
         }
       }
       if (
@@ -758,6 +749,20 @@ export default {
 
       return { isSvg: icon && icon.indexOf('<svg') >= 0, icon }
     },
+    getServiceType(item, serviceIcons) {
+      const layerType = LayerType
+      let serviceType
+      if (LayerType[item.serverType]) {
+        // ModelCache需要区分m3d和3dTiles
+        if (LayerType.ModelCache === item.serverType) {
+          const formatType = this.getFormatType(item.customParameters)
+          serviceType = formatType ? formatType : item.serverType
+        } else {
+          serviceType = item.serverType
+        }
+      }
+      return serviceType
+    },
     getFormatType(customParameters) {
       let type
       customParameters.forEach((item) => {
@@ -771,6 +776,9 @@ export default {
     },
     findFormatTypeIcon(type, serviceIcons) {
       let icon
+      if (this.iconArrCache[type]) {
+        return this.iconArrCache[type]
+      }
       serviceIcons.forEach((item) => {
         if (item.children) {
           item.children.forEach((child) => {
@@ -779,6 +787,7 @@ export default {
               LayerType[child.serviceType] === type
             ) {
               icon = child.icon
+              this.iconArrCache[type] = icon
             }
           })
         }
