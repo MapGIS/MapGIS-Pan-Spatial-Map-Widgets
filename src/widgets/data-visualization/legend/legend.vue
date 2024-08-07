@@ -82,9 +82,24 @@ export default {
     }
   },
 
-  created() {},
+  created() {
+    // 监听事件在组件创建的时候，就进行，不然数据目录默认加载的数据，无法监听到
+    eventBus.$on(events.UPLOAD_LEGEND_SUCCESS_EVENT, this.onGetConfig)
+    eventBus.$on(
+      events.DATA_SELECTION_KEYS_CHANGE_EVENT,
+      this.onCheckedKeysChange
+    )
+  },
   methods: {
     async onOpen() {
+      await this.getTreedata()
+      this.$message.config({
+        top: '100px',
+        duration: 2,
+        maxCount: 1,
+      })
+    },
+    async getTreedata() {
       const config = await api.getWidgetConfig('data-catalog')
       const appConfig = await AppManager.getInstance().getRequest()({
         url: this.application.appConfigPath,
@@ -96,16 +111,6 @@ export default {
       }
       dataCatalogManagerInstance.init(config)
       this.treeData = await dataCatalogManagerInstance.getDataCatalogTreeData()
-      eventBus.$on(events.UPLOAD_LEGEND_SUCCESS_EVENT, this.onGetConfig)
-      eventBus.$on(
-        events.DATA_SELECTION_KEYS_CHANGE_EVENT,
-        this.onCheckedKeysChange
-      )
-      this.$message.config({
-        top: '100px',
-        duration: 2,
-        maxCount: 1,
-      })
     },
     beforeDestroy() {
       eventBus.$off(events.UPLOAD_LEGEND_SUCCESS_EVENT)
@@ -145,6 +150,10 @@ export default {
 
     // 初始化图例数据
     async initData() {
+      if (this.treeData.length < 1) {
+        // 监听到数据目录默认加载的数据的时候，如果还没有获取到数据目录，则获取后，再初始化图例数据
+        await this.getTreedata()
+      }
       const newConfig = await api.getWidgetConfig('legend')
       this.checkedTreeData = []
       this.getCheckNodeData(this.treeData)
