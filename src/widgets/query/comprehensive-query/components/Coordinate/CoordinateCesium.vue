@@ -82,7 +82,8 @@ export default {
         if (!this.pickable) return
         // 判断是否点击到标注点，点击到标注点则不进行拾取
         const pickedFeature = this.viewer.scene.pick(movement.position)
-        if (pickedFeature && pickedFeature.id.markLabel) return
+        if (pickedFeature && pickedFeature.id && pickedFeature.id.markLabel)
+          return
         // 通过指定的椭球或者地图对应的坐标系，将鼠标的二维坐标转换为对应椭球体三维坐标
         const { ellipsoid } = this.viewer.scene.globe
         const cartesian = this.viewer.camera.pickEllipsoid(
