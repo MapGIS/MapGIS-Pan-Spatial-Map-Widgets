@@ -335,11 +335,31 @@ export default {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .contain-img {
   width: 246px;
   height: 246px;
   object-fit: contain;
   background: rgba(128, 128, 128, 0.2);
+}
+
+::v-deep .mapgis-ui-collapse-content > .mapgis-ui-collapse-content-box {
+  padding: unset;
+}
+
+::v-deep
+  .mapgis-ui-collapse
+  > .mapgis-ui-collapse-item
+  > .mapgis-ui-collapse-header {
+  padding: unset;
+  padding-left: 20px;
+}
+
+::v-deep
+  .mapgis-ui-collapse
+  > .mapgis-ui-collapse-item
+  > .mapgis-ui-collapse-header
+  .mapgis-ui-collapse-arrow {
+  left: 2px;
 }
 </style>
