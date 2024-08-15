@@ -100,6 +100,9 @@ export default {
           this.map.transform.resetZoomScale = false
         }
       }
+      // 初始化的时候做复位操作，避免二维初始化默认是原点位置
+      // 修改人:龚跃健，2024年8月15日
+      this.onRestore()
     })
   },
 
