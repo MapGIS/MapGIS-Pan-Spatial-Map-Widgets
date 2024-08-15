@@ -68,15 +68,47 @@ export default {
     }
   },
   methods: {
-    altitudeToZoom(height) {
-      const lv =
-        // eslint-disable-next-line no-restricted-properties
-        Math.round(D + (A - D) / (1 + Math.pow(Number(height) / C, B))) + 1
-      return lv > -1 ? lv : 0
-    },
     zoomToAltitude(zoom) {
       // eslint-disable-next-line no-restricted-properties
       return Math.round(C * Math.pow((A - D) / (zoom - D) - 1, 1 / B))
+    },
+    /**
+     * cesium获取指定点的显示级别和分辨率
+     */
+    getZoomAndResolution(lnglat) {
+      const { viewer } = this
+      const tileList = viewer.scene.globe._surface._tilesToRender
+      const coords = {
+        lng: Cesium.Math.toRadians(lnglat.lng),
+        lat: Cesium.Math.toRadians(lnglat.lat),
+      }
+      let maxLevel = -1
+      let correctTile
+      tileList.forEach((tile) => {
+        if (
+          coords.lng >= tile._rectangle.west &&
+          coords.lng <= tile._rectangle.east &&
+          coords.lat >= tile._rectangle.south &&
+          coords.lat <= tile._rectangle.north
+        ) {
+          if (maxLevel < tile._level) {
+            maxLevel = tile._level
+            correctTile = tile
+          }
+        }
+      })
+      let texelSpacing
+      if (maxLevel > -1) {
+        texelSpacing =
+          1.0 *
+          viewer.terrainProvider.getLevelMaximumGeometricError(
+            correctTile.level
+          )
+      }
+      return {
+        zoom: maxLevel,
+        resolution: texelSpacing,
+      }
     },
     /**
      * 获取当前视图的中心点及层级、高度
@@ -84,20 +116,52 @@ export default {
     getCurrentViewRectBounds() {
       const { Cesium, map, vueCesium, viewer } = this
       if (!this.is2DMapMode) {
-        const res = viewer.camera.pickEllipsoid(
-          new Cesium.Cartesian2(
-            viewer.canvas.clientWidth / 2,
-            viewer.canvas.clientHeight / 2
+        const extend = viewer.camera.computeViewRectangle()
+        // const params = {}
+        if (typeof extend === 'undefined') {
+          // 如果通过以上方法获取不到范围，则通过视图四个顶点，计算范围
+          const coordToLonlat = (viewer, x, y) => {
+            const { camera, scene } = viewer
+            const d2 = new Cesium.Cartesian2(x, y)
+            const ellipsoid = scene.globe.ellipsoid
+            // 2D转3D世界坐标
+            const d3 = camera.pickEllipsoid(d2, ellipsoid)
+            // 3D世界坐标转弧度
+            const upperLeftCartographic =
+              scene.globe.ellipsoid.cartesianToCartographic(d3)
+            // 弧度转经纬度
+            const lon = Cesium.Math.toDegrees(upperLeftCartographic.longitude)
+            const lat = Cesium.Math.toDegrees(upperLeftCartographic.latitude)
+            return { lon, lat }
+          }
+          const canvas = viewer.scene.canvas
+          const upperLeftLonLat = coordToLonlat(viewer, 0, 0)
+          const lowerRightLonLat = coordToLonlat(
+            viewer,
+            canvas.clientWidth,
+            canvas.clientHeight
           )
-        )
-        const curPosition = Cesium.Ellipsoid.WGS84.cartesianToCartographic(res)
-        const lon = (curPosition.longitude * 180) / Math.PI
-        const lat = (curPosition.latitude * 180) / Math.PI
-        this.center = [lon, lat]
-        const height = Cesium.Cartographic.fromCartesian(
-          viewer.camera.position
-        ).height
-        this.zoom = this.altitudeToZoom(height)
+          this.rectBounds = {
+            xmin: upperLeftLonLat.lon,
+            ymin: lowerRightLonLat.lat,
+            xmax: lowerRightLonLat.lon,
+            ymax: upperLeftLonLat.lat,
+          }
+        } else {
+          // 三维视图
+          this.rectBounds = {
+            xmin: Cesium.Math.toDegrees(extend.west),
+            ymin: Cesium.Math.toDegrees(extend.south),
+            xmax: Cesium.Math.toDegrees(extend.east),
+            ymax: Cesium.Math.toDegrees(extend.north),
+          }
+        }
+        const { xmin, ymin, xmax, ymax } = this.rectBounds
+        this.center = {
+          lng: (xmin + xmax) / 2,
+          lat: (ymin + ymax) / 2,
+        }
+        this.zoom = this.getZoomAndResolution(this.center).zoom
       } else if (this.map) {
         this.center = this.map.getCenter()
         const zoom = this.map.getZoom()
@@ -134,7 +198,7 @@ export default {
       } else {
         this.map.jumpTo({
           center: this.center,
-          zoom: this.zoom - 1,
+          zoom: this.zoom,
         })
       }
     },
