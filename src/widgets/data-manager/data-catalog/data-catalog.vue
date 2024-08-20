@@ -724,14 +724,16 @@ export default {
 
         const serviceType = this.getServiceType(item, serviceIcons)
         icon = this.findFormatTypeIcon(serviceType, serviceIcons)
-        if (icon.startsWith('/file')) {
-          icon = `${this.baseUrl}/${this.appProductName}${icon}`
-        } else {
-          icon = `${this.baseUrl}${icon}`
-        }
-        return {
-          isSvg: icon && icon.indexOf('<svg') >= 0,
-          icon,
+        if (icon) {
+          if (icon.startsWith('/file')) {
+            icon = `${this.baseUrl}/${this.appProductName}${icon}`
+          } else {
+            icon = `${this.baseUrl}${icon}`
+          }
+          return {
+            isSvg: icon && icon.indexOf('<svg') >= 0,
+            icon,
+          }
         }
       }
       if (
