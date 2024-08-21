@@ -81,7 +81,6 @@ export default {
       scrollPositionKey: undefined,
     }
   },
-
   created() {
     // 监听事件在组件创建的时候，就进行，不然数据目录默认加载的数据，无法监听到
     eventBus.$on(events.UPLOAD_LEGEND_SUCCESS_EVENT, this.onGetConfig)
@@ -168,7 +167,7 @@ export default {
           obj = {
             description: item.name,
             legendLabel: item.name,
-            imgUrl: `${this.baseUrl}${newConfig[item.name]}`,
+            imgUrl: this.getImage(newConfig[item.name]),
             name: item.name,
           }
         } else {
@@ -189,7 +188,7 @@ export default {
             obj = {
               description: tempDescription,
               legendLabel: tempLengendLabel,
-              imgUrl: `${this.baseUrl}${newConfig[tempDescription]}`,
+              imgUrl: this.getImage(newConfig[tempDescription]),
               name: tempLengendLabel,
             }
           } else {
@@ -203,7 +202,7 @@ export default {
                 obj = {
                   description: description,
                   legendLabel: legendLabel,
-                  imgUrl: `${this.baseUrl}${newConfig[description]}`,
+                  imgUrl: this.getImage(newConfig[description]),
                   name: legendLabel,
                 }
                 break
@@ -220,7 +219,7 @@ export default {
                   obj = {
                     description: tempDescription,
                     legendLabel: tempLengendLabel,
-                    imgUrl: `${this.baseUrl}${tempLegend}`,
+                    imgUrl: this.getImage(tempLegend),
                     name: tempLengendLabel,
                   }
                   await api.saveWidgetConfig({
@@ -241,7 +240,7 @@ export default {
                     obj = {
                       description: tempDescription,
                       legendLabel: tempLengendLabel,
-                      imgUrl: `${this.baseUrl}${tempLegend}`,
+                      imgUrl: this.getImage(tempLegend),
                       name: tempLengendLabel,
                     }
                     await api.saveWidgetConfig({
@@ -260,7 +259,7 @@ export default {
                       obj = {
                         description: tempDescription,
                         legendLabel: tempLengendLabel,
-                        imgUrl: `${this.baseUrl}${tempLegend}`,
+                        imgUrl: this.getImage(tempLegend),
                         name: tempLengendLabel,
                       }
                       await api.saveWidgetConfig({
@@ -278,7 +277,7 @@ export default {
                     obj = {
                       description: tempDescription,
                       legendLabel: tempLengendLabel,
-                      imgUrl: `${this.baseUrl}${tempLegend}`,
+                      imgUrl: this.getImage(tempLegend),
                       name: tempLengendLabel,
                     }
                     await api.saveWidgetConfig({
@@ -330,6 +329,12 @@ export default {
     },
     collapseChange(keys) {
       this.activeKey = [...keys]
+    },
+    getImage(image) {
+      if (image.startsWith('/file')) {
+        return `${this.baseUrl}/${this.appProductName}${image}`
+      }
+      return `${this.baseUrl}${image}`
     },
   },
 }
