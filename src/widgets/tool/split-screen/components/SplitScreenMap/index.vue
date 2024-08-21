@@ -33,6 +33,8 @@ import {
   Layer3D,
   Objects,
   Rectangle3D,
+  CoordinateTransformation,
+  CoordinateSystemType,
 } from '@mapgis/web-app-framework'
 import MapView from '../MapView'
 
@@ -113,7 +115,28 @@ export default {
           )
         }
       }
-      this.initBound = _initBound
+      // 将全图范围统一转换为经纬度
+      if (
+        layer.spatialReference &&
+        layer.spatialReference.wkid === CoordinateSystemType.webMercator
+      ) {
+        const xminYminConverted = CoordinateTransformation.mercatorToWGS84([
+          _initBound.xmin,
+          _initBound.ymin,
+        ])
+        const xmaxYmaxConverted = CoordinateTransformation.mercatorToWGS84([
+          _initBound.xmax,
+          _initBound.ymax,
+        ])
+        this.initBound = {
+          xmin: xminYminConverted[0],
+          ymin: xminYminConverted[1],
+          xmax: xmaxYmaxConverted[0],
+          ymax: xmaxYmaxConverted[1],
+        }
+      } else {
+        this.initBound = _initBound
+      }
     },
   },
 
