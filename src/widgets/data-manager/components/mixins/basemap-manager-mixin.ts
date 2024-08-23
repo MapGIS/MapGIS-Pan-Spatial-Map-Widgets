@@ -72,7 +72,6 @@ export default {
       this.basemapNames = []
     },
     isShowChange(val) {
-      this.changeBaseMap(val)
       if (!val) {
         this.basemapNamesCopy = [...this.basemapNames]
         this.clearBasemap()
