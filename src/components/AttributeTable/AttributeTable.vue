@@ -180,7 +180,7 @@
         <mp-window
           :id="statisticsId"
           title="属性统计"
-          :width="500"
+          :width="600"
           :height="330"
           :bottom="10"
           :verticalOffset="10"
