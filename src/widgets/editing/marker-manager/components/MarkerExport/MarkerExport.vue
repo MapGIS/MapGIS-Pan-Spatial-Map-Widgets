@@ -33,7 +33,7 @@ export default {
         exportFileType: 'shp格式',
       },
       // 导出格式下拉项配置
-      exportFileTypes: ['shp格式', '6x格式', 'excel格式'],
+      exportFileTypes: ['shp格式', '6x格式', 'csv格式'],
       // private shpOr6xOption: any
       shpOr6xOption: {},
     }
@@ -86,8 +86,8 @@ export default {
                 '6x'
               )
               break
-            case 'excel格式':
-              this.ouputToExcel(
+            case 'csv格式':
+              this.ouputToCSV(
                 this.exportOptions.exportFileName,
                 exportedMarkers
               )
@@ -174,8 +174,8 @@ export default {
       }
     },
 
-    // 导出格式为Excel
-    ouputToExcel(fileName: string, exportedMarkers) {
+    // 导出格式为csv
+    ouputToCSV(fileName: string, exportedMarkers) {
       exportedMarkers = exportedMarkers.map((item) => {
         return {
           ...item,
@@ -183,46 +183,29 @@ export default {
           features: `type: ${item.features[0].geometry.type}`,
         }
       })
-      const sheet = XLSX.utils.json_to_sheet(exportedMarkers)
-      let blob = this.sheet2blob(sheet)
+      let csvContent = ''
+      // 添加CSV表头（可选）
+      const keys = Object.keys(exportedMarkers[0])
+      csvContent += `${keys.join(',')}\n`
 
-      if (typeof blob === 'object' && blob instanceof Blob) {
-        blob = URL.createObjectURL(blob) // 创建blob地址
-      }
-
-      const a = document.createElement('a')
-      a.style.display = 'none'
-      a.href = blob
-      a.download = `${fileName}.xlsx`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-    },
-
-    // 将一个sheet转成最终的excel文件的blob对象，然后利用URL.createObjectURL下载
-    sheet2blob(sheet, sheetName) {
-      sheetName = sheetName || 'sheet1'
-      const workbook = {
-        SheetNames: [sheetName],
-        Sheets: {},
-      }
-      workbook.Sheets[sheetName] = sheet
-      // 生成excel的配置项
-      const wopts = {
-        bookType: 'xlsx', // 要生成的文件类型
-        bookSST: false, // 是否生成Shared String Table，官方解释是，如果开启生成速度会下降，但在低版本IOS设备上有更好的兼容性
-        type: 'binary',
-      }
-      const wbout = XLSX.write(workbook, wopts)
-      const blob = new Blob([s2ab(wbout)], { type: 'application/octet-stream' })
-      // 字符串转ArrayBuffer
-      function s2ab(s) {
-        const buf = new ArrayBuffer(s.length)
-        const view = new Uint8Array(buf)
-        for (let i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xff
-        return buf
-      }
-      return blob
+      exportedMarkers.forEach((row) => {
+        const rowData = Object.values(row)
+          .map((item) => `"${item}"`)
+          .join(',')
+        csvContent = `${csvContent}${rowData}\n`
+      })
+      // \ufeff 必须加，不会会乱码
+      const blob = new Blob([`\ufeff${csvContent}`], {
+        type: 'text/csv;charset=utf-8;',
+      })
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', `${fileName}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     },
 
     markers2Features(markers: Record<string, any>[]) {
