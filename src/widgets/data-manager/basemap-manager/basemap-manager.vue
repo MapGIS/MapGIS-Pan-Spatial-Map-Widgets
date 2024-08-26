@@ -3,7 +3,7 @@
     <mapgis-ui-switch-row-left
       title="显示底图"
       v-model="isShow"
-      @change="isShowChange"
+      @change="isShowBasemapChange"
     />
     <div class="basemap-wrapper">
       <mp-basemap-item
@@ -204,6 +204,10 @@ export default {
     }
   },
   methods: {
+    isShowBasemapChange(val) {
+      this.changeBaseMap(val)
+      this.isShowChange(val)
+    },
     changeBaseMap(val) {
       const baseMapInfo = { ...this.baseMapController.currentBaseMapInfo }
       // 直接设置isShow即可
