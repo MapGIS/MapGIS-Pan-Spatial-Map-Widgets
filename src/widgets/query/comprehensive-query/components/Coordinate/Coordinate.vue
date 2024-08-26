@@ -296,14 +296,14 @@ export default {
 
       if (this.crs && this.crs !== this.defaultCrs) {
         // 底图和用户选择的坐标系不一样
-        const { data } = await ProjectionTransformationUtil.projectPoints(
+        const res = await ProjectionTransformationUtil.projectPoints(
           [[Number(xTemp), Number(yTemp)]],
           this.crs,
           this.defaultCrs
         )
-        if (data.Code === 1) {
-          xTemp = data.Data[0].x
-          yTemp = data.Data[0].y
+        if (res.Code === 1) {
+          xTemp = res.Data[0].x
+          yTemp = res.Data[0].y
         }
       }
 
@@ -364,14 +364,14 @@ export default {
       let y = lat.toString()
       if (this.crs && this.crs !== this.defaultCrs) {
         // 底图和用户选择的坐标系不一样
-        const { data } = await ProjectionTransformationUtil.projectPoints(
+        const res = await ProjectionTransformationUtil.projectPoints(
           [[lng, lat]],
           this.defaultCrs,
           this.crs
         )
-        if (data.Code === 1) {
-          x = (data.Data[0].x as number).toString()
-          y = (data.Data[0].y as number).toString()
+        if (res.Code === 1) {
+          x = (res.Data[0].x as number).toString()
+          y = (res.Data[0].y as number).toString()
         }
       }
       this.coordDecimal = [Number(x), Number(y)]
