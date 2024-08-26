@@ -12,6 +12,7 @@
               v-for="(item, index) in layerArrOption"
               :key="index"
               :value="index"
+              :title="item.title"
             >
               {{ item.title }}
             </mapgis-ui-select-option>
@@ -66,6 +67,7 @@
               v-for="(item, index) in layerArrOption"
               :key="index"
               :value="index"
+              :title="item.title"
             >
               {{ item.title }}
             </mapgis-ui-select-option>
