@@ -42,10 +42,6 @@ export default {
   },
   data() {
     return {
-      entityNames: [],
-
-      entityTextNames: [],
-
       timer: null,
     }
   },
@@ -56,6 +52,9 @@ export default {
       this.vueCesium,
       this.viewer
     )
+    this.entityNames = []
+    this.entityTextNames = []
+
     this.featureChange()
     this.timer = window.setTimeout(() => {
       this.clearTimer()
