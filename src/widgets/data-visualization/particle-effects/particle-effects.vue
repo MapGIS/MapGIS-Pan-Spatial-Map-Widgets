@@ -35,7 +35,7 @@ export default {
       return {
         guid: item.guid,
         name: item.name,
-        image: `${this.baseUrl}${item.image}`,
+        image: this.imageUrl(item.image),
         iconUrl: item.iconUrl,
         config: item.config,
       }
@@ -44,6 +44,12 @@ export default {
   },
 
   methods: {
+    imageUrl(url) {
+      if (url.startsWith('/file')) {
+        return `${this.baseUrl}/${this.appProductName}${url}`
+      }
+      return `${this.baseUrl}${url}`
+    },
     load(particleEffects) {
       this.particleEffects = particleEffects
     },
