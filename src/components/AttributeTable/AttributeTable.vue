@@ -882,8 +882,8 @@ export default {
         serverType === LayerType.IGSScene ||
         serverType === LayerType.IGSTile
       ) {
-        let domain
-        if (!!serverUrl && serverUrl.length > 0) {
+        let { domain } = this.optionVal
+        if (!domain && !!serverUrl && serverUrl.length > 0) {
           const url = new URL(serverUrl)
           domain = url.origin
         }

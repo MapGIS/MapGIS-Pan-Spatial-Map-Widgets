@@ -598,8 +598,13 @@ export default {
             this.queryFeaturesByArcgis(layer, geometry)
             break
           case LayerType.IGSTile:
+            if (!layer.searchParams || !layer.searchParams.searchName) {
+              return
+            }
             if (layer.sublayers && layer.sublayers.length > 0) {
               this.queryFeaturesByBindDoc(layer, geometry)
+            } else {
+              this.quertFeatruesByVector(layer, geometry)
             }
             break
           default:
@@ -899,7 +904,8 @@ export default {
         return
       }
       const { extend } = layer
-      const { domain, docName } = layer._parseUrl(layer.url)
+      const url = new URL(layer.url)
+      const domain = url.origin
       const isDataStoreQuery = false
       const DNSName = undefined
       const ipPortObj = this.getIpPort({
@@ -912,11 +918,12 @@ export default {
           {
             id: layer.id,
             DNSName,
+            name: layer.title,
             isDataStoreQuery,
             domain,
             ...ipPortObj,
-            serverType: layer.type,
-            gdbp: layer.gdbps,
+            serverType: LayerType.IGSVector,
+            gdbp: layer.gdbps || layer.searchParams.searchName,
             geometry: geometry,
           },
         ],

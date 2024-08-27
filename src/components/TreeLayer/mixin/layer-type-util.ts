@@ -219,11 +219,9 @@ export default {
     isAttributes(item) {
       const bool =
         (this.isSubLayer(item) && this.isIgsDocLayer(item)) ||
-        (this.isSubLayer(item) &&
-          this.isIGSScene(item) &&
-          this.includeBindData(item)) ||
         (this.isSubLayer(item) && this.isArcGISMapImage(item)) ||
         (this.isSubLayer(item) && this.isIgsVectorLayer(item)) ||
+        (this.isSubLayer(item) && this.includeBindData(item)) ||
         this.isDataFlow(item) ||
         (this.isModelCacheLayer(item) &&
           this.includeBindData(item) &&
@@ -309,8 +307,7 @@ export default {
           this.isWMSLayer(item) ||
           this.isArcGISMapImage(item) ||
           this.isArcGISTile(item) ||
-          this.isVectorTile(item) ||
-          this.isIgsTileLayerBindIgsMapImageData(item)) &&
+          this.isVectorTile(item)) &&
         this.isParentLayer(item)
       return bool
     },
@@ -624,6 +621,7 @@ export default {
           },
         },
         {
+          // 瓦片挂载地图服务
           type: parent && this.isIgsTileLayer(parent),
           setValue: () => {
             const { domain } = parent._parseUrl(parent.url)
@@ -649,6 +647,37 @@ export default {
                 f: queryType || '',
               },
               popupOption: parent.extend?.popupOption,
+            }
+          },
+        },
+        {
+          // 瓦片挂载图层服务
+          type: this.isIgsTileLayer(layer),
+          setValue: () => {
+            const url = new URL(layer.url)
+            const domain = url.origin
+            const isDataStoreQuery = false
+            const DNSName = undefined
+            const ipPortObj = this.getIpPort({ isDataStoreQuery })
+            exhibition = {
+              id: `${layer.title} ${layer.id}`,
+              name: `${layer.title} ${titleType}`,
+              description: `${layer.title}`,
+              option: {
+                id: layer.id,
+                name: layer.title,
+                isDataStoreQuery,
+                DNSName,
+                domain,
+                ...ipPortObj,
+                serverType: LayerType.IGSVector,
+                layerIndex: undefined,
+                gdbp: layer.searchParams.searchName,
+                serverName: undefined,
+                serverUrl: layer.url,
+                f: queryType || '',
+              },
+              popupOption: layer.extend?.popupOption,
             }
           },
         },
