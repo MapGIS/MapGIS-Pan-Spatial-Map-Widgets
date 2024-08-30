@@ -309,6 +309,8 @@ export default {
       currentOGCMetadata: undefined,
       // 记录当前编辑的图层id
       currentEditLayerId: '',
+      // 图层类型图标缓存
+      iconArrCache: {},
     }
   },
   computed: {
@@ -508,7 +510,7 @@ export default {
               for (let j = 0; j < layerIcons[i].children.length; j++) {
                 const child = layerIcons[i].children[j]
                 if (child.layerType === 'Group') {
-                  icon = child.icon
+                  icon = this.getImageUrl(child.icon)
                   return {
                     isSvg: icon && icon.indexOf('<svg') >= 0,
                     icon,
@@ -525,16 +527,17 @@ export default {
         if (!serviceIcons || serviceIcons.length == 0) {
           serviceIcons = defaultDataIconsConfig.serviceIcons
         }
-        for (let i = 0; i < serviceIcons.length; i++) {
-          for (let j = 0; j < serviceIcons[i].children.length; j++) {
-            const child = serviceIcons[i].children[j]
-            if (type === LayerType[child.serviceType]) {
-              icon = child.icon
-              return {
-                isSvg: icon && icon.indexOf('<svg') >= 0,
-                icon,
-              }
-            }
+        if (LayerType.ModelCache === type) {
+          const formatType = this.getFormatType(item.dataRef)
+          icon = this.findFormatTypeIcon(formatType, serviceIcons)
+        } else {
+          icon = this.findFormatTypeIcon(type, serviceIcons)
+        }
+        icon = this.getImageUrl(icon)
+        if (icon) {
+          return {
+            isSvg: icon && icon.indexOf('<svg') >= 0,
+            icon,
           }
         }
       } else if (item.dataRef && item.dataRef.geomType) {
@@ -551,7 +554,7 @@ export default {
           for (let j = 0; j < layerIcons[i].children.length; j++) {
             const child = layerIcons[i].children[j]
             if (geomType === child.layerType) {
-              icon = child.icon
+              icon = this.getImageUrl(child.icon)
               return {
                 isSvg: icon && icon.indexOf('<svg') >= 0,
                 icon,
@@ -562,6 +565,45 @@ export default {
       }
       icon = ''
       return { isSvg: icon && icon.indexOf('<svg') >= 0, icon }
+    },
+    getImageUrl(icon) {
+      if (icon) {
+        if (icon.startsWith('/file')) {
+          icon = `${this.baseUrl}/${this.appProductName}${icon}`
+        } else if (icon.indexOf('<svg') >= 0) {
+        } else {
+          icon = `${this.baseUrl}${icon}`
+        }
+      }
+      return icon
+    },
+    getFormatType(dataRef) {
+      const { format } = dataRef
+      let type = LayerType.ModelCache
+      if (format === ModelCacheFormat.cesium3dTileset) {
+        type = 'TILE3D'
+      }
+      return type
+    },
+    findFormatTypeIcon(type, serviceIcons) {
+      let icon
+      if (this.iconArrCache[type]) {
+        return this.iconArrCache[type]
+      }
+      serviceIcons.forEach((item) => {
+        if (item.children) {
+          item.children.forEach((child) => {
+            if (
+              child.serviceType === type ||
+              LayerType[child.serviceType] === type
+            ) {
+              icon = child.icon
+              this.iconArrCache[type] = icon
+            }
+          })
+        }
+      })
+      return icon
     },
     setLayerEditConfig() {
       const doc = this.layerDocument.clone()

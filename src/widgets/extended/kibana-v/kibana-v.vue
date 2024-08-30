@@ -10,7 +10,12 @@
         :key="index"
         style="padding: 0 8px"
       >
-        <mapgis-ui-card class="kibana-v-card" hoverable @click="onView(item)" :bordered="false">
+        <mapgis-ui-card
+          class="kibana-v-card"
+          hoverable
+          @click="onView(item)"
+          :bordered="false"
+        >
           <div slot="cover" class="img-box">
             <img :src="item.image" :alt="item.title" />
           </div>
@@ -39,7 +44,7 @@ export default {
         return {
           title: item.title,
           link: item.link,
-          image: `${this.baseUrl}${item.image}`,
+          image: this.imageUrl(item.image),
         }
       })
     },
@@ -49,6 +54,12 @@ export default {
     // 点击触发预览
     onView(item) {
       window.open(item.link)
+    },
+    imageUrl(url) {
+      if (url.startsWith('/file')) {
+        return `${this.baseUrl}/${this.appProductName}${url}`
+      }
+      return `${this.baseUrl}${url}`
     },
   },
 }
