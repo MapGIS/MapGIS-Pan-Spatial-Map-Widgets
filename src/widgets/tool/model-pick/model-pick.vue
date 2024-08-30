@@ -46,7 +46,7 @@ import {
 
 export default {
   name: 'MpModelPick',
-  mixins: [WidgetMixin, AppMixin],
+  mixins: [WidgetMixin],
   data() {
     return {
       // 是否开启拾取
