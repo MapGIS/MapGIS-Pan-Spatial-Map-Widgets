@@ -727,6 +727,7 @@ export default {
         if (icon) {
           if (icon.startsWith('/file')) {
             icon = `${this.baseUrl}/${this.appProductName}${icon}`
+          } else if (icon.indexOf('<svg') >= 0) {
           } else {
             icon = `${this.baseUrl}${icon}`
           }
@@ -744,6 +745,11 @@ export default {
         icon = `${this.baseUrl}/${this.appProductName}${
           this.widgetInfo.config.iconConfig[this.nodeLevel(item)]
         }`
+      } else if (
+        this.widgetInfo.config.iconConfig[this.nodeLevel(item)].indexOf(
+          '<svg'
+        ) >= 0
+      ) {
       } else {
         icon =
           this.baseUrl + this.widgetInfo.config.iconConfig[this.nodeLevel(item)]
@@ -752,7 +758,6 @@ export default {
       return { isSvg: icon && icon.indexOf('<svg') >= 0, icon }
     },
     getServiceType(item, serviceIcons) {
-      const layerType = LayerType
       let serviceType
       if (LayerType[item.serverType]) {
         // ModelCache需要区分m3d和3dTiles
