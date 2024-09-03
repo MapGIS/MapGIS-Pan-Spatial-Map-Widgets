@@ -810,13 +810,20 @@ export default {
            * 修改人：龚跃健
            * 修改时间：2023/1/31
            */
-          const { TotalCount } = await this.queryCount(options, true)
-          if (TotalCount > 0) {
-            activeOptionId = sublayer.id
+          /**
+           * fix(6188): 调用了额外的查询要素数目的接口
+           * 修改人：杨琨 2024/9/3
+           * 修改说明：查询到第一个要素数目大于0的子图层后，就停止要素数目的查询，单纯要素查数目比查询要素数据要快
+           */
+          if (!activeOptionId) {
+            const { TotalCount } = await this.queryCount(options, true)
+            if (TotalCount > 0) {
+              activeOptionId = sublayer.id
+            }
           }
         }
       }
-      if (exhibition.options.length > 0) {
+      if (activeOptionId) {
         this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
       }
     },
@@ -1004,12 +1011,21 @@ export default {
          * 修改人：龚跃健
          * 修改时间：2023/1/31
          */
-        const { TotalCount } = await this.queryCount(option)
-        if (TotalCount > 0) {
-          activeOptionId = sublayer.id
+        /**
+         * fix(6188): 调用了额外的查询要素数目的接口
+         * 修改人：杨琨 2024/9/3
+         * 修改说明：查询到有符合要求的子图层后，就停止要素数目的查询，单纯要素查数目比查询要素数据要快
+         */
+        if (!activeOptionId) {
+          const { TotalCount } = await this.queryCount(option)
+          if (TotalCount > 0) {
+            activeOptionId = sublayer.id
+          }
         }
       }
-      this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
+      if (activeOptionId) {
+        this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
+      }
     },
 
     async quertFeatruesByVector(layer: IGSVectorLayer, geometry) {
