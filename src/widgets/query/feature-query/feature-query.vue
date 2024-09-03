@@ -52,8 +52,8 @@
       </mapgis-ui-toolbar-command-group>
     </mapgis-ui-toolbar>
     <div v-show='showNearDistancePanel'>
-      <mapgis-ui-setting-form layout="horizontal" style="padding-top: 8px">
-        <mapgis-ui-form-item label="缓冲半径(像素)">
+      <mapgis-ui-setting-form layout="horizontal" style="padding-top: 8px" size="default">
+        <mapgis-ui-form-item label="缓冲半径(像素)" labelCol='{span: 4}'>
           <mapgis-ui-slider
             v-model="sliderIndex"
             :marks="marks"
@@ -70,7 +70,7 @@
         >
           <mapgis-ui-form-item label="缓冲半径" v-show="showNearDistanceInput" style='margin-bottom: 10px;'>
             <mapgis-ui-input-number
-              style='margin-left: 170px;width: 170px;'
+              class='mp-widget-near-radius-input'
               v-model="nearDistance"
               :min="1"
               :step='1'
@@ -78,7 +78,7 @@
           </mapgis-ui-form-item>
           <mapgis-ui-form-item label="半径单位" v-show="showNearDistanceInput">
             <mapgis-ui-select
-              style='margin-left: 170px;width: 170px;'
+              class='mp-widget-near-radius-input'
               v-model='nearDistanceUnit'
             >
               <mapgis-ui-select-option
@@ -1442,9 +1442,13 @@ export default {
 }
 </script>
 
-<style lang="less" scoped>
+<style scoped>
 .mp-widget-feature-query {
   display: flex;
   flex-direction: column;
+}
+.mp-widget-near-radius-input {
+  margin-left: 170px;
+  width: 170px;
 }
 </style>
