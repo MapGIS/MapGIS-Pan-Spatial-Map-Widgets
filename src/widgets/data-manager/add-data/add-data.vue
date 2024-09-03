@@ -83,14 +83,19 @@ export default {
       loaded: false,
       commonDataTypes: [
         {
-          text: 'WMS服务',
-          value: 'OGCWMS',
-          example: 'http://<server>:<port>/igs/rest/ogc/doc/beijing/WMSServer',
+          text: '地图服务',
+          value: 'IGSMapImage',
+          example: 'http://<server>:<port>/igs/rest/mrms/docs/{docName}',
         },
         {
-          text: 'WMTS服务',
-          value: 'OGCWMTS',
-          example: 'http://<server>:<port>/igs/rest/ogc/beijing/WMTSServer',
+          text: '栅格瓦片服务',
+          value: 'IGSTile',
+          example: 'http://<server>:<port>/igs/rest/mrms/tile/{tileName}',
+        },
+        {
+          text: '图层地图服务',
+          value: 'IGSVector',
+          example: 'http://<server>:<port>/igs/rest/mrms/layers?gdbps={gdbps}',
         },
         {
           text: '矢量瓦片服务',
@@ -111,19 +116,14 @@ export default {
             'http://<server>:<port>/arcgis/rest/services/ServiceRequest/MapServer',
         },
         {
-          text: '栅格瓦片服务',
-          value: 'IGSTile',
-          example: 'http://<server>:<port>/igs/rest/mrms/tile/{tileName}',
+          text: 'WMS服务',
+          value: 'OGCWMS',
+          example: 'http://<server>:<port>/igs/rest/ogc/doc/beijing/WMSServer',
         },
         {
-          text: '地图服务',
-          value: 'IGSMapImage',
-          example: 'http://<server>:<port>/igs/rest/mrms/docs/{docName}',
-        },
-        {
-          text: '图层地图服务',
-          value: 'IGSVector',
-          example: 'http://<server>:<port>/igs/rest/mrms/layers?gdbps={gdbps}',
+          text: 'WMTS服务',
+          value: 'OGCWMTS',
+          example: 'http://<server>:<port>/igs/rest/ogc/beijing/WMTSServer',
         },
         {
           text: 'GEOJSON',
@@ -161,9 +161,9 @@ export default {
 
     fileDataTypes3D() {
       return [
+        { text: 'CZML', value: 'CZML' },
         { text: 'KML', value: 'KML' },
         { text: 'KMZ', value: 'KMZ' },
-        { text: 'CZML', value: 'CZML' },
       ]
     },
 
@@ -180,6 +180,11 @@ export default {
           example: 'http://<server>:<port>/igs/rest/mrms/layers?gdbps={gdbps}',
         },
         {
+          text: 'CZML',
+          value: 'CZML',
+          example: 'http://<server>:<port>/FileName.czml',
+        },
+        {
           text: 'KML',
           value: 'KML',
           example: 'http://<server>:<port>/FileName.kml',
@@ -188,11 +193,6 @@ export default {
           text: 'KMZ',
           value: 'KMZ',
           example: 'http://<server>:<port>/FileName.kmz',
-        },
-        {
-          text: 'CZML',
-          value: 'CZML',
-          example: 'http://<server>:<port>/FileName.czml',
         },
       ]
     },
