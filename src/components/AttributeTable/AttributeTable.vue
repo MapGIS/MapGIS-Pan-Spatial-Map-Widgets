@@ -274,6 +274,10 @@ export default {
     option: {
       type: IAttributeTableOption,
     },
+    // 已激活的Tab标签ID
+    activeOptionId: {
+      type: String
+    }
   },
   computed: {
     // 表格所有勾选的行组成的rowKey数组
@@ -391,17 +395,27 @@ export default {
     optionVal: {
       deep: true,
       immediate: true,
-      handler() {
-        // 清除表格勾选
-        this.clearSelection()
-        // 清除地图上对应的标注
-        this.removeMarkers()
-        // 清除表格数据
-        this.tableData = []
-        // 清除表头数据
-        this.tableColumns = []
-        // 重新查询数据
-        this.query()
+      handler(newValue) {
+        // fix(6188): 多次点击要素属性表的Tab标签后，再进行要素查询，会额外发送其他子图层的要素查询接口
+        // 修改人: 杨琨 2024-9-3
+        // 修改说明: 当前的要素查询被集成在属性表组件中，通过监听属性表配置信息的变化，来决定是否进行要素查询
+        // 当一个Tab标签被激活或被点击过，则会渲染一个属性表组件
+        // 当点击多个Tab标签后，会渲染多个属性表组件，此时在场景视图内进行要素查询，
+        // 会生成一个新的属性表配置信息集合，和当前的属性表配置信息集合进行比较，发现有多个属性表配置信息发生变化
+        // 会发起多次额外的要素查询，因此要判断当前的属性表配置信息中记录的id是否和activeOptionId相等
+        // 只有相等，才发送要素查询
+        if (newValue.id === this.activeOptionId) {
+          // 清除表格勾选
+          this.clearSelection()
+          // 清除地图上对应的标注
+          this.removeMarkers()
+          // 清除表格数据
+          this.tableData = []
+          // 清除表头数据
+          this.tableColumns = []
+          // 重新查询数据
+          this.query()
+        }
       },
     },
   },

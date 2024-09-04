@@ -16,6 +16,7 @@
           :is="attributeTableComponent"
           :ref="option.id"
           :option="option"
+          :activeOptionId="activeOptionId"
           :exhibition="exhibition"
         />
       </mapgis-ui-tab-pane>

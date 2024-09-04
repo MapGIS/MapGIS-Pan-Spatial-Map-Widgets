@@ -51,17 +51,46 @@
         />
       </mapgis-ui-toolbar-command-group>
     </mapgis-ui-toolbar>
-    <div v-show="showSettingPanel">
-      <mapgis-ui-setting-form layout="vertical" style="padding-top: 8px">
-        <mapgis-ui-form-item label="缓冲半径(km)">
+    <div v-show='showNearDistancePanel'>
+      <mapgis-ui-setting-form layout="horizontal" style="padding-top: 8px" size="default">
+        <mapgis-ui-form-item label="缓冲半径(像素)" labelCol='{span: 4}'>
           <mapgis-ui-slider
             v-model="sliderIndex"
             :marks="marks"
             :min="0"
             :max="limitsArray.length - 1"
-            :tipFormatter="() => `${limits}km`"
+            :tipFormatter="() => `${limits}像素`"
+            :disabled='showNearDistanceInput'
           />
         </mapgis-ui-form-item>
+        <mapgis-ui-switch-panel
+          label="手动输入"
+          v-model="showNearDistanceInput"
+          size="small"
+        >
+          <mapgis-ui-form-item label="缓冲半径" v-show="showNearDistanceInput" style='margin-bottom: 10px;'>
+            <mapgis-ui-input-number
+              class='mp-widget-near-radius-input'
+              v-model="nearDistance"
+              :min="1"
+              :step='1'
+            />
+          </mapgis-ui-form-item>
+          <mapgis-ui-form-item label="半径单位" v-show="showNearDistanceInput">
+            <mapgis-ui-select
+              class='mp-widget-near-radius-input'
+              v-model='nearDistanceUnit'
+            >
+              <mapgis-ui-select-option
+                :key="index"
+                v-for="(unit, index) in nearDistanceUnitArray"
+                :value="unit.value"
+              >
+                {{ unit.key }}
+              </mapgis-ui-select-option>
+            </mapgis-ui-select>
+          </mapgis-ui-form-item>
+        </mapgis-ui-switch-panel>
       </mapgis-ui-setting-form>
     </div>
     <div v-show="showLayerList">
@@ -178,8 +207,19 @@ export default {
   data() {
     return {
       showLayerList: false,
-      limitsArray: [0, 0.1, 0.5, 1, 5],
+      // 默认提供的缓冲半径(像素)可选值
+      limitsArray: [1, 2, 5, 10, 20],
       showSettingPanel: false,
+      // 是否显示缓冲半径面板，仅有绘制点和线时，才显示缓冲半径面板
+      showNearDistancePanel: false,
+      // 是否显示缓冲半径输入框
+      showNearDistanceInput: false,
+      // 缓冲半径初始值
+      nearDistance: 1,
+      // 缓冲半径单位
+      nearDistanceUnit: 'pixel',
+      // 可选的缓冲半径单位
+      nearDistanceUnitArray: [{key: '像素', value: 'pixel'}, {key: '厘米', value: 'centimeter'}, {key: '米', value: 'meter'}, {key: '千米', value: 'kilometer'}],
       sliderIndex: 0,
       queryType: '',
       tempActiveExhibitionId: '',
@@ -499,6 +539,12 @@ export default {
 
     // 打开绘制，点击图标激活对应类型的绘制功能
     onOpenDraw(type) {
+      // 绘制点和线时，才显示缓冲半径面板
+      if (type === 'Point' || type === 'LineString') {
+        this.showNearDistancePanel = true
+      } else {
+        this.showNearDistancePanel = false
+      }
       this.drawComponent && this.drawComponent.closeDraw()
       // this.sceneOverlays.removeAllEntities()
       if (this.currentId) {
@@ -547,21 +593,85 @@ export default {
       }
     },
 
+    /**
+     * 根据分辨率计算缓冲半径
+     * @param {Object} shape 点坐标
+     * @param {Number} distanceUnits 一度代表多少米，纬度不同，数值也不同，没有直接返回默认缓冲半径
+     * @return {Number} 缓冲半径
+     * */
+    getNearDistanceByResolution(shape: Record<string, number>, distanceUnits) {
+      // 1 设置默认缓冲半径，单位和图层的坐标系挂钩
+      let nearDis = 0.0001
+
+      // 2 如果没有distanceUnits，则直接返回
+      if (!distanceUnits) {
+        return nearDis
+      }
+      // 3 根据分辨率计算缓冲半径
+      else {
+        const zoomAndResolution = this.sceneController.getZoomAndResolution({
+          lng: shape.x,
+          lat: shape.y
+        })
+        nearDis = zoomAndResolution.resolution * this.nearDistance / distanceUnits
+        return nearDis
+      }
+    },
+
+    /**
+     * 根据坐标计算缓冲半径
+     * @param {Object} shape 点坐标
+     * @param {Object} layer 图层对象
+     * @return {Number} 缓冲半径
+     * */
+    getNearDistance(shape: Record<string, number>, layer) {
+      // 默认缓冲半径，单位和图层的坐标系挂钩
+      let nearDis = 0.0001
+      // 当前的级数和分辨率
+      let zoomAndResolution
+
+      // 1 图层是经纬度坐标系
+      if (
+        layer &&
+        layer.spatialReference &&
+        layer.spatialReference.isWGS84()
+      ) {
+        // 1.1 设置一度代表多少米，纬度不同，数值也不同，此处取武汉附近的纬度
+        const distanceUnits = 103133.845
+        // 1.2 开启了手动输入缓冲半径的面板
+        if (this.showNearDistanceInput) {
+          // 根据不同单位进行处理
+          switch (this.nearDistanceUnit) {
+            case 'pixel':
+            default:
+              // 根据分辨率计算缓冲半径
+              nearDis = this.getNearDistanceByResolution(shape, distanceUnits)
+              break
+            case 'kilometer':
+              // 将千米转为米，之后计算缓冲半径
+              nearDis = this.nearDistance * 1000 / distanceUnits
+              break
+            case 'meter':
+              nearDis = this.nearDistance / distanceUnits
+              break
+            case 'centimeter':
+              // 将厘米转为米，之后计算缓冲半径
+              nearDis = this.nearDistance / 100 / distanceUnits
+              break
+          }
+        }
+        // 1.3 通过滑动条选择缓冲半径
+        else {
+          // 根据分辨率计算缓冲半径
+          nearDis = this.getNearDistanceByResolution(shape, distanceUnits)
+        }
+      }
+      return nearDis
+    },
+
     queryLayers(shape: Record<string, number>) {
       if (!this.document) {
         return
-      }
-
-      let nearDis = this.limits * 1000
-      const { projectionName } = baseConfigInstance.config
-
-      if (
-        projectionName.indexOf('度') !== -1 ||
-        projectionName.indexOf('分') !== -1 ||
-        projectionName.indexOf('秒') !== -1
-      ) {
-        const distanceUnits = 103133.845
-        nearDis /= distanceUnits
       }
 
       const layers = this.isShowLayerList
@@ -572,6 +682,14 @@ export default {
         if (!this.isCrossWithLayer(layer, shape)) {
           return
         }
+
+        // fix(6188): 三维视图倾斜一定角度，绘制交互异常
+        // 修改人: 杨琨 2024-9-2
+        // 修改说明: 重构计算缓冲半径的逻辑，
+        // 通过缓冲半径单位，将用户设置的缓冲半径值，转化为服务需要的缓冲半径值
+        // 默认单位为像素，根据分辨率计算一像素代表多少米，之后换算为服务端需要的缓冲半径值
+        // 其他可选单位为千米、米、厘米，当前仅支持经纬度坐标系图层的要素查询
+        const nearDis = this.getNearDistance(shape, layer)
 
         const geometry = this.toQueryGeometry(layer, shape, nearDis)
 
@@ -697,13 +815,20 @@ export default {
            * 修改人：龚跃健
            * 修改时间：2023/1/31
            */
-          const { TotalCount } = await this.queryCount(options, true)
-          if (TotalCount > 0) {
-            activeOptionId = sublayer.id
+          /**
+           * fix(6188): 调用了额外的查询要素数目的接口
+           * 修改人：杨琨 2024/9/3
+           * 修改说明：查询到第一个要素数目大于0的子图层后，就停止要素数目的查询，单纯要素查数目比查询要素数据要快
+           */
+          if (!activeOptionId) {
+            const { TotalCount } = await this.queryCount(options, true)
+            if (TotalCount > 0) {
+              activeOptionId = sublayer.id
+            }
           }
         }
       }
-      if (exhibition.options.length > 0) {
+      if (activeOptionId) {
         this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
       }
     },
@@ -891,12 +1016,21 @@ export default {
          * 修改人：龚跃健
          * 修改时间：2023/1/31
          */
-        const { TotalCount } = await this.queryCount(option)
-        if (TotalCount > 0) {
-          activeOptionId = sublayer.id
+        /**
+         * fix(6188): 调用了额外的查询要素数目的接口
+         * 修改人：杨琨 2024/9/3
+         * 修改说明：查询到有符合要求的子图层后，就停止要素数目的查询，单纯要素查数目比查询要素数据要快
+         */
+        if (!activeOptionId) {
+          const { TotalCount } = await this.queryCount(option)
+          if (TotalCount > 0) {
+            activeOptionId = sublayer.id
+          }
         }
       }
-      this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
+      if (activeOptionId) {
+        this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
+      }
     },
 
     async quertFeatruesByVector(layer: IGSVectorLayer, geometry) {
@@ -1331,9 +1465,13 @@ export default {
 }
 </script>
 
-<style lang="less" scoped>
+<style scoped>
 .mp-widget-feature-query {
   display: flex;
   flex-direction: column;
+}
+.mp-widget-near-radius-input {
+  margin-left: 170px;
+  width: 170px;
 }
 </style>
