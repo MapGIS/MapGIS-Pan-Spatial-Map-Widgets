@@ -139,7 +139,7 @@
                 key="2"
                 @click="onUploadLegend(item)"
               >
-                上传图例
+                图例
               </mapgis-ui-menu-item>
             </mapgis-ui-menu>
             <span class="tree-node" :id="`tree_${item.guid}`">
@@ -258,7 +258,7 @@
                 key="3"
                 @click="onUploadLegend(item)"
               >
-                上传图例
+                图例
               </mapgis-ui-menu-item>
             </mapgis-ui-menu>
           </mapgis-ui-dropdown>
@@ -270,33 +270,45 @@
       :dialog-style="{ top: '150px' }"
       :width="300"
       :mask="false"
-      title="上传图例"
+      title="图例"
       :footer="null"
     >
       <mapgis-ui-alert
         message="建议上传宽高比为1:1的图片"
         type="info"
         show-icon
-        style="margin-bottom: 16px"
+        style="margin-bottom: 6px"
       />
-      <mapgis-ui-upload
-        name="file"
-        accept=".jpg, image/*"
-        :action="uploadUrl"
-        :multiple="false"
-        method="post"
-        :withCredentials="true"
-        :before-upload="beforeUpload"
-        @change="onChangeFile"
-      >
-        <mapgis-ui-button>
-          <mapgis-ui-iconfont
-            type="mapgis-upload"
-            :style="{ fontSize: '18px' }"
-          />
-          上传图片
-        </mapgis-ui-button>
-      </mapgis-ui-upload>
+      <div v-if="showUploader">
+        <mapgis-ui-row
+          :gutter="[10, 10]"
+          type="flex"
+          style="align-items: center"
+        >
+          <mapgis-ui-col :span="20">
+            <mapgis-ui-input
+              v-model="legendNodeLegendUrl"
+              placeholder="请上传图例"
+              allow-clear
+            />
+          </mapgis-ui-col>
+          <mapgis-ui-col :span="4">
+            <mapgis-ui-upload-image
+              :value="legendNodeLegendUrl"
+              :uploadUrl="uploadUrl"
+              :showUploadList="false"
+              :baseUrl="prefixUrl"
+              :hasPrefix="false"
+              @image-url="(val) => updateImgUrl(val)"
+            ></mapgis-ui-upload-image>
+          </mapgis-ui-col>
+        </mapgis-ui-row>
+        <div style="width: 100%; text-align: center; margin-top: 6px">
+          <mapgis-ui-button type="primary" @click="submitLegend">
+            确认
+          </mapgis-ui-button>
+        </div>
+      </div>
     </mapgis-ui-modal>
 
     <mp-window-wrapper :visible="showMetaData">
@@ -436,8 +448,11 @@ export default {
       // 上传地址
       uploadUrl: '',
 
-      // 上传图例的节点
+      // 有图例的节点
       legendNode: {},
+
+      // 有图例的节点
+      legendNodeLegendUrl: null,
 
       // 非空间数据窗口的显隐
       showNoSpatial: false,
@@ -527,6 +542,9 @@ export default {
     // 单次可勾选的最大数量
     selectedMaxCount() {
       return this.widgetInfo.config.otherConfig.selectedMaxCount || 20
+    },
+    prefixUrl() {
+      return window._CONFIG.domainURL
     },
   },
   created() {
@@ -703,6 +721,7 @@ export default {
     },
     // 获取目录树各级节点对应的图标
     nodeIcon(item) {
+      const legend = item.extend.legend
       let icon
       if (item.serverType !== undefined) {
         const { useLocalDataNodeIcon, dataNodeIcon } =
@@ -715,6 +734,7 @@ export default {
           return {
             isSvg: dataNodeIcon && dataNodeIcon.indexOf('<svg') >= 0,
             icon: dataNodeIcon,
+            legend,
           }
         }
         let { serviceIcons } = this.application.baseConfig
@@ -734,6 +754,7 @@ export default {
           return {
             isSvg: icon && icon.indexOf('<svg') >= 0,
             icon,
+            legend,
           }
         }
       }
@@ -1913,44 +1934,27 @@ export default {
       }
     },
 
-    // 点击上传图例响应事件
+    // 点击图例响应事件
     onUploadLegend(item) {
       this.showUploader = true
       this.legendNode = item
-    },
-
-    // 上传文件之前的钩子
-    beforeUpload(file) {
-      const isLt2M = file.size / 1024 / 1024 < 2
-      if (!isLt2M) {
-        this.$message.error('上传图片大小需小于2M')
-      }
-      return isLt2M
+      this.legendNodeLegendUrl = item && item.extend ? item.extend.legend : null
     },
 
     // 上传文件状态改变时的回调
-    async onChangeFile(info) {
-      if (info.file.status === 'uploading' || info.file.status === 'error') {
-        return
-      }
-      if (info.file.status === 'done') {
-        const url = info.file.response.url
-        const legendConfig = await api.getWidgetConfig('legend')
-        // const key = this.legendNode.name
-        const key = DataCatalogUtil.getTreeNodeLabel(
-          this.legendNode,
-          this.dataCatalogTreeData
-        )
-        if (url) {
-          legendConfig[key] = url
-          const res = await api.saveWidgetConfig({
-            name: 'legend',
-            config: JSON.stringify(legendConfig),
-          })
-          eventBus.$emit(events.UPLOAD_LEGEND_SUCCESS_EVENT)
-          this.showUploader = false
-        }
-      }
+    async updateImgUrl(val) {
+      this.legendNodeLegendUrl = val
+    },
+
+    submitLegend() {
+      const { extend, dataId } = this.legendNode
+      extend.legend = this.legendNodeLegendUrl
+      api.updateData({ dataId, extend })
+      eventBus.$emit(events.UPLOAD_LEGEND_SUCCESS_EVENT, {
+        node: this.legendNode,
+        legendUrl: this.legendNodeLegendUrl,
+      })
+      this.showUploader = false
     },
 
     // 判断节点是否为非空间数据
