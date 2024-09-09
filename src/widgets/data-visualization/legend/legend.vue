@@ -137,8 +137,83 @@ export default {
       })
     },
     // 监听上传图例成功事件回调
-    onGetConfig() {
-      this.initData()
+    onGetConfig({ node, legendUrl }) {
+      if (node.children && node.children.length > 0) {
+        // 说明不是叶子节点上传图例，则把this.treeData清空
+        this.treeData = []
+        this.initData()
+        return
+      }
+
+      // 如果是叶子节点上上传图例，则直接更新this.data
+      const labelLegend = DataCatalogUtil.getTreeNodeLabelLegend(
+        node,
+        this.treeData
+      )
+      const { labelArr, labelLengendArr } = labelLegend
+      const length = labelLengendArr.length
+      // 根节点到子节点的label串
+      let tempDescription = labelArr.join('-')
+      let tempLengendLabel = labelArr[labelArr.length - 1]
+      // 子节点上的legend
+      let tempLegend =
+        labelLengendArr[length - 1] && labelLengendArr[length - 1].legend
+          ? labelLengendArr[length - 1].legend
+          : null
+      let tempName =
+        labelLengendArr[length - 1] && labelLengendArr[length - 1].name
+          ? labelLengendArr[length - 1].name
+          : null
+      if (tempName !== tempLengendLabel) {
+        // 如果图例的name与计算label数组最后一个对不上，则说明子节点上没有图例
+        this.treeData = []
+        this.initData()
+        return
+      }
+      let hasItem = false
+      for (let i = 0; i < this.data.length; i++) {
+        const item = this.data[i]
+        if (item.description === tempDescription) {
+          hasItem = true
+          // 说明data里存在相同的节点图例
+          if (!tempLegend || tempLegend == '') {
+            // 图例为空，直接删除
+            this.data.splice(i, 1)
+            const activeKeyIndex = this.activeKey.indexOf(tempDescription)
+            if (activeKeyIndex > 0) {
+              this.activeKey.splice(activeKeyIndex, 1)
+            }
+            if (this.scrollPositionKey === tempDescription) {
+              this.scrollPositionKey = undefined
+            }
+          } else {
+            this.$set(this.data[i], 'imgUrl', this.getImage(tempLegend))
+          }
+          break
+        } else if (tempDescription.includes(item.description)) {
+          // 如果该子节点之前用的是父节点的图例，现在改用自己的，则直接清空this.treeData，重新获取
+          this.treeData = []
+          this.initData()
+          return
+        }
+      }
+      // 如果不存在图例，则直接push到data中
+      if (!hasItem) {
+        const obj = {
+          description: tempDescription,
+          legendLabel: tempLengendLabel,
+          imgUrl: this.getImage(tempLegend),
+          name: tempName,
+        }
+        this.data.push(obj)
+      }
+      if (this.checkedNodesKeys.includes(node.guid)) {
+        // 滑动条定位的地方
+        this.scrollPositionKey = tempDescription
+        if (!this.activeKey.includes(tempDescription) && !!tempDescription) {
+          this.activeKey.push(tempDescription)
+        }
+      }
     },
 
     // 监听目录树勾选节点变化时回调事件
@@ -153,7 +228,7 @@ export default {
         // 监听到数据目录默认加载的数据的时候，如果还没有获取到数据目录，则获取后，再初始化图例数据
         await this.getTreedata()
       }
-      const newConfig = await api.getWidgetConfig('legend')
+      // const newConfig = await api.getWidgetConfig('legend')
       this.checkedTreeData = []
       this.getCheckNodeData(this.treeData)
 
@@ -162,131 +237,92 @@ export default {
       for (let i = 0; i < this.checkedTreeData.length; i++) {
         const item = this.checkedTreeData[i]
         let obj = {}
-        if (Object.keys(newConfig).includes(item.name)) {
-          // 兼容以前的配置
-          obj = {
-            description: item.name,
-            legendLabel: item.name,
-            imgUrl: this.getImage(newConfig[item.name]),
-            name: item.name,
-          }
-        } else {
-          // 1、获取根节点到节点的节点label和legend
-          const labelLegend = DataCatalogUtil.getTreeNodeLabelLegend(
-            item,
-            this.treeData
-          )
-          const { labelArr, labelLengendArr } = labelLegend
-          const length = labelLengendArr.length
-          // 根节点到子节点的label串
-          let tempDescription = labelArr.join('-')
-          let tempLengendLabel = labelArr[labelArr.length - 1]
-          // 子节点上的legend
-          let tempLegend = labelLengendArr[length - 1].legend
-          if (Object.keys(newConfig).includes(tempDescription)) {
-            // 子节点的图例已存在newConfig中
-            obj = {
-              description: tempDescription,
-              legendLabel: tempLengendLabel,
-              imgUrl: this.getImage(newConfig[tempDescription]),
-              name: tempLengendLabel,
+        // 1、获取根节点到节点的节点label和legend
+        const labelLegend = DataCatalogUtil.getTreeNodeLabelLegend(
+          item,
+          this.treeData
+        )
+        const { labelArr, labelLengendArr } = labelLegend
+        const length = labelLengendArr.length
+        // 根节点到子节点的label串
+        let tempDescription = labelArr.join('-')
+        let tempLengendLabel = labelArr[labelArr.length - 1]
+        // 子节点上的legend
+        let tempLegend =
+          labelLengendArr[length - 1] && labelLengendArr[length - 1].legend
+            ? labelLengendArr[length - 1].legend
+            : null
+        let tempName =
+          labelLengendArr[length - 1] && labelLengendArr[length - 1].name
+            ? labelLengendArr[length - 1].name
+            : null
+        if (!tempLegend || tempLegend == '') {
+          // 如果图例为空，继续
+          continue
+        }
+        for (let j = length - 1; j >= 0; j--) {
+          const { name, legend } = labelLengendArr[j]
+          const description = labelArr.slice(0, j + 1).join('-')
+          const legendLabel = labelArr[j]
+          // 第一种情况，根节点上没有legend，向上父节点上找
+          if (!tempLegend || tempLegend.length == 0) {
+            // 父节点上有legend
+            if (legend && legend.length > 0) {
+              tempLegend = legend
+              tempDescription = description
+              tempLengendLabel = legendLabel
+              tempName = name
+              obj = {
+                description: tempDescription,
+                legendLabel: tempLengendLabel,
+                imgUrl: this.getImage(tempLegend),
+                name: tempName,
+              }
+              break
             }
+            // 父节点上没有legend，继续往上找
+            continue
           } else {
-            // 剩下两种情况：1、图例在newConfig中；2、图例未在newConfig中
-            for (let j = length - 2; j >= 0; j--) {
-              const { label: name, legend } = labelLengendArr[j]
-              const description = labelArr.slice(0, j + 1).join('-')
-              const legendLabel = labelArr[j]
-              if (Object.keys(newConfig).includes(description)) {
-                // 图例在newConfig中
+            // 第二种情况，根节点上有legend，向上父节点上找，看是否与父节点的legend重复
+            // 父节点上有legend
+            if (legend && legend.length > 0) {
+              // 子节点的legend与父节点不相同，取子节点的
+              if (legend !== tempLegend) {
                 obj = {
-                  description: description,
-                  legendLabel: legendLabel,
-                  imgUrl: this.getImage(newConfig[description]),
-                  name: legendLabel,
+                  description: tempDescription,
+                  legendLabel: tempLengendLabel,
+                  imgUrl: this.getImage(tempLegend),
+                  name: tempName,
                 }
                 break
-              }
-              // 图例未在newConfig中，也有两种情况
-              // 第一种情况，根节点上没有legend，向上父节点上找
-              if (!tempLegend || tempLegend.length == 0) {
-                // 父节点上有legend
-                if (legend && legend.length > 0) {
-                  newConfig[description] = legend
-                  tempLegend = legend
-                  tempDescription = description
-                  tempLengendLabel = legendLabel
+              } else {
+                // 子节点的legend与父节点相同，取父节点的，并且继续往上找
+                tempDescription = description
+                tempLengendLabel = legendLabel
+                tempLegend = legend
+                tempName = name
+                if (j === 0) {
+                  // 如果到根节点，子节点的legend还与父节点相同，则直接取根节点的
                   obj = {
                     description: tempDescription,
                     legendLabel: tempLengendLabel,
                     imgUrl: this.getImage(tempLegend),
-                    name: tempLengendLabel,
+                    name: tempName,
                   }
-                  await api.saveWidgetConfig({
-                    name: 'legend',
-                    config: JSON.stringify(newConfig),
-                  })
                   break
                 }
-                // 父节点上没有legend，继续往上找
-                continue
-              } else {
-                // 第二种情况，根节点上有legend，向上父节点上找，看是否与父节点的legend重复
-                // 父节点上有legend
-                if (legend && legend.length > 0) {
-                  // 子节点的legend与父节点不相同，取子节点的
-                  if (legend !== tempLegend) {
-                    newConfig[tempDescription] = tempLegend
-                    obj = {
-                      description: tempDescription,
-                      legendLabel: tempLengendLabel,
-                      imgUrl: this.getImage(tempLegend),
-                      name: tempLengendLabel,
-                    }
-                    await api.saveWidgetConfig({
-                      name: 'legend',
-                      config: JSON.stringify(newConfig),
-                    })
-                    break
-                  } else {
-                    // 子节点的legend与父节点相同，取父节点的，并且继续往上找
-                    tempDescription = description
-                    tempLengendLabel = legendLabel
-                    tempLegend = legend
-                    if (j === 0) {
-                      // 如果到根节点，子节点的legend还与父节点相同，则直接取根节点的
-                      newConfig[tempDescription] = tempLegend
-                      obj = {
-                        description: tempDescription,
-                        legendLabel: tempLengendLabel,
-                        imgUrl: this.getImage(tempLegend),
-                        name: tempLengendLabel,
-                      }
-                      await api.saveWidgetConfig({
-                        name: 'legend',
-                        config: JSON.stringify(newConfig),
-                      })
-                      break
-                    }
-                  }
-                } else {
-                  // 父节点上没有legend
-                  if (j === 0) {
-                    // 如果到根节点，父节点还是没有legend，则直接取子节点的
-                    newConfig[tempDescription] = tempLegend
-                    obj = {
-                      description: tempDescription,
-                      legendLabel: tempLengendLabel,
-                      imgUrl: this.getImage(tempLegend),
-                      name: tempLengendLabel,
-                    }
-                    await api.saveWidgetConfig({
-                      name: 'legend',
-                      config: JSON.stringify(newConfig),
-                    })
-                    break
-                  }
+              }
+            } else {
+              // 父节点上没有legend
+              if (j === 0) {
+                // 如果到根节点，父节点还是没有legend，则直接取子节点的
+                obj = {
+                  description: tempDescription,
+                  legendLabel: tempLengendLabel,
+                  imgUrl: this.getImage(tempLegend),
+                  name: tempName,
                 }
+                break
               }
             }
           }
@@ -311,8 +347,6 @@ export default {
           }
         }
       }
-      // console.log('preCheckedNodesKeys', this.preCheckedNodesKeys)
-      // console.log('checkedNodesKeys', this.checkedNodesKeys)
       this.preCheckedNodesKeys = this.checkedNodesKeys
       if (this.scrollPositionKey) {
         setTimeout(() => {
@@ -331,6 +365,10 @@ export default {
       this.activeKey = [...keys]
     },
     getImage(image) {
+      // 如果image是完整的路径，则直接返回全路径
+      if (image.includes('://')) {
+        return image
+      }
       if (image.startsWith('/file')) {
         return `${this.baseUrl}/${this.appProductName}${image}`
       }
