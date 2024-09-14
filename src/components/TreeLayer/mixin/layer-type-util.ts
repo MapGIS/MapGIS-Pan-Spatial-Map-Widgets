@@ -1,6 +1,7 @@
 import {
   AppMixin,
   LayerType,
+  IGSSceneSublayerType,
   Feature,
   baseConfigInstance,
   dataCatalogManagerInstance,
@@ -68,6 +69,20 @@ export default {
         layerType = layer.type
       }
       return layerType === LayerType.IGSScene
+    },
+    /**
+     * 判断是否是场景图层的模型缓存子图层
+     * @param layerItem 图层信息
+     * @returns boolean
+     */
+    isIGSSceneSubLayerModelCache(layerItem) {
+      let isModelCache = false
+      if (this.isIGSScene(layerItem) && this.isSubLayer(layerItem)) {
+        if (layerItem.type === IGSSceneSublayerType.modelCache) {
+          isModelCache = true
+        }
+      }
+      return isModelCache
     },
     /**
      * 判断是否是瓦片图层

@@ -81,6 +81,22 @@ export default {
       const g3dLayer = viewer.scene.layers.getLayer(g3dLayerIndex)
       return g3dLayer
     },
+    // 获取场景图层的M3DSet
+    getSceneLayer3DSet(id) {
+      const { vueKey, viewer, vueCesium } = this
+      let layerId = id
+      let layerIndex = 0
+      if (id.includes(':')) {
+        layerId = id.split(':')[0]
+        layerIndex = id.split(':')[1]
+      }
+      const sceneLayer = vueCesium.G3DManager.findSource(
+        vueKey || 'default',
+        layerId
+      )
+      const { m3ds, g3dLayerIndex } = sceneLayer.options
+      return m3ds.find((m3d) => m3d._layerIndex === layerIndex)
+    },
     getM3DSet(id) {
       const { vueKey, viewer, vueCesium } = this
       let layerId = id
