@@ -157,6 +157,12 @@ export const defaultDataIconsConfig = {
           serviceType: 'OSM',
           icon: `/file/default/dataIcons/OSM.png`,
         },
+        {
+          id: uuidv4(),
+          label: 'WebTile',
+          serviceType: 'WebTile',
+          icon: `/file/default/dataIcons/OSM.png`,
+        },
       ],
     },
   ],

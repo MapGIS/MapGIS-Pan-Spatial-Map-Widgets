@@ -246,7 +246,7 @@
                   item.serverType &&
                   !isNonSpatial(item) &&
                   !isDataFlow(item) &&
-                  !isModelCacheLayer(item) & !isOSM(item)
+                  !isModelCacheLayer(item) & !isWebTile(item)
                 "
                 key="1"
                 @click="showMetaDataInfo(item)"
@@ -708,7 +708,8 @@ export default {
             str = 'CZML'
             break
           case LayerType.OSM:
-            str = 'OSM'
+          case LayerType.WebTile:
+            str = '互联网瓦片服务'
             break
           default:
             break
@@ -1970,12 +1971,15 @@ export default {
     },
 
     /**
-     * 判断是否是OSM图层
+     * 判断是否是WebTile图层
      * @param item layer图层
      * @returns boolean
      */
-    isOSM(item) {
-      return item.serverType === LayerType.OSM
+    isWebTile(item) {
+      return (
+        item.serverType === LayerType.WebTile ||
+        item.serverType === LayerType.OSM
+      )
     },
 
     /**
