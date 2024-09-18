@@ -263,19 +263,18 @@ export default {
     },
 
     getConfig() {
-      const {
-        initBasicSetting,
-        initCameraSetting,
-        initLightSetting,
-        initWeatherSetting,
-        initEffectSetting,
-      } = this.$refs.sceneSetting
+      const sceneSettingComponent = this.$refs.sceneSetting
+      const basicSetting = sceneSettingComponent.getBasicSetting()
+      const cameraSetting = sceneSettingComponent.getCameraSetting()
+      const lightSetting = sceneSettingComponent.getLightSetting()
+      const weatherSetting = sceneSettingComponent.getWeatherSetting()
+      const effectSetting = sceneSettingComponent.getEffectSetting()
       const config = {
-        basicSetting: initBasicSetting,
-        cameraSetting: initCameraSetting,
-        lightSetting: initLightSetting,
-        weatherSetting: initWeatherSetting,
-        effectSetting: initEffectSetting,
+        basicSetting,
+        cameraSetting,
+        lightSetting,
+        weatherSetting,
+        effectSetting,
       }
       return config
     },
@@ -288,11 +287,11 @@ export default {
           config: JSON.stringify(config),
         })
         .then(() => {
-          // this.$message.success('更新场景设置配置成功')
+          this.$message.success('更新场景设置配置成功')
           // console.log('更新场景设置配置成功')
         })
         .catch(() => {
-          // this.$message.error('更新场景设置配置失败')
+          this.$message.error('更新场景设置配置失败')
           // console.log('更新场景设置配置失败')
         })
     },
