@@ -2,21 +2,21 @@
   <div class="model-edit-container"
     ref="modelEditor"
   >
-    <a-divider>属性变换</a-divider>
-    <a-row type="flex">
-      <a-col :span="3">
+    <mapgis-ui-divider>属性变换</mapgis-ui-divider>
+    <mapgis-ui-row type="flex">
+      <mapgis-ui-col :span="3">
         <mapgis-ui-form-item label="" class="label-item">
           位置
         </mapgis-ui-form-item>
-      </a-col>
-      <a-col :span="3" class="icon-tool">
+      </mapgis-ui-col>
+      <mapgis-ui-col :span="3" class="icon-tool">
         <mapgis-ui-iconfont
           type="mapgis-moveto"
           @click="handleActiveTool('move')"
           :class="[activeTool==='move'?'active-tool':'']"
         />
-      </a-col>         
-      <a-col :span="6">
+      </mapgis-ui-col>         
+      <mapgis-ui-col :span="6">
         <mapgis-form-model-item>
           <div slot="label" style="line-height: 20px;font-size: 14px;width: 90%;">经度</div>
           <mapgis-ui-input-number
@@ -27,8 +27,8 @@
             @blur="handleEdit('moveTo')"
           />
         </mapgis-form-model-item>
-      </a-col>
-      <a-col :span="6">
+      </mapgis-ui-col>
+      <mapgis-ui-col :span="6">
         <mapgis-form-model-item>
           <div slot="label" style="line-height: 20px;font-size: 14px;width: 90%;">纬度</div>
           <mapgis-ui-input-number
@@ -39,8 +39,8 @@
             @blur="handleEdit('moveTo')"
           />
         </mapgis-form-model-item>
-      </a-col>
-      <a-col :span="6">
+      </mapgis-ui-col>
+      <mapgis-ui-col :span="6">
         <mapgis-form-model-item label="高度">
           <div slot="label" style="line-height: 20px;font-size: 14px;width: 90%;">高度</div>
           <mapgis-ui-input-number
@@ -51,22 +51,23 @@
             @blur="handleEdit('moveTo')"
           />
         </mapgis-form-model-item>
-      </a-col>
-    </a-row>
-    <a-row type="flex">
-      <a-col :span="3">
+      </mapgis-ui-col>
+    </mapgis-ui-row>
+    <mapgis-ui-row type="flex">
+      <mapgis-ui-col :span="3">
         <mapgis-ui-form-item label="" class="label-item">
           旋转
         </mapgis-ui-form-item>
-      </a-col>
-      <a-col :span="3" class="icon-tool">
+      </mapgis-ui-col>
+      <mapgis-ui-col :span="3" class="icon-tool">
         <mapgis-ui-iconfont
           type="mapgis-rotate"
           @click="handleActiveTool('rotate')"
           :class="[activeTool==='rotate'?'active-tool':'']"
+          style="color: #ff0000;"
         />
-      </a-col>
-      <a-col :span="6">
+      </mapgis-ui-col>
+      <mapgis-ui-col :span="6">
         <mapgis-form-model-item label="X">
           <div slot="label" style="line-height: 20px;font-size: 14px;">X</div>
           <mapgis-ui-input-number
@@ -76,8 +77,8 @@
             @blur="handleEdit('rotateTo')"
           />
         </mapgis-form-model-item>
-      </a-col>
-      <a-col :span="6">
+      </mapgis-ui-col>
+      <mapgis-ui-col :span="6">
         <mapgis-form-model-item label="Y">
           <div slot="label" style="line-height: 20px;font-size: 14px;">Y</div>
         <mapgis-ui-input-number
@@ -87,8 +88,8 @@
           @blur="handleEdit('rotateTo')"
         />
         </mapgis-form-model-item>
-      </a-col>
-      <a-col :span="6">
+      </mapgis-ui-col>
+      <mapgis-ui-col :span="6">
         <mapgis-form-model-item label="Z">
           <div slot="label" style="line-height: 20px;font-size: 14px;">Z</div>
           <mapgis-ui-input-number
@@ -98,22 +99,22 @@
             @blur="handleEdit('rotateTo')"
           />
         </mapgis-form-model-item>
-      </a-col>
-    </a-row>
-    <a-row type="flex">
-      <a-col :span="3">
+      </mapgis-ui-col>
+    </mapgis-ui-row>
+    <mapgis-ui-row type="flex">
+      <mapgis-ui-col :span="3">
         <mapgis-ui-form-item label="" class="label-item">
           缩放
         </mapgis-ui-form-item>
-      </a-col>
-      <a-col :span="3" class="icon-tool">
+      </mapgis-ui-col>
+      <mapgis-ui-col :span="3" class="icon-tool">
         <mapgis-ui-iconfont
           type="mapgis-scale"
           @click="handleActiveTool('scale')"
           :class="[activeTool==='scale'?'active-tool':'']"
         />
-      </a-col>
-      <a-col :span="6">
+      </mapgis-ui-col>
+      <mapgis-ui-col :span="6">
         <mapgis-form-model-item label="X">
           <div slot="label" style="line-height: 20px;font-size: 14px;">X</div>
         <mapgis-ui-input-number
@@ -123,8 +124,8 @@
           @blur="handleEdit('zoomTo')"
         />
         </mapgis-form-model-item>
-      </a-col>
-      <a-col :span="6">
+      </mapgis-ui-col>
+      <mapgis-ui-col :span="6">
         <mapgis-form-model-item label="Y">
           <div slot="label" style="line-height: 20px;font-size: 14px;">Y</div>
         <mapgis-ui-input-number
@@ -134,8 +135,8 @@
           @blur="handleEdit('zoomTo')"
         />
         </mapgis-form-model-item>
-      </a-col>
-      <a-col :span="6">
+      </mapgis-ui-col>
+      <mapgis-ui-col :span="6">
         <mapgis-form-model-item label="Z">
           <div slot="label" style="line-height: 20px;font-size: 14px;">Z</div>
         <mapgis-ui-input-number
@@ -145,8 +146,8 @@
           @blur="handleEdit('zoomTo')"
         />
         </mapgis-form-model-item>
-      </a-col>
-    </a-row>
+      </mapgis-ui-col>
+    </mapgis-ui-row>
     <mapgis-ui-form
       layout="inline"
       labelAlign="left"
@@ -155,19 +156,19 @@
     >
 
     </mapgis-ui-form>
-    <a-divider>
+    <mapgis-ui-divider>
       矩阵变换
       <mapgis-ui-switch v-model="showMatrix" />
-    </a-divider>
-    <a-row>
+    </mapgis-ui-divider>
+    <mapgis-ui-row v-show="showMatrix">
       <div>
         <div style="position: absolute;right: 6px;bottom: 0px;">
-          <a-button class="edit-tool-button" style="z-index: 2;" @click="handelEditTransform()">应用</a-button>
+          <mapgis-ui-button class="edit-tool-button" style="z-index: 2;" @click="handelEditTransform">应用</mapgis-ui-button>
         </div>
-      <a-textarea placeholder="矩阵" :rows="6" v-model="transformString"/>
+      <mapgis-ui-textarea placeholder="矩阵" :rows="6" v-model="transformString"/>
     </div>
-    </a-row>
-    <a-divider></a-divider>
+    </mapgis-ui-row>
+    <mapgis-ui-divider v-show="showMatrix"></mapgis-ui-divider>
     <div>
       <mapgis-ui-button
         class="edit-tool-button"
@@ -189,7 +190,7 @@
         display: flex;
         justify-content: end;"
     >
-      <a-button type="link" @click="share">应用于其它模型缓存子图层</a-button>
+      <mapgis-ui-button type="link" @click="share" v-show="showShareLink">应用于其它模型缓存子图层</mapgis-ui-button>
     </div>
     <mp-window-wrapper :visible="showSharePanel">
       <template v-slot:default="slotProps">
@@ -223,6 +224,7 @@
 import {
   WidgetMixin,
   AppMixin,
+  LayerType,
 } from '@mapgis/web-app-framework'
 import ModelStretchUtil from '../../../ModelStretch/mixin/ModelStretchUtil.js'
 import cloneDeep from 'lodash.clonedeep'
@@ -268,11 +270,18 @@ export default {
         y:0,
         z:0,
       },
-      modelRotation:{
+      modelRotation: {
+        x:undefined,
+        y:undefined,
+        z:undefined,
+      },
+      // 上一次旋转角度
+      lastRotation:{
         x:0,
         y:0,
         z:0,
       },
+      // 以模型初始位置角度为基准，旋转的角度
       rotationOffset:{
         x:0,
         y:0,
@@ -285,14 +294,16 @@ export default {
         y: 1,
         z: 1,
       },
-
+      // 模型旋转矩阵数组值
       transformArray:[
         1,0,0,0,
         0,1,0,0,
         0,0,1,0,
         0,0,0,0
       ],
-
+      // 模型旋转矩阵数组值的字符串，用于input框的数据绑定
+      transformString:'',
+      // 处于激活状态的编辑工具
       activeTool: undefined,
       showMatrix: true,
       showSharePanel: false,
@@ -301,80 +312,24 @@ export default {
     }
   },
   computed:{
-    transformString(){
-      return this.transformArray.toString()
-    }
+    showShareLink() {
+      if (this.layer && this.layer.type === LayerType.ModelCache) {
+        return false
+      }  else {
+        return true
+      }
+    },
   },
   created() {},
   mounted(){
-    const editorTransform = this.Cesium.Matrix4.clone(this.model.root.transform);
-    const ellipsoid = this.viewer.scene.globe.ellipsoid;
-    const center = ellipsoid.cartesianToCartographic(this.Cesium.Cartesian3.clone(this.modelMetadata.boundingSphereCenter));
-    
     // 获取图层属性中的变换矩阵。初始位置、旋转角度、缩放比例
     if (this.layer.layerProperty && this.layer.layerProperty.transform) {
       this.transformArray = this.layer.layerProperty.transform
     } else {
-      this.transformArray = this.Cesium.Matrix4.toArray(this.model.root.transform)
+      this.transformArray = this.Cesium.Matrix4.toArray(this.model._root.transform)
     }
-    
-    const transformMat4 = new this.Cesium.Matrix4.fromArray(this.transformArray)
-    // 获取缩放量、旋转量
-    const translate = this.Cesium.Matrix4.getTranslation(transformMat4, new this.Cesium.Cartesian3())
-    const scale = this.Cesium.Matrix4.getScale(transformMat4, new this.Cesium.Cartesian3())
-    this.scale = scale
-
-    // 模型初始旋转角度
-    this.modelRotation = this.getRotationMatrix(new this.Cesium.Matrix4.fromArray(this.model.root.transform))
-    // 记录的上一次旋转角度
-    this.rotation = this.getRotationMatrix(new this.Cesium.Matrix4.fromArray(this.transformArray))
-    // 旋转角度变化量
-    this.rotationOffset = {
-      x: this.rotation.x - this.modelRotation.x,
-      y: this.rotation.y - this.modelRotation.y,
-      z: this.rotation.z - this.modelRotation.z
-    }
-
-    // 获取模型中心
-    this.modelMetadataCenter = {
-        longitude: this.Cesium.Math.toDegrees(center.longitude),
-        latitude: this.Cesium.Math.toDegrees(center.latitude),
-        height: center.height,
-    }
-
-    // // 获取平移量
-    // const translateDre = ellipsoid.cartesianToCartographic(translate);
-    // if(translateDre){
-    //   this.coordinate = {
-    //     longitude: this.Cesium.Math.toDegrees(translateDre.longitude),
-    //     latitude: this.Cesium.Math.toDegrees(translateDre.latitude),
-    //     height: translateDre.height,
-    //   }
-    // } else {
-    //   this.coordinate = cloneDeep(this.modelMetadataCenter)
-    // }
-    // this.coordinateOffset = {
-    //   longitude: this.coordinate.longitude - this.modelMetadataCenter.longitude,
-    //   latitude: this.coordinate.latitude - this.modelMetadataCenter.latitude,
-    //   height: this.coordinate.height - this.modelMetadataCenter.height,
-    // }
-
-    // 获取平移位置
-    this.coordinate = {
-      longitude: this.modelMetadataCenter.longitude,
-      latitude: this.modelMetadataCenter.latitude,
-      height: this.modelMetadataCenter.height,
-    }
-    
-    // 获取局部坐标系制图中心
-    // Todo cesium内核中写的是 取 this.model._root.computedTransform
-    const dataCenterCart = this.Cesium.Matrix4.getTranslation(this.model.root.transform, new this.Cesium.Cartesian3())
-    const origin = ellipsoid.cartesianToCartographic(dataCenterCart);
-    this.origin = {
-        longitude: this.Cesium.Math.toDegrees(origin.longitude),
-        latitude: this.Cesium.Math.toDegrees(origin.latitude),
-        height: origin.height,
-    }
+    this.transformString = this.transformArray.toString()
+    this.getPropertiesByTransform(this.transformArray)
   },
   methods:{
     submit() {
@@ -405,20 +360,26 @@ export default {
           latitude: this.coordinate.latitude - this.modelMetadataCenter.latitude,
           height: this.coordinate.height - this.modelMetadataCenter.height,
         }
-        this.newOrigin = {
-          longitude: this.origin.longitude + this.coordinateOffset.longitude,
-          latitude: this.origin.latitude + this.coordinateOffset.latitude,
-          height: this.origin.height + this.coordinateOffset.height,
+        this.origin = {
+          longitude: this.metadataOrigin.longitude + this.coordinateOffset.longitude,
+          latitude: this.metadataOrigin.latitude + this.coordinateOffset.latitude,
+          height: this.metadataOrigin.height + this.coordinateOffset.height,
         }
         this.$emit('model-edit', type, {
-          move: this.newOrigin,
+          move: this.origin,
           model:this.model,
         })
       } else if(type === 'rotateTo'){
+        const rotationChangeValue = {
+          x: this.rotationOffset.x - this.lastRotation.x,
+          y: this.rotationOffset.y - this.lastRotation.y,
+          z: this.rotationOffset.z - this.lastRotation.z,
+        }
         this.$emit('model-edit', type, {
-          rotation: this.rotationOffset,
+          rotation: rotationChangeValue,
           model:this.model,
         })
+        this.lastRotation = cloneDeep(this.rotationOffset)
       } else if(type === 'zoomTo'){
         this.$emit('model-edit', type, {
           scale: this.scale,
@@ -440,21 +401,28 @@ export default {
         y:1,
         z:1,
       }
-      
-      this.handleEdit('moveTo')
-      this.handleEdit('rotateTo')
-      this.handleEdit('zoomTo')
-      this.$emit('model-edit', 'reset')
+      this.transformArray = this.Cesium.Matrix4.toArray(this.modelMetadata.transform)
+      this.transformString = this.transformArray.toString()
+      const transform = new this.Cesium.Matrix4()
+      this.Cesium.Matrix4.clone(this.modelMetadata.transform, transform)     
+      this.model._root.transform = transform
+      this.$emit('model-edit', 'deactivate')
     },
     handleActiveTool(type){
-      this.activeTool = type
-      if(type === 'move'){
-        this.$emit('model-edit', 'move')
-      } else if(type === 'rotate'){
-        this.$emit('model-edit', 'rotate')
-      } else if(type === 'scale'){
-        this.$emit('model-edit', 'zoomSingle')
-      } 
+      if (this.activeTool === type){
+        // 如果当前处于激活的工具再次被点击，则取消工具激活
+        this.handleDeactivateTool()
+      } else {
+        // 如果被点击的工具是未被激活状态，则激活工具
+        this.activeTool = type
+        if (type === 'move'){
+          this.$emit('model-edit', 'move')
+        } else if(type === 'rotate'){
+          this.$emit('model-edit', 'rotate')
+        } else if(type === 'scale'){
+          this.$emit('model-edit', 'zoomSingle')
+        } 
+      }
     },
     handleDeactivateTool(){
       if(this.activeTool){
@@ -489,6 +457,7 @@ export default {
           this.newOrigin = this.convertToDegree(value.originPosition)
         } else if (value.editorMode === 'rotate') {
           this.rotation = value.modelRotation
+          this.lastRotation = cloneDeep(this.rotationOffset)
           this.rotationOffset = {
             x: this.Cesium.Math.toDegrees(this.rotation.x),
             y: this.Cesium.Math.toDegrees(this.rotation.y),
@@ -498,12 +467,65 @@ export default {
           this.scale = value.scale
         }
       }
-      this.transformArray = this.Cesium.Matrix4.toArray(this.model.root.transform)
+      this.transformArray = this.Cesium.Matrix4.toArray(this.model._root.transform)
+      this.transformString = this.transformArray.toString()
     },
     handelEditTransform(){
-      this.transformArray = this.Cesium.Matrix4.toArray(this.model.root.transform)
+      this.transformArray = this.transformString.split(',')
+      const transformMat4 = new this.Cesium.Matrix4.fromArray(this.transformArray)
+      this.model._root.transform = transformMat4
+      this.getPropertiesByTransform(transformMat4)
     },
-    getPropertiesByTransform(){
+    getPropertiesByTransform(transform){
+      let transformMat4 = transform
+      if (Array.isArray(transform) && transform.length === 16) {
+        transformMat4 = new this.Cesium.Matrix4.fromArray(transform)
+      }
+
+      // 1.获取缩放量
+      this.scale = this.Cesium.Matrix4.getScale(transformMat4, new this.Cesium.Cartesian3())
+      
+      // 2.获取旋转量
+      if (!this.modelRotation || !this.modelRotation.x || !this.modelRotation.y || !this.modelRotation.z ) {
+        // 2.1获取模型初始旋转角度
+        // this.modelRotation = this.getRotationMatrix(this.modelMetadata.transform, new this.Cesium.Cartesian3())
+        this.modelRotation = window.transformEditor.getEulerFromTransform(this.modelMetadata.transform, this.model)
+      }
+      // 2.2当前旋转角度
+      // this.rotation = this.getRotationMatrix(transformMat4, new this.Cesium.Cartesian3())
+      this.rotation = window.transformEditor.getEulerFromTransform(transformMat4, this.model)
+      // 2.3旋转角度变化量
+      this.rotationOffset = {
+        x: this.rotation.x - this.modelRotation.x,
+        y: this.rotation.y - this.modelRotation.y,
+        z: this.rotation.z - this.modelRotation.z
+      }
+      this.lastRotation  = cloneDeep(this.rotationOffset)
+
+      // 3.获取当前模型外包球中心的位置
+      if (!this.modelMetadataCenter || !this.modelMetadataCenter.longitude || !this.modelMetadataCenter.latitude || !this.modelMetadataCenter.height) {
+        // 3.1获取模型元数据外包球中心
+        this.modelMetadataCenter = this.convertToDegree(this.modelMetadata.boundingSphereCenter)
+      }
+      if (!this.metadataOrigin || !this.metadataOrigin.longitude || !this.metadataOrigin.latitude || !this.metadataOrigin.height) {
+        // 3.2获取元数据局部坐标系中心
+        this.metadataOrigin = this.convertToDegree(this.Cesium.Matrix4.getTranslation(this.modelMetadata.transform, new this.Cesium.Cartesian3()))
+      }
+      // 3.3获取当前局部坐标系中心
+      // this.metadataOrigin = this.convertToDegree(this.Cesium.Matrix4.getTranslation(transformMat4, new this.Cesium.Cartesian3()))
+      this.origin = this.convertToDegree(this.Cesium.Matrix4.getTranslation(transformMat4, new this.Cesium.Cartesian3()))
+      // 3.4获取局部坐标系中心变化量
+      this.coordinateOffset = {
+        longitude: this.origin.longitude - this.metadataOrigin.longitude,
+        latitude: this.origin.latitude - this.metadataOrigin.latitude,
+        height: this.origin.height - this.metadataOrigin.height,
+      }
+      // 3.5获取当前模型外包球中心的位置，该值等于模型元数据中心加上平移量
+      this.coordinate = {
+        longitude: this.modelMetadataCenter.longitude + this.coordinateOffset.longitude,
+        latitude: this.modelMetadataCenter.latitude + this.coordinateOffset.latitude,
+        height: this.modelMetadataCenter.height + this.coordinateOffset.height,
+      }
     },
     share(){
       this.showSharePanel = !this.showSharePanel

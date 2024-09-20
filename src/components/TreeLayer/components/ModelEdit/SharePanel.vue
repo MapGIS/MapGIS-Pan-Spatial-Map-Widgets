@@ -227,86 +227,6 @@ export default {
     },
   },
   watch: {
-    // 'layerDocument.defaultMap': {
-    //   immediate: true,
-    //   deep: true,
-    //   handler() {
-    //     debugger
-    //     this.layers = [this.layerObject]
-    //     // this.parentKeys = []
-    //     // const layerSublayers = []
-    //     // if (
-    //     //   this.layerDocument &&
-    //     //   this.layerDocument.defaultMap &&
-    //     //   this.layerDocument.defaultMap.layers()
-    //     // ) {
-    //     //   const layers: Array<unknown> = this.layerDocument
-    //     //     .clone()
-    //     //     .defaultMap.layers()
-    //     //   this.setDocument(layers)
-    //     //   const arr = []
-    //     //   for (let index = 0; index < layers.length; index++) {
-    //     //     const item = layers[index]
-    //     //     item.key = index.toString()
-    //     //     item.scopedSlots = { title: 'custom' }
-    //     //     item.visiblePopover = false
-    //     //     if (this.isIGSScene(item)) {
-    //     //       if (item.activeScene) {
-    //     //         item.sublayers = item.activeScene.sublayers.map((row) => ({
-    //     //           ...row,
-    //     //         }))
-    //     //       }
-    //     //     }
-
-    //     //     if (this.isVectorTile(item)) {
-    //     //       /**
-    //     //        * 修改说明：矢量瓦片里的layers没有row.layout或者没有row.layout.visibility字段时，是默认显示，这里默认设置为可见
-    //     //        * 修改人：龚跃健
-    //     //        * 修改日期：2021/11/25
-    //     //        */
-    //     //       item.sublayers = item.currentStyle.layers.map((row) => ({
-    //     //         ...row,
-    //     //         visible:
-    //     //           row.layout === undefined ||
-    //     //           row.layout.visibility === undefined ||
-    //     //           row.layout.visibility === 'visible',
-    //     //         id: `${item.id}~${row.id}`,
-    //     //         sublayerId: row.id,
-    //     //         title: row.description || row.id,
-    //     //       }))
-    //     //     }
-    //     //     if (this.isWMTSLayer(item) || this.isIgsTileLayer(item)) {
-    //     //       if (item.isVisible || item.visible) {
-    //     //         arr.push(item.key)
-    //     //       }
-    //     //     } else if (
-    //     //       (item.sublayers && item.sublayers.length === 0) ||
-    //     //       !item.sublayers
-    //     //     ) {
-    //     //       if (item.isVisible || item.visible) {
-    //     //         arr.push(item.key)
-    //     //       }
-    //     //     } else if (item.sublayers && item.sublayers.length > 0) {
-    //     //       /**
-    //     //        * @修改说明
-    //     //        * 这里存储visible或者为isVisible为true的父节点，因为这些可见的父节点并没有存储到ticked，
-    //     //        * 后续点击check的点击事件返回的val会包含这些父节点无法做比较
-    //     //        */
-    //     //       if (item.isVisible || item.visible) {
-    //     //         this.parentKeys.push(item.key)
-    //     //       }
-    //     //     }
-    //     //     if (item.sublayers && item.sublayers.length > 0) {
-    //     //       this.setSublayers(item.sublayers, item.key, arr, layerSublayers)
-    //     //     }
-    //     //   }
-    //     //   LayerSublayersManager.sublayersConfig = layerSublayers
-    //     //   this.layers = layers
-
-    //     //   // this.ticked = arr
-    //     // }
-    //   },
-    // },
     filter: {
       handler(newVal, oldVal) {
         if (this.filter !== '') {
@@ -537,24 +457,10 @@ export default {
       this.tickedChange0(this.ticked)
     },
     tickedChange0(val: Array<string>) {
-      debugger
-      // const doc = this.layerDocument.clone()
-      // const layers: Array<unknown> = doc.defaultMap.layers()
       const layers = this.layers
       const diffArr = val
-      // this.$emit('changed', diffArr)
       const modelsInfo = []
       diffArr.forEach((item) => {
-        // const model = this.getSceneLayer3DSet(item)
-        // const modelsInfo = []
-        // if(model){
-        //   model._root.transform = this.Cesium.Matrix4.fromArray(this.transformArray);
-        //   // 记录需要保存的模型变换矩阵
-        //   modelsInfo.push({          
-        //     layer: selectLayer,
-        //     transform: model._root.transform
-        //   })
-        // }
         let selectLayer
         if (item.split('-').length > 1) {
           const parentIndex: string = item.split('-')[0]
@@ -778,10 +684,6 @@ export default {
         this.showMetadataInfo = true
         this.currentLayerInfo = layer
       }
-      // 复位当前选择的图层
-      // this.$nextTick(() => {
-      //   this.currentLayerInfo = {}
-      // })
       this.clickPopover(node, false)
     },
 
@@ -805,12 +707,6 @@ export default {
       const expandedKeys = this.expandedKeys
       const relation = {}
       const checkNodeKeys = this.ticked
-      // 记录checkNodeKeys
-      // this.transferLayers(this.layers, layerArr)
-      // this.ticked.forEach((item) => {
-      //   const find = layerArr.find((layer) => layer.key === item)
-      //   find && checkNodeKeys.push(find.url)
-      // })
       this.layers.forEach((layer) => {
         // relation[layer.id] = layer.key
         relation[layer.url] = layer.key
@@ -890,17 +786,11 @@ export default {
         }
       })
 
-      // const layerConfig = {
-      //   expandedKeys: newExpandedKeys,
-      //   ticked: newCheckNodeKeys,
-      // }
-
       return expandedKeys
     },
   },
   beforeDestroy() {
     eventBus.$off(events.MODEL_PICK)
-    // window.modelEditControlList = undefined
   },
 }
 </script>

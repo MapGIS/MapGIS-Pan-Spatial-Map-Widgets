@@ -1003,16 +1003,23 @@ export default {
         * 修改日期：2024/9/14
         */
         // 将layerProperty的transform信息，在M3D模型缓存图层数据加载完毕后，将其赋值给模型对象，改变模型姿态
-        const currentLayer = this.layers.find((item) => item.id === id);
-        if (currentLayer && currentLayer.layerProperty && currentLayer.layerProperty.transform) {
-          const model = this.getM3DSet(id);
+        const currentLayer = this.layers.find((item) => item.id === id)
+        const exitMetadata = this.modelMetadataList.find(item=>item.layerId === id)
+        const model = this.getM3DSet(id);
+        if (currentLayer && !exitMetadata) {
           // 模型元数据中的transform记录到变量中
+          const transform = new this.Cesium.Matrix4()
+          this.Cesium.Matrix4.clone(model._root.transform, transform)
+          const center = new this.Cesium.Cartesian3()
+          this.Cesium.Cartesian3.clone(model.boundingSphere.center, center)
           this.modelMetadataList.push({
             layerId: id, 
-            transform: model._root.transform, 
-            boundingSphereCenter: model.boundingSphere.center
+            transform: transform, 
+            boundingSphereCenter: center
           })
-          model._root.transform = currentLayer.layerProperty.transform;
+        }
+        if (currentLayer && currentLayer.layerProperty && currentLayer.layerProperty.transform) {
+          model._root.transform = new this.Cesium.Matrix4.fromArray(currentLayer.layerProperty.transform)
         }
         source.readyPromise.then(() => {
           vm._setBoundingSphereAndExtent(source, layer)
@@ -1040,11 +1047,17 @@ export default {
           // 模型元数据中的transform记录到变量中
           const subLayerObjectList = this._getAllSubLayers(currentLayer,'sublayers')
           subLayerObjectList.forEach((subLayerObject)=>{
+            const exitMetadata = this.modelMetadataList.find(item=>item.layerId === subLayerObject.id)
+            if (exitMetadata) return 
             const model = this.getSceneLayer3DSet(subLayerObject.id);
+            const transform = new this.Cesium.Matrix4()
+            this.Cesium.Matrix4.clone(model._root.transform, transform)
+            const center = new this.Cesium.Cartesian3()
+            this.Cesium.Cartesian3.clone(model.boundingSphere.center, center)
             this.modelMetadataList.push({
               layerId: subLayerObject.id, 
-              transform: model._root.transform, 
-              boundingSphereCenter: model.boundingSphere.center
+              transform: transform, 
+              boundingSphereCenter: center
             })
           })
         }
@@ -1059,7 +1072,7 @@ export default {
           transformLayerObjects.forEach((transformLayer)=>{
             const sublayer = layerList.find((sublayerItem)=>transformLayer.layerRenderIndex === sublayerItem.layerIndex)
             const model = this.getSceneLayer3DSet(sublayer.id);
-            model._root.transform = JSON.parse(transformLayer.layerProperty).transform;
+            model._root.transform = new this.Cesium.Matrix4.fromArray(JSON.parse(transformLayer.layerProperty).transform);
           })
         }
 
@@ -1579,7 +1592,7 @@ export default {
     },
 
     updateModelRotateTo(value) {
-      window.transformEditor.rotateLocalFromOriginal({            
+      window.transformEditor.rotateLocal({            
         rotation: new this.Cesium.Cartesian3(value.rotation.x,value.rotation.y,value.rotation.z),
         rotationPoint:value.model.boundingSphere.center,
         model: value.model
@@ -2120,7 +2133,7 @@ export default {
       let layer
       let documentLayer
       let documentTransform
-      const documentScenesJson = []
+      let documentScenesJson = []
       if (!Array.isArray(modelsInfo) || modelsInfo.length === 0) {
         return
       }
@@ -2138,8 +2151,6 @@ export default {
           layer.layerProperty = layer.layerProperty ? layer.layerProperty : {}
           layer.layerProperty.transform = transform
           documentTransform = transform
-          // documentLayer.layerProperty = documentLayer.layerProperty ? documentLayer.layerProperty : {}
-          // documentLayer.layerProperty.transform = transform
         }
       }  else {
         const scenesJson = []
@@ -2172,12 +2183,7 @@ export default {
         })
         layer.layerProperty = layer.layerProperty? layer.layerProperty : {}
         layer.layerProperty.scenes = scenesJson
-        documentLayer.scenes.forEach((scene)=>{
-          const sceneJson = scene.toJSON()
-          documentScenesJson.push(sceneJson)
-        })
-        // documentLayer.layerProperty = layer.layerProperty? layer.layerProperty : {}
-        // documentLayer.layerProperty.scenes = documentScenesJson
+        documentScenesJson = scenesJson
       }
       api.updateData({ dataId: layer.dataId, layerProperty: layer.layerProperty }).then(response=>{
         if (response.code===200) {
@@ -2185,7 +2191,7 @@ export default {
           this.closeSharePanel()
           this.$nextTick(() => {
             // 更新documentLayer的值
-            documentLayer.layerProperty = layer.layerProperty? layer.layerProperty : {}
+            documentLayer.layerProperty = documentLayer.layerProperty? documentLayer.layerProperty : {}
             if (this.isModelCacheLayer(modelsInfo[0].layer)) {
               documentLayer.layerProperty.transform = documentTransform
             } else {
