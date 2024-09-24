@@ -311,6 +311,8 @@ export default {
       currentEditLayerId: '',
       // 图层类型图标缓存
       iconArrCache: {},
+      // 模型元数据的变换矩阵、中心点位置等信息
+      modelMetadataList: [],
     }
   },
   computed: {
@@ -364,9 +366,27 @@ export default {
             item.visiblePopover = false
             if (this.isIGSScene(item)) {
               if (item.activeScene) {
+                /**
+                * 修改说明：2672 SZ-一张图支持编辑模型下沉
+                * 修改人：杨婷茹
+                * 修改日期：2024/9/14
+                */
+                // 将layerProperty的transform信息，在图层数据加载的初始状态，将其赋值给sceneLayer的sublayers
+                if(item.layerProperty && item.layerProperty.scenes && item.layerProperty.scenes.length > 0) {
+                  const sceneJson = item.layerProperty.scenes.find((scene)=>scene.sceneIndex === item.activeScene.sceneIndex)
+                  let transformLayerObjects = []
+                  sceneJson.layers.forEach((layerItem)=>{
+                    transformLayerObjects = transformLayerObjects.concat(this._getTransformLayer(layerItem,'children'))
+                  })
+                  const subLayerList = this._getAllSubLayers(item.activeScene,'sublayers')
+                  transformLayerObjects.forEach((transformLayer)=>{
+                    const sublayer = subLayerList.find((subLayerItem) => transformLayer.layerRenderIndex === subLayerItem.layerIndex)
+                    sublayer.layerProperty = JSON.parse(transformLayer.layerProperty)
+                  })
+                }
                 item.sublayers = item.activeScene.sublayers.map((row) => ({
                   ...row,
-                }))
+                }))      
               }
             }
 
@@ -977,6 +997,30 @@ export default {
         } else if (layer.format === ModelCacheFormat.cesium3dTileset) {
           source = vm.sceneController.findTileset3DSource(id)
         }
+        /**
+        * 修改说明：2672 SZ-一张图支持编辑模型下沉
+        * 修改人：杨婷茹
+        * 修改日期：2024/9/14
+        */
+        // 将layerProperty的transform信息，在M3D模型缓存图层数据加载完毕后，将其赋值给模型对象，改变模型姿态
+        const currentLayer = this.layers.find((item) => item.id === id)
+        const exitMetadata = this.modelMetadataList.find(item=>item.layerId === id)
+        const model = this.getM3DSet(id);
+        if (currentLayer && !exitMetadata) {
+          // 模型元数据中的transform记录到变量中
+          const transform = new this.Cesium.Matrix4()
+          this.Cesium.Matrix4.clone(model._root.transform, transform)
+          const center = new this.Cesium.Cartesian3()
+          this.Cesium.Cartesian3.clone(model.boundingSphere.center, center)
+          this.modelMetadataList.push({
+            layerId: id, 
+            transform: transform, 
+            boundingSphereCenter: center
+          })
+        }
+        if (currentLayer && currentLayer.layerProperty && currentLayer.layerProperty.transform) {
+          model._root.transform = new this.Cesium.Matrix4.fromArray(currentLayer.layerProperty.transform)
+        }
         source.readyPromise.then(() => {
           vm._setBoundingSphereAndExtent(source, layer)
           window.layers3D[layer.id] = layer
@@ -993,6 +1037,45 @@ export default {
             layerIdArr.push(sublayer.id)
           }
         })
+        /**
+        * 修改说明：2672 SZ-一张图支持编辑模型下沉
+        * 修改人：杨婷茹
+        * 修改日期：2024/9/14
+        */
+        const currentLayer = this.layers.find((item)=>item.id === id)
+        if(currentLayer) {
+          // 模型元数据中的transform记录到变量中
+          const subLayerObjectList = this._getAllSubLayers(currentLayer,'sublayers')
+          subLayerObjectList.forEach((subLayerObject)=>{
+            const exitMetadata = this.modelMetadataList.find(item=>item.layerId === subLayerObject.id)
+            if (exitMetadata) return 
+            const model = this.getSceneLayer3DSet(subLayerObject.id);
+            const transform = new this.Cesium.Matrix4()
+            this.Cesium.Matrix4.clone(model._root.transform, transform)
+            const center = new this.Cesium.Cartesian3()
+            this.Cesium.Cartesian3.clone(model.boundingSphere.center, center)
+            this.modelMetadataList.push({
+              layerId: subLayerObject.id, 
+              transform: transform, 
+              boundingSphereCenter: center
+            })
+          })
+        }
+        // 将layerProperty的transform信息，在场景图层数据加载完毕后，将其赋值给模型对象，改变模型姿态
+        if(currentLayer && currentLayer.layerProperty && currentLayer.layerProperty.scenes && currentLayer.layerProperty.scenes.length > 0) {
+          const sceneJson = currentLayer.layerProperty.scenes.find((scene)=>scene.sceneIndex === currentLayer.activeScene.sceneIndex)
+          let transformLayerObjects = []
+          sceneJson.layers.forEach((layerItem)=>{
+            transformLayerObjects = transformLayerObjects.concat(this._getTransformLayer(layerItem,'children'))
+          })
+          const layerList = this._getAllSubLayers(currentLayer.activeScene,'sublayers')
+          transformLayerObjects.forEach((transformLayer)=>{
+            const sublayer = layerList.find((sublayerItem)=>transformLayer.layerRenderIndex === sublayerItem.layerIndex)
+            const model = this.getSceneLayer3DSet(sublayer.id);
+            model._root.transform = new this.Cesium.Matrix4.fromArray(JSON.parse(transformLayer.layerProperty).transform);
+          })
+        }
+
         setTimeout(() => {
           const sourceArr = layerIdArr.map((layerId) =>
             vm.sceneController.findSource(layerId)
@@ -1004,6 +1087,38 @@ export default {
           // vm.$emit('update:layerDocument', doc)
         }, 1000)
       }
+    },
+
+    _getTransformLayer(layer, childKey){
+      if(childKey === undefined) childKey = 'children'
+      let transformLayers = []
+      if(layer.layerProperty) {
+        const layerProperty = JSON.parse(layer.layerProperty)
+        if (layerProperty) {
+          if (layerProperty.transform) {
+            transformLayers.push(layer)
+          }
+        }
+      }
+      if(layer[childKey]){
+        layer[childKey].forEach((childLayer)=>{
+          transformLayers = transformLayers.concat(this._getTransformLayer(childLayer,childKey))
+        })
+      }
+      return transformLayers
+    },
+
+    _getAllSubLayers(layer, childKey){
+      if(childKey === undefined) childKey = 'children'
+      let subLayers = []
+      if(layer[childKey]&&layer[childKey].length>0){
+        layer[childKey].forEach((childLayer)=>{
+          subLayers = subLayers.concat(this._getAllSubLayers(childLayer,childKey))
+        })
+      } else{
+        subLayers = subLayers.concat(layer)
+      }
+      return subLayers
     },
     /**
      * 设置场景服务图层的BoundingSphere和Extent
@@ -1200,6 +1315,8 @@ export default {
           import('./components/ChangeM3DProps/ChangeM3DProps.vue'),
         props: {
           layer: this.currentLayerInfo,
+          layerProperty: this.currentLayerInfo.layerProperty,
+          extend: this.currentLayerInfo.extend,
         },
         listeners: {
           'update:layer': (val) => {
@@ -1308,29 +1425,38 @@ export default {
      * 打开模型编辑页面
      */
     modelEdit(item) {
-      // if (this.modelEditId !== item.id) this.modelEditId = item.id
+      const self = this
+      let layerOption
       this.modelEditLayer = item
+      const { Cesium, viewer } = this
+      if (this.isIGSScene(item)) {
+        if (this.isSubLayer(item)) {
+          layerOption = this.getSceneLayer3DSet(item.id)
+        } else {
+          // layerOption = this.getG3dLayer(item.id)
+        }
+      } else if (this.isModelCacheLayer(item)) {
+        layerOption = this.getM3DSet(item.id)
+      }
       if (window.modelEditControlList[item.id]) {
         window.transformEditor = window.modelEditControlList[item.id]
       } else {
-        const { Cesium, viewer } = this
-        let layerOption
-        if (this.isIGSScene(item)) {
-          layerOption = this.getG3dLayer(item.id)
-        } else if (this.isModelCacheLayer(item)) {
-          layerOption = this.getM3DSet(item.id)
+        const editorCallback = function(value){
+          self.$parent?.$parent?.$refs['模型变换']?.transformUpdate(value)
         }
-        window.transformEditor = new Cesium.ModelTransformTool(layerOption)
+        window.transformEditor = new Cesium.ModelTransformTool(layerOption, editorCallback)
         window.transformEditor.initModelEditor(viewer)
         window.modelEditControlList[item.id] = window.transformEditor
       }
-
+      const modelMetadata = this.modelMetadataList.find(metadataItem=>metadataItem.layerId === item.id)
       this.openPage({
         title: '模型变换',
         name: 'MpModelEdit',
         component: () => import('./components/ModelEdit/ModelEdit.vue'),
         props: {
           layer: this.modelEditLayer,
+          modelMetadata: modelMetadata,
+          model: layerOption
         },
         listeners: {
           'model-edit': (type, val) => {
@@ -1413,18 +1539,25 @@ export default {
         case 'zoomTo':
           // 开始缩放
           this.updateModelZoomTo(val)
+          this.updateModelTransform()
           break
         case 'rotateTo':
           // 开始旋转
           this.updateModelRotateTo(val)
+          this.updateModelTransform()
           break
         case 'moveTo':
           // 开始移动
           this.updateModelMoveTo(val)
+          this.updateModelTransform()
           break
         case 'destroy':
           // 销毁
           this.updateModelDestroy(val)
+          break
+        case 'save':
+          // 销毁
+          this.saveModelEdit(val)
           break
         default:
           break
@@ -1451,24 +1584,37 @@ export default {
       window.transformEditor.activeTranslationEditor()
     },
 
-    updateModelZoomTo(zoom) {
-      window.transformEditor.setScala(zoom.xScale, zoom.yScale, zoom.zScale)
+    updateModelZoomTo(value) {
+      window.transformEditor.setLocalScala({
+        size: new this.Cesium.Cartesian3(value.scale.x, value.scale.y, value.scale.z),
+        model: value.model
+      });
     },
 
-    updateModelRotateTo(rotate) {
-      window.transformEditor.setRotation(rotate.degree, rotate.axis)
+    updateModelRotateTo(value) {
+      window.transformEditor.rotateLocal({            
+        rotation: new this.Cesium.Cartesian3(value.rotation.x,value.rotation.y,value.rotation.z),
+        rotationPoint:value.model.boundingSphere.center,
+        model: value.model
+      })
     },
 
-    updateModelMoveTo(move) {
-      window.transformEditor.setTranslation(
-        move.longitude,
-        move.latitude,
-        move.height
-      )
+    updateModelMoveTo(value) {
+      window.transformEditor.setPositionWorld({
+        position: new this.Cesium.Cartesian3.fromDegrees(value.move.longitude, value.move.latitude, value.move.height),
+        model: value.model
+      })
+    },
+
+    updateModelTransform(){
+      this.$parent?.$parent?.$refs['模型变换']?.transformUpdate()
+    },
+
+    closeSharePanel(){
+      this.$parent?.$parent?.$refs['模型变换']?.closeSharePanel()
     },
 
     updateModelDestroy(isSave) {
-      this.modelSave = isSave
       this.updateModelDeactivate()
     },
 
@@ -1982,6 +2128,79 @@ export default {
         }
       })
       this.$emit('update:layerDocument', doc)
+    },
+    saveModelEdit(modelsInfo){
+      let layer
+      let documentLayer
+      let documentTransform
+      let documentScenesJson = []
+      if (!Array.isArray(modelsInfo) || modelsInfo.length === 0) {
+        return
+      }
+      if (this.isModelCacheLayer(modelsInfo[0].layer)) {
+        if(modelsInfo.length>0){
+          const modelInfo = modelsInfo[0]      
+          const layerObject = modelInfo.layer
+          const transform = this.Cesium.Matrix4.toArray(modelInfo.transform)
+          layer = this.layers.find((item)=>item.id===layerObject.id)
+          if (!layer) return 
+          
+          documentLayer = this.layerDocument.defaultMap.layers().find(item=>item.id===layerObject.id)
+          layerObject.layerProperty = layerObject.layerProperty?layerObject.layerProperty:{}
+          layerObject.layerProperty.transform = transform
+          layer.layerProperty = layer.layerProperty ? layer.layerProperty : {}
+          layer.layerProperty.transform = transform
+          documentTransform = transform
+        }
+      }  else {
+        const scenesJson = []
+        for(let i = 0;i<modelsInfo.length;i++){
+          const modelInfo = modelsInfo[i]      
+          const subLayerObject = modelInfo.layer
+          const transform = this.Cesium.Matrix4.toArray(modelInfo.transform)
+          layer = subLayerObject.layer
+          if (!layer) return 
+
+          const subLayerObjectList = this._getAllSubLayers(layer,'sublayers')
+          const subLayerObjectItem = subLayerObjectList.find(item=>item.id===subLayerObject.id)
+          const layerList = this._getAllSubLayers(layer.activeScene,'sublayers')
+          const subLayerItem = layerList.find(item=>item.id===subLayerObject.id)
+          const sceneLayerId = subLayerObject.id.split(':')[0]
+          documentLayer = this.layerDocument.defaultMap.layers().find(item=>item.id===sceneLayerId)
+          const documentSubLayerList = this._getAllSubLayers(documentLayer.activeScene,'sublayers')
+          const documentSubLayerItem = documentSubLayerList.find(item=>item.id===subLayerObject.id)
+
+          subLayerObjectItem.layerProperty = subLayerObjectItem.layerProperty? subLayerObjectItem.layerProperty : {}
+          subLayerObjectItem.layerProperty.transform = transform
+          subLayerItem.layerProperty = subLayerItem.layerProperty? subLayerItem.layerProperty : {}
+          subLayerItem.layerProperty.transform = transform
+          documentSubLayerItem.layerProperty = documentSubLayerItem.layerProperty? documentSubLayerItem.layerProperty : {}
+          documentSubLayerItem.layerProperty.transform = transform
+        }
+        layer.scenes.forEach((scene)=>{
+          const sceneJson = scene.toJSON()
+          scenesJson.push(sceneJson)
+        })
+        layer.layerProperty = layer.layerProperty? layer.layerProperty : {}
+        layer.layerProperty.scenes = scenesJson
+        documentScenesJson = scenesJson
+      }
+      api.updateData({ dataId: layer.dataId, layerProperty: layer.layerProperty }).then(response=>{
+        if (response.code===200) {
+          this.$message.success('保存成功')  
+          this.closeSharePanel()
+          this.$nextTick(() => {
+            // 更新documentLayer的值
+            documentLayer.layerProperty = documentLayer.layerProperty? documentLayer.layerProperty : {}
+            if (this.isModelCacheLayer(modelsInfo[0].layer)) {
+              documentLayer.layerProperty.transform = documentTransform
+            } else {
+              documentLayer.layerProperty.scenes = documentScenesJson
+            }
+          })
+          
+        }
+      })
     },
   },
   beforeDestroy() {

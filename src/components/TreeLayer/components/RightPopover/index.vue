@@ -104,10 +104,9 @@ export default {
         {
           name: '模型变换',
           show:
-            this.isParentLayer(this.layerItem) &&
-            (this.isIGSScene(this.layerItem) ||
-              (this.isModelCacheLayer(this.layerItem) &&
-                !this.isVoxelLayer(this.layerItem))),
+            (this.isModelCacheLayer(this.layerItem) && 
+              !this.isVoxelLayer(this.layerItem)) ||
+            this.isIGSSceneSubLayerModelCache(this.layerItem),
           click: () => this.modelEdit(),
         },
         {
