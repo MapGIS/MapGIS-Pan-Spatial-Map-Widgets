@@ -171,7 +171,7 @@ export default {
       )
       // 需要重置一次
       if (this.isAgain) {
-        this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig({})
+        // this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig({})
         this.baseMapController.setBaseMapInfo = null
         this.$nextTick(() => {
           this.dataCatalogCheckController.setCurrentCheckSceneSettingConfig(
