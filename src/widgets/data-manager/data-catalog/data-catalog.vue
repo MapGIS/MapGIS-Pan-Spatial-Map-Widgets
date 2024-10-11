@@ -722,7 +722,8 @@ export default {
     },
     // 获取目录树各级节点对应的图标
     nodeIcon(item) {
-      const legend = item.extend.legend
+      const legend =
+        item.extend && item.extend.legend ? item.extend.legend : undefined
       let icon
       if (item.serverType !== undefined) {
         const { useLocalDataNodeIcon, dataNodeIcon } =
@@ -785,7 +786,7 @@ export default {
         // ModelCache需要区分m3d和3dTiles
         if (LayerType.ModelCache === item.serverType) {
           const formatType = this.getFormatType(item.customParameters)
-          serviceType = formatType ? formatType : item.serverType
+          serviceType = formatType !== undefined ? formatType : item.serverType
         } else {
           serviceType = item.serverType
         }
@@ -1943,7 +1944,7 @@ export default {
     },
 
     // 上传文件状态改变时的回调
-    async updateImgUrl(val) {
+    updateImgUrl(val) {
       this.legendNodeLegendUrl = val
     },
 
