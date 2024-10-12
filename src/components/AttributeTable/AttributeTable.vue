@@ -276,8 +276,8 @@ export default {
     },
     // 已激活的Tab标签ID
     activeOptionId: {
-      type: String
-    }
+      type: String,
+    },
   },
   computed: {
     // 表格所有勾选的行组成的rowKey数组
@@ -404,7 +404,13 @@ export default {
         // 会生成一个新的属性表配置信息集合，和当前的属性表配置信息集合进行比较，发现有多个属性表配置信息发生变化
         // 会发起多次额外的要素查询，因此要判断当前的属性表配置信息中记录的id是否和activeOptionId相等
         // 只有相等，才发送要素查询
-        if (newValue.id === this.activeOptionId) {
+
+        // 需考虑activeOptionId为undefined的情况，从图层列表查看属性表，没有activeOptionId
+        // 修改人：龚跃健 2024-10-12
+        if (
+          this.activeOptionId == undefined ||
+          newValue.id === this.activeOptionId
+        ) {
           // 清除表格勾选
           this.clearSelection()
           // 清除地图上对应的标注

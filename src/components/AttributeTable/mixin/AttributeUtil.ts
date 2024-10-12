@@ -378,9 +378,8 @@ export default {
         case LayerType.IGSScene:
         case LayerType.ModelCache:
           // 查找矩阵集
-          const source = this.sceneController.findSource(this.optionVal.id)
           queryGeometry = geometry
-            ? this.getGeometry3D(source)
+            ? this.getGeometry3D()
             : this.optionVal.geometry
           if (!isPageChange) {
             const json = await FeatureQuery.igsQueryResourceServer({
@@ -413,7 +412,6 @@ export default {
             })
             this.attrTableToJsonData = this.setTable20(
               jsonData.features,
-              source,
               jsonData.fields,
               is3dBind2dData
             )
@@ -439,7 +437,6 @@ export default {
           }
           this.tableData = this.setTable20(
             jsonData.features,
-            source,
             jsonData.fields,
             is3dBind2dData
           )
@@ -562,7 +559,6 @@ export default {
             })
             this.attrTableToJsonData = this.setTable20(
               jsonData.features,
-              source,
               jsonData.fields,
               is3dBind2dData
             )
@@ -739,12 +735,12 @@ export default {
       return false
     },
     // 获取模型的包围盒坐标
-    getGeometry3D(source) {
+    getGeometry3D() {
       const { xmin, ymin, xmax, ymax, zmin, zmax } = this.geometry3D
       return new Rectangle3D(xmin, ymin, zmin, xmax, ymax, zmax)
     },
     // 设置IGSScene类型的属性表table数据
-    setTable(SFEleArray, source, FldName, FldNumber) {
+    setTable(SFEleArray, FldName, FldNumber) {
       return (SFEleArray || []).map(({ AttValue = [], bound = {}, FID }) => {
         console.log(this.optionVal)
         const properties = {
@@ -767,7 +763,7 @@ export default {
       })
     },
     // 设置属性表table数据
-    setTable20(features, source, fields, is3dBind2dData) {
+    setTable20(features, fields, is3dBind2dData) {
       return (features || []).map(
         ({ attributes = {}, bound = {}, geometry = {} }) => {
           const properties = {
