@@ -471,7 +471,9 @@ export default {
                 const find = this.dataCatalogLayerArr.find(
                   (config) => config.serverURL === item
                 )
-                transferSubArr.push(find.guid)
+                if (find) {
+                  transferSubArr.push(find.guid)
+                }
               } else {
                 transferSubArr.push(item)
               }
