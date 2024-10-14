@@ -17,7 +17,7 @@
         />
       </mapgis-ui-col>         
       <mapgis-ui-col :span="6">
-        <mapgis-form-model-item>
+        <div>
           <div slot="label" style="line-height: 20px;font-size: 14px;width: 90%;">经度</div>
           <mapgis-ui-input-number
             v-model="coordinate.longitude"
@@ -26,10 +26,10 @@
             style="width: 90%"
             @blur="handleEdit('moveTo')"
           />
-        </mapgis-form-model-item>
+        </div>
       </mapgis-ui-col>
       <mapgis-ui-col :span="6">
-        <mapgis-form-model-item>
+        <div>
           <div slot="label" style="line-height: 20px;font-size: 14px;width: 90%;">纬度</div>
           <mapgis-ui-input-number
             v-model="coordinate.latitude"
@@ -38,10 +38,10 @@
             style="width: 90%"
             @blur="handleEdit('moveTo')"
           />
-        </mapgis-form-model-item>
+        </div>
       </mapgis-ui-col>
       <mapgis-ui-col :span="6">
-        <mapgis-form-model-item label="高度">
+        <div>
           <div slot="label" style="line-height: 20px;font-size: 14px;width: 90%;">高度</div>
           <mapgis-ui-input-number
             v-model="coordinate.height"
@@ -50,7 +50,7 @@
             style="width: 90%"
             @blur="handleEdit('moveTo')"
           />
-        </mapgis-form-model-item>
+        </div>
       </mapgis-ui-col>
     </mapgis-ui-row>
     <mapgis-ui-row type="flex">
@@ -68,7 +68,7 @@
         />
       </mapgis-ui-col>
       <mapgis-ui-col :span="6">
-        <mapgis-form-model-item label="X">
+        <div>
           <div slot="label" style="line-height: 20px;font-size: 14px;">X</div>
           <mapgis-ui-input-number
             v-model="rotationOffset.x"
@@ -76,10 +76,10 @@
             style="width: 90%"
             @blur="handleEdit('rotateTo')"
           />
-        </mapgis-form-model-item>
+        </div>
       </mapgis-ui-col>
       <mapgis-ui-col :span="6">
-        <mapgis-form-model-item label="Y">
+        <div>
           <div slot="label" style="line-height: 20px;font-size: 14px;">Y</div>
         <mapgis-ui-input-number
           v-model="rotationOffset.y"
@@ -87,10 +87,10 @@
           style="width: 90%"
           @blur="handleEdit('rotateTo')"
         />
-        </mapgis-form-model-item>
+        </div>
       </mapgis-ui-col>
       <mapgis-ui-col :span="6">
-        <mapgis-form-model-item label="Z">
+        <div>
           <div slot="label" style="line-height: 20px;font-size: 14px;">Z</div>
           <mapgis-ui-input-number
             v-model="rotationOffset.z"
@@ -98,7 +98,7 @@
             style="width: 90%"
             @blur="handleEdit('rotateTo')"
           />
-        </mapgis-form-model-item>
+        </div>
       </mapgis-ui-col>
     </mapgis-ui-row>
     <mapgis-ui-row type="flex">
@@ -115,7 +115,7 @@
         />
       </mapgis-ui-col>
       <mapgis-ui-col :span="6">
-        <mapgis-form-model-item label="X">
+        <div>
           <div slot="label" style="line-height: 20px;font-size: 14px;">X</div>
         <mapgis-ui-input-number
           v-model="scale.x"
@@ -123,10 +123,10 @@
           style="width: 90%"
           @blur="handleEdit('zoomTo')"
         />
-        </mapgis-form-model-item>
+        </div>
       </mapgis-ui-col>
       <mapgis-ui-col :span="6">
-        <mapgis-form-model-item label="Y">
+        <div>
           <div slot="label" style="line-height: 20px;font-size: 14px;">Y</div>
         <mapgis-ui-input-number
           v-model="scale.y"
@@ -134,10 +134,10 @@
           style="width: 90%"
           @blur="handleEdit('zoomTo')"
         />
-        </mapgis-form-model-item>
+        </div>
       </mapgis-ui-col>
       <mapgis-ui-col :span="6">
-        <mapgis-form-model-item label="Z">
+        <div>
           <div slot="label" style="line-height: 20px;font-size: 14px;">Z</div>
         <mapgis-ui-input-number
           v-model="scale.z"
@@ -145,7 +145,7 @@
           style="width: 90%"
           @blur="handleEdit('zoomTo')"
         />
-        </mapgis-form-model-item>
+        </div>
       </mapgis-ui-col>
     </mapgis-ui-row>
     <mapgis-ui-form
@@ -201,7 +201,8 @@
           :shrinkAction="false"
           :fullScreenAction="false"
           :visible.sync="showSharePanel"
-          anchor="top-center"
+          :verticalOffset="52"
+          :horizontalOffset="350"
           v-bind="slotProps"
         >
           <template>
@@ -553,10 +554,10 @@ export default {
 <style lang="less" scoped>
 .model-edit-container {
   .mapgis-ui-form-item {
-    margin-bottom: 6px;
-    .mapgis-ui-form-item-label {
-      line-height: 20px;
-    }
+  margin-bottom: 6px;
+  .mapgis-ui-form-item-label {
+  line-height: 20px;
+  }
   }
   .edit-tools {
     display: flex;

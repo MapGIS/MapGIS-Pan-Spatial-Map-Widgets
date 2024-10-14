@@ -169,7 +169,7 @@ export default {
     return {
       filter: '',
       ticked: [],
-      // layers: [],
+      layers: [],
       showMetadataInfo: false,
       queryParams: {},
       // 右侧菜单栏选中的图层信息
@@ -198,9 +198,6 @@ export default {
     }
   },
   computed: {
-    layers(){
-      return [this.layerObject]
-    },
     selectedKeys() {
       if (this.searchkeyArr.length > 0 && this.searchIndex > -1) {
         return [this.searchkeyArr[this.searchIndex]]
