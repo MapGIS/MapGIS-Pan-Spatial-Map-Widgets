@@ -441,6 +441,32 @@ export default {
             this.setLayerEditConfig()
           }, 3000)
 
+          // 更新modelEditControlList
+          /**
+          * 修改说明：2672 SZ-一张图支持编辑模型下沉
+          * 修改人：杨婷茹
+          * 修改日期：2024/9/14
+          */
+          for(const editLayerId in window.modelEditControlList) {
+            let exist = false
+            for (let j = 0; j < this.layers.length; j++) {
+              if (editLayerId == this.layers[j].id) {
+                exist = true
+                break
+              } else {
+                if (this.isIGSScene(layers[j]) && this.layers[j].activeScene) {
+                  const subLayerList = this._getAllSubLayers(this.layers[j].activeScene,'sublayers')
+                  if (subLayerList.find(subLayer => editLayerId === subLayer.id)){
+                    exist = true
+                    break
+                  }
+                }
+              }
+            }
+            if (!exist) {
+              delete window.modelEditControlList[editLayerId]
+            }
+          }
           // const expandedKeys = this.getExpandedKeys()
           // this.expandedKeys = [
           //   ...new Set([...expandedKeys, ...this.expandedKeys]),
