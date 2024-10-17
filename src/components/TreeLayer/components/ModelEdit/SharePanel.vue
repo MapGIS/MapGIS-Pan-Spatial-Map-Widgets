@@ -516,7 +516,7 @@ export default {
         }
         const model = this.getSceneLayer3DSet(selectLayer.id)
         if(model){
-          model._root.transform = this.Cesium.Matrix4.fromArray(this.transformArray);
+          this.$emit('edit-model', model, selectLayer)
           // 记录需要保存的模型变换矩阵
           modelsInfo.push({          
             layer: selectLayer,

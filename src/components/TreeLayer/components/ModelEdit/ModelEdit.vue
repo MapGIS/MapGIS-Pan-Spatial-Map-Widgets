@@ -192,7 +192,7 @@
     >
       <mapgis-ui-button type="link" @click="share" v-show="showShareLink">应用于其它模型缓存子图层</mapgis-ui-button>
     </div>
-    <mp-window-wrapper :visible="showSharePanel">
+    <mp-window-wrapper :visible="showSharePanel" v-if="showShareLink">
       <template v-slot:default="slotProps">
         <mp-window
           title="应用于模型缓存子图层"
@@ -212,6 +212,7 @@
               :transformArray="transformArray"
               :layerObject="layer.layer"
               @save="save"
+              @edit-model="editModel"
             >
             </mp-share-panel>
           </template>
@@ -235,7 +236,7 @@ export default {
   name: 'MpModelEdit',
   components: { MpSharePanel },
   mixins: [WidgetMixin,AppMixin, ModelStretchUtil],
-  props: ['layer','model','modelMetadata'],
+  props: ['layer','model','modelMetadata','modelMetadataList'],
   data() {
     return {
       isSave: false,
@@ -288,7 +289,6 @@ export default {
         y:0,
         z:0,
       },
-
       // 缩放相关参数
       scale: {
         x: 1,
@@ -304,9 +304,10 @@ export default {
       ],
       // 模型旋转矩阵数组值的字符串，用于input框的数据绑定
       transformString:'',
+      savedTransform:[],
       // 处于激活状态的编辑工具
       activeTool: undefined,
-      showMatrix: true,
+      showMatrix: false,
       showSharePanel: false,
 
       shareMode: 'normal',
@@ -329,6 +330,7 @@ export default {
     } else {
       this.transformArray = this.Cesium.Matrix4.toArray(this.model._root.transform)
     }
+    this.Cesium.Matrix4.clone(this.transformArray, this.savedTransform) 
     this.transformString = this.transformArray.toString()
     this.getPropertiesByTransform(this.transformArray)
   },
@@ -343,6 +345,7 @@ export default {
       this.save(modelsInfo)
     },
     save(modelsInfo) {
+      this.Cesium.Matrix4.clone(this.model._root.transform, this.savedTransform) 
       modelsInfo = modelsInfo || [
         {
           'layer': this.layer,
@@ -351,10 +354,13 @@ export default {
       ]
       this.$emit('model-edit', 'save' ,modelsInfo)
     },
-    handleEdit(type){
+    handleEdit(type, model){
       if(this.activeTool){
         this.handleDeactivateTool()
-      } 
+      }
+      if(!model){
+        model = this.model
+      }
       if(type === 'moveTo'){
         this.coordinateOffset = {
           longitude: this.coordinate.longitude - this.modelMetadataCenter.longitude,
@@ -368,7 +374,7 @@ export default {
         }
         this.$emit('model-edit', type, {
           move: this.origin,
-          model:this.model,
+          model:model,
         })
       } else if(type === 'rotateTo'){
         const rotationChangeValue = {
@@ -378,13 +384,13 @@ export default {
         }
         this.$emit('model-edit', type, {
           rotation: rotationChangeValue,
-          model:this.model,
+          model,
         })
         this.lastRotation = cloneDeep(this.rotationOffset)
       } else if(type === 'zoomTo'){
         this.$emit('model-edit', type, {
           scale: this.scale,
-          model:this.model,
+          model,
         })
       }
       
@@ -454,8 +460,13 @@ export default {
       if (value) {
         if (value.editorMode === 'translate') {
           this.coordinate = this.convertToDegree(value.modelPosition)
-          this.coordinateOffset = this.convertToDegree(value.offset)
+          // this.coordinateOffset = this.convertToDegree(value.offset)
           this.newOrigin = this.convertToDegree(value.originPosition)
+          this.coordinateOffset = {
+            longitude: this.newOrigin.longitude - this.origin.longitude,
+            latitude: this.newOrigin.latitude - this.origin.latitude,
+            height: this.newOrigin.height - this.origin.height
+          }
         } else if (value.editorMode === 'rotate') {
           this.rotation = value.modelRotation
           this.lastRotation = cloneDeep(this.rotationOffset)
@@ -531,6 +542,52 @@ export default {
     share(){
       this.showSharePanel = !this.showSharePanel
     },
+    editModel(model, layer){
+      if(!model || !layer) return 
+      const modelMetadata = this.getModelMetadata(layer.id)
+      const metadataOrigin = this.convertToDegree(this.Cesium.Matrix4.getTranslation(modelMetadata.transform, new this.Cesium.Cartesian3()))
+      // 同步平移
+      const currentModelOrigin = this.convertToDegree(this.Cesium.Matrix4.getTranslation(this.savedTransform, new this.Cesium.Cartesian3()))
+      const coordinateOffset = {
+            longitude: currentModelOrigin.longitude - this.metadataOrigin.longitude,
+            latitude: currentModelOrigin.latitude - this.metadataOrigin.latitude,
+            height: currentModelOrigin.height - this.metadataOrigin.height
+          }
+      const origin = {
+        longitude: metadataOrigin.longitude + coordinateOffset.longitude,
+        latitude: metadataOrigin.latitude + coordinateOffset.latitude,
+        height: metadataOrigin.height + coordinateOffset.height,
+      }
+      this.$emit('model-edit', 'moveTo', {
+        move: origin,
+        model:model,
+      })
+      // 同步旋转
+      // 获取同步的旋转量
+      const currentModelRotation = window.transformEditor.getEulerFromTransform(this.savedTransform, this.model)
+      const rotationOffset = {
+        x: currentModelRotation.x - this.modelRotation.x,
+        y: currentModelRotation.y - this.modelRotation.y,
+        z: currentModelRotation.z - this.modelRotation.z
+      }
+      // 获取需要同步模型的初始旋转角和当前旋转角
+      const modelRotation = window.transformEditor.getEulerFromTransform(modelMetadata.transform, model)
+      const rotation = window.transformEditor.getEulerFromTransform(layer.layerProperty.transform, model)
+      const rotationChangeValue = {
+        x: modelRotation.x - rotation.x + rotationOffset.x,
+        y: modelRotation.y - rotation.y + rotationOffset.y,
+        z: modelRotation.z - rotation.z + rotationOffset.z
+      }
+      this.$emit('model-edit', 'rotateTo', {
+        rotation: rotationChangeValue,
+        model,
+      })
+      // 同步缩放
+      this.handleEdit('zoomTo', model)
+    },
+    getModelMetadata(layerId){
+      return this.modelMetadataList.find(metadataItem=>metadataItem.layerId === layerId)
+    },
     closeSharePanel(){
       this.showSharePanel = false
     },
@@ -542,11 +599,21 @@ export default {
         latitude: this.Cesium.Math.toDegrees(radian.latitude),
         height: radian.height,
       }
+    },
+    // 恢复未保存的数据
+    resetUnsave(){
+      const transform = new this.Cesium.Matrix4()
+      this.Cesium.Matrix4.clone(this.savedTransform, transform)
+      if(this.model._root && this.model._root.transform){
+        this.model._root.transform = transform
+      }
     }
   },
 
   // 组件销毁前还原模型
   beforeDestroy() {
+    this.resetUnsave()
+    this.closeSharePanel()
     this.$emit('model-edit', 'destroy', this.isSave)
   },
 }

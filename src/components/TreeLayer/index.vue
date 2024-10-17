@@ -1482,6 +1482,7 @@ export default {
         props: {
           layer: this.modelEditLayer,
           modelMetadata: modelMetadata,
+          modelMetadataList: this.modelMetadataList,
           model: layerOption
         },
         listeners: {
