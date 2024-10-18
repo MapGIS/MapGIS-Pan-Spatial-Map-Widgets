@@ -460,7 +460,7 @@ export default {
       diffArr.forEach((item) => {
         let selectLayer
         if (item.split('-').length > 1) {
-          const parentIndex: string = item.split('-')[0]
+          const parentIndex = 0
           const childrenArr: Array<string> = item.split('-')
           let layerItem = layers[parentIndex]
           const modelsInfo = []
