@@ -195,7 +195,7 @@
     <mp-window-wrapper :visible="showSharePanel" v-if="showShareLink">
       <template v-slot:default="slotProps">
         <mp-window
-          title="应用于模型缓存子图层"
+          title="应用于其它模型缓存子图层"
           :width="320"
           :height="400"
           :shrinkAction="false"
