@@ -127,7 +127,7 @@ module.exports = {
     'no-continue': 'off',
 
     // TypeScript
-    quotes: ['warn', 'single'],
+    quotes: ['warn', 'single', { 'allowTemplateLiterals': true }],
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/indent': ['warn', 2],
     '@typescript-eslint/no-explicit-any': 'off',
@@ -154,6 +154,6 @@ module.exports = {
     '@typescript-eslint/camelcase': 'off',
     '@typescript-eslint/unbound-method': 'off',
 
-    'vue/no-side-effects-in-computed-properties': 'off'
+    'vue/no-side-effects-in-computed-properties': 'off',
   },
 }

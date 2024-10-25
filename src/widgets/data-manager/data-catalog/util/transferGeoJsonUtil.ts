@@ -20,7 +20,6 @@ async function getGeoJson(layer) {
     domain: layer.domain,
     ...ipPortObj,
     serverType: layer.serverType,
-    layerIndex: layer.id,
     gdbp: layer.url,
     serverName: layer.docName,
     serverUrl: layer.parentUrl,
