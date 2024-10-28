@@ -283,7 +283,9 @@ export default {
           .post(this.imagesUploadApi, file, {
             headers: {
               'Content-Type': 'multipart/form-data',
-              'Authorization': JSON.parse(localStorage.getItem('access_token')),
+              'Authorization': JSON.parse(
+                localStorage.getItem(`access_token_${this.appProductName}`)
+              ),
             },
           })
           .then((res) => {
