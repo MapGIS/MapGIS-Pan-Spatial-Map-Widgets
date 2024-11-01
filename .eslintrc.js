@@ -1,5 +1,9 @@
 const { resolve } = require('path')
 module.exports = {
+  rules: {
+    'prefer-const': 'off',
+    'no-undef': 'off',
+  },
   // https://eslint.org/docs/user-guide/configuring#configuration-cascading-and-hierarchy
   // This option interrupts the configuration hierarchy at this file
   // Remove this if you have an higher level ESLint config file (it usually happens into a monorepos)
@@ -154,6 +158,6 @@ module.exports = {
     '@typescript-eslint/camelcase': 'off',
     '@typescript-eslint/unbound-method': 'off',
 
-    'vue/no-side-effects-in-computed-properties': 'off'
+    'vue/no-side-effects-in-computed-properties': 'off',
   },
 }

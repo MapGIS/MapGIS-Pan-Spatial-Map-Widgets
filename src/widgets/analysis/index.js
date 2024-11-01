@@ -10,4 +10,4 @@ export { default as MpTerrainAnalysis } from './terrain-analysis/terrain-analysi
 export { default as MpTopologyAnalysis } from './topology-analysis/topology-analysis.vue'
 export { default as MpVisibilityAnalysis } from './visibility-analysis/visibility-analysis.vue'
 export { default as MpVisualAnalysis } from './visual-analysis/visual-analysis.vue'
-
+export { default as MpExcavateAnalysis } from './excavate-analysis/excavate-analysis.vue'
