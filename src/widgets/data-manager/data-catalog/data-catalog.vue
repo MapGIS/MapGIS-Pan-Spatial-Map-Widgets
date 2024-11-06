@@ -515,6 +515,8 @@ export default {
       iconArrCache: {},
       // 图层加载时的loading状态
       loading: false,
+      // 待初始化节点的keys
+      uninitializedKeys: [],
     }
   },
   computed: {
@@ -833,6 +835,7 @@ export default {
       // 获取初始化需要加载的图层id数组
       const initKeys =
         DataCatalogCheckController.getInitLoadLayerKeys(allLayerNodes)
+      this.uninitializedKeys = initKeys
       // 勾选对应的图层节点
       this.dataCatalogChangeNodes(initKeys, true)
     },
@@ -1189,7 +1192,13 @@ export default {
             // 获取不会自动定位到图层所在位置的图层id
             const unAutoResetArr =
               this.layerAutoResetManager.getUnAutoResetArr()
-            if (
+            const index = this.uninitializedKeys.indexOf(layer.id)
+            if (index > -1) {
+              // 初始化的时候，不自动切换二三维视图，视图初始显示模式以管理平台配置的初始显示模式为主
+              // 修改人:龚跃健 20241106
+              // 对应禅道bug-6556
+              this.uninitializedKeys.splice(index, 1)
+            } else if (
               this.is3DLayer(layer) &&
               this.is2DMapMode &&
               !unAutoResetArr.includes(layer.id)
