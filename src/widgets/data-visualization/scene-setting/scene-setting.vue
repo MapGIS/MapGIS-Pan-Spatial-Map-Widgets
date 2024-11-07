@@ -71,6 +71,12 @@ export default {
       if (config && config.basicSetting) {
         config.basicSetting.zoom = undefined
       }
+      // fix(6503): 地表自适应透明和地下模式使用最新的Cesium接口
+      // 修改人：杨琨 2024-11-7
+      // 修改说明：如果服务端没有影像图层独立控制配置，则补全该配置
+      if (config && config.cameraSetting  && !Object.prototype.hasOwnProperty.call(config.cameraSetting.undgrdParams, 'enableIndependentTranslucency')) {
+        config.cameraSetting.undgrdParams.enableIndependentTranslucency = false
+      }
       this.dataCatalogCheckController.setInitSceneConfig(config)
       return config
     },
@@ -141,6 +147,12 @@ export default {
             }
           }
         })
+      // fix(6503): 地表自适应透明和地下模式使用最新的Cesium接口
+      // 修改人：杨琨 2024-11-7
+      // 修改说明：考虑到后续可能新增二维影像图层类型，此处判断不会及时更新，因此不判断图层类型，只要目录树有更新，直接更新影像独立控制影响的图层
+      if (this.$refs.sceneSetting) {
+        this.$refs.sceneSetting.updateIndependentTranslucency()
+      }
       setTimeout(() => {
         // 防止获取到未加载完的模型
         this._getM3DSetArrayBoundingSphere(layers)
