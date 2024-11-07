@@ -1,6 +1,6 @@
 <template>
   <div class="mp-widget-terrain-analysis">
-    <mapgis-3d-terrain-aspect :models="layers" />
+    <mapgis-3d-excavate-analysis :models="layers" @load="load" />
   </div>
 </template>
 
@@ -9,8 +9,7 @@ import {
   WidgetMixin,
   LayerType,
   IGSSceneSublayerType,
-  LoadStatus,
-  Objects,
+  LoadStatus
 } from '@mapgis/web-app-framework'
 
 export default {
@@ -21,12 +20,6 @@ export default {
   data() {
     return {
       layers: [],
-      // radio样式
-      radioStyle: {
-        display: 'block',
-        height: '30px',
-        lineHeight: '30px',
-      },
       // 开挖分析对象
       ExcavateAnalysis: null,
     }
@@ -78,23 +71,9 @@ export default {
             }
           }
         })
-      console.log(layers, 'layers----')
-
       this.layers = layers
-      // if (layers.length > 0) {
-      //   this.layer = layers[layers.length - 1]
-      // } else {
-      //   this.layer = layers
-      //   this.layer = null
-      // }
     },
-    /**
-     * 切换图层
-     */
-    changeLayer() {
-      if (!this.isActive || !this.layer) return
-      const { layer } = this
-    },
+
     // 加载成功时
     load(ExcavateAnalysis) {
       this.ExcavateAnalysis = ExcavateAnalysis
@@ -107,15 +86,14 @@ export default {
     // 微件激活时
     onActive() {
       this.isActive = true
+      this.ExcavateAnalysis.mount()
     },
 
     // 微件关闭时
     onClose() {
       this.isActive = false
+      this.ExcavateAnalysis.unmount()
     },
-
-    // 微件失活时
-    onDeActive() {},
   },
 }
 </script>
