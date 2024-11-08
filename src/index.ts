@@ -18,6 +18,7 @@ import {
   MpTopologyAnalysis,
   MpVisibilityAnalysis,
   MpVisualAnalysis,
+  MpExcavateAnalysis,
 } from './widgets/analysis'
 
 import {
@@ -82,6 +83,7 @@ const components = [
   MpTopologyAnalysis,
   MpVisibilityAnalysis,
   MpVisualAnalysis,
+  MpExcavateAnalysis,
   // data-manager
   MpAddData,
   MpBasemapManager,
