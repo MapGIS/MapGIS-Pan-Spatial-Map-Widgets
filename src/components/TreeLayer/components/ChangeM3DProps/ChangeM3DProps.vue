@@ -197,14 +197,13 @@ export default {
             layerProperty.textureScale !== undefined
               ? layerProperty.textureScale
               : false
+          this.maximumMemoryUsage =
+            layerProperty.maximumMemoryUsage !== undefined
+              ? layerProperty.maximumMemoryUsage
+              : this.maximumMemoryUsage
         }
         this.maximumScreenSpaceError =
           maximumScreenSpaceError !== undefined ? maximumScreenSpaceError : 16
-
-        this.maximumMemoryUsage =
-          layerProperty.maximumMemoryUsage !== undefined
-            ? layerProperty.maximumMemoryUsage
-            : this.maximumMemoryUsage
 
         this.enablePopup = enablePopup !== undefined ? enablePopup : false
         this.enableModelSwitch =

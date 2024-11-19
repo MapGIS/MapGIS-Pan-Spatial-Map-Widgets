@@ -318,6 +318,7 @@ export default {
         layerSublayersManager.forEach((item) => {
           const sublayer = sceneController.findSource(item.id)
           if (
+            item.layerProperty &&
             sublayer &&
             sublayer.maximumScreenSpaceError !==
               Math.floor(
