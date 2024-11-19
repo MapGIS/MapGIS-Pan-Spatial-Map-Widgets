@@ -728,7 +728,7 @@ export default {
       const layerSublayers = LayerSublayersManager.sublayersConfig
       if (layerSublayers && layerSublayers.length > 0) {
         layerSublayers.forEach((item) => {
-          if (!unSetArr.includes(item.id)) {
+          if (!unSetArr.includes(item.id) && item.layerProperty) {
             const sublayer =
               this.sceneController.findSource(item.id) ||
               this.sceneController.findM3DIgsSource(item.id)

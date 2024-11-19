@@ -102,17 +102,24 @@ export default {
       const { fullExtent, activeScene = {} } = layer
       let _initBound = fullExtent
       if (layer instanceof Layer3D) {
-        const sceneController = Objects.SceneController.getInstance(
-          this.Cesium,
-          this.vueCesium,
-          this.viewer
-        )
-        if (activeScene.sublayers) {
-          _initBound = sceneController.layerExtentToGlobelExtent(
-            activeScene.sublayers.find(({ visible }) => !!visible) ||
-              activeScene.sublayers[0],
-            activeScene.sceneMode
+        const loadedLayer = window.layers3D[layer.id]
+        // 如果存在已加载的三维图层，则直接使用已加载三维图层里的范围，这个范围比较准确
+        if (loadedLayer) {
+          const { xmin, ymin, xmax, ymax } = loadedLayer.fullExtent
+          _initBound = { xmin, ymin, xmax, ymax }
+        } else {
+          const sceneController = Objects.SceneController.getInstance(
+            this.Cesium,
+            this.vueCesium,
+            this.viewer
           )
+          if (activeScene.sublayers) {
+            _initBound = sceneController.layerExtentToGlobelExtent(
+              activeScene.sublayers.find(({ visible }) => !!visible) ||
+                activeScene.sublayers[0],
+              activeScene.sceneMode
+            )
+          }
         }
       }
       // 将全图范围统一转换为经纬度
