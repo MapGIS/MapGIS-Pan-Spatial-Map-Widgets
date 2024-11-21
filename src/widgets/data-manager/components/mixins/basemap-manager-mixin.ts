@@ -7,6 +7,7 @@ import {
   DataCatalogManager,
 } from '@mapgis/web-app-framework'
 import MpBasemapItem from '../BasemapItem/BasemapItem.vue'
+import { inOrderPromise } from '@mapgis/webclient-common'
 
 export default {
   components: {
@@ -229,26 +230,46 @@ export default {
 
     // 渲染底图到页面
     renderMaps(guid, isZoomTo, init) {
-      for (let i = 0; i < this.basemaps.length; i++) {
-        const basemap = this.basemaps[i]
+      const self = this
+      for (let i = 0; i < self.basemaps.length; i++) {
+        const basemap = self.basemaps[i]
         if (basemap.guid === guid) {
-          basemap.children.forEach(async (layer) => {
-            const mapLayer = DataCatalogManager.generateLayerByConfig(layer)
-            mapLayer.description = layer.description
-            if (mapLayer.loadStatus === LoadStatus.notLoaded) {
-              await mapLayer.load()
-              this.document.baseLayerMap.add(mapLayer)
-              if (isZoomTo || mapLayer.type === LayerType.STKTerrain) {
-                this.fitBounds(mapLayer, init)
-              } else if (mapLayer.type === LayerType.IGSScene) {
-                setTimeout(() => {
-                  this.fitBounds(mapLayer, init)
-                }, 500)
-              }
-            } else {
-              this.document.baseLayerMap.add(mapLayer)
+          const funcs = basemap.children.map((layer) => {
+            return () => {
+              return new Promise<void>((reslove) => {
+                const mapLayer = DataCatalogManager.generateLayerByConfig(layer)
+                mapLayer.description = layer.description
+                if (mapLayer.loadStatus === LoadStatus.notLoaded) {
+                  mapLayer.load().then(() => {
+                    self.document.baseLayerMap.add(mapLayer)
+                    reslove()
+                  })
+                } else {
+                  self.document.baseLayerMap.add(mapLayer)
+                  reslove()
+                }
+              })
             }
           })
+
+          // 修改说明：引用@mapgis/webclient-common里的inOrderPromise,确保在同时加多个图层时，能按顺序加载
+          // 修改人：龚跃健
+          // 修改时间；2024-11-21
+          inOrderPromise(funcs).then(() => {
+            // 如果一次添加多个图层,则等多个图层加载完后再进行缩放
+            const layers = self.document.baseLayerMap.allLayers
+            if (layers && layers.length > 0) {
+              const mapLayer = layers[layers.length - 1]
+              if (isZoomTo || mapLayer.type === LayerType.STKTerrain) {
+                self.fitBounds(mapLayer, init)
+              } else if (mapLayer.type === LayerType.IGSScene) {
+                setTimeout(() => {
+                  self.fitBounds(mapLayer, init)
+                }, 500)
+              }
+            }
+          })
+
           if (!basemap.select) {
             basemap.select = true
           }
