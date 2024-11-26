@@ -1345,10 +1345,18 @@ export default {
      * 三维图层需要判定图层是否加载到地图上，才能恢复checkbox可选状态，
      * 因为M3D加载到地图上需要时间，当用户快速点击会多次加载而产生bug
      */
-    sceneLoadedCallback(id) {
+    sceneLoadedCallback(id, loaded = true) {
       const layer = this.findTreeNodeConfigById(id)
       if (layer) {
         this.setCheckBoxEnable(layer, false)
+      }
+      if (!loaded) {
+        this.$message.error(`图层:${layer.name}加载失败`)
+        // 移除图层
+        this.dataCatalogManager.checkedLayerConfigIDs =
+          this.dataCatalogManager.checkedLayerConfigIDs.filter(
+            (item) => item !== id
+          )
       }
     },
 
