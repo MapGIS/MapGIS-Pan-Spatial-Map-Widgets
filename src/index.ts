@@ -126,11 +126,23 @@ const components = [
 
 const install = (Vue) => {
   components.forEach((component) => {
-    Vue.component(
-      (component.options && component.options.name) || component.name,
-      component
-    )
+    const registerName = component.options
+      ? component.options.name
+      : component.name
+    if (registerName in Vue.options.components) {
+      console.log(`发现同名组件[${registerName}],已取消该组件的注册`)
+    } else {
+      Vue.component(
+        (component.options && component.options.name) || component.name,
+        component
+      )
+    }
   })
+}
+
+if (typeof window !== 'undefined' && window['MapgisApplicationVueRuntime']) {
+  // @ts-ignore
+  install(window['MapgisApplicationVueRuntime'], {})
 }
 
 export default {
