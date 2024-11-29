@@ -131,6 +131,8 @@ export default {
               }
             } else if (layer.type === LayerType.STKTerrain) {
               layers.push(layer)
+            } else if (layer.type === LayerType.ModelCache) {
+              layers.push(layer)
             }
           }
         })
@@ -149,41 +151,48 @@ export default {
     changeLayer() {
       if (!this.isActive || !this.layer) return
       const { layer } = this
-      const { type } = layer.activeScene.sublayers[0]
-      const source = this.landscapeLayerFuc()
-      /**
-       * 修改说明：为优化用户体验，取消自动缩放至模型设置
-       * 修改人：龚跃健
-       * 修改时间：2021/12/24
-       * */
-      if (type === IGSSceneSublayerType.modelCache) {
-        // 模型只要把模型移到当前视图范围下即可进行分析
-        // Objects.SceneController.getInstance(
-        //   this.Cesium,
-        //   this.vueCesium,
-        //   this.viewer
-        // ).zoomToM3dLayerBySource(source[0])
+
+      if (layer.type === LayerType.IGSScene) {
+        const { type } = layer.activeScene.sublayers[0]
+        const source = this.landscapeLayerFuc()
+        /**
+         * 修改说明：为优化用户体验，取消自动缩放至模型设置
+         * 修改人：龚跃健
+         * 修改时间：2021/12/24
+         * */
+        if (type === IGSSceneSublayerType.modelCache) {
+          // 模型只要把模型移到当前视图范围下即可进行分析
+          // Objects.SceneController.getInstance(
+          //   this.Cesium,
+          //   this.vueCesium,
+          //   this.viewer
+          // ).zoomToM3dLayerBySource(source[0])
+          this.samplePrecision = 0.2
+          this.polygonHeight = 2
+          this.profileType = 1
+        } else if (type === IGSSceneSublayerType.elevation) {
+          // 地形
+          // const bound = layer.fullExtent
+          // if (bound) {
+          //   this.viewer.camera.flyTo({
+          //     destination: this.Cesium.Rectangle.fromDegrees(
+          //       bound.xmin,
+          //       bound.ymin,
+          //       bound.xmax,
+          //       bound.ymax
+          //     )
+          //   })
+          // }
+          this.samplePrecision = 2
+          this.polygonHeight = 100
+          this.profileType = 0
+          // 设置当前地形对象
+          // this.viewer.terrainProvider = source[0]
+        }
+      } else if (layer.type === LayerType.ModelCache) {
         this.samplePrecision = 0.2
         this.polygonHeight = 2
         this.profileType = 1
-      } else if (type === IGSSceneSublayerType.elevation) {
-        // 地形
-        // const bound = layer.fullExtent
-        // if (bound) {
-        //   this.viewer.camera.flyTo({
-        //     destination: this.Cesium.Rectangle.fromDegrees(
-        //       bound.xmin,
-        //       bound.ymin,
-        //       bound.xmax,
-        //       bound.ymax
-        //     )
-        //   })
-        // }
-        this.samplePrecision = 2
-        this.polygonHeight = 100
-        this.profileType = 0
-        // 设置当前地形对象
-        // this.viewer.terrainProvider = source[0]
       }
     },
 
