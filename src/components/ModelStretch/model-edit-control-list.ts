@@ -3,7 +3,7 @@
  * @return Object
  */
 class ModelEditControlList {
-  private _modelEditControlList = {}
+  private _modelEditControlList = new Object()
 
   public get modelEditControlList() {
     return this._modelEditControlList

@@ -1,5 +1,9 @@
-import { LayerType, IGSSceneSublayerType } from '@mapgis/web-app-framework'
-import ModelEditControlList from './model-edit-control-list'
+import {
+  LayerType,
+  IGSSceneSublayerType,
+  ModelCacheFormat,
+} from '@mapgis/web-app-framework'
+import ModelEditControlList from '../model-edit-control-list'
 
 export default {
   data() {
@@ -25,6 +29,11 @@ export default {
             return true
           }
         }
+      } else if (
+        layer.type === LayerType.ModelCache &&
+        layer.format === ModelCacheFormat.m3d
+      ) {
+        return true
       }
       return false
     },
@@ -39,47 +48,44 @@ export default {
       if (id.includes(':')) {
         layerId = id.split(':')[0]
       }
-      const g3dLayer = this.getG3dLayer(layerId)
-      if (ModelEditControlList[layerId]) {
+      if (
+        ModelEditControlList[layerId] &&
+        ModelEditControlList[layerId]._layer &&
+        ModelEditControlList[layerId]._layer.ready
+      ) {
         window.transformEditor = ModelEditControlList[layerId]
         this.m3dSetObj = ModelEditControlList[layerId].m3dSetObj
       } else {
-        window.transformEditor = new Cesium.ModelTransformTool(g3dLayer)
-        window.transformEditor.initModelEditor(viewer)
-        ModelEditControlList[layerId] = window.transformEditor
-        const m3dSet = g3dLayer.getM3DLayers()[0]
-        const initTransform = m3dSet._transform
-        // 模型的自身坐标系原点
-        const cartographic = Cesium.Cartographic.fromCartesian(
-          new Cesium.Cartesian3(
-            initTransform[12],
-            initTransform[13],
-            initTransform[14]
+        // 增加延时，防止分析过程中，从数据目录中取消勾选数据，再次勾选，数据还没加到视图中的时候，就去获取数据，导致获取M3D失败
+        setTimeout(() => {
+          let m3dSet
+          if (layer.type === LayerType.IGSScene) {
+            m3dSet = this.getSceneLayer3DSet(layerId)
+          } else if (layer.type === LayerType.ModelCache) {
+            m3dSet = this.getM3DSet(layerId)
+          }
+          window.transformEditor = new Cesium.ModelTransformTool(m3dSet)
+          window.transformEditor.initModelEditor(viewer)
+          ModelEditControlList[layerId] = window.transformEditor
+          const initTransform = m3dSet._transform
+          // 模型的自身坐标系原点
+          const cartographic = Cesium.Cartographic.fromCartesian(
+            new Cesium.Cartesian3(
+              initTransform[12],
+              initTransform[13],
+              initTransform[14]
+            )
           )
-        )
-        const longitude = Cesium.Math.toDegrees(cartographic.longitude)
-        const latitude = Cesium.Math.toDegrees(cartographic.latitude)
-        const height = cartographic.height // 模型高度
-        const zmin = m3dSet._root.boundingVolume.minimumHeight
-        // const zmax = 4.5
-        const zmax = m3dSet._root.boundingVolume.maximumHeight
-        this.m3dSetObj = { longitude, latitude, height, zmax, zmin }
-        ModelEditControlList[layerId].m3dSetObj = this.m3dSetObj
+          const longitude = Cesium.Math.toDegrees(cartographic.longitude)
+          const latitude = Cesium.Math.toDegrees(cartographic.latitude)
+          const height = cartographic.height // 模型高度
+          const zmin = m3dSet._root.boundingVolume.minimumHeight
+          // const zmax = 4.5
+          const zmax = m3dSet._root.boundingVolume.maximumHeight
+          this.m3dSetObj = { longitude, latitude, height, zmax, zmin }
+          ModelEditControlList[layerId].m3dSetObj = this.m3dSetObj
+        }, 1000)
       }
-    },
-    getG3dLayer(id) {
-      const { vueKey, viewer, vueCesium } = this
-      let layerId = id
-      if (id.includes(':')) {
-        layerId = id.split(':')[0]
-      }
-      const sceneLayer = vueCesium.G3DManager.findSource(
-        vueKey || 'default',
-        layerId
-      )
-      const { m3ds, g3dLayerIndex } = sceneLayer.options
-      const g3dLayer = viewer.scene.layers.getLayer(g3dLayerIndex)
-      return g3dLayer
     },
     // 获取场景图层的M3DSet
     getSceneLayer3DSet(id) {
@@ -95,7 +101,7 @@ export default {
         layerId
       )
       const { m3ds, g3dLayerIndex } = sceneLayer.options
-      return m3ds.find((m3d) => m3d._layerIndex === layerIndex)
+      return m3ds.find((m3d) => Number(m3d._layerIndex) === Number(layerIndex))
     },
     getM3DSet(id) {
       const { vueKey, viewer, vueCesium } = this
@@ -112,12 +118,20 @@ export default {
           vueKey || 'default',
           layerId
         )
-        return Tiles3DLayer.source
+        if (Tiles3DLayer) {
+          return Tiles3DLayer.source
+        } else {
+          return null
+        }
       }
       return m3dLayer.source[0]
     },
     changeScaleZ(scaleZ, offset, id) {
-      if (window.transformEditor) {
+      if (
+        window.transformEditor &&
+        window.transformEditor._layer &&
+        window.transformEditor._layer.ready
+      ) {
         window.transformEditor.setScala(1, 1, scaleZ)
         const { longitude, latitude, height, zmax, zmin } = this.m3dSetObj
         // 计算顶部到原点距离
@@ -129,16 +143,18 @@ export default {
     },
     // 1、现有接口只针对平铺纹理；2、顶部和底部纹理可能会变形。
     changeTextureScale(scaleXY, scaleZ, id) {
-      const g3dLayer = this.getG3dLayer(id)
-      const m3dSet = g3dLayer.getM3DLayers()[0]
+      const m3dSet = this.getSceneLayer3DSet(id)[0]
       m3dSet.textureCoordScale = new this.Cesium.Cartesian2(scaleXY, scaleZ)
     },
     updateModelReset() {
-      if (!window.transformEditor) {
-        return
+      if (
+        window.transformEditor &&
+        window.transformEditor._layer &&
+        window.transformEditor._layer.ready
+      ) {
+        this.updateModelDeactivate()
+        window.transformEditor.reset()
       }
-      this.updateModelDeactivate()
-      window.transformEditor.reset()
     },
     updateModelDeactivate() {
       window.transformEditor.deactivate()

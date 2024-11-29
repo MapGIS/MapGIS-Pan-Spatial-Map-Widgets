@@ -244,6 +244,7 @@ import ModelStretchUtil from '../ModelStretch/mixin/ModelStretchUtil.js'
 import layerCoordinateGridUtil from './mixin/layer-coordinate-grid-util'
 import featureEditUtil from './mixin/feature-eidt-util'
 import { defaultDataIconsConfig } from '../../theme/dataIconsConfig.js'
+import ModelEditControlList from '../ModelStretch/model-edit-control-list'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
@@ -464,7 +465,7 @@ export default {
            * 修改人：杨婷茹
            * 修改日期：2024/9/14
            */
-          for (const editLayerId in window.modelEditControlList) {
+          for (const editLayerId in ModelEditControlList) {
             let exist = false
             for (let j = 0; j < this.layers.length; j++) {
               if (editLayerId == this.layers[j].id) {
@@ -486,7 +487,7 @@ export default {
               }
             }
             if (!exist) {
-              delete window.modelEditControlList[editLayerId]
+              delete ModelEditControlList[editLayerId]
             }
           }
           // const expandedKeys = this.getExpandedKeys()
@@ -553,8 +554,6 @@ export default {
       this.vueCesium,
       this.viewer
     )
-    // 存放模型编辑对象
-    window.modelEditControlList = new Object()
   },
   mounted() {
     this.$root.$on(events.SCENE_LOADED_ON_MAP, this.sceneLoadedCallback)
@@ -1520,8 +1519,8 @@ export default {
       } else if (this.isModelCacheLayer(item)) {
         layerOption = this.getM3DSet(item.id)
       }
-      if (window.modelEditControlList[item.id]) {
-        window.transformEditor = window.modelEditControlList[item.id]
+      if (ModelEditControlList[item.id]) {
+        window.transformEditor = ModelEditControlList[item.id]
       } else {
         const editorCallback = function (value) {
           self.$parent?.$parent?.$refs['模型变换']?.transformUpdate(value)
@@ -1531,7 +1530,7 @@ export default {
           editorCallback
         )
         window.transformEditor.initModelEditor(viewer)
-        window.modelEditControlList[item.id] = window.transformEditor
+        ModelEditControlList[item.id] = window.transformEditor
       }
       const modelMetadata = this.modelMetadataList.find(
         (metadataItem) => metadataItem.layerId === item.id
@@ -2344,7 +2343,7 @@ export default {
   },
   beforeDestroy() {
     eventBus.$off(events.MODEL_PICK)
-    window.modelEditControlList = undefined
+    ModelEditControlList = new Object()
   },
 }
 </script>

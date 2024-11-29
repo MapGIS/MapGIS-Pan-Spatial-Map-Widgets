@@ -95,7 +95,13 @@
       </mapgis-ui-tree>
     </div>
     <div>
-      <a-button class="edit-tool-button" type="primary" @click="transformUpdate" style="width: 100%;">应用变换</a-button>
+      <a-button
+        class="edit-tool-button"
+        type="primary"
+        @click="transformUpdate"
+        style="width: 100%"
+        >应用变换</a-button
+      >
     </div>
   </div>
 </template>
@@ -142,8 +148,7 @@ window.layers3D = {}
 
 export default {
   name: 'MpSharePanel',
-  components: {
-  },
+  components: {},
   mixins: [
     MapMixin,
     AppMixin,
@@ -258,8 +263,6 @@ export default {
       this.vueCesium,
       this.viewer
     )
-    // // 存放模型编辑对象
-    // window.modelEditControlList = new Object()
   },
   mounted() {
     this.layers = [this.layerObject]
@@ -450,7 +453,7 @@ export default {
     tickedChange(val: Array<string>, e) {
       this.ticked = val
     },
-    transformUpdate(){
+    transformUpdate() {
       this.tickedChange0(this.ticked)
     },
     tickedChange0(val: Array<string>) {
@@ -505,7 +508,7 @@ export default {
             //   const model = this.getSceneLayer3DSet(selectLayer)
             //   model._root.transform = this.Cesium.Matrix4.fromArray(this.transformArray);
             //   // 记录需要保存的模型变换矩阵
-            //   modelsInfo.push({          
+            //   modelsInfo.push({
             //     layer: selectLayer,
             //     transform: model._root.transform
             //   })
@@ -515,17 +518,17 @@ export default {
           selectLayer = layers[item]
         }
         const model = this.getSceneLayer3DSet(selectLayer.id)
-        if(model){
+        if (model) {
           this.$emit('edit-model', model, selectLayer)
           // 记录需要保存的模型变换矩阵
-          modelsInfo.push({          
+          modelsInfo.push({
             layer: selectLayer,
-            transform: model._root.transform
+            transform: model._root.transform,
           })
         }
       })
       // 提交保存
-      this.$emit('save',modelsInfo)
+      this.$emit('save', modelsInfo)
     },
 
     /**
@@ -584,7 +587,6 @@ export default {
       }
     },
 
-
     /**
      * 笛卡尔坐标转世界坐标
      */
@@ -598,7 +600,6 @@ export default {
       point.height = cartographic.height // 模型高度
       return point
     },
-
 
     getIndex(item) {
       if (this.layerDocument && this.layerDocument.defaultMap) {

@@ -63,6 +63,7 @@ import {
   MpSplitScreen,
   MpModelPick,
   MpOpacityFactor,
+  MpModelStretch,
 } from './widgets/tool'
 
 const components = [
@@ -122,6 +123,7 @@ const components = [
   MpModelPick,
   MpOpacityFactor,
   MpFavorites,
+  MpModelStretch,
 ]
 
 const install = (Vue) => {
