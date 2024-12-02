@@ -4,7 +4,7 @@
     :coordinates="[coordinate[0], coordinate[1]]"
     anchor="bottom"
   >
-    <img slot="marker" :src="`${baseUrl + markerImg}`" />
+    <img slot="marker" :src="markerImg" />
   </mapgis-marker>
 </template>
 
@@ -14,6 +14,7 @@ import {
   AppMixin,
   Feature,
   baseConfigInstance,
+  markerIconInstance,
 } from '@mapgis/web-app-framework'
 import { Style } from '@mapgis/webclient-es6-service'
 
@@ -47,7 +48,7 @@ export default {
   },
   data() {
     return {
-      markerImg: `${baseConfigInstance.config.colorConfig.label.image.defaultImg}`,
+      markerImg: '',
 
       timer: null,
     }
@@ -189,7 +190,8 @@ export default {
     },
   },
 
-  mounted() {
+  async mounted() {
+    this.markerImg = await markerIconInstance.unSelectIcon()
     this.pickableChange()
     this.frameFeatureChange()
     this.timer = window.setTimeout(() => {
