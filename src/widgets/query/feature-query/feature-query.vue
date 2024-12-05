@@ -51,16 +51,20 @@
         />
       </mapgis-ui-toolbar-command-group>
     </mapgis-ui-toolbar>
-    <div v-show='showNearDistancePanel'>
-      <mapgis-ui-setting-form layout="horizontal" style="padding-top: 8px" size="default">
-        <mapgis-ui-form-item label="缓冲半径(像素)" labelCol='{span: 4}'>
+    <div v-show="showNearDistancePanel">
+      <mapgis-ui-setting-form
+        layout="horizontal"
+        style="padding-top: 8px"
+        size="default"
+      >
+        <mapgis-ui-form-item label="缓冲半径(像素)" labelCol="{span: 4}">
           <mapgis-ui-slider
             v-model="sliderIndex"
             :marks="marks"
             :min="0"
             :max="limitsArray.length - 1"
             :tipFormatter="() => `${limits}像素`"
-            :disabled='showNearDistanceInput'
+            :disabled="showNearDistanceInput"
           />
         </mapgis-ui-form-item>
         <mapgis-ui-switch-panel
@@ -68,18 +72,22 @@
           v-model="showNearDistanceInput"
           size="small"
         >
-          <mapgis-ui-form-item label="缓冲半径" v-show="showNearDistanceInput" style='margin-bottom: 10px;'>
+          <mapgis-ui-form-item
+            label="缓冲半径"
+            v-show="showNearDistanceInput"
+            style="margin-bottom: 10px"
+          >
             <mapgis-ui-input-number
-              class='mp-widget-near-radius-input'
+              class="mp-widget-near-radius-input"
               v-model="nearDistance"
               :min="1"
-              :step='1'
+              :step="1"
             />
           </mapgis-ui-form-item>
           <mapgis-ui-form-item label="半径单位" v-show="showNearDistanceInput">
             <mapgis-ui-select
-              class='mp-widget-near-radius-input'
-              v-model='nearDistanceUnit'
+              class="mp-widget-near-radius-input"
+              v-model="nearDistanceUnit"
             >
               <mapgis-ui-select-option
                 :key="index"
@@ -219,7 +227,12 @@ export default {
       // 缓冲半径单位
       nearDistanceUnit: 'pixel',
       // 可选的缓冲半径单位
-      nearDistanceUnitArray: [{key: '像素', value: 'pixel'}, {key: '厘米', value: 'centimeter'}, {key: '米', value: 'meter'}, {key: '千米', value: 'kilometer'}],
+      nearDistanceUnitArray: [
+        { key: '像素', value: 'pixel' },
+        { key: '厘米', value: 'centimeter' },
+        { key: '米', value: 'meter' },
+        { key: '千米', value: 'kilometer' },
+      ],
       sliderIndex: 0,
       queryType: '',
       tempActiveExhibitionId: '',
@@ -611,9 +624,10 @@ export default {
       else {
         const zoomAndResolution = this.sceneController.getZoomAndResolution({
           lng: shape.x,
-          lat: shape.y
+          lat: shape.y,
         })
-        nearDis = zoomAndResolution.resolution * this.nearDistance / distanceUnits
+        nearDis =
+          (zoomAndResolution.resolution * this.nearDistance) / distanceUnits
         return nearDis
       }
     },
@@ -631,11 +645,7 @@ export default {
       let zoomAndResolution
 
       // 1 图层是经纬度坐标系
-      if (
-        layer &&
-        layer.spatialReference &&
-        layer.spatialReference.isWGS84()
-      ) {
+      if (layer && layer.spatialReference && layer.spatialReference.isWGS84()) {
         // 1.1 设置一度代表多少米，纬度不同，数值也不同，此处取武汉附近的纬度
         const distanceUnits = 103133.845
         // 1.2 开启了手动输入缓冲半径的面板
@@ -649,7 +659,7 @@ export default {
               break
             case 'kilometer':
               // 将千米转为米，之后计算缓冲半径
-              nearDis = this.nearDistance * 1000 / distanceUnits
+              nearDis = (this.nearDistance * 1000) / distanceUnits
               break
             case 'meter':
               nearDis = this.nearDistance / distanceUnits
@@ -1461,6 +1471,9 @@ export default {
       })
       this.operateLayerData = layers
     },
+  },
+  beforeDestroy() {
+    eventBus.$off(events.MARKER_CLICK)
   },
 }
 </script>

@@ -92,6 +92,9 @@ export default {
       this.editWindowVisible = false
     },
   },
+  beforeDestroy() {
+    eventBus.$off('marker-manager-toolbar-edit-button-click')
+  },
 }
 </script>
 

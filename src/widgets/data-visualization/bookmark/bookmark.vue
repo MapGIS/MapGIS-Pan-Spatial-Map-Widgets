@@ -209,6 +209,10 @@ export default {
         })
     },
   },
+  beforeDestroy() {
+    eventBus.$off(events.ADD_DATA_BOOKMARK_EVENT)
+    eventBus.$off(events.ADD_ALL_SELECTED_DATA_BOOKMARK_EVENT)
+  },
 }
 </script>
 
