@@ -117,15 +117,18 @@
 
 <script>
 import MpAlphaTable from './AlphaTable.vue'
-import { Voxel } from '@mapgis/web-app-framework'
-
 export default {
   name: 'MpSymbolization',
+  inject: ['Cesium', 'vueCesium', 'viewer'],
   components: { MpAlphaTable },
   props: {
     // 图层id
     id: {
       type: String,
+    },
+    vueKey: {
+      type: String,
+      default: 'default',
     },
   },
   data() {
@@ -167,28 +170,37 @@ export default {
     numberData: {
       deep: true,
       handler() {
-        this.voxel &&
-          this.voxel.setFilterRange(this.numberData[0], this.numberData[1])
+        const tileset = this.getVoxelLayer()
+        tileset.minimumVoxelThreshold = this.numberData[0];
+        tileset.maximumVoxelThreshold = this.numberData[1];
       },
     },
   },
   methods: {
+    /**
+     * 获取voxel图层
+     */
+    getVoxelLayer() {
+      const { vueKey, vueCesium } = this
+      const vueIndex = this.id
+      let find = vueCesium.M3DIgsManager.findSource(vueKey, vueIndex)
+      if (find) {
+        let m3ds = find.source
+        return m3ds[0]
+      }
+    },
     // 初始化属性变量、voxel对象
     initData() {
-      const voxelMetaData = Voxel.getMetaData(this.id)
-      this.voxel = Voxel.getPrimitives(this.id)
-      const { variables } = voxelMetaData
-      const excludeArr = ['lat', 'level', 'lon', 'time']
-      for (const key in variables) {
-        if (!excludeArr.includes(key)) {
+      const tileset = this.getVoxelLayer()
+      tileset.readyPromise.then(() => {
+        const { fieldInfos } = tileset.layerinfo[0] || []
+        fieldInfos.forEach((field) => {
           this.variablesArr.push({
-            label: key,
-            value: variables[key].variable_range
-              ? variables[key].variable_range.join(',')
-              : variables[key].actual_range.join(','),
+            label: field.name,
+            value: `${field.minValue},${field.maxValue}`,
           })
-        }
-      }
+        })
+      })
       const data = this.variablesArr[0].value.split(',')
       this.numberData = [
         Number(Number(data[0]).toFixed(2)),
@@ -340,13 +352,23 @@ export default {
         this.canvasWidth,
         0
       )
+      const tileset = this.getVoxelLayer()
       const range = this.maxValue - this.minValue
+      const conditions = []
       colors.forEach(({ num, color }) => {
         linearGradient.addColorStop((num - this.minValue) / range, color)
+        const rangeItem = `\${${this.currentProperty}} === ${(num - this.minValue) / range}`
+        const colorItem = `color("${color}")`
+        conditions.push([rangeItem, colorItem])
       })
       this.ctx.fillStyle = linearGradient
       this.ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight)
-      this.voxel.setColorScheme(this.canvas)
+      tileset.style = new Cesium.Cesium3DTileStyle({
+        color: {
+          type: 'stretch-value',
+          conditions
+        },
+      })
     },
     // 获取默认的颜色表格和透明度表格
     formatTableData() {

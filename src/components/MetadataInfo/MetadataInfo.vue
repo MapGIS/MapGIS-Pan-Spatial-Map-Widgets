@@ -52,7 +52,6 @@ import {
   Layer,
   Metadata,
   baseConfigInstance,
-  Voxel,
 } from '@mapgis/web-app-framework'
 
 import MpMetadataInfoDoc from './MetadataInfoDoc'
@@ -66,6 +65,7 @@ import MpMetadataInfoJson from './MetadataInfoJson.vue'
 
 export default {
   name: 'MpMetadataInfo',
+  inject: ['vueCesium'],
   components: {
     MpMetadataInfoDoc,
     MpMetadataInfoTile,
@@ -160,6 +160,52 @@ export default {
         })
       }
     },
+    getVoxelLayer() {
+      const { vueCesium } = this
+      const vueIndex = this.currentLayer.id
+      const vueKey = 'default'
+      let find = vueCesium.M3DIgsManager.findSource(vueKey, vueIndex)
+      if (find) {
+        let m3ds = find.source
+        return m3ds[0]
+      }
+    },
+    /**
+     * 获取图层元信息
+     */
+    getVoxelMetaData() {
+      const tileset = this.getVoxelLayer()
+      const haderInfo = tileset.root._header || {}
+      return tileset.readyPromise.then(() => {
+        const { voxelInfo, fieldInfos } = tileset.layerinfo[0] || {}
+        const { dimensions, time } = voxelInfo
+        const classInfoJson = {
+          key: '类属性',
+          value: {
+            '空间参考系': haderInfo.spatialReference,
+            '体元个数': {
+              T: time.size,
+              X: dimensions[0],
+              Y: dimensions[1],
+              Z: dimensions[2],
+            },
+          },
+        }
+        const variableInfo = {}
+        fieldInfos.forEach((field) => {
+          variableInfo[field.name] = {
+            '名称': field.name,
+            '最小值': field.minValue,
+            '最大值': field.maxValue,
+          }
+        })
+        const variableJson = {
+          key: '变量信息',
+          value: variableInfo,
+        }
+        return [classInfoJson, variableJson]
+      })
+    },
   },
   watch: {
     currentLayer: {
@@ -178,7 +224,7 @@ export default {
           const defaultToken = baseConfigInstance.config.token
           let option: Metadata.MetadataQueryParam = {}
           // 栅格体元本身的元数据信息
-          const metaDataOfVoxel = []
+          let metaDataOfVoxel = []
           // 云管配置的元数据信息
           let metaDataOfCloud = []
           switch (type) {
@@ -194,10 +240,9 @@ export default {
                 this.currentLayer.metaData &&
                 this.currentLayer.metaData.dataContentType === 'VoxelGrid'
               ) {
-                const { metadata } = Voxel.getMetaData(this.currentLayer.id)
-                for (const key in metadata) {
-                  metaDataOfVoxel.push({ key, value: metadata[key] })
-                }
+                this.getVoxelMetaData().then((res) => {
+                  metaDataOfVoxel = res
+                })
               } else {
                 // metaDataOfVoxel = this.currentLayer.metaData
               }
@@ -302,7 +347,7 @@ export default {
           } else {
             this.metadata = await Metadata.MetaDataQuery.query(option)
           }
-          this.spinning = false
+                    this.spinning = false
         }
       },
     },
@@ -409,7 +454,7 @@ export default {
           } else {
             this.metadata = await Metadata.MetaDataQuery.query(option)
           }
-          this.spinning = false
+                    this.spinning = false
           this.isCloudData = false
         }
       },
@@ -421,7 +466,7 @@ export default {
         if (this.currentOGCMetadata) {
           const metadata = JSON.parse(JSON.stringify(this.currentOGCMetadata))
           this.metadata = this.formatMetadata(metadata)
-          this.isCloudData = true
+                    this.isCloudData = true
         }
       },
     },

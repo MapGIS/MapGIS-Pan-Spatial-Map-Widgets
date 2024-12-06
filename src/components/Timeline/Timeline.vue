@@ -76,16 +76,21 @@
 <script>
 import VueSlider from 'vue-slider-component'
 import 'vue-slider-component/theme/default.css'
-import { ExhibitionMixin, Exhibition, Voxel } from '@mapgis/web-app-framework'
+import { ExhibitionMixin, Exhibition } from '@mapgis/web-app-framework'
 
 const { IAttributeTableExhibition } = Exhibition
 
 export default {
   name: 'MpTimeline',
+  inject: ['Cesium', 'vueCesium', 'viewer'],
   components: {
     VueSlider,
   },
   props: {
+    vueKey: {
+      type: String,
+      default: 'default',
+    },
     exhibition: IAttributeTableExhibition,
   },
   mixins: [ExhibitionMixin],
@@ -112,6 +117,8 @@ export default {
       speed: 1,
       maxSize: 1000,
       test: 0,
+      values: [],
+      unit: 'hours'
     }
   },
   computed: {
@@ -178,28 +185,37 @@ export default {
     },
   },
   created() {
-    const voxelMetaData = Voxel.getMetaData(this.exhibition.option.id)
-    const {
-      dimensions: {
-        time: { size },
-      },
-      variables: {
-        time: { values, units },
-      },
-    } = voxelMetaData
-    const unitsArr = units.split(' since ')
-    this.baseDate = new Date(unitsArr[1]).getTime() // 获取基准时间
-    this.unit = unitsArr[0] // 获取时间单位
-    this.maxSize = size - 1
-    this.voxel = Voxel.getPrimitives(this.exhibition.option.id)
-    this.playTime = [0, this.maxSize]
-    // 保存元数据当中的时间信息
-    this.values = values
-    this.startTimestamp = values[0] * this.timeScale + this.baseDate
-    this.endTimestamp =
-      values[values.length - 1] * this.timeScale + this.baseDate
+    const tileset = this.getVoxelLayer()
+    tileset.readyPromise.then( () => {
+      const { voxelInfo } = tileset.layerinfo[0] || {}
+      const { size, regularSpacing, irregularSpacing } = voxelInfo.time || {}
+
+      if (irregularSpacing) {
+        this.values = irregularSpacing.values
+      } else if (regularSpacing) {
+        let { offset, gap } = regularSpacing
+        for (let i = 0; i < size; i++) {
+          this.values.push(offset)
+          offset += gap
+        }
+      }
+      this.unit = 'hours'
+      this.maxSize = size - 1
+      this.playTime = [0, this.maxSize]
+      this.startTimestamp = this.values[0]
+      this.endTimestamp =  this.values[this.values.length - 1]
+    })
   },
   methods: {
+    getVoxelLayer() {
+      const { vueKey, vueCesium } = this
+      const vueIndex = this.exhibition.option.id
+      let find = vueCesium.M3DIgsManager.findSource(vueKey, vueIndex)
+      if (find) {
+        let m3ds = find.source
+        return m3ds[0]
+      }
+    },
     /**
      * @description 将时间戳标准化成 year-month-day hour-min-second的形式
      * @param value  时间戳
@@ -210,7 +226,7 @@ export default {
       this.test = value
       let time
       if (format) {
-        time = this.values[value] * this.timeScale + this.baseDate
+        time = this.values[value] 
       } else {
         time = value
       }
@@ -261,6 +277,7 @@ export default {
      * @returns
      */
     startOrPause() {
+      const tileset = this.getVoxelLayer()
       if (!this.isPlay) {
         this.isPlay = true
         if (this.playTime.length > 2) {
@@ -272,7 +289,7 @@ export default {
         }
         this.timer = setInterval(() => {
           this.$set(this.playTime, 1, this.playTime[1] + 1)
-          this.voxel.setPlaybackFrame(this.playTime[1])
+          tileset.timeIdentity = this.playTime[1]
           if (this.playTime[1] === this.playTime[2]) {
             this.isPlay = false
             clearInterval(this.timer)
@@ -288,12 +305,13 @@ export default {
      * @returns
      */
     onSpeedChange() {
+      const tileset = this.getVoxelLayer()
       this.activateExhibition()
       if (this.isPlay) {
         this.timer && clearInterval(this.timer)
         this.timer = setInterval(() => {
           this.$set(this.playTime, 1, this.playTime[1] + 1)
-          this.voxel.setPlaybackFrame(this.playTime[1])
+          tileset.timeIdentity = this.playTime[1]
           if (this.playTime[1] === this.playTime[2]) {
             this.isPlay = false
             clearInterval(this.timer)
@@ -306,9 +324,10 @@ export default {
      * @returns
      */
     onDragend(index) {
+      const tileset = this.getVoxelLayer()
       if (this.playTime.length > 2) {
         if (index === 1) {
-          this.voxel.setPlaybackFrame(this.playTime[1])
+          tileset.timeIdentity = this.playTime[1]
         } else {
           if (this.isPlay) {
             this.isPlay = false
