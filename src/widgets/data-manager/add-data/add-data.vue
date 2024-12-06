@@ -427,6 +427,10 @@ export default {
       return this.dataCatalogManager.hasRepeatedService(data)
     },
   },
+  beforeDestroy() {
+    eventBus.$off(events.ADD_DATA_EVENT)
+    eventBus.$off(events.DELETE_DATA_EVENT)
+  },
 }
 </script>
 

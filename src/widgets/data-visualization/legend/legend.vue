@@ -375,6 +375,10 @@ export default {
       return `${this.baseUrl}${image}`
     },
   },
+  beforeDestroy() {
+    eventBus.$off(events.UPLOAD_LEGEND_SUCCESS_EVENT)
+    eventBus.$off(events.DATA_SELECTION_KEYS_CHANGE_EVENT)
+  },
 }
 </script>
 

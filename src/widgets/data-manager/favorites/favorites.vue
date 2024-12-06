@@ -499,6 +499,9 @@ export default {
       }
     },
   },
+  beforeDestroy() {
+    eventBus.$off(events.DATA_CATALOG_ADD_COLLECT)
+  },
 }
 </script>
 
