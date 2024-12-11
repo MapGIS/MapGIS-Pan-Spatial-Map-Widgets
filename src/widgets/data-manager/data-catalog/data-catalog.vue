@@ -618,6 +618,8 @@ export default {
     eventBus.$on(events.DATA_CATALOG_CHANGE_NODES, this.dataCatalogChangeNodes)
     // 接收目录树勾选节点事件
     eventBus.$on(events.DATA_CATALOG_CHECK_NODES, this.dataCatalogCheckNodes)
+    // 接收数据目录刷新事件
+    eventBus.$on(events.DATA_CATALOG_REFRESH, this.refreshTree)
   },
   watch: {
     // 监听目录树节点变化
@@ -1697,9 +1699,11 @@ export default {
       })
 
       // 使用新的app.json中的规范，判断this.application.data是否有且有值就替换this.widgetInfo.config.treeConfig.treeData
-      if (appConfig.data && appConfig.data.length > 0) {
-        config.treeConfig.treeData = appConfig.data
-      }
+      // if (appConfig.data && appConfig.data.length > 0) {
+      //   config.treeConfig.treeData = appConfig.data
+      // }
+      // 不再做老数据的兼容
+      config.treeConfig.treeData = appConfig.data
       // 初始化数据目录
       this.dataCatalogManager.init(config)
 
@@ -1713,6 +1717,18 @@ export default {
       )
       this.dataCatalogTreeData = treeData
       this.allTreeDataConfigs = allTreeDataConfigs
+      this.initLocationKeys()
+      const removeKeys = []
+      this.checkedNodeKeys = this.checkedNodeKeys.filter((item) => {
+        const layerConfig = this.dataCatalogManager.getLayerConfigByID(item)
+        !layerConfig && removeKeys.push(item)
+        return layerConfig
+      })
+      // 对加载了的图层进行清除
+      removeKeys.forEach((key) => {
+        const layer = this.document.defaultMap.findLayerById(key)
+        layer && this.document.defaultMap.remove(layer)
+      })
       if (this.isClassify) {
         this.dataCatalogTreeDataCopy = treeData
         this.dataCatalogTabData = this.getTabsData(treeData)
