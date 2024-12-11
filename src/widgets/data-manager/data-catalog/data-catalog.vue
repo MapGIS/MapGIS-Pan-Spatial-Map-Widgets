@@ -568,6 +568,8 @@ export default {
 
     // 初始化目录树数据
     this.dataCatalogManager.init(this.widgetInfo.config)
+    // 获取地址映射
+    DataCatalogManager.getAddressMap()
     // 是否对图层节点进行过滤
     const filtTree = this.widgetInfo.config.otherConfig.filtTree || false
     // 组装目录树数据
