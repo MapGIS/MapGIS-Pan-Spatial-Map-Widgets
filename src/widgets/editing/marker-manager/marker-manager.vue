@@ -92,6 +92,7 @@
       </template>
     </mp-marker-plotting>
     <mp-3d-marker-plotting
+      ref="MarkerPlot"
       v-if="!is2DMapMode && hasGlobeDisplay"
       :markers="shownMarkers"
       :center="currentMarkerCenter"
@@ -445,7 +446,6 @@ export default {
       this.markers.push(marker)
 
       this.onGotoMarker(marker)
-
       this.scrollToMarkerListBottom()
     },
 
@@ -485,6 +485,12 @@ export default {
     // 选择标注
     onGotoMarker(marker) {
       // 点击标注跳转
+      if(marker.coordinates === this.currentMarkerCenter) {
+        // 解决同一个标注点击无法定位的问题
+        const MarkerPlot = this.$refs.MarkerPlot
+        const [x, y] = marker.coordinates
+        MarkerPlot && MarkerPlot.zoomToCartesian3(x, y)
+      }
       this.currentMarkerCenter = marker.coordinates
       this.currentMarkerId = marker.markerId
     },
