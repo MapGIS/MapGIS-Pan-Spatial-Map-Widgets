@@ -43,12 +43,6 @@
           :active="showLayerList"
           @click="showLayerListInfo"
         />
-        <mapgis-ui-toolbar-command
-          title="设置"
-          icon="setting"
-          :active="showSettingPanel"
-          @click="showSettingsInfo"
-        />
       </mapgis-ui-toolbar-command-group>
     </mapgis-ui-toolbar>
     <div v-show="showNearDistancePanel">
@@ -217,7 +211,6 @@ export default {
       showLayerList: false,
       // 默认提供的缓冲半径(像素)可选值
       limitsArray: [1, 2, 5, 10, 20],
-      showSettingPanel: false,
       // 是否显示缓冲半径面板，仅有绘制点和线时，才显示缓冲半径面板
       showNearDistancePanel: false,
       // 是否显示缓冲半径输入框
@@ -351,6 +344,7 @@ export default {
     },
     'document.defaultMap': {
       deep: true,
+      immediate: true,
       handler() {
         this.dealwithLayers()
       },
@@ -1441,11 +1435,6 @@ export default {
     },
     showLayerListInfo() {
       this.showLayerList = !this.showLayerList
-      this.showSettingPanel = false
-    },
-    showSettingsInfo() {
-      this.showSettingPanel = !this.showSettingPanel
-      this.showLayerList = false
     },
     dealwithLayers() {
       const layers = this.document.clone().defaultMap.layers()
