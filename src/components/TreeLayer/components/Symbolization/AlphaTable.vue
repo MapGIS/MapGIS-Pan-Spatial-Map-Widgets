@@ -69,6 +69,7 @@
 
 <script>
 import { UUID } from '@mapgis/web-app-framework'
+import { formatNumber } from '../../../../utils'
 
 export default {
   name: 'MpAlphaTable',
@@ -161,7 +162,7 @@ export default {
     add(index) {
       const min = this.tableData[index].num
       const max = this.tableData[index + 1].num
-      const num = Math.floor((max + min) / 2)
+      const num = formatNumber((max + min) / 2)
       const node = {
         key: UUID.uuid(),
         alpha: this.defaultAlpha,
