@@ -105,6 +105,7 @@ export default {
       currentHeight: undefined,
       isStart: false,
       timer: undefined,
+      count: 1
     }
   },
   computed: {
@@ -156,6 +157,7 @@ export default {
     // 微件失活时
     onDeActive() {
       this.floodAnalysis.unmount()
+      this.progressVisible = false
     },
 
     // 清除洪水淹没分析结果
@@ -175,20 +177,30 @@ export default {
       this.currentHeight = 0
     },
     start() {
+      let isPause = false
       if (!this.isStart) {
-        this.floodAnalysis._doAnalysis()
-        this.isStart = true
         const { startHeightCopy, maxHeightCopy, floodSpeedCopy } =
           this.progressData
-        let count = 1
+         if(this.currentHeight && this.currentHeight < maxHeightCopy) {
+           isPause = true
+         }else {
+          this.currentHeight = 0
+          this.count = 1
+         }
+        this.floodAnalysis._doAnalysis(isPause)
+        this.isStart = true
         this.timer = setInterval(() => {
-          this.currentHeight = startHeightCopy + floodSpeedCopy * count
-          count++
+          this.currentHeight = startHeightCopy + floodSpeedCopy * this.count
+          this.count++
           if (this.currentHeight >= maxHeightCopy) {
             this.isStart = false
             clearInterval(this.timer)
           }
         }, 1000)
+      }else {
+        this.isStart = false
+        clearInterval(this.timer)
+        this.floodAnalysis._doPause()
       }
     },
   },
