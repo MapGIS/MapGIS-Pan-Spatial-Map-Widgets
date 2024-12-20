@@ -151,6 +151,7 @@
       :popup-width="popupWidth"
       :selected-markers="selectedMarkers"
       :marker-show-type="markerShowType"
+      :max-zoom="maxZoom"
       @map-bound-change="onGetGeometry"
       @currentId="updateCurrentMarkerId"
     >
@@ -369,6 +370,9 @@ export default {
     // marker几何高亮类型，hover表示鼠标放到标注上高亮，default表示显示标注的时候就高亮
     markerShowType() {
       return this.hightlightSelection ? 'default' : 'hover'
+    },
+    maxZoom() {
+      return baseConfigInstance.config.endZoom
     },
   },
   watch: {
