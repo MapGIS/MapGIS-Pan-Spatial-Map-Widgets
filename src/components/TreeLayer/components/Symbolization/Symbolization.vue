@@ -6,17 +6,15 @@
     <mapgis-ui-row>
       <mapgis-ui-col
         ><mapgis-ui-space>
-          <mapgis-ui-select
-            v-if="variablesArr && variablesArr.length > 0"
-            :options="variablesArr"
-            :default-value="variablesArr[0].value"
-            @select="onSelect"
-            style="width: 200px"
-          ></mapgis-ui-select>
-          <span>
-            <span>{{ minValue }}</span
-            >~<span>{{ maxValue }}</span>
-          </span>
+          <mapgis-ui-select v-if="variablesArr && variablesArr.length > 0" :default-value="variablesArr[0].key" @select="onSelect" style="width: 200px">
+            <mapgis-ui-select-option
+              v-for="{ label, key } in variablesArr"
+              :key="key"
+              :value="key"
+            >
+              {{ label }}
+            </mapgis-ui-select-option>
+          </mapgis-ui-select>
         </mapgis-ui-space>
       </mapgis-ui-col>
     </mapgis-ui-row>
@@ -52,6 +50,7 @@
           :minValue="minValue"
           :maxValue="maxValue"
           :disableAlpha="true"
+          :needDecimal="true"
           @change="onColorsTableDataChange"
           rangeField="数值"
           rangeFieldMode="single"
@@ -76,25 +75,26 @@
       <mapgis-ui-col
         ><mapgis-ui-checkbox
           @change="onFilter"
-          :disabled="!(numberData && numberData.length > 0)"
+          :disabled="!(propertyData && propertyData.length > 0)"
           >属性过滤</mapgis-ui-checkbox
         ></mapgis-ui-col
       >
     </mapgis-ui-row>
     <mapgis-ui-row v-show="showFilter">
-      <mapgis-ui-col v-if="numberData && numberData.length > 0">
+      <mapgis-ui-col v-if="propertyData && propertyData.length > 0">
         <mapgis-ui-slider
           range
-          v-model="numberData"
-          :max="maxValue"
-          :min="minValue"
+          v-model="propertyData"
+          :max="maxNum"
+          :min="minNum"
+          :step="propertyStep"
         ></mapgis-ui-slider>
         <mapgis-ui-row type="flex" justify="space-between">
           <mapgis-ui-col
-            ><mapgis-ui-input-number v-model="numberData[0]"
+            ><mapgis-ui-input-number v-model="propertyData[0]" :max="maxNum" :min="minNum" :step="propertyStep"
           /></mapgis-ui-col>
           <mapgis-ui-col
-            ><mapgis-ui-input-number v-model="numberData[1]"
+            ><mapgis-ui-input-number v-model="propertyData[1]" :max="maxNum" :min="minNum"  :step="propertyStep"
           /></mapgis-ui-col>
         </mapgis-ui-row>
       </mapgis-ui-col>
@@ -117,6 +117,7 @@
 
 <script>
 import MpAlphaTable from './AlphaTable.vue'
+import { formatNumber } from '../../../../utils'
 export default {
   name: 'MpSymbolization',
   inject: ['Cesium', 'vueCesium', 'viewer'],
@@ -142,6 +143,8 @@ export default {
       ],
       // 属性值范围
       numberData: [0, 100],
+      propertyData: [0, 100],
+      propertyStep: 1,
       // 属性值最大值
       maxValue: 0,
       // 属性值最小值
@@ -159,6 +162,9 @@ export default {
       variablesArr: [],
       // 当前选中属性的名称
       currentProperty: '',
+      // 原始属性最大最小值
+      maxNum: 0,
+      minNum: 0
     }
   },
 
@@ -167,12 +173,14 @@ export default {
     this.initCanvas()
   },
   watch: {
-    numberData: {
+    propertyData: {
       deep: true,
       handler() {
         const tileset = this.getVoxelLayer()
-        tileset.minimumVoxelThreshold = this.numberData[0];
-        tileset.maximumVoxelThreshold = this.numberData[1];
+        const min = this.propertyData[0]
+        const max = this.propertyData[1]
+        tileset.minimumVoxelThreshold = min;
+        tileset.maximumVoxelThreshold = max;
       },
     },
   },
@@ -194,20 +202,29 @@ export default {
       const tileset = this.getVoxelLayer()
       tileset.readyPromise.then(() => {
         const { fieldInfos } = tileset.layerinfo[0] || []
-        fieldInfos.forEach((field) => {
+        fieldInfos.forEach((field, index) => {
           this.variablesArr.push({
             label: field.name,
             value: `${field.minValue},${field.maxValue}`,
+            key: index
           })
         })
       })
       const data = this.variablesArr[0].value.split(',')
-      this.numberData = [
-        Number(Number(data[0]).toFixed(2)),
-        Number(Number(data[1]).toFixed(2)),
+      this.minNum = Number(data[0])
+      this.maxNum = Number(data[1])
+
+      this.propertyData = [
+        this.minNum,
+        this.maxNum,
       ]
-      this.minValue = Number(Number(data[0]).toFixed(2))
-      this.maxValue = Number(Number(data[1]).toFixed(2))
+      this.propertyStep = (this.maxNum - this.minNum) / 10
+      this.minValue = formatNumber(data[0])
+      this.maxValue = formatNumber(data[1])
+      this.numberData = [
+        this.minValue,
+        this.maxValue,
+      ]
       this.currentProperty = this.variablesArr[0].label
     },
     // 初始化绘板
@@ -376,7 +393,7 @@ export default {
       const step =
         (this.maxValue - this.minValue) / (this.defaultColors.length - 1)
       this.colorsTableData = this.defaultColors.map(({ color }, index) => ({
-        num: parseInt(start + step * index),
+        num: formatNumber((start + step * index)),
         color,
       }))
       this.alphaTableData = this.numberData.map((data) => ({
@@ -386,6 +403,12 @@ export default {
     },
     onFilter(e) {
       this.showFilter = e.target.checked
+      if (!this.showFilter) {
+        this.propertyData = [
+          this.minNum,
+          this.maxNum
+        ]
+      }
     },
     // 修改颜色表格的参数时触发
     onColorsTableDataChange(val) {
@@ -399,14 +422,25 @@ export default {
       const colors = this.getAllColors()
       this.getCanvasColors(colors)
     },
-    onSelect(val, option) {
+    onSelect(key, option) {
+      const selectOption = this.variablesArr.find(item => item.key === key)
+      const val = selectOption.value
+      this.currentProperty = selectOption.label
       const data = val.split(',')
-      this.numberData = [
-        Number(Number(data[0]).toFixed(2)),
-        Number(Number(data[1]).toFixed(2)),
+      this.minNum = Number(data[0])
+      this.maxNum = Number(data[1])
+
+      this.propertyData = [
+        this.minNum,
+        this.maxNum,
       ]
-      this.minValue = Number(Number(data[0]).toFixed(2))
-      this.maxValue = Number(Number(data[1]).toFixed(2))
+      this.minValue = formatNumber(data[0])
+      this.maxValue = formatNumber(data[1])
+      this.numberData = [
+        this.minValue,
+        this.maxValue
+      ]
+      this.propertyStep = (this.maxNum - this.minNum) / 10
       this.formatTableData()
       const colors = this.getAllColors()
       this.getCanvasColors(colors)
