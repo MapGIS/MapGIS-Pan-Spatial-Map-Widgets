@@ -308,6 +308,7 @@ export default {
     onQueryClear() {
       this.queryFeatures = []
       this.querySelection = []
+      this.queryVisible = false
     },
 
     setSublayersConfig(sceneController) {
