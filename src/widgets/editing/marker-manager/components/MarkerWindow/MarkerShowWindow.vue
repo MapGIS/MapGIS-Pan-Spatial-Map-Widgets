@@ -6,7 +6,7 @@
       <div
         v-if="marker.picture"
         class="picture"
-        :style="`background: url('${baseUrl}${marker.picture}') center center / 100% 100% no-repeat`"
+        :style="`background: url('${baseUrl}${marker.picture}') center center / contain no-repeat`"
         @click="onPreviewPicture"
       />
     </div>
