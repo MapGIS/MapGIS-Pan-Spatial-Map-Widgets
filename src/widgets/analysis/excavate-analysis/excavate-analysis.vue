@@ -1,6 +1,6 @@
 <template>
   <div class="mp-widget-terrain-analysis">
-    <mapgis-3d-excavate-analysis :models="layers" @load="load" />
+    <mapgis-3d-excavate-analysis :models="layers" :terrainGroundFillImages="terrainGroundFillImages" :terrainWallFillImages="terrainWallFillImages" :modelFillImage="modelFillImage" @load="load" />
   </div>
 </template>
 
@@ -9,7 +9,8 @@ import {
   WidgetMixin,
   LayerType,
   IGSSceneSublayerType,
-  LoadStatus
+  LoadStatus,
+  api
 } from '@mapgis/web-app-framework'
 
 export default {
@@ -22,6 +23,12 @@ export default {
       layers: [],
       // 开挖分析对象
       ExcavateAnalysis: null,
+      // 底面纹理
+      terrainGroundFillImages: [],
+      // 剖面纹理
+      terrainWallFillImages: [],
+      // 模型纹理
+      modelFillImage: ''
     }
   },
 
@@ -32,15 +39,36 @@ export default {
       handler: 'getScenes',
       immediate: true,
       deep: true,
-    },
-    layer: {
-      handler: 'changeLayer',
-      deep: true,
-      immediate: true,
-    },
+    }
+  },
+
+  async mounted() {
+    const config = await api.getWidgetConfig('excavate-analysis')
+    this.terrainGroundFillImages = config.terrainGroundFillImages.map((item, index) => {
+      if(index > 0) {
+        item.value = this.imageUrl(item.value)
+      }
+      return item
+    })
+    this.terrainWallFillImages = config.terrainWallFillImages.map((item, index) => {
+      if(index > 0) {
+        item.value = this.imageUrl(item.value)
+      }
+      return item
+    })
+    this.modelFillImage = this.imageUrl(config.modelFillImage)
   },
 
   methods: {
+    /**
+     * 获取纹理的最终路径
+     */
+    imageUrl(url) {
+      if (url.startsWith('/file')) {
+        return `${this.baseUrl}/${this.appProductName}${url}`
+      }
+      return `${this.baseUrl}${url}`
+    },
     /**
      * 动态获取基础目录树上已勾选的地图图层
      */

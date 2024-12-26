@@ -322,8 +322,8 @@ export default {
 
 .cesium-performanceDisplay-defaultContainer {
   position: absolute;
-  top: 90%;
-  right: 25%;
+  top: 90% !important;
+  right: 25% !important;
   text-align: right;
 }
 </style>
