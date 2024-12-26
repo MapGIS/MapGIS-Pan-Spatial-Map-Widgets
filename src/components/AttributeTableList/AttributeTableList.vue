@@ -210,22 +210,30 @@ export default {
         domain = url.origin
       }
       let dataUrl
+      const serverNameArray = serverName.split('?')
+      let queryStr = ''
+      // 判断有token等额外参数的情况
+      if (serverNameArray.length > 1) {
+        serverName = serverNameArray[0]
+        queryStr = `&${serverNameArray[1]}`
+      }
       switch (serverType) {
         case LayerType.IGSMapImage:
           // 有冒号说明是文件夹里面的服务，新接口支持的格式为文件夹/服务名，因此需将冒号替换成/
           if (serverName.indexOf(':') > -1) {
             serverName = serverName.replace(':', '/')
           }
-          dataUrl = `${domain}/igs/rest/services/${serverName}/MapServer/query?f=csv&resultRecordCount=1000`
+
+          dataUrl = `${domain}/igs/rest/services/${serverName}/MapServer/query?f=csv&resultRecordCount=1000${queryStr}`
           break
         case LayerType.IGSScene:
           if (is3dBind2dData) {
             if (serverName.indexOf(':') > -1) {
               serverName = serverName.replace(':', '/')
             }
-            dataUrl = `${domain}/igs/rest/services/${serverName}/MapServer/query?f=csv&resultRecordCount=1000`
+            dataUrl = `${domain}/igs/rest/services/${serverName}/MapServer/query?f=csv&resultRecordCount=1000${queryStr}`
           } else {
-            dataUrl = `${domain}/igs/rest/services/system/ResourceServer/tempData/features/query?url=${gdbp}&f=csv&resultRecordCount=1000`
+            dataUrl = `${domain}/igs/rest/services/system/ResourceServer/tempData/features/query?url=${gdbp}&f=csv&resultRecordCount=1000${queryStr}`
           }
 
           break
