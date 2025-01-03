@@ -32,6 +32,7 @@ module.exports = {
       '@mapgis/mapbox-gl-inspect': '@mapgis/mapbox-gl-inspect',
       '@mapgis/supercluster': '@mapgis/supercluster',
       '@mapgis/webclient-cesium-plugin': '@mapgis/webclient-cesium-plugin',
+      '@mapgis/webclient-mapboxgl-plugin': '@mapgis/webclient-mapboxgl-plugin',
       '@mapgis/webclient-common': '@mapgis/webclient-common',
       '@mapgis/webclient-es6-mapboxgl': '@mapgis/webclient-es6-mapboxgl',
       '@mapgis/webclient-es6-service': '@mapgis/webclient-es6-service',
@@ -57,7 +58,7 @@ module.exports = {
       .tap((options) =>
         Object.assign(options, { limit: 2000, esModule: false })
       )
-      config.plugins.delete('fork-ts-checker') // 解决打包时候ts类型检测报错
+    config.plugins.delete('fork-ts-checker') // 解决打包时候ts类型检测报错
     // config.plugin('fork-ts-checker').tap((args) => {
     //   args[0].memoryLimit = 12288
     //   return args
