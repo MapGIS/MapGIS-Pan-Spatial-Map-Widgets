@@ -28,6 +28,7 @@ import {
   dataCatalogManagerInstance,
 } from '@mapgis/web-app-framework'
 import axios from 'axios'
+import { defaultSceneSetting } from './index'
 
 export default {
   name: 'MpFavorites',
@@ -82,6 +83,9 @@ export default {
       this.$set(this.widgetInfo.config, 'showType', 'image')
     }
     this.dataList = JSON.parse(JSON.stringify(this.widgetInfo.config.data))
+    this.dataList = this.initData(
+      JSON.parse(JSON.stringify(this.widgetInfo.config.data))
+    )
     this.baseMapController.saveType = 'url'
   },
   methods: {
@@ -497,6 +501,34 @@ export default {
       } else {
         return find
       }
+    },
+    initData(data) {
+      if (data.length > 0) {
+        data.forEach((item) => {
+          const sceneConfig = this.mergeObjects(
+            JSON.parse(JSON.stringify(defaultSceneSetting)),
+            item.options.sceneConfig || {}
+          )
+          item.options.sceneConfig = sceneConfig
+        })
+      }
+      return data
+    },
+    mergeObjects(target, source) {
+      for (const key in source) {
+        if (source.hasOwnProperty(key)) {
+          if (
+            target.hasOwnProperty(key) &&
+            typeof target[key] === 'object' &&
+            typeof source[key] === 'object'
+          ) {
+            this.mergeObjects(target[key], source[key])
+          } else {
+            target[key] = source[key]
+          }
+        }
+      }
+      return target
     },
   },
   beforeDestroy() {
