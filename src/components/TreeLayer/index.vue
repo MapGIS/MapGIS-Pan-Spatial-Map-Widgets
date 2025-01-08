@@ -1525,7 +1525,7 @@ export default {
         const editorCallback = function (value) {
           self.$parent?.$parent?.$refs['模型变换']?.transformUpdate(value)
         }
-        window.transformEditor = new Cesium.ModelTransformTool(
+        window.transformEditor = new zondy.cesium.ModelTransformTool(
           layerOption,
           editorCallback
         )
