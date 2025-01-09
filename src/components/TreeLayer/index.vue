@@ -1076,11 +1076,8 @@ export default {
             currentLayer.layerProperty.transform
           )
         }
-        source.readyPromise.then(() => {
-          vm._setBoundingSphereAndExtent(source, layer)
-          window.layers3D[layer.id] = layer
-          // vm.$emit('update:layerDocument', doc)
-        })
+        vm._setBoundingSphereAndExtent(source, layer)
+        window.layers3D[layer.id] = layer
       } else if (layer.type === LayerType.IGSScene) {
         const layerIdArr = []
         layer.activeScene.sublayers.forEach((sublayer) => {

@@ -22,9 +22,6 @@
       <mapgis-ui-form-item label="开启拾取">
         <mapgis-ui-switch v-model="enablePopup" />
       </mapgis-ui-form-item>
-      <mapgis-ui-form-item label="开启多模态切换">
-        <mapgis-ui-switch v-model="enableModelSwitch" />
-      </mapgis-ui-form-item>
       <mapgis-ui-form-item label="开启模型包围盒">
         <mapgis-ui-switch
           v-model="enableModelBoundingBox"
@@ -84,7 +81,6 @@ export default {
     return {
       maximumScreenSpaceError: 16,
       maximumMemoryUsage: 512,
-      enableModelSwitch: false,
       enablePopup: false,
       luminanceAtZenith: 10,
       enableModelStretch: false,
@@ -165,21 +161,13 @@ export default {
       if (layer) {
         const { layerProperty } = layer
         // 后续这些属性直接取layerProperty中的属性
-        let {
-          enablePopup,
-          enableModelSwitch,
-          luminanceAtZenith,
-          maximumScreenSpaceError,
-        } = layer
+        let { enablePopup, luminanceAtZenith, maximumScreenSpaceError } = layer
         if (layerProperty) {
           if (layerProperty.maximumScreenSpaceError !== undefined) {
             maximumScreenSpaceError = layerProperty.maximumScreenSpaceError
           }
           if (layerProperty.enablePopup !== undefined) {
             enablePopup = layerProperty.enablePopup
-          }
-          if (layerProperty.enableModelSwitch !== undefined) {
-            enableModelSwitch = layerProperty.enableModelSwitch
           }
           if (layerProperty.luminanceAtZenith !== undefined) {
             luminanceAtZenith = layerProperty.luminanceAtZenith
@@ -206,8 +194,6 @@ export default {
           maximumScreenSpaceError !== undefined ? maximumScreenSpaceError : 16
 
         this.enablePopup = enablePopup !== undefined ? enablePopup : false
-        this.enableModelSwitch =
-          enableModelSwitch !== undefined ? enableModelSwitch : false
 
         this.luminanceAtZenith =
           luminanceAtZenith !== undefined ? luminanceAtZenith : 10
@@ -231,10 +217,8 @@ export default {
       }
       if (this.layer.layer) {
         this.layer.layer.enablePopup = this.enablePopup
-        this.layer.layer.enableModelSwitch = this.enableModelSwitch
       } else {
         this.layer.enablePopup = this.enablePopup
-        this.layer.enableModelSwitch = this.enableModelSwitch
       }
       const layer = this.layer.layer ? this.layer.layer : this.layer
       if (layer) {
@@ -244,7 +228,6 @@ export default {
           layerProperty.maximumMemoryUsage = this.maximumMemoryUsage
           layerProperty.luminanceAtZenith = this.luminanceAtZenith
           layerProperty.enablePopup = this.enablePopup
-          layerProperty.enableModelSwitch = this.enableModelSwitch
           layerProperty.enableModelStretch = this.enableModelStretch
           layerProperty.scaleZ = this.scaleZ
           layerProperty.offset = this.offset
