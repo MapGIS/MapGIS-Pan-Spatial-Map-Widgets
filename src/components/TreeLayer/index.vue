@@ -1507,13 +1507,8 @@ export default {
       let layerOption
       this.modelEditLayer = item
       const { Cesium, viewer } = this
-      if (this.isIGSScene(item)) {
-        if (this.isSubLayer(item)) {
-          layerOption = this.getSceneLayer3DSet(item.id)
-        } else {
-          // layerOption = this.getG3dLayer(item.id)
-        }
-      } else if (this.isModelCacheLayer(item)) {
+      // 模型变换不支持场景图层，删掉场景图层判断
+     if (this.isModelCacheLayer(item)) {
         layerOption = this.getM3DSet(item.id)
       }
       if (ModelEditControlList[item.id]) {

@@ -64,7 +64,7 @@ export default {
           } else if (layer.type === LayerType.ModelCache) {
             m3dSet = this.getM3DSet(layerId)
           }
-          window.transformEditor = new Cesium.ModelTransformTool(m3dSet)
+          window.transformEditor = new zondy.cesium.ModelTransformTool(m3dSet)
           window.transformEditor.initModelEditor(viewer)
           ModelEditControlList[layerId] = window.transformEditor
           const initTransform = m3dSet._transform

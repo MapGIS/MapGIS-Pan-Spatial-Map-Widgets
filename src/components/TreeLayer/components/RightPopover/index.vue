@@ -101,12 +101,15 @@ export default {
                 this.isArcgisMapLayer(this.layerItem))),
           click: () => this.showAdvancedSetting(),
         },
+        /**
+         * 修改说明:删除模型变换对场景图层的支持，模型变换现在不支持场景图层
+         * 修改时间:2025-1-10
+         */
         {
           name: '模型变换',
           show:
-            (this.isModelCacheLayer(this.layerItem) && 
-              !this.isVoxelLayer(this.layerItem)) ||
-            this.isIGSSceneSubLayerModelCache(this.layerItem),
+            (this.isModelCacheLayer(this.layerItem) &&
+              !this.isVoxelLayer(this.layerItem)),
           click: () => this.modelEdit(),
         },
         {
