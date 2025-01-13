@@ -568,8 +568,6 @@ export default {
 
     // 初始化目录树数据
     this.dataCatalogManager.init(this.widgetInfo.config)
-    // 获取地址映射
-    DataCatalogManager.getAddressMap()
     // 是否对图层节点进行过滤
     const filtTree = this.widgetInfo.config.otherConfig.filtTree || false
     // 组装目录树数据
@@ -627,7 +625,9 @@ export default {
     // 监听目录树节点变化
     checkedNodeKeys: {
       deep: false,
-      handler() {
+      async handler() {
+        // 获取地址映射后再执行后续逻辑
+        await DataCatalogManager.getAddressMap()
         this.onCheckedNodeKeysChanged()
       },
     },
