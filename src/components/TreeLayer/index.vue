@@ -741,10 +741,10 @@ export default {
               }
 
               if (
-                sublayer.luminanceAtZenith.toString() !==
+                sublayer.imageBasedLighting.luminanceAtZenith.toString() !==
                 item.layerProperty.luminanceAtZenith.toString()
               ) {
-                sublayer.luminanceAtZenith =
+                sublayer.imageBasedLighting.luminanceAtZenith =
                   item.layerProperty.luminanceAtZenith
               }
             }
@@ -1244,7 +1244,7 @@ export default {
       let zmin
       let zmax
       const boundingSphere =
-        this.Cesium.AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
+        zondy.cesium.AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
       for (let i = 0; i < m3dSetArray.length; i++) {
         const m3d = m3dSetArray[i]
         const range = this._getM3DSetRange(m3d)
@@ -1508,7 +1508,7 @@ export default {
       this.modelEditLayer = item
       const { Cesium, viewer } = this
       // 模型变换不支持场景图层，删掉场景图层判断
-     if (this.isModelCacheLayer(item)) {
+      if (this.isModelCacheLayer(item)) {
         layerOption = this.getM3DSet(item.id)
       }
       if (ModelEditControlList[item.id]) {

@@ -74,7 +74,14 @@ export default {
       // fix(6503): 地表自适应透明和地下模式使用最新的Cesium接口
       // 修改人：杨琨 2024-11-7
       // 修改说明：如果服务端没有影像图层独立控制配置，则补全该配置
-      if (config && config.cameraSetting  && !Object.prototype.hasOwnProperty.call(config.cameraSetting.undgrdParams, 'enableIndependentTranslucency')) {
+      if (
+        config &&
+        config.cameraSetting &&
+        !Object.prototype.hasOwnProperty.call(
+          config.cameraSetting.undgrdParams,
+          'enableIndependentTranslucency'
+        )
+      ) {
         config.cameraSetting.undgrdParams.enableIndependentTranslucency = false
       }
       this.dataCatalogCheckController.setInitSceneConfig(config)
@@ -198,7 +205,7 @@ export default {
         }
       }
       const boundingSphere =
-        this.Cesium.AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
+        zondy.cesium.AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
       if (boundingSphere && boundingSphere.radius !== undefined) {
         this.boundingSphereRadius = boundingSphere.radius
       }
