@@ -825,7 +825,10 @@ export default {
            * 修改说明：查询到第一个要素数目大于0的子图层后，就停止要素数目的查询，单纯要素查数目比查询要素数据要快
            */
           if (!activeOptionId) {
-            const { TotalCount } = await this.queryCount(options, true)
+            const { TotalCount } = await this.queryCount(
+              options,
+              layer.type !== LayerType.IGSTile
+            )
             if (TotalCount > 0) {
               activeOptionId = sublayer.id
             }

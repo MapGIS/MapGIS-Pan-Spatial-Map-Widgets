@@ -529,33 +529,30 @@ export default {
         case LayerType.IGSTile: {
           queryGeometry = this.optionVal.geometry
           if (!isPageChange) {
-            const json = await FeatureQuery.igsQueryResourceServer({
-              ip,
-              port: port.toString(),
-              domain,
-              geometry: queryGeometry,
-              url: gdbp,
-              inSrs: 'WGS1984_度',
-              outSrs: 'WGS1984_度',
-              returnCountOnly: true,
-            })
-            const { count } = json
-            this.pagination.total = count
+            const { AttStruct, TotalCount } = await this.queryCount(
+              queryGeometry,
+              queryWhere
+            )
+            if (!(this.tableColumns && this.tableColumns.length > 0)) {
+              columns = this.setTableScroll(AttStruct)
+              this.tableColumns = columns
+            }
+            this.pagination.total = TotalCount
           }
           let jsonData
           if (val === '1') {
-            jsonData = await FeatureQuery.igsQueryResourceServer({
+            jsonData = await FeatureQuery.query({
               ip,
               port: port.toString(),
               domain,
               where: queryWhere,
               geometry: queryGeometry,
+              f: f || 'geojson',
               page: 0,
               pageCount: this.pagination.total,
-              url: gdbp,
-              geometryPrecision: 8,
-              inSrs: 'WGS1984_度',
-              outSrs: 'WGS1984_度',
+              gdbp,
+              coordPrecision: 8,
+              requestType: 'POST',
             })
             this.attrTableToJsonData = this.setTable20(
               jsonData.features,
@@ -564,31 +561,26 @@ export default {
             )
             return
           } else {
-            jsonData = await FeatureQuery.igsQueryResourceServer({
+            jsonData = await FeatureQuery.query({
               ip,
               port: port.toString(),
               domain,
               where: queryWhere,
               geometry: queryGeometry,
-              url: gdbp,
-              geometryPrecision: 8,
-              inSrs: 'WGS1984_度',
-              outSrs: 'WGS1984_度',
+              f: f || 'geojson',
               page: current - 1,
               pageCount: pageSize,
+              gdbp,
+              coordPrecision: 8,
+              requestType: 'POST',
             })
           }
-          if (!(this.tableColumns && this.tableColumns.length > 0)) {
-            columns = this.setTableScroll20(jsonData.fields)
-            this.tableColumns = columns
-          }
-          console.log(jsonData, 'jsonData')
 
           const tableData = []
           jsonData.features.forEach((item) => {
             tableData.push({
               type: 'Feature',
-              properties: item.attributes,
+              properties: item.attributes || item.properties,
               geometry: item.geometry,
             })
           })
