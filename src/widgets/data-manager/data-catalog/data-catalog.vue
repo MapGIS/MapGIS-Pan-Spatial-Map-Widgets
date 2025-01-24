@@ -1694,18 +1694,23 @@ export default {
     async refreshTree() {
       // 获取数据目录微件的配置信息
       const config = await api.getWidgetConfig('data-catalog')
-      // 获取一张图的应用信息
-      const appConfig = await AppManager.getInstance().getRequest()({
-        url: this.application.appConfigPath,
-        method: 'get',
-      })
+      // 如果处于应用搭建状态下直接从application对象中获取
+      if (this.designTime) {
+        config.treeConfig.treeData = this.application.data
+      } else {
+        // 获取一张图的应用信息
+        const appConfig = await AppManager.getInstance().getRequest()({
+          url: this.application.appConfigPath,
+          method: 'get',
+        })
+        // 使用新的app.json中的规范，判断this.application.data是否有且有值就替换this.widgetInfo.config.treeConfig.treeData
+        // if (appConfig.data && appConfig.data.length > 0) {
+        //   config.treeConfig.treeData = appConfig.data
+        // }
+        // 不再做老数据的兼容
+        config.treeConfig.treeData = appConfig.data
+      }
 
-      // 使用新的app.json中的规范，判断this.application.data是否有且有值就替换this.widgetInfo.config.treeConfig.treeData
-      // if (appConfig.data && appConfig.data.length > 0) {
-      //   config.treeConfig.treeData = appConfig.data
-      // }
-      // 不再做老数据的兼容
-      config.treeConfig.treeData = appConfig.data
       // 初始化数据目录
       this.dataCatalogManager.init(config)
 
