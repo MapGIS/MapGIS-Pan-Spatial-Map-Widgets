@@ -104,7 +104,7 @@ export default {
         vueKey || 'default',
         layerId
       )
-      if (sceneLayer && sceneLayer.source) {
+      if (sceneLayer && sceneLayer.source && sceneLayer.source[layerIndex]) {
         return sceneLayer.source[layerIndex].source
       }
       return null
