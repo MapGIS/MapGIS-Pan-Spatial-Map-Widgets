@@ -118,7 +118,7 @@ export default {
       maxSize: 1000,
       test: 0,
       values: [],
-      unit: 'hours'
+      unit: 'hours',
     }
   },
   computed: {
@@ -186,25 +186,23 @@ export default {
   },
   created() {
     const tileset = this.getVoxelLayer()
-    tileset.readyPromise.then( () => {
-      const { voxelInfo } = tileset.layerinfo[0] || {}
-      const { size, regularSpacing, irregularSpacing } = voxelInfo.time || {}
+    const { voxelInfo } = tileset.layerinfo[0] || {}
+    const { size, regularSpacing, irregularSpacing } = voxelInfo.time || {}
 
-      if (irregularSpacing) {
-        this.values = irregularSpacing.values
-      } else if (regularSpacing) {
-        let { offset, gap } = regularSpacing
-        for (let i = 0; i < size; i++) {
-          this.values.push(offset)
-          offset += gap
-        }
+    if (irregularSpacing) {
+      this.values = irregularSpacing.values
+    } else if (regularSpacing) {
+      let { offset, gap } = regularSpacing
+      for (let i = 0; i < size; i++) {
+        this.values.push(offset)
+        offset += gap
       }
-      this.unit = 'hours'
-      this.maxSize = size - 1
-      this.playTime = [0, this.maxSize]
-      this.startTimestamp = this.values[0]
-      this.endTimestamp =  this.values[this.values.length - 1]
-    })
+    }
+    this.unit = 'hours'
+    this.maxSize = size - 1
+    this.playTime = [0, this.maxSize]
+    this.startTimestamp = this.values[0]
+    this.endTimestamp = this.values[this.values.length - 1]
   },
   methods: {
     getVoxelLayer() {
@@ -226,7 +224,7 @@ export default {
       this.test = value
       let time
       if (format) {
-        time = this.values[value] 
+        time = this.values[value]
       } else {
         time = value
       }

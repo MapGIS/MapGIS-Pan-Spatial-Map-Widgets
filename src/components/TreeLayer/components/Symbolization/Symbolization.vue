@@ -6,7 +6,12 @@
     <mapgis-ui-row>
       <mapgis-ui-col
         ><mapgis-ui-space>
-          <mapgis-ui-select v-if="variablesArr && variablesArr.length > 0" :default-value="variablesArr[0].key" @select="onSelect" style="width: 200px">
+          <mapgis-ui-select
+            v-if="variablesArr && variablesArr.length > 0"
+            :default-value="variablesArr[0].key"
+            @select="onSelect"
+            style="width: 200px"
+          >
             <mapgis-ui-select-option
               v-for="{ label, key } in variablesArr"
               :key="key"
@@ -91,10 +96,18 @@
         ></mapgis-ui-slider>
         <mapgis-ui-row type="flex" justify="space-between">
           <mapgis-ui-col
-            ><mapgis-ui-input-number v-model="propertyData[0]" :max="maxNum" :min="minNum" :step="propertyStep"
+            ><mapgis-ui-input-number
+              v-model="propertyData[0]"
+              :max="maxNum"
+              :min="minNum"
+              :step="propertyStep"
           /></mapgis-ui-col>
           <mapgis-ui-col
-            ><mapgis-ui-input-number v-model="propertyData[1]" :max="maxNum" :min="minNum"  :step="propertyStep"
+            ><mapgis-ui-input-number
+              v-model="propertyData[1]"
+              :max="maxNum"
+              :min="minNum"
+              :step="propertyStep"
           /></mapgis-ui-col>
         </mapgis-ui-row>
       </mapgis-ui-col>
@@ -164,7 +177,7 @@ export default {
       currentProperty: '',
       // 原始属性最大最小值
       maxNum: 0,
-      minNum: 0
+      minNum: 0,
     }
   },
 
@@ -179,8 +192,8 @@ export default {
         const tileset = this.getVoxelLayer()
         const min = this.propertyData[0]
         const max = this.propertyData[1]
-        tileset.minimumVoxelThreshold = min;
-        tileset.maximumVoxelThreshold = max;
+        tileset.minimumVoxelThreshold = min
+        tileset.maximumVoxelThreshold = max
       },
     },
   },
@@ -200,31 +213,23 @@ export default {
     // 初始化属性变量、voxel对象
     initData() {
       const tileset = this.getVoxelLayer()
-      tileset.readyPromise.then(() => {
-        const { fieldInfos } = tileset.layerinfo[0] || []
-        fieldInfos.forEach((field, index) => {
-          this.variablesArr.push({
-            label: field.name,
-            value: `${field.minValue},${field.maxValue}`,
-            key: index
-          })
+      const { fieldInfos } = tileset.layerinfo[0] || []
+      fieldInfos.forEach((field, index) => {
+        this.variablesArr.push({
+          label: field.name,
+          value: `${field.minValue},${field.maxValue}`,
+          key: index,
         })
       })
       const data = this.variablesArr[0].value.split(',')
       this.minNum = Number(data[0])
       this.maxNum = Number(data[1])
 
-      this.propertyData = [
-        this.minNum,
-        this.maxNum,
-      ]
+      this.propertyData = [this.minNum, this.maxNum]
       this.propertyStep = (this.maxNum - this.minNum) / 10
       this.minValue = formatNumber(data[0])
       this.maxValue = formatNumber(data[1])
-      this.numberData = [
-        this.minValue,
-        this.maxValue,
-      ]
+      this.numberData = [this.minValue, this.maxValue]
       this.currentProperty = this.variablesArr[0].label
     },
     // 初始化绘板
@@ -374,7 +379,9 @@ export default {
       const conditions = []
       colors.forEach(({ num, color }) => {
         linearGradient.addColorStop((num - this.minValue) / range, color)
-        const rangeItem = `\${${this.currentProperty}} === ${(num - this.minValue) / range}`
+        const rangeItem = `\${${this.currentProperty}} === ${
+          (num - this.minValue) / range
+        }`
         const colorItem = `color("${color}")`
         conditions.push([rangeItem, colorItem])
       })
@@ -383,7 +390,7 @@ export default {
       tileset.style = new Cesium.Cesium3DTileStyle({
         color: {
           type: 'stretch-value',
-          conditions
+          conditions,
         },
       })
     },
@@ -393,7 +400,7 @@ export default {
       const step =
         (this.maxValue - this.minValue) / (this.defaultColors.length - 1)
       this.colorsTableData = this.defaultColors.map(({ color }, index) => ({
-        num: formatNumber((start + step * index)),
+        num: formatNumber(start + step * index),
         color,
       }))
       this.alphaTableData = this.numberData.map((data) => ({
@@ -404,10 +411,7 @@ export default {
     onFilter(e) {
       this.showFilter = e.target.checked
       if (!this.showFilter) {
-        this.propertyData = [
-          this.minNum,
-          this.maxNum
-        ]
+        this.propertyData = [this.minNum, this.maxNum]
       }
     },
     // 修改颜色表格的参数时触发
@@ -423,23 +427,17 @@ export default {
       this.getCanvasColors(colors)
     },
     onSelect(key, option) {
-      const selectOption = this.variablesArr.find(item => item.key === key)
+      const selectOption = this.variablesArr.find((item) => item.key === key)
       const val = selectOption.value
       this.currentProperty = selectOption.label
       const data = val.split(',')
       this.minNum = Number(data[0])
       this.maxNum = Number(data[1])
 
-      this.propertyData = [
-        this.minNum,
-        this.maxNum,
-      ]
+      this.propertyData = [this.minNum, this.maxNum]
       this.minValue = formatNumber(data[0])
       this.maxValue = formatNumber(data[1])
-      this.numberData = [
-        this.minValue,
-        this.maxValue
-      ]
+      this.numberData = [this.minValue, this.maxValue]
       this.propertyStep = (this.maxNum - this.minNum) / 10
       this.formatTableData()
       const colors = this.getAllColors()

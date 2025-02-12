@@ -704,18 +704,20 @@ export default {
 
                   const sublayerM3d = this.sceneController.findSource(sub.id)
                   if (
-                    sublayerM3d.luminanceAtZenith.toString() !==
+                    sublayerM3d.imageBasedLighting.luminanceAtZenith.toString() !==
                     item.luminanceAtZenith.toString()
                   ) {
-                    sublayerM3d.luminanceAtZenith = item.luminanceAtZenith
+                    sublayerM3d.imageBasedLighting.luminanceAtZenith =
+                      item.luminanceAtZenith
                   }
                 })
               } else {
                 if (
-                  sublayer.luminanceAtZenith.toString() !==
+                  sublayer.imageBasedLighting.luminanceAtZenith.toString() !==
                   item.luminanceAtZenith.toString()
                 ) {
-                  sublayer.luminanceAtZenith = item.luminanceAtZenith
+                  sublayer.imageBasedLighting.luminanceAtZenith =
+                    item.luminanceAtZenith
                 }
               }
             }
@@ -1851,7 +1853,7 @@ export default {
           const m3d = this.sceneController.findSource(id)
           m3d.maximumScreenSpaceError = maximumScreenSpaceError
           // @ts-ignore
-          m3d.maximumMemoryUsage =
+          m3d.cacheBytes =
             layerProperty && layerProperty.maximumMemoryUsage
               ? layerProperty.maximumMemoryUsage
               : 512
@@ -1884,7 +1886,7 @@ export default {
             m3d.maximumScreenSpaceError = maximumScreenSpaceError
             m3d.luminanceAtZenith = luminanceAtZenith
             // @ts-ignore
-            m3d.maximumMemoryUsage =
+            m3d.cacheBytes =
               layerProperty && layerProperty.maximumMemoryUsage
                 ? layerProperty.maximumMemoryUsage
                 : 512
@@ -1895,7 +1897,7 @@ export default {
               cesium3DTileset.luminanceAtZenith = luminanceAtZenith
 
               // @ts-ignore
-              cesium3DTileset.maximumMemoryUsage =
+              cesium3DTileset.cacheBytes =
                 layerProperty && layerProperty.maximumMemoryUsage
                   ? layerProperty.maximumMemoryUsage
                   : 512
