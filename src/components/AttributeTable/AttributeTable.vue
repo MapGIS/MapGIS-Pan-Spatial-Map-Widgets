@@ -858,27 +858,18 @@ export default {
     getModelHeight(tempMarkers: Array<unknown>) {
       return new Promise((resolve, reject) => {
         const positions = tempMarkers.map((item) => {
-          return new this.Cesium.Cartesian3.fromDegrees(
+          return new this.Cesium.Cartographic.fromDegrees(
             item.coordinates[0],
             item.coordinates[1]
           )
         })
-        // 构造采样高程工具类
-        const sampleElevationTool = new this.Cesium.SampleElevationTool(
-          this.viewer,
-          positions,
-          'model',
-          (elevationPosition) => {
-            // 采用高程结果回调
-            if (elevationPosition && elevationPosition.length > 0) {
-              resolve(elevationPosition)
-            } else {
-              resolve([])
-            }
-          }
-        )
-        // 执行高程采样
-        sampleElevationTool.start()
+       // 替换高层采样方法为Cesium的原生高程采样方法
+      const sampledPositions = [];
+      for (let n = 0; n < positions.length; n++) {
+        positions[n].height = this.viewer.scene.sampleHeight(positions[n]);
+        sampledPositions.push(positions[n].clone());
+      }
+      resolve(sampledPositions);
       })
     },
 
