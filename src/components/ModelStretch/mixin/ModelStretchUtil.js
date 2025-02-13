@@ -51,7 +51,7 @@ export default {
       if (
         ModelEditControlList[layerId] &&
         ModelEditControlList[layerId]._layer &&
-        ModelEditControlList[layerId]._layer.ready
+        ModelEditControlList[layerId]._layer.tilesLoaded
       ) {
         window.transformEditor = ModelEditControlList[layerId]
         this.m3dSetObj = ModelEditControlList[layerId].m3dSetObj
@@ -130,7 +130,7 @@ export default {
       if (
         window.transformEditor &&
         window.transformEditor._layer &&
-        window.transformEditor._layer.ready
+        window.transformEditor._layer.tilesLoaded
       ) {
         window.transformEditor.setScala(1, 1, scaleZ)
         const { longitude, latitude, height, zmax, zmin } = this.m3dSetObj
@@ -150,7 +150,7 @@ export default {
       if (
         window.transformEditor &&
         window.transformEditor._layer &&
-        window.transformEditor._layer.ready
+        window.transformEditor._layer.tilesLoaded
       ) {
         this.updateModelDeactivate()
         window.transformEditor.reset()

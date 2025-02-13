@@ -234,7 +234,7 @@ export default {
     },
     getImage() {
       const { Cesium, viewer, map } = this
-      const reImg = new Cesium.ReImg()
+      const reImg = new zondy.cesium.ReImg()
       const dataUrl = this.getDataUrl()
       const img = reImg.outputProcessor(dataUrl).toImg()
       return img

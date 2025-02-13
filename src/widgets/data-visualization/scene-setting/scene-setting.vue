@@ -198,7 +198,7 @@ export default {
         }
       }
       const boundingSphere =
-        this.Cesium.AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
+        zondy.cesium.AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
       if (boundingSphere && boundingSphere.radius !== undefined) {
         this.boundingSphereRadius = boundingSphere.radius
       }

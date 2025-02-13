@@ -704,18 +704,18 @@ export default {
 
                   const sublayerM3d = this.sceneController.findSource(sub.id)
                   if (
-                    sublayerM3d.luminanceAtZenith.toString() !==
+                    sublayerM3d.imageBasedLighting.luminanceAtZenith.toString() !==
                     item.luminanceAtZenith.toString()
                   ) {
-                    sublayerM3d.luminanceAtZenith = item.luminanceAtZenith
+                    sublayerM3d.imageBasedLighting.luminanceAtZenith = item.luminanceAtZenith
                   }
                 })
               } else {
                 if (
-                  sublayer.luminanceAtZenith.toString() !==
+                  sublayer.imageBasedLighting.luminanceAtZenith.toString() !==
                   item.luminanceAtZenith.toString()
                 ) {
-                  sublayer.luminanceAtZenith = item.luminanceAtZenith
+                  sublayer.imageBasedLighting.luminanceAtZenith = item.luminanceAtZenith
                 }
               }
             }
@@ -741,10 +741,10 @@ export default {
               }
 
               if (
-                sublayer.luminanceAtZenith.toString() !==
+                sublayer.imageBasedLighting.luminanceAtZenith.toString() !==
                 item.layerProperty.luminanceAtZenith.toString()
               ) {
-                sublayer.luminanceAtZenith =
+                sublayer.imageBasedLighting.luminanceAtZenith =
                   item.layerProperty.luminanceAtZenith
               }
             }
@@ -1244,7 +1244,7 @@ export default {
       let zmin
       let zmax
       const boundingSphere =
-        this.Cesium.AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
+        zondy.cesium.AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
       for (let i = 0; i < m3dSetArray.length; i++) {
         const m3d = m3dSetArray[i]
         const range = this._getM3DSetRange(m3d)
@@ -1839,7 +1839,7 @@ export default {
           const { sublayers } = layers[firstIndex].activeScene
           const sublayer = sublayers[secondIndex]
           sublayer.maximumScreenSpaceError = maximumScreenSpaceError
-          sublayer.luminanceAtZenith = luminanceAtZenith
+          sublayer.imageBasedLighting.luminanceAtZenith = luminanceAtZenith
           sublayer.layer.enablePopup = enablePopup
           sublayer.layer.layerProperty = {
             ...layerProperty,
@@ -1871,7 +1871,7 @@ export default {
           MC.enablePopup = enablePopup
           MC.enableModelSwitch = enableModelSwitch
           MC.maximumScreenSpaceError = maximumScreenSpaceError
-          MC.luminanceAtZenith = luminanceAtZenith
+          MC.imageBasedLighting.luminanceAtZenith = luminanceAtZenith
           MC.layerProperty = {
             ...layerProperty,
             enablePopup,
@@ -1882,7 +1882,7 @@ export default {
           const m3d = this.sceneController.findM3DIgsSource(MC.id)
           if (m3d) {
             m3d.maximumScreenSpaceError = maximumScreenSpaceError
-            m3d.luminanceAtZenith = luminanceAtZenith
+            m3d.imageBasedLighting.luminanceAtZenith = luminanceAtZenith
             // @ts-ignore
             m3d.maximumMemoryUsage =
               layerProperty && layerProperty.maximumMemoryUsage
