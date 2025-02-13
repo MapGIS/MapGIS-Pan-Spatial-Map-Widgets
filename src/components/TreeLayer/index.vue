@@ -704,18 +704,22 @@ export default {
 
                   const sublayerM3d = this.sceneController.findSource(sub.id)
                   if (
+                    sublayerM3d.imageBasedLighting &&
                     sublayerM3d.imageBasedLighting.luminanceAtZenith.toString() !==
-                    item.luminanceAtZenith.toString()
+                      item.luminanceAtZenith.toString()
                   ) {
-                    sublayerM3d.imageBasedLighting.luminanceAtZenith = item.luminanceAtZenith
+                    sublayerM3d.imageBasedLighting.luminanceAtZenith =
+                      item.luminanceAtZenith
                   }
                 })
               } else {
                 if (
+                  sublayer.imageBasedLighting &&
                   sublayer.imageBasedLighting.luminanceAtZenith.toString() !==
-                  item.luminanceAtZenith.toString()
+                    item.luminanceAtZenith.toString()
                 ) {
-                  sublayer.imageBasedLighting.luminanceAtZenith = item.luminanceAtZenith
+                  sublayer.imageBasedLighting.luminanceAtZenith =
+                    item.luminanceAtZenith
                 }
               }
             }
@@ -741,8 +745,9 @@ export default {
               }
 
               if (
+                sublayer.imageBasedLighting &&
                 sublayer.imageBasedLighting.luminanceAtZenith.toString() !==
-                item.layerProperty.luminanceAtZenith.toString()
+                  item.layerProperty.luminanceAtZenith.toString()
               ) {
                 sublayer.imageBasedLighting.luminanceAtZenith =
                   item.layerProperty.luminanceAtZenith
@@ -1107,6 +1112,9 @@ export default {
             )
             if (exitMetadata) return
             const model = this.getSceneLayer3DSet(subLayerObject.id)
+            if (!model._root) {
+              return
+            }
             const transform = new this.Cesium.Matrix4()
             this.Cesium.Matrix4.clone(model._root.transform, transform)
             const center = new this.Cesium.Cartesian3()
@@ -1247,6 +1255,9 @@ export default {
         zondy.cesium.AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
       for (let i = 0; i < m3dSetArray.length; i++) {
         const m3d = m3dSetArray[i]
+        if (!m3d._root) {
+          continue
+        }
         const range = this._getM3DSetRange(m3d)
         if (!range) {
           continue
@@ -1508,7 +1519,7 @@ export default {
       this.modelEditLayer = item
       const { Cesium, viewer } = this
       // 模型变换不支持场景图层，删掉场景图层判断
-     if (this.isModelCacheLayer(item)) {
+      if (this.isModelCacheLayer(item)) {
         layerOption = this.getM3DSet(item.id)
       }
       if (ModelEditControlList[item.id]) {
@@ -1851,7 +1862,7 @@ export default {
           const m3d = this.sceneController.findSource(id)
           m3d.maximumScreenSpaceError = maximumScreenSpaceError
           // @ts-ignore
-          m3d.maximumMemoryUsage =
+          m3d.cacheBytes =
             layerProperty && layerProperty.maximumMemoryUsage
               ? layerProperty.maximumMemoryUsage
               : 512
@@ -1884,7 +1895,7 @@ export default {
             m3d.maximumScreenSpaceError = maximumScreenSpaceError
             m3d.imageBasedLighting.luminanceAtZenith = luminanceAtZenith
             // @ts-ignore
-            m3d.maximumMemoryUsage =
+            m3d.cacheBytes =
               layerProperty && layerProperty.maximumMemoryUsage
                 ? layerProperty.maximumMemoryUsage
                 : 512
@@ -1895,7 +1906,7 @@ export default {
               cesium3DTileset.luminanceAtZenith = luminanceAtZenith
 
               // @ts-ignore
-              cesium3DTileset.maximumMemoryUsage =
+              cesium3DTileset.cacheBytes =
                 layerProperty && layerProperty.maximumMemoryUsage
                   ? layerProperty.maximumMemoryUsage
                   : 512

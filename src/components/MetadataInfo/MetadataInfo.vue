@@ -176,35 +176,33 @@ export default {
     getVoxelMetaData() {
       const tileset = this.getVoxelLayer()
       const haderInfo = tileset.root._header || {}
-      return tileset.readyPromise.then(() => {
-        const { voxelInfo, fieldInfos } = tileset.layerinfo[0] || {}
-        const { dimensions, time } = voxelInfo
-        const classInfoJson = {
-          key: '类属性',
-          value: {
-            '空间参考系': haderInfo.spatialReference,
-            '体元个数': {
-              T: time.size,
-              X: dimensions[0],
-              Y: dimensions[1],
-              Z: dimensions[2],
-            },
+      const { voxelInfo, fieldInfos } = tileset.layerinfo[0] || {}
+      const { dimensions, time } = voxelInfo
+      const classInfoJson = {
+        key: '类属性',
+        value: {
+          '空间参考系': haderInfo.spatialReference,
+          '体元个数': {
+            T: time.size,
+            X: dimensions[0],
+            Y: dimensions[1],
+            Z: dimensions[2],
           },
+        },
+      }
+      const variableInfo = {}
+      fieldInfos.forEach((field) => {
+        variableInfo[field.name] = {
+          '名称': field.name,
+          '最小值': field.minValue,
+          '最大值': field.maxValue,
         }
-        const variableInfo = {}
-        fieldInfos.forEach((field) => {
-          variableInfo[field.name] = {
-            '名称': field.name,
-            '最小值': field.minValue,
-            '最大值': field.maxValue,
-          }
-        })
-        const variableJson = {
-          key: '变量信息',
-          value: variableInfo,
-        }
-        return [classInfoJson, variableJson]
       })
+      const variableJson = {
+        key: '变量信息',
+        value: variableInfo,
+      }
+      return Promise.resolve([classInfoJson, variableJson])
     },
   },
   watch: {
@@ -347,7 +345,7 @@ export default {
           } else {
             this.metadata = await Metadata.MetaDataQuery.query(option)
           }
-                    this.spinning = false
+          this.spinning = false
         }
       },
     },
@@ -454,7 +452,7 @@ export default {
           } else {
             this.metadata = await Metadata.MetaDataQuery.query(option)
           }
-                    this.spinning = false
+          this.spinning = false
           this.isCloudData = false
         }
       },
@@ -466,7 +464,7 @@ export default {
         if (this.currentOGCMetadata) {
           const metadata = JSON.parse(JSON.stringify(this.currentOGCMetadata))
           this.metadata = this.formatMetadata(metadata)
-                    this.isCloudData = true
+          this.isCloudData = true
         }
       },
     },

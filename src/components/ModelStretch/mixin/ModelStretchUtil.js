@@ -59,9 +59,13 @@ export default {
         // 增加延时，防止分析过程中，从数据目录中取消勾选数据，再次勾选，数据还没加到视图中的时候，就去获取数据，导致获取M3D失败
         setTimeout(() => {
           let m3dSet
-          if (layer.type === LayerType.IGSScene) {
-            m3dSet = this.getSceneLayer3DSet(layerId)
-          } else if (layer.type === LayerType.ModelCache) {
+          let { type } = layer
+          if (layer.layer) {
+            type = layer.layer.type
+          }
+          if (type === LayerType.IGSScene) {
+            m3dSet = this.getSceneLayer3DSet(layer.id)
+          } else if (type === LayerType.ModelCache) {
             m3dSet = this.getM3DSet(layerId)
           }
           window.transformEditor = new zondy.cesium.ModelTransformTool(m3dSet)
@@ -100,8 +104,10 @@ export default {
         vueKey || 'default',
         layerId
       )
-      const { m3ds, g3dLayerIndex } = sceneLayer.options
-      return m3ds.find((m3d) => Number(m3d._layerIndex) === Number(layerIndex))
+      if (sceneLayer && sceneLayer.source && sceneLayer.source[layerIndex]) {
+        return sceneLayer.source[layerIndex].source
+      }
+      return null
     },
     getM3DSet(id) {
       const { vueKey, viewer, vueCesium } = this
@@ -143,7 +149,7 @@ export default {
     },
     // 1、现有接口只针对平铺纹理；2、顶部和底部纹理可能会变形。
     changeTextureScale(scaleXY, scaleZ, id) {
-      const m3dSet = this.getSceneLayer3DSet(id)[0]
+      const m3dSet = this.getSceneLayer3DSet(id)
       m3dSet.textureCoordScale = new this.Cesium.Cartesian2(scaleXY, scaleZ)
     },
     updateModelReset() {
