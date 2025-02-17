@@ -52,6 +52,7 @@ import {
   Layer,
   Metadata,
   baseConfigInstance,
+  DataCatalogManager,
 } from '@mapgis/web-app-framework'
 
 import MpMetadataInfoDoc from './MetadataInfoDoc'
@@ -204,234 +205,108 @@ export default {
       }
       return Promise.resolve([classInfoJson, variableJson])
     },
-  },
-  watch: {
-    currentLayer: {
-      deep: true,
-      immediate: true,
-      async handler() {
-        if (this.currentLayer) {
-          const { type } = this.currentLayer.layer || this.currentLayer
-          if (
-            !type ||
-            type === LayerType.OGCWMS ||
-            type === LayerType.OGCWMTS
-          ) {
-            return
-          }
-          const defaultToken = baseConfigInstance.config.token
-          let option: Metadata.MetadataQueryParam = {}
-          // 栅格体元本身的元数据信息
-          let metaDataOfVoxel = []
-          // 云管配置的元数据信息
-          let metaDataOfCloud = []
-          switch (type) {
-            case LayerType.STKTerrain: {
-              const serverName = this.currentLayer.serverName
-              const ip = this.currentLayer.ip
-              const port = this.currentLayer.port
-              option = { ip, port, docName: serverName }
-              break
-            }
-            case LayerType.ModelCache: {
-              if (
-                this.currentLayer.metaData &&
-                this.currentLayer.metaData.dataContentType === 'VoxelGrid'
-              ) {
-                this.getVoxelMetaData().then((res) => {
-                  metaDataOfVoxel = res
-                })
-              } else {
-                // metaDataOfVoxel = this.currentLayer.metaData
-              }
-              const res = this.currentLayer._parseUrl(this.currentLayer.url)
-
-              const { domain, docName } = res
-              option = { domain, docName }
-              break
-            }
-            case LayerType.IGSScene: {
-              let res
-              if (this.currentLayer.layer) {
-                res = this.currentLayer.layer._parseUrl(
-                  this.currentLayer.layer.url
-                )
-              } else {
-                res = this.currentLayer._parseUrl(this.currentLayer.url)
-              }
-              const { domain, docName } = res
-              option = { domain, docName, globe: true }
-              break
-            }
-            case LayerType.IGSMapImage: {
-              if (this.currentLayer.layer) {
-                const { id } = this.currentLayer
-                const { domain, docName } = this.currentLayer.layer._parseUrl(
-                  this.currentLayer.layer.url
-                )
-                option = { domain, docName, layerIdxs: id || '' }
-              } else {
-                const { domain, docName } = this.currentLayer._parseUrl(
-                  this.currentLayer.url
-                )
-                option = { domain, docName }
-              }
-
-              break
-            }
-            case LayerType.IGSTile: {
-              const { domain, tileName } = this.currentLayer._parseUrl(
-                this.currentLayer.url
-              )
-              option = { domain, tileName }
-              break
-            }
-            case LayerType.IGSVector: {
-              const { gdbps } = this.currentLayer
-              const { domain } = this.currentLayer._parseUrl(
-                this.currentLayer.url
-              )
-              option = { domain, gdbp: gdbps }
-              break
-            }
-            case LayerType.ArcGISMapImage:
-            case LayerType.ArcGISTile: {
-              const { url } = this.currentLayer
-              option = { url }
-              break
-            }
-            case LayerType.VectorTile: {
-              const { url } = this.currentLayer
-              option = { url }
-              break
-            }
-            default:
-              break
-          }
-          this.spinning = true
-          // 后台配置了token就先走云管
-          if (defaultToken) {
-            option.token = defaultToken
-            const metadata = await Metadata.CloudMetaDataQuery.query(option)
-
-            if (metadata) {
-              if (type === LayerType.ModelCache) {
-                const metadataCopy = JSON.parse(JSON.stringify(metadata))
-                metaDataOfCloud = this.formatMetadata(metadataCopy)
-              } else {
-                const metadataCopy = JSON.parse(JSON.stringify(metadata))
-                this.metadata = this.formatMetadata(metadataCopy)
-                this.spinning = false
-                this.isCloudData = true
-                return
-              }
-            }
-          }
-          if (
-            type === LayerType.ArcGISMapImage ||
-            type === LayerType.ArcGISTile
-          ) {
-            this.metadata = await Metadata.ArcGISMetadataQuery.getServiceInfo(
-              option.url
-            )
-          } else if (type === LayerType.VectorTile) {
-            this.metadata =
-              await Metadata.VectorTileMetadataQuery.getServiceInfo(option.url)
-          } else if (type === LayerType.ModelCache) {
-            this.metadata = [
-              { label: '基础信息', items: metaDataOfVoxel },
-              ...metaDataOfCloud,
-            ]
-          } else {
-            this.metadata = await Metadata.MetaDataQuery.query(option)
-          }
-          this.spinning = false
+    async getMetaData(currentLayer) {
+      if (currentLayer) {
+        const { type } = currentLayer.layer || currentLayer
+        if (!type || type === LayerType.OGCWMS || type === LayerType.OGCWMTS) {
+          return
         }
-      },
-    },
-    currentConfig: {
-      deep: true,
-      immediate: true,
-      async handler() {
-        if (this.currentConfig) {
-          const { type } = this.currentConfig
-          if (
-            !type ||
-            type === LayerType.OGCWMS ||
-            type === LayerType.OGCWMTS
-          ) {
-            return
+        const defaultToken = baseConfigInstance.config.token
+        let option: Metadata.MetadataQueryParam = {}
+        // 栅格体元本身的元数据信息
+        let metaDataOfVoxel = []
+        // 云管配置的元数据信息
+        let metaDataOfCloud = []
+        switch (type) {
+          case LayerType.STKTerrain: {
+            const serverName = currentLayer.serverName
+            const ip = currentLayer.ip
+            const port = currentLayer.port
+            option = { ip, port, docName: serverName }
+            break
           }
-          const { serverURL } = this.currentConfig
-          let domain
-          if (!!serverURL && serverURL.length > 0) {
-            const url = new URL(serverURL)
-            domain = url.origin
-          }
-          let option: Metadata.MetadataQueryParam = {}
-          const defaultIp = baseConfigInstance.config.ip
-          const defaultPort = baseConfigInstance.config.port
-          const defaultToken = baseConfigInstance.config.token
-          switch (type) {
-            case LayerType.STKTerrain:
-            case LayerType.ModelCache: {
-              const serverName = this.currentConfig.serverName
-              const ip = this.currentConfig.ip || defaultIp
-              const port = this.currentConfig.port || defaultPort
-              option = { domain, ip, port, docName: serverName }
-              break
+          case LayerType.ModelCache: {
+            if (
+              currentLayer.metaData &&
+              currentLayer.metaData.dataContentType === 'VoxelGrid'
+            ) {
+              this.getVoxelMetaData().then((res) => {
+                metaDataOfVoxel = res
+              })
+            } else {
+              // metaDataOfVoxel = currentLayer.metaData
             }
-            case LayerType.IGSScene: {
-              const serverName = this.currentConfig.serverName
-              const ip = this.currentConfig.ip || defaultIp
-              const port = this.currentConfig.port || defaultPort
+            const res = currentLayer._parseUrl(currentLayer.url)
 
-              option = { domain, ip, port, docName: serverName, globe: true }
-              break
-            }
-            case LayerType.IGSMapImage: {
-              const serverName = this.currentConfig.serverName
-              const ip = this.currentConfig.ip || defaultIp
-              const port = this.currentConfig.port || defaultPort
-              option = { domain, ip, port, docName: serverName }
-
-              break
-            }
-            case LayerType.IGSTile: {
-              const serverName = this.currentConfig.serverName
-              const ip = this.currentConfig.ip || defaultIp
-              const port = this.currentConfig.port || defaultPort
-              option = { domain, ip, port, tileName: serverName }
-              break
-            }
-            case LayerType.IGSVector: {
-              const gdbps = this.currentConfig.gdbps
-              const ip = this.currentConfig.ip || defaultIp
-              const port = this.currentConfig.port || defaultPort
-              option = { domain, ip, port, gdbp: gdbps }
-              break
-            }
-            case LayerType.ArcGISMapImage:
-            case LayerType.ArcGISTile: {
-              option = { url: serverURL }
-              break
-            }
-            case LayerType.VectorTile: {
-              const serverName = this.currentConfig.serverName
-              const ip = this.currentConfig.ip || defaultIp
-              const port = this.currentConfig.port || defaultPort
-              option = { url: serverURL, ip, port, docName: serverName, domain }
-              break
-            }
-            default:
-              break
+            const { domain, docName } = res
+            option = { domain, docName }
+            break
           }
-          this.spinning = true
-          // 后台配置了token就先走云管
-          if (defaultToken) {
-            option.token = defaultToken
-            const metadata = await Metadata.CloudMetaDataQuery.query(option)
-            if (metadata) {
+          case LayerType.IGSScene: {
+            let res
+            if (currentLayer.layer) {
+              res = currentLayer.layer._parseUrl(currentLayer.layer.url)
+            } else {
+              res = currentLayer._parseUrl(currentLayer.url)
+            }
+            const { domain, docName } = res
+            option = { domain, docName, globe: true }
+            break
+          }
+          case LayerType.IGSMapImage: {
+            if (currentLayer.layer) {
+              const { id } = currentLayer
+              const { domain, docName } = currentLayer.layer._parseUrl(
+                currentLayer.layer.url
+              )
+              option = { domain, docName, layerIdxs: id || '' }
+            } else {
+              const { domain, docName } = currentLayer._parseUrl(
+                currentLayer.url
+              )
+              option = { domain, docName }
+            }
+
+            break
+          }
+          case LayerType.IGSTile: {
+            const { domain, tileName } = currentLayer._parseUrl(
+              currentLayer.url
+            )
+            option = { domain, tileName }
+            break
+          }
+          case LayerType.IGSVector: {
+            const { gdbps } = currentLayer
+            const { domain } = currentLayer._parseUrl(currentLayer.url)
+            option = { domain, gdbp: gdbps }
+            break
+          }
+          case LayerType.ArcGISMapImage:
+          case LayerType.ArcGISTile: {
+            const { url } = currentLayer
+            option = { url }
+            break
+          }
+          case LayerType.VectorTile: {
+            const { url } = currentLayer
+            option = { url }
+            break
+          }
+          default:
+            break
+        }
+        this.spinning = true
+        // 后台配置了token就先走云管
+        if (defaultToken) {
+          option.token = defaultToken
+          const metadata = await Metadata.CloudMetaDataQuery.query(option)
+
+          if (metadata) {
+            if (type === LayerType.ModelCache) {
+              const metadataCopy = JSON.parse(JSON.stringify(metadata))
+              metaDataOfCloud = this.formatMetadata(metadataCopy)
+            } else {
               const metadataCopy = JSON.parse(JSON.stringify(metadata))
               this.metadata = this.formatMetadata(metadataCopy)
               this.spinning = false
@@ -439,21 +314,48 @@ export default {
               return
             }
           }
-          if (
-            type === LayerType.ArcGISMapImage ||
-            type === LayerType.ArcGISTile
-          ) {
-            this.metadata = await Metadata.ArcGISMetadataQuery.getServiceInfo(
-              option.url
-            )
-          } else if (type === LayerType.VectorTile) {
-            this.metadata =
-              await Metadata.VectorTileMetadataQuery.getServiceInfo(option.url)
-          } else {
-            this.metadata = await Metadata.MetaDataQuery.query(option)
-          }
-          this.spinning = false
-          this.isCloudData = false
+        }
+        if (
+          type === LayerType.ArcGISMapImage ||
+          type === LayerType.ArcGISTile
+        ) {
+          this.metadata = await Metadata.ArcGISMetadataQuery.getServiceInfo(
+            option.url
+          )
+        } else if (type === LayerType.VectorTile) {
+          this.metadata = await Metadata.VectorTileMetadataQuery.getServiceInfo(
+            option.url
+          )
+        } else if (type === LayerType.ModelCache) {
+          this.metadata = [
+            { label: '基础信息', items: metaDataOfVoxel },
+            ...metaDataOfCloud,
+          ]
+        } else {
+          this.metadata = await Metadata.MetaDataQuery.query(option)
+        }
+        this.spinning = false
+        this.isCloudData = false
+      }
+    },
+  },
+  watch: {
+    currentLayer: {
+      deep: true,
+      immediate: true,
+      async handler() {
+        this.getMetaData(this.currentLayer)
+      },
+    },
+    currentConfig: {
+      deep: true,
+      immediate: true,
+      async handler() {
+        if (this.currentConfig) {
+          const layer = DataCatalogManager.generateLayerByConfig(
+            this.currentConfig
+          )
+          this.getMetaData(layer)
         }
       },
     },
