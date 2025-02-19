@@ -705,8 +705,10 @@ export default {
                   const sublayerM3d = this.sceneController.findSource(sub.id)
                   if (
                     sublayerM3d.imageBasedLighting &&
-                    sublayerM3d.imageBasedLighting.luminanceAtZenith.toString() !==
-                      item.luminanceAtZenith.toString()
+                    (!sublayerM3d.imageBasedLighting.luminanceAtZenith ||
+                      Number(
+                        sublayerM3d.imageBasedLighting.luminanceAtZenith
+                      ) !== Number(item.luminanceAtZenith))
                   ) {
                     sublayerM3d.imageBasedLighting.luminanceAtZenith =
                       item.luminanceAtZenith
@@ -715,8 +717,9 @@ export default {
               } else {
                 if (
                   sublayer.imageBasedLighting &&
-                  sublayer.imageBasedLighting.luminanceAtZenith.toString() !==
-                    item.luminanceAtZenith.toString()
+                  (!sublayer.imageBasedLighting.luminanceAtZenith ||
+                    Number(sublayer.imageBasedLighting.luminanceAtZenith) !==
+                      Number(item.luminanceAtZenith))
                 ) {
                   sublayer.imageBasedLighting.luminanceAtZenith =
                     item.luminanceAtZenith
@@ -746,8 +749,9 @@ export default {
 
               if (
                 sublayer.imageBasedLighting &&
-                sublayer.imageBasedLighting.luminanceAtZenith.toString() !==
-                  item.layerProperty.luminanceAtZenith.toString()
+                (!sublayer.imageBasedLighting.luminanceAtZenith ||
+                  Number(sublayer.imageBasedLighting.luminanceAtZenith) !==
+                    Number(item.layerProperty.luminanceAtZenith))
               ) {
                 sublayer.imageBasedLighting.luminanceAtZenith =
                   item.layerProperty.luminanceAtZenith
@@ -1037,7 +1041,10 @@ export default {
      */
     sceneLoadedCallback(id) {
       const doc = this.layerDocument.clone()
-      const layer = doc.defaultMap.findLayerById(id)
+      let layer = doc.defaultMap.findLayerById(id)
+      if (!layer) {
+        layer = doc.baseLayerMap.findLayerById(id)
+      }
       const vm = this
       let source
       if (
@@ -1844,13 +1851,21 @@ export default {
         luminanceAtZenith: luminanceAtZenith,
       }
       DataCatalogCheckController.editCurrentLayerConfig(editChangeConfig)
-      if (indexArr.length === 2 || this.isModelCacheLayer(val)) {
-        const [firstIndex, secondIndex] = indexArr
-        if (indexArr.length === 2) {
-          const { sublayers } = layers[firstIndex].activeScene
-          const sublayer = sublayers[secondIndex]
+      if (indexArr.length > 1 || this.isModelCacheLayer(val)) {
+        const [firstIndex, secondIndex, thirdIndex] = indexArr
+        if (indexArr.length > 1) {
+          let sublayers
+          let sublayer
+          if (indexArr.length === 2) {
+            sublayers = layers[firstIndex].activeScene.sublayers
+            sublayer = sublayers[secondIndex]
+          } else if (indexArr.length === 3) {
+            sublayers =
+              layers[firstIndex].activeScene.sublayers[secondIndex].sublayers
+            sublayer = sublayers[thirdIndex]
+          }
           sublayer.maximumScreenSpaceError = maximumScreenSpaceError
-          sublayer.imageBasedLighting.luminanceAtZenith = luminanceAtZenith
+          sublayer.luminanceAtZenith = luminanceAtZenith
           sublayer.layer.enablePopup = enablePopup
           sublayer.layer.layerProperty = {
             ...layerProperty,
@@ -1882,7 +1897,7 @@ export default {
           MC.enablePopup = enablePopup
           MC.enableModelSwitch = enableModelSwitch
           MC.maximumScreenSpaceError = maximumScreenSpaceError
-          MC.imageBasedLighting.luminanceAtZenith = luminanceAtZenith
+          MC.luminanceAtZenith = luminanceAtZenith
           MC.layerProperty = {
             ...layerProperty,
             enablePopup,
@@ -1903,7 +1918,8 @@ export default {
             const cesium3DTileset = this.sceneController.findSource(MC.id)
             if (cesium3DTileset) {
               cesium3DTileset.maximumScreenSpaceError = maximumScreenSpaceError
-              cesium3DTileset.luminanceAtZenith = luminanceAtZenith
+              cesium3DTileset.imageBasedLighting.luminanceAtZenith =
+                luminanceAtZenith
 
               // @ts-ignore
               cesium3DTileset.cacheBytes =

@@ -264,7 +264,7 @@ export default {
               if (isZoomTo) {
                 if (this.is3DLayer(mapLayer)) {
                   setTimeout(() => {
-                    this.fitBounds(mapLayer, false)
+                    // this.fitBounds(mapLayer, false)
                   }, 500)
                 } else {
                   this.fitBounds(mapLayer, false)
