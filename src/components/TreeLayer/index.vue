@@ -1041,7 +1041,10 @@ export default {
      */
     sceneLoadedCallback(id) {
       const doc = this.layerDocument.clone()
-      const layer = doc.defaultMap.findLayerById(id)
+      let layer = doc.defaultMap.findLayerById(id)
+      if (!layer) {
+        layer = doc.baseLayerMap.findLayerById(id)
+      }
       const vm = this
       let source
       if (
