@@ -238,9 +238,7 @@ export default {
                 this.currentLayer.metaData &&
                 this.currentLayer.metaData.dataContentType === 'VoxelGrid'
               ) {
-                this.getVoxelMetaData().then((res) => {
-                  metaDataOfVoxel = res
-                })
+                metaDataOfVoxel = await this.getVoxelMetaData()
               } else {
                 // metaDataOfVoxel = this.currentLayer.metaData
               }
