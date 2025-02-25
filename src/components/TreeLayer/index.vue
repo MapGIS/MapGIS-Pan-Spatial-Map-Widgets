@@ -132,7 +132,6 @@
                 @attributes="attributes"
                 @custom-query="customQuery"
                 @fit-bounds="fitBounds"
-                @reset-tilematrix-set="resetTilematrixSet"
                 @open-change-active-layer="openChangeActiveLayer"
                 @to-top="toTop"
                 @edit-data-flow-style="editDataFlowStyle"
@@ -428,6 +427,12 @@ export default {
             if (this.isWMTSLayer(item) || this.isIgsTileLayer(item)) {
               if (item.isVisible || item.visible) {
                 arr.push(item.key)
+              }
+              if (this.isWMTSLayer(item)) {
+                // 用于切换图层
+                item.sublayersBackup = item.sublayers
+                // 用于图层树显示
+                item.sublayers = [item.activeLayer]
               }
             } else if (
               (item.sublayers && item.sublayers.length === 0) ||
@@ -1343,23 +1348,6 @@ export default {
       }
     },
 
-    resetTilematrixSet(item) {
-      this.currentLayerInfo = item.dataRef
-      this.clickPopover(item, false)
-      this.openPage({
-        title: '切换矩阵集',
-        name: 'MpSelectTilematrixSet',
-        component: () =>
-          import('./components/SelectTilematrixSet/SelectTilematrixSet.vue'),
-        props: {
-          layer: this.currentLayerInfo,
-        },
-        listeners: {
-          'update:layer': this.refreshCurrentWmts,
-        },
-      })
-    },
-
     editDataFlowStyle(item) {
       this.currentLayerInfo = item.dataRef
       this.clickPopover(item, false)
@@ -1495,6 +1483,7 @@ export default {
         },
         listeners: {
           'update:layer': this.updateActiveLayer,
+          'save': this.saveLayerProperty,
         },
       })
     },
@@ -1960,40 +1949,54 @@ export default {
     updateActiveLayer(val: OGCWMTSLayer) {
       const {
         key,
-        activeLayer: { id },
+        activeLayer: { id, tileMatrixSetId },
       } = val
       const indexArr: Array<string> = key.split('-')
       const doc = this.layerDocument.clone()
       const layers: Array<unknown> = doc.defaultMap.layers()
       if (indexArr.length === 1) {
         const layerItem: OGCWMTSLayer = layers[indexArr[0]]
-        // layerItem.activeLayer = val.activeLayer
-        layerItem.activeLayer = layerItem.findSublayerById(id)
+        const activeLayer = layerItem.findSublayerById(id)
+        if (activeLayer) {
+          activeLayer.tileMatrixSetId = tileMatrixSetId
+          layerItem.activeLayer = activeLayer
+        }
       }
       this.$emit('update:layerDocument', doc)
-      this.currentLayerInfo = {}
     },
 
-    refreshCurrentWmts(val) {
-      const { tileMatrixSetId, tileMatrixSets } = val
-      const { key } = val
-      const indexArr = key.split('-')
+    /**
+     * 保存WMTS设置的当前激活图层Id和瓦片集
+     */
+    saveLayerProperty(val: OGCWMTSLayer) {
+      const {
+        key,
+        activeLayer: { id, tileMatrixSetId },
+      } = val
+      const indexArr: Array<string> = key.split('-')
       const doc = this.layerDocument.clone()
       const layers: Array<unknown> = doc.defaultMap.layers()
-      let layerItem = layers[indexArr[0]]
-      indexArr.forEach((i, index) => {
-        if (index === 0) {
-          return
+      if (indexArr.length === 1) {
+        const layerItem: OGCWMTSLayer = layers[indexArr[0]]
+        const layerProperty = {
+          ...layerItem.layerProperty,
+          activeLayerId: id,
+          tileMatrixSetId: tileMatrixSetId,
         }
-        if (index === indexArr.length - 1 && layerItem.sublayers[i]) {
-          layerItem.sublayers[i].tileMatrixSetId = tileMatrixSetId
-          layerItem.sublayers[i].tileMatrixSets = tileMatrixSets
-        } else {
-          layerItem = layerItem.sublayers[i]
-        }
-      })
-      this.$emit('update:layerDocument', doc)
+
+        api
+          .updateData({
+            dataId: layerItem.dataId,
+            layerProperty: layerProperty,
+          })
+          .then((response) => {
+            if (response.code === 200) {
+              this.$message.success('保存成功')
+            }
+          })
+      }
       this.currentLayerInfo = {}
+      this.resetWidgetRouters()
     },
 
     /**

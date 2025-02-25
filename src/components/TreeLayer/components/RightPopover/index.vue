@@ -65,14 +65,6 @@ export default {
           click: () => this.fitBounds(),
         },
         {
-          name: '切换矩阵集',
-          show:
-            this.layerItem.layer &&
-            this.isWMTSLayer(this.layerItem.layer) &&
-            this.isActiveWMTSLayer(this.layerItem),
-          click: () => this.resetTilematrixSet(),
-        },
-        {
           name: '切换图层',
           show:
             this.isParentLayer(this.layerItem) &&
@@ -104,7 +96,7 @@ export default {
         {
           name: '模型变换',
           show:
-            (this.isModelCacheLayer(this.layerItem) && 
+            (this.isModelCacheLayer(this.layerItem) &&
               !this.isVoxelLayer(this.layerItem)) ||
             this.isIGSSceneSubLayerModelCache(this.layerItem),
           click: () => this.modelEdit(),
@@ -220,10 +212,6 @@ export default {
       }
 
       return undefined
-    },
-
-    resetTilematrixSet() {
-      this.$emit('reset-tilematrix-set', this.layerItem)
     },
 
     openChangeActiveLayer() {
