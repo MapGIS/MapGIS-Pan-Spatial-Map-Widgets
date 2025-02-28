@@ -244,6 +244,7 @@ import layerCoordinateGridUtil from './mixin/layer-coordinate-grid-util'
 import featureEditUtil from './mixin/feature-eidt-util'
 import { defaultDataIconsConfig } from '../../theme/dataIconsConfig.js'
 import ModelEditControlList from '../ModelStretch/model-edit-control-list'
+import picker from '../mixin/pick'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
@@ -265,6 +266,7 @@ export default {
     ModelStretchUtil,
     layerCoordinateGridUtil,
     featureEditUtil,
+    picker,
   ],
   inject: ['vueCesium'],
   props: {
@@ -499,6 +501,8 @@ export default {
           // this.expandedKeys = [
           //   ...new Set([...expandedKeys, ...this.expandedKeys]),
           // ]
+
+          this.resetPickLayers(layers)
         }
       },
     },
@@ -554,11 +558,13 @@ export default {
     },
   },
   created() {
+    const { Cesium, vueCesium, viewer } = this
     this.sceneController = Objects.SceneController.getInstance(
-      this.Cesium,
-      this.vueCesium,
-      this.viewer
+      Cesium,
+      vueCesium,
+      viewer
     )
+    this.cesiumHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
   },
   mounted() {
     this.$root.$on(events.SCENE_LOADED_ON_MAP, this.sceneLoadedCallback)
@@ -2205,15 +2211,20 @@ export default {
       const doc = this.layerDocument.clone()
       const layers = doc.defaultMap.layers()
       changeModelPickArr.forEach((item) => {
+        const targetLayer = layers.find((change) => change.id === item.parentId)
         // 单个图层和多个图层的处理
-        if (item.childIds && item.childIds.length > 0) {
+        if (
+          ![LayerType.IGSMapImage, LayerType.IGSVector].includes(
+            targetLayer.type
+          ) &&
+          item.childIds &&
+          item.childIds.length > 0
+        ) {
           item.childIds.forEach((change) => {
             const indexArr = change.split(':')
             const [firstIndex, secondIndex] = indexArr
-            const layer = this.layers.find((c) => c.id === item.parentId)
             if (indexArr.length === 2) {
-              const editLayer = layers[layer.key]
-              const { sublayers } = editLayer.activeScene
+              const { sublayers } = targetLayer.activeScene
               const sublayer = sublayers[secondIndex]
               sublayer.layer.enablePopup = modelPickOpen
               sublayer.layer.layerProperty = {
@@ -2223,10 +2234,6 @@ export default {
             }
           })
         } else {
-          const layer = this.layers.find(
-            (change) => change.id === item.parentId
-          )
-          const targetLayer = layers[layer.key]
           targetLayer.enablePopup = modelPickOpen
           targetLayer.layerProperty = {
             ...targetLayer.layerProperty,

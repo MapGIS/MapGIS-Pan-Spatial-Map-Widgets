@@ -16,6 +16,9 @@
           </a-select-option>
         </a-select>
       </a-form-item>
+      <mapgis-ui-form-item label="开启拾取" v-if="showPopupSwitch">
+        <mapgis-ui-switch v-model="enablePopup" @change="submit" />
+      </mapgis-ui-form-item>
     </mapgis-ui-form>
   </div>
 </template>
@@ -33,6 +36,7 @@ export default {
         { label: '图片', value: 'image' },
       ],
       renderMode: 'tile',
+      enablePopup: false,
     }
   },
   computed: {
@@ -47,9 +51,42 @@ export default {
         layer.type === LayerType.ArcGISMapImage
       )
     },
+    showPopupSwitch() {
+      const layer = this.layer.layer ? this.layer.layer : this.layer
+      return (
+        layer.type === LayerType.IGSMapImage ||
+        layer.type === LayerType.IGSVector
+      )
+    },
+    enablePopup: {
+      get() {
+        const layer = this.layer.layer ? this.layer.layer : this.layer
+        if (layer) {
+          const { layerProperty } = layer
+          if (layerProperty) {
+            if (layerProperty.enablePopup !== undefined) {
+              return layerProperty.enablePopup
+            }
+          }
+        }
+        return false
+      },
+      set(enable) {
+        this.submit()
+      },
+    },
+  },
+  watch: {
+    layer: {
+      handler() {
+        this.init()
+      },
+      deep: true,
+      immediate: true,
+    },
   },
   created() {
-    this.init()
+    // this.init()
   },
   methods: {
     /**
@@ -63,6 +100,9 @@ export default {
           if (layerProperty.renderMode !== undefined) {
             this.renderMode = layerProperty.renderMode
           }
+          if (layerProperty.enablePopup !== undefined) {
+            this.enablePopup = layerProperty.enablePopup
+          }
         }
       }
     },
@@ -75,6 +115,7 @@ export default {
         const { layerProperty } = layer
         if (layerProperty) {
           layerProperty.renderMode = this.renderMode
+          layerProperty.enablePopup = this.enablePopup
         }
       }
       this.$emit('update:layer', this.layer)

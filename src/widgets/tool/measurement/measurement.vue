@@ -22,6 +22,7 @@ import {
   WidgetMixin,
   baseConfigInstance,
   DisplayModeMixin,
+  ModelPickController,
 } from '@mapgis/web-app-framework'
 
 export default {
@@ -43,6 +44,8 @@ export default {
   },
   methods: {
     onClose() {
+      // 恢复拾取功能
+      ModelPickController.unablePick = false
       this.$refs[
         `${this.is2DMapMode ? 'mapgisMeasure' : 'mapgis3dMeasure'}`
       ].remove()
@@ -53,6 +56,8 @@ export default {
 
     onActive() {
       this.doDeActive = false
+      // 禁用拾取功能
+      ModelPickController.unablePick = true
       if (this.map) {
         this.map.getCanvas().style.cursor =
           this.widgetInfo.config.cursorType || 'default'
@@ -61,6 +66,8 @@ export default {
     // 微件失活时
     onDeActive() {
       this.doDeActive = true
+      // 恢复拾取功能
+      ModelPickController.unablePick = false
       this.$refs[
         `${this.is2DMapMode ? 'mapgisMeasure' : 'mapgis3dMeasure'}`
       ].remove()

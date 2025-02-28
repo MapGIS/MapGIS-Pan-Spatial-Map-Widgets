@@ -392,6 +392,8 @@ export default {
     // 微件激活时
     onActive() {
       this.doDeActive = false
+      // 禁用拾取功能
+      ModelPickController.unablePick = true
       if (this.map) {
         this.map.getCanvas().style.cursor = this.widgetInfo.config.cursorType
       }
@@ -400,6 +402,8 @@ export default {
     // 微件关闭时
     onClose() {
       this.stateClosed = true
+      // 恢复拾取功能
+      ModelPickController.unablePick = false
       this.onClearMark()
       if (!this.doDeActive && this.map) {
         this.map.getCanvas().style.cursor = 'grab'
@@ -410,6 +414,8 @@ export default {
     onDeActive() {
       this.closeMark()
       this.doDeActive = true
+      // 恢复拾取功能
+      ModelPickController.unablePick = false
       if (this.map) {
         this.map.getCanvas().style.cursor = 'grab'
       }
@@ -485,7 +491,7 @@ export default {
     // 选择标注
     onGotoMarker(marker) {
       // 点击标注跳转
-      if(marker.coordinates === this.currentMarkerCenter) {
+      if (marker.coordinates === this.currentMarkerCenter) {
         // 解决同一个标注点击无法定位的问题
         const MarkerPlot = this.$refs.MarkerPlot
         const [x, y] = marker.coordinates

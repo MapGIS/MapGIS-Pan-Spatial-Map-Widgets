@@ -42,68 +42,43 @@ import {
   eventBus,
   LayerType,
   ModelPickController,
+  Objects,
 } from '@mapgis/web-app-framework'
+
+import picker from '../../../components/mixin/pick'
 
 export default {
   name: 'MpModelPick',
-  mixins: [WidgetMixin],
+  mixins: [WidgetMixin, picker],
   data() {
     return {
       // 是否开启拾取
       isOpenPick: false,
       pickLayers: [],
-      layerRelation: {},
       checkArr: [],
       unCheckArr: [],
+      modelPickController: ModelPickController,
     }
   },
   watch: {
-    'document.defaultMap': {
+    'modelPickController.pickLayers': {
       immediate: true,
       deep: true,
       handler() {
-        const layers = this.document.clone().defaultMap.layers() || []
-        const pickLayer = layers.filter((layer) =>
-          [LayerType.IGSScene, LayerType.ModelCache].includes(layer.type)
-        )
-        pickLayer.forEach((layer) => {
-          if (LayerType.IGSScene === layer.type && layer.activeScene) {
-            layer.sublayers = layer.activeScene.sublayers.map((row) => ({
-              ...row,
-            }))
-          }
-        })
-        // 记录父子图层节点关系
-        this.layerRelation = {}
-        // 组装数据
-        const pickArr = []
-        pickLayer.forEach((layer) => {
-          this.layerRelation[layer.id] = []
-          const openObj = {
-            isOpen: false,
-          }
-          const childLayer = []
-          if (layer.sublayers && layer.sublayers.length > 0) {
-            this.getLayerRelation(layer.sublayers, childLayer, openObj)
-          } else {
-            openObj.isOpen = layer.layerProperty?.enablePopup
-          }
-
-          this.layerRelation[layer.id] = childLayer
-          const pick = {
-            key: layer.id,
-            title: layer.title,
-            value: openObj.isOpen,
-          }
-          pickArr.push(pick)
-        })
-        this.pickLayers = pickArr
+        this.pickLayers = this.modelPickController.pickLayers
         this.isAllOpen()
       },
     },
   },
+
   created() {
-    // eventBus.$on(events.MODEL_PICK_ADD, this.openPick)
+    const { Cesium, vueCesium, viewer } = this
+    this.sceneController = Objects.SceneController.getInstance(
+      Cesium,
+      vueCesium,
+      viewer
+    )
+    this.cesiumHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
   },
 
   methods: {
@@ -124,7 +99,6 @@ export default {
       }
       // 改变pickLayers中的属性值
       this.pickLayers.forEach((item) => (item.value = val))
-      // eventBus.$emit(events.MODEL_PICK, val)
     },
     openPick() {
       if (this.isOpenPick) {
@@ -132,23 +106,6 @@ export default {
           this.isModelOpenPick(this.isOpenPick)
         }, 5000)
       }
-    },
-    getLayerRelation(layers, childLayer, openObj) {
-      layers.forEach((layer) => {
-        childLayer.push(layer.id)
-
-        if (!openObj.isOpen) {
-          openObj.isOpen = layer.layer
-            ? layer.layer.layerProperty?.enablePopup
-            : layer.layerProperty?.enablePopup
-        }
-        if (layer.layer) {
-          return
-        }
-        if (layer.sublayers && layer.sublayers.length > 0) {
-          this.getLayerRelation(layer.sublayers, childLayer, openObj.isOpen)
-        }
-      })
     },
     layerPickChange(val, isOpen, index) {
       const childLayer = this.layerRelation[val]
@@ -160,21 +117,7 @@ export default {
       }
       ModelPickController.pickLayerObj = [data]
       ModelPickController.modelPickOpen = isOpen
-      // this.operateLayer(layer.key, isOpen)
       this.isAllOpen()
-    },
-    operateLayer(key, isOpen) {
-      if (isOpen) {
-        if (this.unCheckArr.includes(key)) {
-          this.unCheckArr = this.unCheckArr.filter((item) => item.key !== key)
-        }
-        this.checkArr.push(key)
-      } else {
-        if (this.checkArr.includes(key)) {
-          this.checkArr = this.checkArr.filter((item) => item.key !== key)
-        }
-        this.unCheckArr.push(key)
-      }
     },
     isAllOpen() {
       if (this.pickLayers && this.pickLayers.length > 0) {
