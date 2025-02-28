@@ -620,6 +620,11 @@ export default {
     eventBus.$on(events.DATA_CATALOG_CHECK_NODES, this.dataCatalogCheckNodes)
     // 接收数据目录刷新事件
     eventBus.$on(events.DATA_CATALOG_REFRESH, this.refreshTree)
+
+    eventBus.$on(
+      events.DATA_CATALOG_SELECT_LOADED_NODE_CALLBACK,
+      this.selectLoadedNodeCallback
+    )
   },
   watch: {
     // 监听目录树节点变化
@@ -1448,18 +1453,37 @@ export default {
       if (
         this.dataCatalogManager.checkedLayerConfigIDs.includes(selectedKeys[0])
       ) {
-        const layer = this.document.defaultMap.findLayerById(selectedKeys[0])
-        if (layer) {
-          this.lastSelect = selectedKeys[0]
-          // 三维图层在二维模式下需要先切换到三维模式
-          if (this.is3DLayer(layer)) {
-            this.is2DMapMode && this.switchMapMode()
-          }
-          setTimeout(() => {
-            // 自动定位至图层所在位置
-            this.fitBounds(layer, this.getDataFlowExtent(layer))
-          }, 1000)
+        this.lastSelect = selectedKeys[0]
+        // 如果已加载的图层节点的监听事件存在则发送消息交给监听方处理，否则就执行一张图的图层跳转逻辑
+        if (eventBus._events[events.DATA_CATALOG_SELECT_LOADED_NODE]) {
+          const { dataRef } = info.node
+          eventBus.$emit(events.DATA_CATALOG_SELECT_LOADED_NODE, dataRef)
+        } else {
+          this.autoResetLayer(selectedKeys[0])
         }
+      }
+    },
+    // events.DATA_CATALOG_SELECT_LOADED_NODE事件的返回消息事件
+    selectLoadedNodeCallback(data) {
+      const { flyTo } = data
+      if (flyTo) {
+        this.autoResetLayer()
+      }
+    },
+    // 数据目录默认跳转到图层位置
+    autoResetLayer(layerId) {
+      const layer = this.document.defaultMap.findLayerById(
+        layerId || this.lastSelect
+      )
+      if (layer) {
+        // 三维图层在二维模式下需要先切换到三维模式
+        if (this.is3DLayer(layer)) {
+          this.is2DMapMode && this.switchMapMode()
+        }
+        setTimeout(() => {
+          // 自动定位至图层所在位置
+          this.fitBounds(layer, this.getDataFlowExtent(layer))
+        }, 1000)
       }
     },
     // 图层自动定位方法
