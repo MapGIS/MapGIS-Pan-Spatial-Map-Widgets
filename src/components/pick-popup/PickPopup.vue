@@ -6,7 +6,7 @@
     <mapgis-popup
       v-if="is2DMapMode && hasMapDisplay"
       :coordinates="popupInfo.coordinates"
-      :visible="showPopup"
+      :showed="showPopup"
       @removed="clearHighlight"
     >
       <mapgis-ui-list
@@ -46,7 +46,7 @@
 
 <script lang="ts">
 import {
-  WidgetMixin,
+  AppMixin,
   MapMixin,
   DisplayModeMixin,
   baseConfigInstance,
@@ -55,7 +55,7 @@ import {
 } from '@mapgis/web-app-framework'
 export default {
   name: 'MpPickPopup',
-  mixins: [WidgetMixin, DisplayModeMixin],
+  mixins: [AppMixin, MapMixin, DisplayModeMixin],
   props: {
     popupInfo: {
       type: Object,
