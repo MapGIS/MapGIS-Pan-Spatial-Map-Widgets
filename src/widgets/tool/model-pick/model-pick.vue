@@ -35,21 +35,11 @@
   </div>
 </template>
 <script lang="ts">
-import {
-  WidgetMixin,
-  AppMixin,
-  events,
-  eventBus,
-  LayerType,
-  ModelPickController,
-  Objects,
-} from '@mapgis/web-app-framework'
-
-import picker from '../../../components/mixin/pick'
+import { WidgetMixin, ModelPickController } from '@mapgis/web-app-framework'
 
 export default {
   name: 'MpModelPick',
-  mixins: [WidgetMixin, picker],
+  mixins: [WidgetMixin],
   data() {
     return {
       // 是否开启拾取
@@ -69,16 +59,6 @@ export default {
         this.isAllOpen()
       },
     },
-  },
-
-  created() {
-    const { Cesium, vueCesium, viewer } = this
-    this.sceneController = Objects.SceneController.getInstance(
-      Cesium,
-      vueCesium,
-      viewer
-    )
-    this.cesiumHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
   },
 
   methods: {

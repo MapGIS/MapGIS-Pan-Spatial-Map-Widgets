@@ -201,6 +201,7 @@
         </mp-window>
       </template>
     </mp-window-wrapper>
+    <mp-pick-popup :popupInfo="popupInfo"></mp-pick-popup>
   </div>
 </template>
 
@@ -245,6 +246,7 @@ import featureEditUtil from './mixin/feature-eidt-util'
 import { defaultDataIconsConfig } from '../../theme/dataIconsConfig.js'
 import ModelEditControlList from '../ModelStretch/model-edit-control-list'
 import picker from '../mixin/pick'
+import MpPickPopup from '../pick-popup/PickPopup.vue'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
@@ -257,6 +259,7 @@ export default {
     MpCustomQuery,
     MpUnifyModify, //eslint-disable-line
     RightPopover,
+    MpPickPopup,
   },
   mixins: [
     MapMixin,

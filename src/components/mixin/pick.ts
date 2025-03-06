@@ -7,6 +7,9 @@ import {
   ExhibitionControllerMixin,
   Feature,
   baseConfigInstance,
+  eventBus,
+  events,
+  UUID,
 } from '@mapgis/web-app-framework'
 import { lineString, polygon, point, multiPolygon } from '@turf/helpers'
 import booleanDisjoint from '@turf/boolean-disjoint'
@@ -26,9 +29,18 @@ export default {
       layerRelation: {},
       openPickLayers: [],
       hasHander: false,
+      popupInfo: undefined,
     }
   },
   computed: {},
+  watch: {
+    is2DMapMode: {
+      deep: true,
+      handler(newValue) {
+        this.popupInfo = undefined
+      },
+    },
+  },
   methods: {
     /**
      * 更新支持拾取的图层集合，在图层管理微件中，对document的监听中调用
@@ -180,25 +192,28 @@ export default {
         }
       })
     },
-    /**
-     * 拾取查询
-     * @param shape 查询范围
-     * @returns
-     */
-    queryLayers(shape) {
+    getQueryLayers(shape) {
       const document = this.document || this.layerDocument
       if (!document) {
         return
       }
 
       const layers = document.defaultMap.layers()
-      const self = this
-      this.openPickLayers.forEach((item) => {
-        const layer = layers.find((change) => change.id === item.key)
-        if (!self.isCrossWithLayer(layer, shape, QueryType.Point)) {
-          return
+      const queryLayers = []
+      for (let i = 0; i < layers.length; i++) {
+        const layer = layers[i]
+        const openPickLayer = this.openPickLayers.find(
+          (change) => change.key === layer.id
+        )
+        if (
+          !openPickLayer ||
+          ![LayerType.IGSVector, LayerType.IGSMapImage].includes(layer.type)
+        ) {
+          continue
         }
-
+        if (!this.isCrossWithLayer(layer, shape, QueryType.Point)) {
+          continue
+        }
         // fix(6188): 三维视图倾斜一定角度，绘制交互异常
         // 修改人: 杨琨 2024-9-2
         // 修改说明: 重构计算缓冲半径的逻辑，
@@ -206,23 +221,96 @@ export default {
         // 默认单位为像素，根据分辨率计算一像素代表多少米，之后换算为服务端需要的缓冲半径值
         // 其他可选单位为千米、米、厘米，当前仅支持经纬度坐标系图层的要素查询
         const nearDistance = baseConfigInstance.config.nearDistance
-        const nearDis = self.getNearDistance(shape, layer, nearDistance)
+        const nearDis = this.getNearDistance(shape, layer, nearDistance)
 
-        const geometry = self.toQueryGeometry(
+        const geometry = this.toQueryGeometry(
           layer,
           shape,
           nearDis,
           QueryType.Point
         )
-
-        switch (layer.type) {
-          // IGSVector跟IGSMapImage走相同逻辑
-          case LayerType.IGSVector:
-          case LayerType.IGSMapImage:
-            self.queryFeaturesByDoc(layer, geometry)
-            break
-        }
+        queryLayers.push({ layer, queryGeometry: geometry })
+      }
+      return queryLayers
+    },
+    /**
+     * 拾取查询
+     * @param shape 查询范围
+     * @returns
+     */
+    async queryLayers(shape) {
+      this.popupInfo = undefined
+      const queryLayers = this.getQueryLayers(shape)
+      if (!queryLayers || !queryLayers.length) {
+        return
+      }
+      const { layer, queryGeometry } = queryLayers[queryLayers.length - 1]
+      const { domain, docName } = layer._parseUrl(layer.url)
+      const isDataStoreQuery = false
+      const DNSName = undefined
+      const ipPortObj = this.getIpPort({
+        isDataStoreQuery,
       })
+      const option = {
+        DNSName,
+        isDataStoreQuery,
+        domain,
+        ...ipPortObj,
+        gdbp: layer.type === LayerType.IGSVector ? layer.gdbps : undefined,
+        layerIdxs: '*',
+        docName: docName,
+        geometry: queryGeometry,
+      }
+      let properties
+      const results = await FeatureQuery.query(option)
+      if (!results) {
+        return
+      }
+      let geojson
+      if (results.value && results.value.length) {
+        for (let i = results.value.length - 1; i >= 0; i--) {
+          const res = results.value[i]
+          if (res.features && res.features.length > 0) {
+            geojson = res.features[0]
+            break
+          }
+        }
+      } else if (results.features && results.features.length > 0) {
+        geojson = results.features[0]
+      }
+      if (!geojson || !geojson.properties) {
+        return
+      }
+      properties = geojson.properties
+
+      const pickInfo = {
+        layerId: layer.id,
+        queryLayers,
+        position: {
+          height: shape.z,
+          latitude: shape.y,
+          longitude: shape.x,
+        },
+        properties,
+      }
+
+      eventBus.$emit(events.SEND_MODEL_PICK_INFO, pickInfo)
+
+      let showPopup = true
+      if (layer.layerProperty.extensions) {
+        const extensions = JSON.parse(layer.layerProperty.extensions)
+        showPopup = extensions.showPopup
+      }
+      if (showPopup) {
+        // 显示弹框表示在一张图中显示拾取的属性信息
+        this.popupInfo = {
+          id: UUID.uuid(),
+          coordinates: [shape.x, shape.y, shape.z],
+          fid: geojson.properties['FID'],
+          properties: geojson.properties,
+          feature: geojson,
+        }
+      }
     },
   },
 }
