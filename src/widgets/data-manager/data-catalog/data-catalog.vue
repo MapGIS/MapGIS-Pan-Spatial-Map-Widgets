@@ -593,10 +593,10 @@ export default {
       this.activeTreeTab && this.treeTabChange(this.activeTreeTab)
     }
 
-    // 初始化加载图层
-    this.initLoadKeys()
     // 初始化存储点击跳转图层
     this.initLocationKeys()
+    // 初始化加载图层
+    this.initLoadKeys()
 
     // 监听tree-tabs-list，当面板宽度超过scrollWidth取消前后处的箭头
     const targetNode = document.getElementById('tree-tabs-list')
@@ -1091,7 +1091,9 @@ export default {
             // 调整图层顺序
             layerConfigNodeList.forEach((item) => {
               if (item) {
-                const sortLayer = result.find((layer) => layer.id === item.guid)
+                const sortLayer = result.find(
+                  (layer) => layer?.id === item.guid
+                )
                 sortLayer && appendLayer.push(sortLayer)
               }
             })
