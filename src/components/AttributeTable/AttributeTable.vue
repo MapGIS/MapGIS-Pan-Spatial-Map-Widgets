@@ -242,6 +242,7 @@ import {
   Exhibition,
   eventBus,
   events,
+  Overlay,
 } from '@mapgis/web-app-framework'
 import * as Zondy from '@mapgis/webclient-es6-service'
 import MpAttributeTableColumnSetting from './AttributeTableColumnSetting.vue'
@@ -433,6 +434,11 @@ export default {
   created() {
     // 创建全屏事件的监听
     DomUtil.addFullScreenListener(this.fullScreenListener)
+    this.sceneOverlays = Overlay.SceneOverlays.getInstance(
+      this.Cesium,
+      this.vueCesium,
+      this.viewer
+    )
   },
 
   beforeDestroy() {
@@ -816,21 +822,7 @@ export default {
           tempMarkers.push(marker)
         }
       }
-      if (
-        (this.isIGSScence ||
-          this.isModelCacheLayer ||
-          this.isIGSVector3dLayer) &&
-        tempMarkers.length > 0
-      ) {
-        // 获取中心点的高度再设置到对应的标注信息中
-        const arr = await this.getModelHeight(tempMarkers)
-        if (arr.length === tempMarkers.length) {
-          arr.forEach((item, index) => {
-            const { longitude, latitude, height } = item
-            tempMarkers[index].coordinates = [longitude, latitude, height]
-          })
-        }
-      }
+      // marker的高度在点击事件的回调中计算
       this.markers = [...tempMarkers]
     },
 
@@ -854,27 +846,9 @@ export default {
       return obj
     },
 
-    // 获取三维模型高度方法
-    getModelHeight(tempMarkers: Array<unknown>) {
-      return new Promise((resolve, reject) => {
-        const positions = tempMarkers.map((item) => {
-          return new this.Cesium.Cartographic.fromDegrees(
-            item.coordinates[0],
-            item.coordinates[1]
-          )
-        })
-       // 替换高层采样方法为Cesium的原生高程采样方法
-      const sampledPositions = [];
-      for (let n = 0; n < positions.length; n++) {
-        positions[n].height = this.viewer.scene.sampleHeight(positions[n]);
-        sampledPositions.push(positions[n].clone());
-      }
-      resolve(sampledPositions);
-      })
-    },
-
     // 移除标注
     removeMarkers() {
+      this.sceneOverlays && this.sceneOverlays.removeGraphicMarker(this.markers)
       this.markers = []
     },
 
