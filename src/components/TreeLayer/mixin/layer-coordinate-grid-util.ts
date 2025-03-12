@@ -19,7 +19,7 @@ export default {
     },
     addGraphicLayer() {
       const { Cesium, viewer } = this
-      this.graphicsLayer = new Cesium.GraphicsLayer(viewer, {})
+      this.graphicsLayer = new zondy.cesium.GraphicsLayer(viewer, {})
     },
     drawCoordinateGrid(layer) {
       const { Cesium } = this
@@ -282,7 +282,7 @@ export default {
     },
     addGraphicPolylineArrow(positions) {
       const { Cesium } = this
-      const polylineGraphic = new Cesium.Graphic({
+      const polylineGraphic = new zondy.cesium.Graphic({
         // 类型
         type: 'polyline',
         // 几何数组
@@ -305,7 +305,7 @@ export default {
     },
     addGraphicPolyline(positions) {
       const { Cesium } = this
-      const polylineGraphic = new Cesium.Graphic({
+      const polylineGraphic = new zondy.cesium.Graphic({
         // 类型
         type: 'polyline',
         // 几何数组
@@ -326,7 +326,7 @@ export default {
     addGraphicText(positions, text) {
       const { Cesium } = this
       const { extrudedHeight } = this
-      const textGraphic = new Cesium.Graphic({
+      const textGraphic = new zondy.cesium.Graphic({
         // 类型
         type: 'wall',
         // 几何点数组

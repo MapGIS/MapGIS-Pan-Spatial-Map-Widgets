@@ -72,7 +72,7 @@ export default {
       maxProjected: 10,
       hideVPInvisible: false,
       config: {},
-      projectorComponent: null,
+      // projectorComponent: null,
     }
   },
 

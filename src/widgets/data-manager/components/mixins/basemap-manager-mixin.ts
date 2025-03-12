@@ -166,7 +166,7 @@ export default {
               }
             }
 
-            const layerConfig = {
+            const layerConfig: any = {
               name: layer.name,
               guid: UUID.uuid(),
               description,
@@ -174,6 +174,11 @@ export default {
               serverType: this.parseLayerType(layer.type),
               commonData: layer.commonData,
               serviceType: layer.serviceType,
+            }
+            if (layer.type === 'IGSVector') {
+              if (!layer.url.includes('?') && layer.url.includes('gdbp')) {
+                layerConfig.gdbps = layer.url
+              }
             }
             if (layer.type === 'TILE3D') {
               layerConfig.customParameters = [
@@ -262,10 +267,6 @@ export default {
               const mapLayer = layers[layers.length - 1]
               if (isZoomTo || mapLayer.type === LayerType.STKTerrain) {
                 self.fitBounds(mapLayer, init)
-              } else if (mapLayer.type === LayerType.IGSScene) {
-                setTimeout(() => {
-                  self.fitBounds(mapLayer, init)
-                }, 500)
               }
             }
           })

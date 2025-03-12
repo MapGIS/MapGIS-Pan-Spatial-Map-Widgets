@@ -105,20 +105,18 @@ export default {
         }
         const positions = markers.map(
           ({ coordinates }) =>
-            new this.Cesium.Cartesian3.fromDegrees(
+            new this.Cesium.Cartographic.fromDegrees(
               coordinates[0],
               coordinates[1]
             )
         )
-        const sampleElevationTool = new this.Cesium.SampleElevationTool(
-          viewer,
-          positions,
-          'model',
-          (positions) => {
-            resolve(positions && positions.length ? positions : [])
-          }
-        )
-        sampleElevationTool.start()
+
+      const sampledPositions = [];
+      for (let n = 0; n < positions.length; n++) {
+        positions[n].height = viewer.scene.sampleHeight(positions[n]);
+        sampledPositions.push(positions[n].clone());
+      }
+      resolve(sampledPositions);
       })
     },
 

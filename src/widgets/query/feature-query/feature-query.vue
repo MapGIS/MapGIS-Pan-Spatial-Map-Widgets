@@ -51,7 +51,7 @@
         style="padding-top: 8px"
         size="default"
       >
-        <mapgis-ui-form-item label="缓冲半径(像素)" labelCol="{span: 4}">
+        <mapgis-ui-form-item label="缓冲半径(像素)" :labelCol="{span: 4}">
           <mapgis-ui-slider
             v-model="sliderIndex"
             :marks="marks"
