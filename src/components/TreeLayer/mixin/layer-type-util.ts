@@ -403,7 +403,14 @@ export default {
         {
           type: parent && this.isIgsDocLayer(parent),
           setValue: () => {
+            const { tokenKey, tokenValue } = parent
+
             const { domain, docName } = parent._parseUrl(parent.url)
+            const token = {
+              tokenKey,
+              tokenValue,
+            }
+
             // const {
             //   isDataStoreQuery,
             //   DNSName
@@ -437,6 +444,7 @@ export default {
                 serverName: docName,
                 serverUrl: parent.url,
                 f: queryType || '',
+                token,
               },
               popupOption: parent.extend?.popupOption,
             }
@@ -446,9 +454,14 @@ export default {
           type: this.isIgsVectorLayer(layer),
           setValue: () => {
             const igsVectorLayer = layer.dataRef
-            const { domain, docName } = igsVectorLayer.layer._parseUrl(
-              igsVectorLayer.layer.url
+            const targetLayer = igsVectorLayer.layer
+            let { domain, docName } = igsVectorLayer.layer._parseUrl(
+              targetLayer.url
             )
+            const token = {
+              tokenKey: targetLayer.tokenKey,
+              tokenValue: targetLayer.tokenValue,
+            }
             // const { isDataStoreQuery, DNSName } =
             //   await FeatureQuery.isDataStoreQuery({
             //     ip,
@@ -472,6 +485,7 @@ export default {
                 serverType: igsVectorLayer.layer.type,
                 gdbp: igsVectorLayer.url,
                 f: queryType || '',
+                token,
               },
               popupOption: parent
                 ? parent.extend?.popupOption
@@ -502,10 +516,38 @@ export default {
           type: this.isIGSScene(layer),
           setValue: () => {
             const sceneLayer = layer.dataRef
-            const { domain, docName } = parent._parseUrl(parent.url)
             const queryPrefix = parent.extend.queryPrefix || ''
             const querySuffix = parent.extend.querySuffix || ''
             const { id, name, title } = sceneLayer
+
+            const { tokenKey, tokenValue } = parent
+            let { domain } = parent._parseUrl(parent.url)
+            let ip, port
+            const token = {
+              tokenKey,
+              tokenValue,
+            }
+            const { searchParams } = parent
+            if (searchParams && searchParams.searchName) {
+              const {
+                searchIp,
+                searchPort,
+                searchName,
+                searchTokenKey,
+                searchTokenValue,
+              } = searchParams
+              if (searchIp && searchPort) {
+                const protocol = window.location.protocol
+                ip = searchIp
+                port = searchPort
+                domain = `${protocol}//${searchIp}:${searchPort}`
+              }
+
+              if (searchTokenKey && searchTokenValue) {
+                token.tokenKey = searchTokenKey
+                token.tokenValue = searchTokenValue
+              }
+            }
 
             let gdbp
             const is3dBind2dData =
@@ -531,13 +573,14 @@ export default {
               option: {
                 id: `${id}`,
                 domain,
-                ip: baseConfigInstance.config.ip,
-                port: Number(baseConfigInstance.config.port),
+                ip: ip || baseConfigInstance.config.ip,
+                port: port || Number(baseConfigInstance.config.port),
                 serverType: parent.type,
                 searchServiceType: parent.searchParams.searchServiceType,
                 gdbp,
                 f: queryType || '',
                 is3dBind2dData,
+                token,
               },
               popupOption: parent.extend?.popupOption,
             }
@@ -547,11 +590,41 @@ export default {
           type: this.isModelCacheLayer(layer) && !this.isVoxelLayer(layer),
           setValue: () => {
             const sceneLayer = layer.dataRef
-            const url = new URL(layer.url)
-            const domain = url.origin
+            // const url = new URL(layer.url)
+            // const domain = url.origin
             const { id, name, title } = sceneLayer
             const queryPrefix = layer.extend.queryPrefix || ''
             const querySuffix = layer.extend.querySuffix || ''
+
+            const { tokenKey, tokenValue } = sceneLayer
+            const url = new URL(layer.url)
+            let domain = url.origin
+            let ip, port
+            const token = {
+              tokenKey,
+              tokenValue,
+            }
+            const { searchParams } = sceneLayer
+            if (searchParams && searchParams.searchName) {
+              const {
+                searchIp,
+                searchPort,
+                searchName,
+                searchTokenKey,
+                searchTokenValue,
+              } = searchParams
+              if (searchIp && searchPort) {
+                const protocol = window.location.protocol
+                ip = searchIp
+                port = searchPort
+                domain = `${protocol}//${searchIp}:${searchPort}`
+              }
+
+              if (searchTokenKey && searchTokenValue) {
+                token.tokenKey = searchTokenKey
+                token.tokenValue = searchTokenValue
+              }
+            }
 
             let gdbp
             const is3dBind2dData =
@@ -577,13 +650,14 @@ export default {
               option: {
                 id: `${id}`,
                 domain,
-                ip: baseConfigInstance.config.ip,
-                port: Number(baseConfigInstance.config.port),
+                ip: ip || baseConfigInstance.config.ip,
+                port: port || baseConfigInstance.config.port,
                 serverType: layer.type,
                 searchServiceType: layer.searchParams.searchServiceType,
                 gdbp,
                 f: queryType || '',
                 is3dBind2dData,
+                token,
               },
               popupOption: layer.extend?.popupOption,
             }
@@ -637,10 +711,44 @@ export default {
           // 瓦片挂载地图服务
           type: parent && this.isIgsTileLayer(parent),
           setValue: () => {
-            const { domain } = parent._parseUrl(parent.url)
+            let domain, ip, port
+            const url = parent._parseUrl(parent.url)
             const isDataStoreQuery = false
             const DNSName = undefined
             const ipPortObj = this.getIpPort({ isDataStoreQuery })
+
+            domain = url.domain
+            const { searchParams, tokenKey, tokenValue } = parent
+            const token = {
+              tokenKey,
+              tokenValue,
+            }
+            if (searchParams && searchParams.searchName) {
+              const {
+                searchIp,
+                searchPort,
+                searchName,
+                searchTokenKey,
+                searchTokenValue,
+              } = searchParams
+              if (searchIp && searchPort) {
+                const protocol = window.location.protocol
+                ip = searchIp
+                port = searchPort
+                domain = `${protocol}//${searchIp}:${searchPort}`
+              }
+
+              if (searchTokenKey && searchTokenValue) {
+                token.tokenKey = searchTokenKey
+                token.tokenValue = searchTokenValue
+              }
+            }
+
+            if (ip && port) {
+              ipPortObj.ip = ip
+              ipPortObj.port = port
+            }
+
             exhibition = {
               id: `${parent.title} ${layer.title} ${layer.id}`,
               name: `${layer.title} ${titleType}`,
@@ -658,6 +766,7 @@ export default {
                 serverName: parent.searchParams.searchName,
                 serverUrl: parent.url,
                 f: queryType || '',
+                token,
               },
               popupOption: parent.extend?.popupOption,
             }
@@ -668,10 +777,43 @@ export default {
           type: this.isIgsTileLayer(layer),
           setValue: () => {
             const url = new URL(layer.url)
-            const domain = url.origin
+            let domain, ip, port
             const isDataStoreQuery = false
             const DNSName = undefined
             const ipPortObj = this.getIpPort({ isDataStoreQuery })
+
+            const { searchParams, tokenKey, tokenValue } = layer
+            domain = url.origin
+            const token = {
+              tokenKey,
+              tokenValue,
+            }
+            if (searchParams && searchParams.searchName) {
+              const {
+                searchIp,
+                searchPort,
+                searchName,
+                searchTokenKey,
+                searchTokenValue,
+              } = searchParams
+              if (searchIp && searchPort) {
+                const protocol = window.location.protocol
+                ip = searchIp
+                port = searchPort
+                domain = `${protocol}//${searchIp}:${searchPort}`
+              }
+
+              if (searchTokenKey && searchTokenValue) {
+                token.tokenKey = searchTokenKey
+                token.tokenValue = searchTokenValue
+              }
+            }
+
+            if (ip && port) {
+              ipPortObj.ip = ip
+              ipPortObj.port = port
+            }
+
             exhibition = {
               id: `${layer.title} ${layer.id}`,
               name: `${layer.title} ${titleType}`,
@@ -689,6 +831,7 @@ export default {
                 serverName: undefined,
                 serverUrl: layer.url,
                 f: queryType || '',
+                token,
               },
               popupOption: layer.extend?.popupOption,
             }

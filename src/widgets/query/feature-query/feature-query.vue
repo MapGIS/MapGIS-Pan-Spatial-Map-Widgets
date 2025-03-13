@@ -675,7 +675,14 @@ export default {
       const domain = url.origin
       const {
         extend,
-        searchParams: { searchName, searchServiceType },
+        searchParams: {
+          searchName,
+          searchServiceType,
+          searchIp,
+          searchPort,
+          searchTokenKey,
+          searchTokenValue,
+        },
       } = layer
       const queryPrefix = extend.queryPrefix || ''
       const querySuffix = extend.querySuffix || ''
@@ -713,8 +720,8 @@ export default {
           case LayerType.IGSScene:
           case LayerType.ModelCache:
             map = layer.searchParams.mapList.find(
-              (map) =>
-                `${queryPrefix}${map.LayerName}${querySuffix}` ===
+              (mapDoc) =>
+                `${queryPrefix}${mapDoc.LayerName}${querySuffix}` ===
                 sublayer.title
             )
             break
@@ -730,6 +737,16 @@ export default {
           const ipPortObj = this.getIpPort({
             isDataStoreQuery,
           })
+
+          // 如果查询服务设置了ip和端口则使用设置的ip和端口
+          if (searchIp) {
+            ipPortObj.ip = searchIp
+          }
+
+          if (searchPort) {
+            ipPortObj.port = searchPort
+          }
+
           const options = {
             id: sublayer.id,
             name: sublayer.title,
@@ -743,6 +760,10 @@ export default {
             serverUrl: layer.url,
             layerIndex: sublayer.id,
             searchServiceType,
+            token: {
+              tokenKey: searchTokenKey,
+              tokenValue: searchTokenValue,
+            },
           }
           exhibition.options.push(options)
           /**
@@ -785,11 +806,42 @@ export default {
       if (!layer.isVisible) {
         return
       }
+
+      let ip, port, domain, tokenKey, tokenValue
+
       const url = new URL(layer.url)
-      const domain = url.origin
-      const ip = url.hostname
-      const port = url.port
+      domain = url.origin
+      ip = url.hostname
+      port = url.port
       const { extend } = layer
+
+      if (layer.tokenKey && layer.tokenValue) {
+        tokenKey = layer.tokenKey
+        tokenValue = layer.tokenValue
+      }
+
+      const { searchParams } = layer
+      if (searchParams) {
+        const { searchIp, searchPort, searchTokenKey, searchTokenValue } =
+          searchParams
+
+        if (searchIp) {
+          ip = searchIp
+        }
+
+        if (searchPort) {
+          port = searchPort
+        }
+
+        if (searchIp && searchPort) {
+          domain = `${url.protocol}//${searchIp}:${searchPort}`
+        }
+
+        if (searchTokenKey && searchTokenValue) {
+          tokenKey = searchTokenKey
+          tokenValue = searchTokenValue
+        }
+      }
 
       const exhibition: IAttributeTableListExhibition = {
         id: `${layer.id}`,
@@ -815,6 +867,10 @@ export default {
           serverType: layer.type,
           gdbp: layer.searchParams.searchName,
           geometry: geometry,
+          token: {
+            tokenKey,
+            tokenValue,
+          },
         })
         const { xmin, ymin, xmax, ymax, zmin, zmax } = geometry
         const queryGeometry = new Rectangle3D(
@@ -825,14 +881,18 @@ export default {
           ymax,
           zmax
         )
-        const json = await FeatureQuery.igsQueryResourceServer({
+
+        const options = {
           ip: ip || baseConfigInstance.config.ip,
           port: port || Number(baseConfigInstance.config.port),
           domain,
           geometry: queryGeometry,
           url: layer.searchParams.searchName,
           returnCountOnly: true,
-        })
+          tokenKey,
+          tokenValue,
+        }
+        const json = await FeatureQuery.igsQueryResourceServer(options)
         const TotalCount = json.count
         if (TotalCount > 0) {
           activeOptionId = `${layer.id}:0`
@@ -845,14 +905,55 @@ export default {
       if (!layer.isVisible) {
         return
       }
-      const { extend } = layer
+      // const { extend } = layer
+      // const url = new URL(layer.url)
+      // const domain = url.origin
+
+      let ip, port, domain, tokenKey, tokenValue
+
       const url = new URL(layer.url)
-      const domain = url.origin
+      domain = url.origin
+      ip = url.hostname
+      port = url.port
+      const { extend } = layer
+
+      if (layer.tokenKey && layer.tokenValue) {
+        tokenKey = layer.tokenKey
+        tokenValue = layer.tokenValue
+      }
+
+      const { searchParams } = layer
+      if (searchParams && searchParams.searchName) {
+        const { searchIp, searchPort, searchTokenKey, searchTokenValue } =
+          searchParams
+
+        if (searchIp) {
+          ip = searchIp
+        }
+
+        if (searchPort) {
+          port = searchPort
+        }
+
+        if (searchIp && searchPort) {
+          domain = `${url.protocol}//${searchIp}:${searchPort}`
+        }
+
+        if (searchTokenKey && searchTokenValue) {
+          tokenKey = searchTokenKey
+          tokenValue = searchTokenValue
+        }
+      }
+
       const isDataStoreQuery = false
       const DNSName = undefined
       const ipPortObj = this.getIpPort({
         isDataStoreQuery,
       })
+      if (ip && port) {
+        ipPortObj.ip = ip
+        ipPortObj.port = port
+      }
       const exhibition: IAttributeTableListExhibition = {
         id: `${layer.id}`,
         name: `${layer.title} 查询结果`,
@@ -867,6 +968,10 @@ export default {
             serverType: LayerType.IGSVector,
             gdbp: layer.gdbps || layer.searchParams.searchName,
             geometry: geometry,
+            token: {
+              tokenKey,
+              tokenValue,
+            },
           },
         ],
         popupOption: extend.popupOption,

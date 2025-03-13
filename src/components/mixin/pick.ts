@@ -57,13 +57,7 @@ export default {
           LayerType.IGSVector,
         ].includes(layer.type)
       )
-      pickLayer.forEach((layer) => {
-        if (LayerType.IGSScene === layer.type && layer.activeScene) {
-          layer.sublayers = layer.activeScene.sublayers.map((row) => ({
-            ...row,
-          }))
-        }
-      })
+
       // 记录父子图层节点关系
       this.layerRelation = {}
       // 组装数据，支持拾取(可以显示拾取开关，不管是否开启)的图层集合，
