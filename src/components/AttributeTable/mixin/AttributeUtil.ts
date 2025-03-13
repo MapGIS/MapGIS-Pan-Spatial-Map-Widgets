@@ -241,6 +241,7 @@ export default {
         gdbp,
         f,
         is3dBind2dData = false,
+        token,
       } = this.optionVal
       let { domain } = this.optionVal
       if (!domain && !!serverUrl && serverUrl.length > 0) {
@@ -284,6 +285,8 @@ export default {
             layerIdxs: layerIndex,
             coordPrecision: 8,
             requestType: 'POST',
+            tokenKey: token?.tokenKey,
+            tokenValue: token?.tokenValue,
           })
           // json格式数据转成geojson格式
           if (f === 'json') {
@@ -391,6 +394,8 @@ export default {
               inSrs: 'WGS1984_度',
               outSrs: 'WGS1984_度',
               returnCountOnly: true,
+              tokenKey: token?.tokenKey,
+              tokenValue: token?.tokenValue,
             })
             const { count } = json
             this.pagination.total = count
@@ -409,6 +414,8 @@ export default {
               geometryPrecision: 8,
               inSrs: 'WGS1984_度',
               outSrs: 'WGS1984_度',
+              tokenKey: token?.tokenKey,
+              tokenValue: token?.tokenValue,
             })
             this.attrTableToJsonData = this.setTable20(
               jsonData.features,
@@ -429,6 +436,8 @@ export default {
               outSrs: 'WGS1984_度',
               page: current - 1,
               pageCount: pageSize,
+              tokenKey: token?.tokenKey,
+              tokenValue: token?.tokenValue,
             })
           }
           if (!(this.tableColumns && this.tableColumns.length > 0)) {
@@ -528,6 +537,7 @@ export default {
 
         case LayerType.IGSTile: {
           queryGeometry = this.optionVal.geometry
+          const { token } = this.optionVal
           if (!isPageChange) {
             const { AttStruct, TotalCount } = await this.queryCount(
               queryGeometry,
@@ -553,6 +563,8 @@ export default {
               gdbp,
               coordPrecision: 8,
               requestType: 'POST',
+              tokenKey: token?.tokenKey,
+              tokenValue: token?.tokenValue,
             })
             this.attrTableToJsonData = this.setTable20(
               jsonData.features,
@@ -573,6 +585,8 @@ export default {
               gdbp,
               coordPrecision: 8,
               requestType: 'POST',
+              tokenKey: token?.tokenKey,
+              tokenValue: token?.tokenValue,
             })
           }
 
@@ -777,7 +791,7 @@ export default {
     },
     // IGSMapImage、IGSVector图层获取总页数
     async queryCount(geometry?: Record<string, any>, where?: string) {
-      const { ip, port, isDataStoreQuery, serverName, serverUrl } =
+      const { ip, port, isDataStoreQuery, serverName, serverUrl, token } =
         this.optionVal
       let { domain } = this.optionVal
       if (!domain && !!serverUrl && serverUrl.length > 0) {
@@ -785,7 +799,7 @@ export default {
         domain = url.origin
       }
       const { layerIndex, gdbp } = this.optionVal
-      const featureSet = await FeatureQuery.query({
+      const options = {
         ip,
         port: port.toString(),
         domain,
@@ -800,7 +814,11 @@ export default {
         docName: serverName,
         layerIdxs: layerIndex,
         requestType: 'POST',
-      })
+        tokenKey: token?.tokenKey,
+        tokenValue: token?.tokenValue,
+      }
+
+      const featureSet = await FeatureQuery.query(options)
       return featureSet
     },
     /**

@@ -325,7 +325,8 @@ export default {
       if (!layer.isVisible) {
         return
       }
-      const { extend } = layer
+      const { extend, tokenKey, tokenValue } = layer
+
       const { domain, docName } = layer._parseUrl(layer.url)
 
       const exhibition: IAttributeTableListExhibition = {
@@ -360,6 +361,7 @@ export default {
         const ipPortObj = this.getIpPort({
           isDataStoreQuery,
         })
+
         const option = {
           id: sublayer.id,
           name: sublayer.title,
@@ -373,7 +375,12 @@ export default {
           serverName: docName,
           serverUrl: layer.url,
           geometry: geometry,
+          token: {
+            tokenKey,
+            tokenValue,
+          },
         }
+
         exhibition.options.push(option)
         /**
          * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
@@ -478,6 +485,7 @@ export default {
         layerIndex,
         gdbp,
         geometry,
+        token,
       } = optionVal
       if (isScence) {
         const json = await FeatureQuery.igsQueryResourceServer({
@@ -487,6 +495,8 @@ export default {
           geometry,
           url: gdbp,
           returnCountOnly: true,
+          tokenKey: token?.tokenKey,
+          tokenValue: token?.tokenValue,
         })
         return { TotalCount: json.count }
       }
@@ -507,6 +517,8 @@ export default {
           layerIdxs: layerIndex,
           rtnLabel: false,
           requestType: 'POST',
+          tokenKey: token?.tokenKey,
+          tokenValue: token?.tokenValue,
         },
         false,
         isScence
