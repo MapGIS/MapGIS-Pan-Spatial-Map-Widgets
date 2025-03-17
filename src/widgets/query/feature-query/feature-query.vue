@@ -594,12 +594,11 @@ export default {
         this.isDrawStart = false
         if (this.isContinuous) {
           setTimeout(() => {
-            if (!this.clearDrawMode) {
-              return
-            }
-            this.drawComponent && this.drawComponent.closeDraw()
-            if (this.currentId) {
-              this.currentId = '' // 清空当前id用于清除页面已绘制图形
+            if (this.clearDrawMode) {
+              this.drawComponent && this.drawComponent.closeDraw()
+              if (this.currentId) {
+                this.currentId = '' // 清空当前id用于清除页面已绘制图形
+              }
             }
             this.drawComponent &&
               this.drawComponent.openDraw(
