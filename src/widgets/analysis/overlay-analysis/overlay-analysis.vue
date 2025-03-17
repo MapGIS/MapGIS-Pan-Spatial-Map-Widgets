@@ -307,15 +307,24 @@ export default {
         this.srcType = 'Layer'
       } else {
         this.srcType = 'Feature'
+        this.srcAFeature = {}
+        this.srcBFeature = {}
         for (let i = 0; i < SelectedResultSet.selectedResultSet.length; i++) {
           const selectedResultSet = SelectedResultSet.selectedResultSet[i]
-          if (selectedResultSet.id == this.tData.id) {
+          if (
+            selectedResultSet.id === this.tData.id &&
+            selectedResultSet.name === this.tData.title
+          ) {
             this.srcAFeature = selectedResultSet
-          } else if (selectedResultSet.id == this.dData.id) {
+          } else if (
+            selectedResultSet.id === this.dData.id &&
+            selectedResultSet.name === this.dData.title
+          ) {
             this.srcBFeature = selectedResultSet
           }
         }
-        if (this.srcAFeature.length == 0 && this.srcBFeature.length == 0) {
+        // this.srcBFeature是叠加对象，被叠加图层为this.srcALayer
+        if (JSON.stringify(this.srcBFeature) === '{}') {
           this.$message.warn('当前选择要素为空，请重新选择')
           this.selectLevel = true
           this.changeSelectLevel()
@@ -386,7 +395,7 @@ export default {
     showLayer(data) {
       this.finishLayer = true
       this.destLayer = data
-      if (this.add == true) {
+      if (this.add) {
         this.addNewLayer()
       }
     },
