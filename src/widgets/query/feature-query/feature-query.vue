@@ -1,10 +1,10 @@
 <template>
   <div class="mp-widget-feature-query">
     <mapgis-ui-checkbox
-      v-model="clearDrawMode"
+      v-model="remainDrawArea"
       style="margin-bottom: 15px; width: 150px"
     >
-      绘制结束后清除绘制区域
+      保留绘制区域
     </mapgis-ui-checkbox>
     <mp-draw-pro
       v-if="is2DMapMode && hasMapDisplay"
@@ -276,6 +276,7 @@ export default {
       currentId: '',
       isDrawStart: false,
       isQueryFeatures: false, // 是否在查询要素，并显示结果集，显示结果集会触发onDeActive事件，防止取消连续查询事件
+      remainDrawArea: false, // 是否保留绘制区域
     }
   },
   computed: {
@@ -308,11 +309,8 @@ export default {
     },
     clearDrawMode: {
       get() {
-        return this.widgetInfo.config.clearDrawMode
-      },
-      set(val) {
-        this.widgetInfo.config.clearDrawMode = val
-      },
+        return !this.remainDrawArea
+      }
     },
     isContinuous() {
       return this.widgetInfo.config.isContinuous
