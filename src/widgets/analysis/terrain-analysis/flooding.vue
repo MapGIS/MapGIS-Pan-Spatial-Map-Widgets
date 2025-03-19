@@ -15,7 +15,7 @@
       @showProgress="showProgress"
       @closeProgress="closeProgress"
     />
-    <mp-window-wrapper>
+    <mp-window-wrapper :widget="widget">
       <mp-window
         title="洪水淹没进度"
         anchor="bottom-center"
@@ -87,6 +87,7 @@ import { WidgetMixin } from '@mapgis/web-app-framework'
 export default {
   name: 'MpFlooding',
   mixins: [WidgetMixin],
+  props: ['widget'],
   data() {
     return {
       loaded: false,

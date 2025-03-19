@@ -12,7 +12,7 @@
     </div>
     <mp-aspect-slope v-show="tab === 'aspectSlope'" ref="aspectSlopeAnalysis" />
     <mp-contour-analysis v-show="tab === 'contour'" ref="contourAnalysis" />
-    <mp-flooding v-show="tab === 'flooding'" ref="floodingAnalysis" />
+    <mp-flooding v-show="tab === 'flooding'" ref="floodingAnalysis" :widget="widget" />
     <mp-cut-fill-analysis v-show="tab === 'cut-fill'" ref="cutFillAnalysis" />
   </div>
 </template>
@@ -27,6 +27,7 @@ import MpContourAnalysis from './contour-analysis.vue'
 export default {
   name: 'MpTerrainAnalysis',
   mixins: [WidgetMixin],
+  props: ['widget'],
   components: {
     MpAspectSlope,
     MpFlooding,
