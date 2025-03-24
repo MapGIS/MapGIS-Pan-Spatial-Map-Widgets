@@ -479,22 +479,28 @@ export default {
       this.selection = selectedRows
       // 无勾选项时置空ActiveResultSet和SelectedResultSet
       if (this.selectedRowKeys.length == 0) {
-        ActiveResultSet.activeResultSet = {}
         SelectedResultSet.selectedResultSet =
           SelectedResultSet.selectedResultSet.filter(
-            (item) => item.id != ActiveResultSet.activeResultSet.id
+            (item) =>
+              item.id !== ActiveResultSet.activeResultSet.id &&
+              item.name !== ActiveResultSet.activeResultSet.name
           )
+        ActiveResultSet.activeResultSet = {}
       } else {
         // 构建geojson对象
         ActiveResultSet.activeResultSet = {
           type: 'FeatureCollection',
           features: selectedRows,
           id: this.optionVal.id,
+          name: this.optionVal.name,
         }
         let hasActiveResultSet = false
         // 保存对应tab页的selectedResultSet值
         for (let i = 0; i < SelectedResultSet.selectedResultSet.length; i++) {
-          if (SelectedResultSet.selectedResultSet[i].id == this.optionVal.id) {
+          if (
+            SelectedResultSet.selectedResultSet[i].id === this.optionVal.id &&
+            SelectedResultSet.selectedResultSet[i].id === this.optionVal.name
+          ) {
             SelectedResultSet.selectedResultSet[i] =
               ActiveResultSet.activeResultSet
             hasActiveResultSet = true
