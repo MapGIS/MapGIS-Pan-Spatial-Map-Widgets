@@ -12,7 +12,7 @@ export default class MarkerAddMixin extends Vue {
       srcSref,
       destSref
     )
-    if (result.Data && result.Data.length > 0) {
+    if (result && result.Data && result.Data.length > 0) {
       const datas: any[] = []
       for (let i = 0; i < result.Data.length; i += 1) {
         const obj = result.Data[i]
