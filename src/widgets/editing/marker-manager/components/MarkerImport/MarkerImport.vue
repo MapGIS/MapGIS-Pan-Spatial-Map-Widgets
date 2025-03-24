@@ -47,7 +47,11 @@
           <label>坐标系</label>
         </mapgis-ui-row>
         <mapgis-ui-row>
-          <mapgis-ui-select v-model="importOptions.crsName" style="width: 100%">
+          <mapgis-ui-select
+            v-model="importOptions.crsName"
+            style="width: 100%"
+            @change="handleCrsNameChange"
+          >
             <mapgis-ui-select-option v-for="item in crsNames" :key="item">
               {{ item }}
             </mapgis-ui-select-option>
@@ -101,6 +105,7 @@ export default {
       openImportFileDesc: false,
       markers: [],
       noUtf8: false, // 文件编码格式不是utf8
+      analyzeFileContent: undefined, // 文件内容
     }
   },
 
@@ -123,6 +128,11 @@ export default {
     },
 
     onImportCancel() {
+      // 重置input框中的显示信息
+      this.$refs.fileInput.value = null
+      this.$refs.fileLabel.innerHTML = '上传文件'
+      // 重置文件内容
+      this.analyzeFileContent = undefined
       this.emitFinished()
     },
 
@@ -140,6 +150,7 @@ export default {
     },
 
     async fileLoad(e: any) {
+      this.analyzeFileContent = e.target.result
       await this.analyzeFile(e.target.result)
     },
 
@@ -291,6 +302,11 @@ export default {
           }
           this.markers.push(obj)
         }
+      }
+    },
+    async handleCrsNameChange(val) {
+      if (this.analyzeFileContent) {
+        await this.analyzeFile(this.analyzeFileContent)
       }
     },
   },
