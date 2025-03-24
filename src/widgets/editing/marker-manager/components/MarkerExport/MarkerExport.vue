@@ -52,6 +52,7 @@ export default {
       this.exportOptions.exportFileType = val.fileType
       if (this.markers.length) {
         if (this.exportOptions.exportFileName !== '') {
+          const { ip, port } = baseConfigInstance.config
           const exportedMarkers = this.markers.map((marker) => {
             const {
               markerId,
@@ -73,6 +74,13 @@ export default {
 
           switch (this.exportOptions.exportFileType) {
             case 'shp格式':
+              if (!ip || !port) {
+                this.$message.warn(
+                  '导出当前格式标注数据需要配置IGServer相关信息,请前往管理平台进行配置！',
+                  8
+                )
+                return
+              }
               this.ouputToShpOr6x(
                 this.exportOptions.exportFileName,
                 exportedMarkers,
@@ -80,6 +88,13 @@ export default {
               )
               break
             case '6x格式':
+              if (!ip || !port) {
+                this.$message.warn(
+                  '导出当前格式标注数据需要配置IGServer相关信息,请前往管理平台进行配置！',
+                  8
+                )
+                return
+              }
               this.ouputToShpOr6x(
                 this.exportOptions.exportFileName,
                 exportedMarkers,
@@ -95,7 +110,12 @@ export default {
             default:
               break
           }
+        } else {
+          this.$message.warn('请输入导出标注的文件名称信息！')
+          return
         }
+      } else {
+        this.$message.warn('当前无可导出的标注信息！')
       }
 
       this.emitFinished()
@@ -110,7 +130,7 @@ export default {
       const setOption = this.markers2Features(exportedMarkers) // 获取结果集对象
       let fileNameItem: string
       let exportFormat: string
-      const { projectionName, ip, port } = baseConfigInstance.config // 获取目标参考系
+      const { projectionName, ip, port, token } = baseConfigInstance.config // 获取目标参考系
       if (setOption.featureSet1.SFEleArray.length > 0) {
         // 有点要素
         this.shpOr6xOption = {
@@ -122,14 +142,15 @@ export default {
         fileNameItem =
           fileType === 'shp' ? `${fileName}_点.zip` : `${fileName}_点.wt`
         exportFormat = fileType === 'shp' ? 'shp' : 'wp'
-        Feature.ExportFeature.downloadFile(
+        this.downloadFile(
           fileNameItem,
           setOption.featureSet1,
           'Pnt',
           exportFormat,
           projectionName,
           ip,
-          port
+          port,
+          token ? { tokenKey: 'token', tokenValue: token } : null
         )
       }
       if (setOption.featureSet2.SFEleArray.length > 0) {
@@ -142,14 +163,15 @@ export default {
         fileNameItem =
           fileType === 'shp' ? `${fileName}_线.zip` : `${fileName}_线.wl`
         exportFormat = fileType === 'shp' ? 'shp' : 'wl'
-        Feature.ExportFeature.downloadFile(
+        this.downloadFile(
           fileNameItem,
           setOption.featureSet2,
           'Lin',
           exportFormat,
           projectionName,
           ip,
-          port
+          port,
+          token ? { tokenKey: 'token', tokenValue: token } : null
         )
       }
       if (setOption.featureSet3.SFEleArray.length > 0) {
@@ -162,14 +184,15 @@ export default {
         fileNameItem =
           fileType === 'shp' ? `${fileName}_区.zip` : `${fileName}_区.wp`
         exportFormat = fileType === 'shp' ? 'shp' : 'wp'
-        Feature.ExportFeature.downloadFile(
+        this.downloadFile(
           fileNameItem,
           setOption.featureSet3,
           'Reg',
           exportFormat,
           projectionName,
           ip,
-          port
+          port,
+          token ? { tokenKey: 'token', tokenValue: token } : null
         )
       }
     },
@@ -378,6 +401,36 @@ export default {
       // 设置要素类型
       feature.setFType(fType)
       return feature
+    },
+    async downloadFile(
+      fileName,
+      gdbp,
+      featureType,
+      exportFormat,
+      projectionName,
+      exportIp,
+      exportPort,
+      exportToken
+    ) {
+      const that = this
+      try {
+        await Feature.ExportFeature.downloadFile(
+          fileName,
+          gdbp,
+          featureType,
+          exportFormat,
+          projectionName,
+          exportIp,
+          exportPort,
+          exportToken
+        )
+      } catch (error) {
+        that.$message.error(
+          '导出标注数据失败，请检查IGServer相关信息是否配置正确!',
+          5
+        )
+        console.log(error)
+      }
     },
   },
 }
