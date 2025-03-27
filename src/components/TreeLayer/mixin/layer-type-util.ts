@@ -217,7 +217,7 @@ export default {
         this.isIGSScene(item) ||
         (this.isParentLayer(item) && this.isWMTSLayer(item)) ||
         (this.isParentLayer(item) && !this.isIGSScene(item)) ||
-        (this.isWMTSLayer(item.layer) && !this.isSubLayer(item)) ||
+        (this.isWMTSLayer(item.laye || {}) && !this.isSubLayer(item)) ||
         this.isVectorTileSubLayer(item)
       ) {
         return true

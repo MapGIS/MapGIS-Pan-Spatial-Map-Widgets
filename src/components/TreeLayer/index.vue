@@ -9,42 +9,44 @@
       allowClear
     />
     <div class="tree-container beauty-scroll">
-      <mapgis-ui-tree
-        :checkedKeys="ticked"
+      <mapgis-ui-virtual-tree
+        ref="veTree"
+        node-key="key"
+        height="400px"
+        :data="layers"
+        :props="treeProps"
+        :auto-expand-parent="false"
+        :default-checked-keys="ticked"
+        :default-expanded-keys="expandedKeys"
+        :filter-node-method="filterNode"
+        :item-size="30"
+        show-checkbox
         @check="tickedChange"
-        :expanded-keys="expandedKeys"
-        @expand="onExpand"
-        @select="onSelect"
-        checkable
-        :tree-data="layers"
-        block-node
-        :selectedKeys="selectedKeys"
-        :replaceFields="{
-          children: 'sublayers',
-        }"
+        @node-expand="onExpand"
+        @node-collapse="onCollapse"
       >
         <!-- 原来的图标类型为type="check-circle" -->
-        <div slot="custom" slot-scope="item" class="tree-item-handle">
+        <div slot-scope="{ node, data }" class="tree-item-handle">
           <div>
             <i
-              v-if="nodeIcon(item).isSvg"
+              v-if="nodeIcon(data).isSvg"
               class="icon"
-              v-html="nodeIcon(item).icon"
+              v-html="nodeIcon(data).icon"
             >
             </i>
-            <img v-else class="tree-item-icon" :src="nodeIcon(item).icon" />
+            <img v-else class="tree-item-icon" :src="nodeIcon(data).icon" />
           </div>
           <!-- wmts图层的子图层start ：当为wmts图层时，子图层是展示当前选中的图层， -->
           <mapgis-ui-iconfont
             v-if="
-              item.layer && isWMTSLayer(item.layer) && isActiveWMTSLayer(item)
+              data.layer && isWMTSLayer(data.layer) && isActiveWMTSLayer(data)
             "
             type="mapgis-check"
             :style="{ color: '#52c41a', fontSize: '16px' }"
           />
           <i
             v-else-if="
-              item.layer && isWMTSLayer(item.layer) && !isActiveWMTSLayer(item)
+              data.layer && isWMTSLayer(data.layer) && !isActiveWMTSLayer(data)
             "
           />
           <!--------------------------- wmts图层的子图层end -------------------------->
@@ -53,29 +55,29 @@
           <mapgis-ui-tooltip
             v-if="
               filter !== '' &&
-              item.title.toUpperCase().indexOf(filter.toUpperCase()) > -1
+              data.title.toUpperCase().indexOf(filter.toUpperCase()) > -1
             "
           >
-            <template v-if="item.description" slot="title">
-              {{ item.description }}
+            <template v-if="data.description" slot="title">
+              {{ data.description }}
             </template>
-            <span :id="`tree_${item.key}`" @click="clickItem(item)">
+            <span :id="`tree_${data.key}`" @click="clickItem(data)">
               <!---------- 高亮查询查询结果start -------->
               <span>{{
-                item.title.substr(
+                data.title.substr(
                   0,
-                  item.title.toUpperCase().indexOf(filter.toUpperCase())
+                  data.title.toUpperCase().indexOf(filter.toUpperCase())
                 )
               }}</span>
               <span class="filter-words">{{
-                item.title.substr(
-                  item.title.toUpperCase().indexOf(filter.toUpperCase()),
+                data.title.substr(
+                  data.title.toUpperCase().indexOf(filter.toUpperCase()),
                   filter.length
                 )
               }}</span>
               <span>{{
-                item.title.substr(
-                  item.title.toUpperCase().indexOf(filter.toUpperCase()) +
+                data.title.substr(
+                  data.title.toUpperCase().indexOf(filter.toUpperCase()) +
                     filter.length
                 )
               }}</span>
@@ -83,50 +85,50 @@
             </span>
           </mapgis-ui-tooltip>
           <mapgis-ui-tooltip v-else>
-            <template v-if="item.description" slot="title">
-              {{ item.description }}
+            <template v-if="data.description" slot="title">
+              {{ data.description }}
             </template>
-            <span :id="`tree_${item.key}`" @click="clickItem(item)">{{
-              item.title
+            <span :id="`tree_${data.key}`" @click="clickItem(data)">{{
+              data.title
             }}</span>
           </mapgis-ui-tooltip>
           <mapgis-ui-iconfont
             v-if="
-              isParentLayer(item) &&
-              !isIGSScene(item) &&
-              !isModelCacheLayer(item)
+              isParentLayer(data) &&
+              !isIGSScene(data) &&
+              !isModelCacheLayer(data)
             "
             class="mapgis-ui-iconfont"
-            :disabled="getIndex(item) <= 0"
+            :disabled="getIndex(data) <= 0"
             type="mapgis-shang"
-            @click="lower(item)"
+            @click="lower(data)"
           />
           <mapgis-ui-iconfont
             v-if="
-              isParentLayer(item) &&
-              !isIGSScene(item) &&
-              !isModelCacheLayer(item)
+              isParentLayer(data) &&
+              !isIGSScene(data) &&
+              !isModelCacheLayer(data)
             "
             class="mapgis-ui-iconfont"
-            :disabled="getIndex(item) >= layers.length - 1"
+            :disabled="getIndex(data) >= layers.length - 1"
             type="mapgis-xia"
-            @click="raise(item)"
+            @click="raise(data)"
           />
           <!---------------------------- 图层的子图层end -------------------------->
           <mapgis-ui-popover
-            v-if="showPopover(item)"
+            v-if="showPopover(data)"
             placement="bottomLeft"
             arrow-point-at-center
-            :visible="item.visiblePopover"
+            :visible="data.visiblePopover"
             trigger="click"
-            @visibleChange="(visible) => clickPopover(item, visible)"
+            @visibleChange="(visible) => clickPopover(data, visible)"
             overlayClassName="layer-list-popover"
           >
             <template slot="content">
               <right-popover
-                v-if="!isVectorTileSubLayer(item)"
+                v-if="!isVectorTileSubLayer(data)"
                 ref="rightPopover"
-                :layer-item="item"
+                :layer-item="data"
                 :map-list="mapList"
                 @meta-data-info="metaDataInfo"
                 @attributes="attributes"
@@ -152,10 +154,11 @@
             <mapgis-ui-iconfont
               type="mapgis-more"
               class="more mapgis-ui-iconfont"
+              @click.stop
             ></mapgis-ui-iconfont>
           </mapgis-ui-popover>
         </div>
-      </mapgis-ui-tree>
+      </mapgis-ui-virtual-tree>
     </div>
     <mp-window-wrapper :visible="showMetadataInfo">
       <template v-slot:default="slotProps">
@@ -285,6 +288,10 @@ export default {
   },
   data() {
     return {
+      treeProps: {
+        label: 'title',
+        children: 'sublayers',
+      },
       filter: '',
       ticked: [],
       layers: [],
@@ -500,39 +507,8 @@ export default {
               delete ModelEditControlList[editLayerId]
             }
           }
-          // const expandedKeys = this.getExpandedKeys()
-          // this.expandedKeys = [
-          //   ...new Set([...expandedKeys, ...this.expandedKeys]),
-          // ]
 
           this.resetPickLayers(layers)
-        }
-      },
-    },
-    filter: {
-      handler(newVal, oldVal) {
-        if (this.filter !== '') {
-          const arr = []
-          this.filterTreeNode(this.layers, arr)
-          this.searchkeyArr = arr
-          const parentArr = []
-          arr.forEach((key) => {
-            const keyArr = key.split('-')
-            keyArr.forEach((item, i) => {
-              const keys = []
-              for (let index = 0; index <= i; index++) {
-                keys.push(keyArr[index])
-              }
-              parentArr.push(keys.join('-'))
-            })
-          })
-          // 去除数组中重叠的key
-          this.expandedKeys = Array.from(new Set(parentArr))
-          if (newVal !== oldVal) {
-            this.timer = setTimeout(() => {
-              this.setSearchIndex()
-            }, 700)
-          }
         }
       },
     },
@@ -559,6 +535,9 @@ export default {
         }
       },
     },
+    filter(val) {
+      this.$refs.veTree.filter(val)
+    },
   },
   created() {
     const { Cesium, vueCesium, viewer } = this
@@ -572,7 +551,6 @@ export default {
   mounted() {
     this.$root.$on(events.SCENE_LOADED_ON_MAP, this.sceneLoadedCallback)
     eventBus.$on(events.MODEL_PICK, this.updateM3DEnablePopupEnable)
-    // eventBus.$on(events.ECHO_LAYER_LIST_INFO, this.echoLayerList)
   },
   methods: {
     nodeIcon(item) {
@@ -609,7 +587,7 @@ export default {
           serviceIcons = defaultDataIconsConfig.serviceIcons
         }
         if (LayerType.ModelCache === type) {
-          const formatType = this.getFormatType(item.dataRef)
+          const formatType = this.getFormatType(item)
           icon = this.findFormatTypeIcon(formatType, serviceIcons)
         } else {
           icon = this.findFormatTypeIcon(type, serviceIcons)
@@ -621,14 +599,14 @@ export default {
             icon,
           }
         }
-      } else if (item.dataRef && item.dataRef.geomType) {
+      } else if (item && item.geomType) {
         // 图层类型
         let { layerIcons } = this.application.baseConfig
         if (!layerIcons || layerIcons.length == 0) {
           layerIcons = defaultDataIconsConfig.layerIcons
         }
-        let geomType = item.dataRef.geomType
-        if (item.dataRef.sublayers && item.dataRef.sublayers.length > 0) {
+        let geomType = item.geomType
+        if (item.sublayers && item.sublayers.length > 0) {
           geomType = 'Group'
         }
         for (let i = 0; i < layerIcons.length; i++) {
@@ -795,50 +773,15 @@ export default {
         this.widgetRouters.splice(1)
       }
     },
-
+    // 节点过滤
+    filterNode(value, data) {
+      if (!value) return true
+      return data.title.toUpperCase().indexOf(value.toUpperCase()) !== -1
+    },
+    // 搜索
     onSearch(val) {
-      const time = this.filter === val
-      if (time) {
-        this.filter = val
-        // 当延时操作还在进行时，取消滚动条滚动操作，防止searchIndex因为延时操作而产生bug
-        if (!this.timer) {
-          this.setSearchIndex()
-        }
-      } else {
-        this.searchkeyArr = []
-        this.searchIndex = -1
-        this.filter = val
-      }
+      this.filter = val
     },
-
-    setSearchIndex() {
-      if (this.searchkeyArr.length > 0) {
-        if (this.searchIndex >= this.searchkeyArr.length - 1) {
-          this.searchIndex = 0
-        } else {
-          this.searchIndex++
-        }
-        const element = this.$el.querySelector(
-          `#tree_${this.searchkeyArr[this.searchIndex]}`
-        )
-        if (element) {
-          element.scrollIntoView()
-        }
-        this.timer = null
-      }
-    },
-
-    filterTreeNode(layers, arr) {
-      layers.forEach((item) => {
-        if (item.title.toUpperCase().indexOf(this.filter.toUpperCase()) > -1) {
-          arr.push(item.key)
-        }
-        if (item.sublayers && item.sublayers.length > 0) {
-          this.filterTreeNode(item.sublayers, arr)
-        }
-      })
-    },
-
     /**
      * 点击树节点的回调函数
      */
@@ -858,21 +801,13 @@ export default {
       return null
     },
 
-    //  没有这一步，手动控制展开的位置无法折叠
-    onExpand(expandedKeys) {
-      this.expandedKeys = expandedKeys
+    //  展开节点
+    onExpand(node) {
+      this.expandedKeys = [...this.expandedKeys, node.key]
     },
-
-    // 选中树节点触发展开/收起
-    onSelect(selectedKeys, e) {
-      const flag = this.expandedKeys.includes(e.node.eventKey)
-      if (flag) {
-        this.expandedKeys = this.expandedKeys.filter(
-          (item) => item !== e.node.eventKey
-        )
-      } else {
-        this.expandedKeys.push(e.node.eventKey)
-      }
+    // 收起节点
+    onCollapse(node) {
+      this.expandedKeys = this.expandedKeys.filter((key) => node.key !== key)
     },
 
     /**
@@ -918,9 +853,8 @@ export default {
         }
       }
     },
-
     tickedChange(val: Array<string>, e) {
-      const includeHanlfCheckArrNew = val.concat(e.halfCheckedKeys)
+      const includeHanlfCheckArrNew = e.checkedKeys.concat(e.halfCheckedKeys)
       const includeHanlfCheckArrOld = this.ticked.concat(this.parentKeys)
       const doc = this.layerDocument.clone()
       const layers: Array<unknown> = doc.defaultMap.layers()
@@ -990,6 +924,7 @@ export default {
           layers[item].isVisible = !layers[item].isVisible
         }
       })
+      this.ticked = e.checkedKeys
       // this.document = doc
       this.$emit('update:layerDocument', doc)
     },
@@ -1017,11 +952,11 @@ export default {
         }
         layerSublayers.push(sublayerConfig)
         if (item.layer && this.isWMTSLayer(item.layer)) {
-          item.checkable = false
+          item.disabled = true
           return
         }
         if (item.layer && this.isIgsTileLayer(item.layer)) {
-          item.checkable = false
+          item.disabled = true
           if (item.sublayers && item.sublayers.length > 0) {
             this.setSublayers(item.sublayers, item.key, arr, layerSublayers)
           }
@@ -1359,7 +1294,7 @@ export default {
     fitBounds(item, layeExtent) {
       const { Cesium, map, viewer, vueCesium } = this
       const isOutOfRange = FitBound.fitBoundByLayer(
-        item.dataRef,
+        item,
         {
           Cesium,
           map,
@@ -1376,7 +1311,7 @@ export default {
     },
 
     editDataFlowStyle(item) {
-      this.currentLayerInfo = item.dataRef
+      this.currentLayerInfo = item
       this.clickPopover(item, false)
       this.openPage({
         title: '编辑样式',
@@ -1398,7 +1333,7 @@ export default {
      * 打开M3D编辑属性页面
      */
     changeM3DProps(item) {
-      this.currentLayerInfo = item.dataRef
+      this.currentLayerInfo = item
       this.clickPopover(item, false)
       this.changeLayer(item)
       this.openPage({
@@ -1468,7 +1403,7 @@ export default {
      * 打开图层属性编辑页面
      */
     changeLayerProps(item) {
-      this.currentLayerInfo = item.dataRef
+      this.currentLayerInfo = item
       this.clickPopover(item, false)
       this.openPage({
         title: '属性编辑',
@@ -1498,7 +1433,7 @@ export default {
      * 打开wmts切换激活图层页面
      */
     openChangeActiveLayer(item) {
-      this.currentLayerInfo = item.dataRef
+      this.currentLayerInfo = item
       this.clickPopover(item, false)
       this.openPage({
         title: '切换图层',
@@ -1566,7 +1501,7 @@ export default {
     async featureEdit(item) {
       // 获取属性字段
       const fieldInfo = await this.getFeatureField(item)
-      this.currentLayerInfo = item.dataRef
+      this.currentLayerInfo = item
       this.openPage({
         title: '图层样式',
         name: 'MpFeatureEdit',
@@ -2080,7 +2015,7 @@ export default {
     },
 
     async metaDataInfo(node) {
-      const layer = node.dataRef
+      const layer = node
       if (this.isWMTSLayer(layer) || this.isWMSLayer(layer)) {
         if (baseConfigInstance.config.token) {
           const token = baseConfigInstance.config.token
@@ -2110,8 +2045,7 @@ export default {
     },
 
     clickPopover(item, visible) {
-      item.dataRef.visiblePopover = visible
-      this.layers = [...this.layers]
+      item.visiblePopover = visible
     },
 
     onCloseCustomQuery() {
@@ -2193,41 +2127,6 @@ export default {
           }
         })
       }
-    },
-    echoLayerList(layerConfig) {
-      this.layerConfig = layerConfig
-      this.expandedKeys = []
-    },
-    getExpandedKeys(item) {
-      const { layerInfo, relation, checkNodeKeys, expandedKeys } =
-        this.layerConfig
-
-      const newRelation = {}
-      const newExpandedKeys = []
-      const checkRelation = {}
-      Object.keys(relation).forEach((id) => {
-        const index = this.layers.findIndex((item) => item.id === id)
-        if (index !== -1) {
-          newRelation[id] = index
-          checkRelation[relation[id]] = index
-          expandedKeys.includes(id) && newExpandedKeys.push(index)
-        }
-      })
-
-      const newCheckNodeKeys = []
-      checkNodeKeys.forEach((item) => {
-        const splitArr = item.split('-')
-        if (checkRelation[splitArr[0]] !== undefined) {
-          newCheckNodeKeys.push(checkRelation[splitArr[0]])
-        }
-      })
-
-      // const layerConfig = {
-      //   expandedKeys: newExpandedKeys,
-      //   ticked: newCheckNodeKeys,
-      // }
-
-      return expandedKeys
     },
     parseModelPick() {
       const changeModelPickArr = ModelPickController.pickLayerObj
@@ -2381,8 +2280,9 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-::v-deep .tree-layer-container {
+.tree-layer-container {
   .tree-container {
+    padding-top: 8px;
     .tree-item-handle {
       .filter-words {
         color: $primary-color;
