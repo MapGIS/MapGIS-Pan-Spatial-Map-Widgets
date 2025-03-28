@@ -101,7 +101,7 @@
         </mapgis-ui-switch-panel>
       </mapgis-ui-setting-form>
     </div>
-    <div v-show="showLayerList">
+    <div v-if="showLayerList">
       <mapgis-ui-layer-check-list
         :layers="operateLayerData"
         @on-check="onCheckLayer"
