@@ -272,10 +272,9 @@ export default {
       } else if (results.features && results.features.length > 0) {
         geojson = results.features[0]
       }
-      if (!geojson || !geojson.properties) {
-        return
+      if (geojson && geojson.properties) {
+        properties = geojson.properties
       }
-      properties = geojson.properties
 
       const pickInfo = {
         layerId: layer.id,
