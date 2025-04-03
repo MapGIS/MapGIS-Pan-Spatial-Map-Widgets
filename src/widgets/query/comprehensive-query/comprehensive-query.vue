@@ -194,6 +194,7 @@ export default {
       locationType: 'district',
 
       selectShowProperty: null,
+      updateData: true,
     }
   },
   computed: {
@@ -264,7 +265,9 @@ export default {
       if (this.geoJSONExtent && Object.keys(this.geoJSONExtent).length > 0) {
         this.extent = this.geoJSONExtent
       } else {
-        this.extent = this.getBounds()
+        // this.extent = this.getBounds()
+        // 不再采用当前屏幕的范围，不添加加空间过滤条件
+        this.extent = null
       }
       // if (
       //   this.geoJSONExtent === null ||
@@ -339,7 +342,11 @@ export default {
      */
     currentResult(geojson) {
       // igs、datastore查询时设置字段别名在此处处理
-      this.current = this.setAliasKeys(geojson)
+      if (this.updateData) {
+        this.current = this.setAliasKeys(geojson)
+      } else {
+        this.updateData = !this.updateData
+      }
     },
 
     /**
@@ -367,6 +374,9 @@ export default {
           },
         })
       }
+
+      // 点击事件会触发更新geojson数据的回调
+      this.updateData = false
     },
 
     /**
