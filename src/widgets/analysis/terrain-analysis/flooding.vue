@@ -150,12 +150,12 @@ export default {
       this.floodAnalysis = floodAnalysis
     },
 
-    onActive() {
+    onOpen() {
       this.floodAnalysis && this.floodAnalysis.mount()
     },
 
-    // 微件失活时
-    onDeActive() {
+    // 微件关闭时
+    onClose() {
       this.floodAnalysis.unmount()
       this.progressVisible = false
     },
