@@ -354,6 +354,7 @@
     <mapgis-ui-mask
       :loading="loading"
       :showSvg="true"
+      svgPostion="top"
       text="Loading..."
       parentDivClass="mp-map-container"
     ></mapgis-ui-mask>
