@@ -1265,11 +1265,8 @@ export default {
             // 分类展示情况下清除选中的节点check状态
             this.filterCheckNodeKeys()
           }
-          // 地图文档设置渲染模式为图片加载时不在此处恢复节点的勾选禁用状态，需要在回调事件中处理
-          if (
-            !this.is3DLayer(layer) &&
-            !this.isMapImageLayerRenderForImage(layer)
-          ) {
+          // 设置渲染模式为图片加载时不在此处恢复节点的勾选禁用状态，需要在回调事件中处理
+          if (!this.is3DLayer(layer) && !this.isLayerRenderForImage(layer)) {
             // 图层加载完毕，恢复checkbox可选状态
             this.setCheckBoxEnable(recordCheckLayer, false)
           }
@@ -1331,10 +1328,16 @@ export default {
       }
       return false
     },
-    // 判断是否为地图文档图层使用图片渲染模式类型
-    isMapImageLayerRenderForImage(layer) {
+    // 判断是否为使用图片渲染模式类型的图层 IGSMapImage ArcGISMapImage OGCWMS
+    isLayerRenderForImage(layer) {
       const renderMode = layer.layerProperty?.renderMode
-      return layer.type === LayerType.IGSMapImage && renderMode === 'image'
+      return (
+        [
+          LayerType.IGSMapImage,
+          LayerType.ArcGISMapImage,
+          LayerType.OGCWMS,
+        ].includes(layer.type) && renderMode === 'image'
+      )
     },
     /**
      * 当加载图层时，图层还在请求，禁用数据目录的checkbox
