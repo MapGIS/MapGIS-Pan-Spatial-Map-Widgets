@@ -103,23 +103,23 @@ export default {
         if (this.hasHander) {
           return
         }
-        //添加鼠标左键点击监听
+        // 添加鼠标左键点击监听
         this.cesiumHandler.setInputAction(function (movement) {
           if (ModelPickController.unablePick) {
             return
           }
-          let position = movement.position || movement.endPosition
-          let cartesian = viewer.getCartesian3Position(position)
-          let tempRay = new Cesium.Ray()
-          let tempPos = new Cesium.Cartesian3()
+          const position = movement.position || movement.endPosition
+          const cartesian = viewer.getCartesian3Position(position)
+          const tempRay = new Cesium.Ray()
+          const tempPos = new Cesium.Cartesian3()
           const { scene } = viewer
-          let ray = scene.camera.getPickRay(position, tempRay)
-          let cartesian2 = scene.globe.pick(ray, scene, tempPos)
+          const ray = scene.camera.getPickRay(position, tempRay)
+          const cartesian2 = scene.globe.pick(ray, scene, tempPos)
 
-          let longitudeString2, latitudeString2, heightString2
+          let longitudeString2; let latitudeString2; let heightString2
 
           if (Cesium.defined(cartesian2)) {
-            let cartographic2 = Cesium.Cartographic.fromCartesian(cartesian)
+            const cartographic2 = Cesium.Cartographic.fromCartesian(cartesian)
             longitudeString2 = Cesium.Math.toDegrees(cartographic2.longitude)
             latitudeString2 = Cesium.Math.toDegrees(cartographic2.latitude)
             heightString2 = cartographic2.height
@@ -137,7 +137,7 @@ export default {
         if (!this.hasHander) {
           return
         }
-        //移除鼠标左键点击监听
+        // 移除鼠标左键点击监听
         this.cesiumHandler.removeInputAction(
           Cesium.ScreenSpaceEventType.LEFT_CLICK
         )
@@ -254,6 +254,7 @@ export default {
         layerIdxs: '*',
         docName: docName,
         geometry: queryGeometry,
+        coordPrecision:8
       }
       let properties
       const results = await FeatureQuery.query(option)
@@ -299,7 +300,7 @@ export default {
         this.popupInfo = {
           id: UUID.uuid(),
           coordinates: [shape.x, shape.y, shape.z],
-          fid: geojson.properties['FID'],
+          fid: geojson.properties.FID,
           properties: geojson.properties,
           feature: geojson,
         }
