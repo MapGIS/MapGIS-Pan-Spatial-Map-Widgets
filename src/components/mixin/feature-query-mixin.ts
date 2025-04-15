@@ -191,11 +191,35 @@ export default {
       }
       // 3 根据分辨率计算缓冲半径
       else {
-        const zoomAndResolution = this.sceneController.getZoomAndResolution({
-          lng: shape.x,
-          lat: shape.y,
-        })
-        nearDis = (zoomAndResolution.resolution * nearDistance) / distanceUnits
+        if (this.is2DMapMode) {
+          // 获取地图中心点经纬度
+          const { map } = this
+          const coord = {
+            lng: shape.x,
+            lat: shape.y,
+          }
+
+          // 将坐标点转换为屏幕像素坐标
+          const pixel = map.project(coord)
+
+          // 向右偏移1像素并转换回地理坐标
+          const pixelRight = [pixel.x + 1, pixel.y]
+          const coordRight = map.unproject(pixelRight)
+          const resolutionX = coordRight.lng - coord.lng // 经度方向分辨率（度/像素）
+
+          // 向上偏移1像素并转换回地理坐标（纬度方向）
+          const pixelUp = [pixel.x, pixel.y + 1]
+          const coordUp = map.unproject(pixelUp)
+          const resolutionY = coord.lat - coordUp.lat // 纬度方向分辨率（度/像素）
+          nearDis = ((resolutionX + resolutionY) / 2) * nearDistance
+        } else {
+          const zoomAndResolution = this.sceneController.getZoomAndResolution({
+            lng: shape.x,
+            lat: shape.y,
+          })
+          nearDis =
+            (zoomAndResolution.resolution * nearDistance) / distanceUnits
+        }
         return nearDis
       }
     },
