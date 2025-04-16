@@ -310,7 +310,7 @@ export default {
     clearDrawMode: {
       get() {
         return !this.remainDrawArea
-      }
+      },
     },
     isContinuous() {
       return this.widgetInfo.config.isContinuous
@@ -392,6 +392,46 @@ export default {
     eventBus.$on(events.MARKER_CLICK, this.markerClick)
   },
   methods: {
+    getFullExtentByBoundingSphere(center, radius) {
+      const { Cesium, viewer } = this
+
+      const centerCartographic = Cesium.Cartographic.fromCartesian(center)
+      const earthRadius = 6371000.0 // 地球半径，单位米
+      const angularDistance = radius / earthRadius // 角度距离
+      const lat = centerCartographic.latitude
+      const lon = centerCartographic.longitude
+      const dLat = angularDistance / Math.cos(lon)
+      const dLon = angularDistance
+
+      const northLat = lat + dLat
+      const southLat = lat - dLat
+      const eastLon = lon + dLon
+      const westLon = lon - dLon
+
+      const northEast = Cesium.Cartesian3.fromRadians(eastLon, northLat, 0)
+      const southWest = Cesium.Cartesian3.fromRadians(westLon, southLat, 0)
+
+      const northEastCoordinate = Cesium.Cartographic.fromCartesian(northEast)
+      const southwestCoordinate = Cesium.Cartographic.fromCartesian(southWest)
+      const fullExtent = {}
+      if (northEastCoordinate.longitude > southwestCoordinate.longitude) {
+        fullExtent.xmin = Cesium.Math.toDegrees(southwestCoordinate.longitude)
+        fullExtent.xmax = Cesium.Math.toDegrees(northEastCoordinate.longitude)
+      } else {
+        fullExtent.xmin = Cesium.Math.toDegrees(northEastCoordinate.longitude)
+        fullExtent.xmax = Cesium.Math.toDegrees(southwestCoordinate.longitude)
+      }
+
+      if (northEastCoordinate.latitude > southwestCoordinate.latitude) {
+        fullExtent.ymin = Cesium.Math.toDegrees(southwestCoordinate.latitude)
+        fullExtent.ymax = Cesium.Math.toDegrees(northEastCoordinate.latitude)
+      } else {
+        fullExtent.ymin = Cesium.Math.toDegrees(northEastCoordinate.latitude)
+        fullExtent.ymax = Cesium.Math.toDegrees(southwestCoordinate.latitude)
+      }
+
+      return fullExtent
+    },
     markerClick(marker) {
       if (this.isContinuous && this.drawComponent) {
         this.drawComponent.closeDraw()
@@ -610,6 +650,22 @@ export default {
       }
     },
 
+    // 通过模型包围盒计算范围，再计算图层与查询范围是否有交集
+    isCrossWithLayerForBoundingSphere(layer, shape) {
+      const targetLayer = this.sceneController.findSource(layer.id)
+      if (targetLayer) {
+        const boundingSphere = targetLayer._root.boundingVolume.boundingSphere
+        const { center, radius } = boundingSphere
+        const fullExtent = this.getFullExtentByBoundingSphere(center, radius)
+        const isCrossWithLayer = this.isCrossWithLayer(
+          { type: layer.type, fullExtent },
+          shape,
+          this.queryType
+        )
+        return isCrossWithLayer
+      }
+    },
+
     queryLayers(shape: Record<string, number>) {
       if (!this.document) {
         return
@@ -620,7 +676,18 @@ export default {
         : this.document.defaultMap.layers()
 
       layers.forEach((layer) => {
-        if (!this.isCrossWithLayer(layer, shape, this.queryType)) {
+        let isCrossWithLayer = this.isCrossWithLayer(
+          layer,
+          shape,
+          this.queryType
+        )
+        if (!isCrossWithLayer) {
+          isCrossWithLayer = this.isCrossWithLayerForBoundingSphere(
+            layer,
+            shape
+          )
+        }
+        if (!isCrossWithLayer) {
           return
         }
 
@@ -714,7 +781,8 @@ export default {
 
         case LayerType.ModelCache:
           allSublayers.push({
-            title: layer.title,
+            title: layer.serviceName,
+            id: layer.id,
           })
           break
         case LayerType.IGSTile:
