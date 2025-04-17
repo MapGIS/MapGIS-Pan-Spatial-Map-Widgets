@@ -209,7 +209,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.mp-window-wrapper {
+.mp-window-wrapper.window-wrapper {
   color: #fff;
   // background-color: rgba(20, 67, 125, 1);
   ::v-deep .window-head {
