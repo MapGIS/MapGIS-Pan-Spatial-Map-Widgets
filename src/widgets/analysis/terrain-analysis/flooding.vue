@@ -2,7 +2,6 @@
   <div class="mp-flooding">
     <mapgis-3d-analysis-flood
       v-if="loaded"
-      :startHeight="startHeight"
       :minHeight="minHeight"
       :maxHeight="maxHeight"
       :floodColor="floodColor"
@@ -33,8 +32,8 @@
               <mapgis-ui-col>
                 <mapgis-ui-slider
                   :min="
-                    HeightProgress.startHeightCopy
-                      ? HeightProgress.startHeightCopy
+                    HeightProgress.minHeightCopy
+                      ? HeightProgress.minHeightCopy
                       : 0
                   "
                   :max="
@@ -48,14 +47,12 @@
             </mapgis-ui-row>
             <mapgis-ui-row type="flex" justify="space-between">
               <mapgis-ui-col>{{
-                HeightProgress.startHeightCopy
-                  ? HeightProgress.startHeightCopy
-                  : 0
+                HeightProgress.minHeightCopy ? HeightProgress.minHeightCopy : 0
               }}</mapgis-ui-col>
               <mapgis-ui-col>{{
                 HeightProgress.maxHeightCopy
                   ? (HeightProgress.maxHeightCopy +
-                      HeightProgress.startHeightCopy) /
+                      HeightProgress.minHeightCopy) /
                     2
                   : 50
               }}</mapgis-ui-col>
@@ -91,7 +88,6 @@ export default {
   data() {
     return {
       loaded: false,
-      startHeight: undefined,
       minHeight: undefined,
       maxHeight: undefined,
       floodColor: undefined,
@@ -106,7 +102,7 @@ export default {
       currentHeight: undefined,
       isStart: false,
       timer: undefined,
-      count: 1
+      count: 1,
     }
   },
   computed: {
@@ -124,7 +120,6 @@ export default {
   methods: {
     setConfig(config) {
       const {
-        startHeight = 0,
         minHeight = 0,
         maxHeight = 2000,
         floodColor = 'rgba(149,232,249,0.5)',
@@ -134,7 +129,6 @@ export default {
         animationSpeed = 0.01,
         frequency = 500,
       } = config
-      this.startHeight = startHeight
       this.minHeight = minHeight
       this.maxHeight = maxHeight
       this.floodColor = floodColor
@@ -180,25 +174,25 @@ export default {
     start() {
       let isPause = false
       if (!this.isStart) {
-        const { startHeightCopy, maxHeightCopy, floodSpeedCopy } =
+        const { minHeightCopy, maxHeightCopy, floodSpeedCopy } =
           this.progressData
-         if(this.currentHeight && this.currentHeight < maxHeightCopy) {
-           isPause = true
-         }else {
+        if (this.currentHeight && this.currentHeight < maxHeightCopy) {
+          isPause = true
+        } else {
           this.currentHeight = 0
           this.count = 1
-         }
+        }
         this.floodAnalysis._doAnalysis(isPause)
         this.isStart = true
         this.timer = setInterval(() => {
-          this.currentHeight = startHeightCopy + floodSpeedCopy * this.count
+          this.currentHeight = minHeightCopy + floodSpeedCopy * this.count
           this.count++
           if (this.currentHeight >= maxHeightCopy) {
             this.isStart = false
             clearInterval(this.timer)
           }
         }, 1000)
-      }else {
+      } else {
         this.isStart = false
         clearInterval(this.timer)
         this.floodAnalysis._doPause()
