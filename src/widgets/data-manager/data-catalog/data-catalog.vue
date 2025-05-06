@@ -1265,8 +1265,7 @@ export default {
             // 分类展示情况下清除选中的节点check状态
             this.filterCheckNodeKeys()
           }
-          // 设置渲染模式为图片加载时不在此处恢复节点的勾选禁用状态，需要在回调事件中处理
-          if (!this.is3DLayer(layer) && !this.isLayerRenderForImage(layer)) {
+          if (!this.is3DLayer(layer)) {
             // 图层加载完毕，恢复checkbox可选状态
             this.setCheckBoxEnable(recordCheckLayer, false)
           }
