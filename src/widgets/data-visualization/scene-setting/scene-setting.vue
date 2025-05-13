@@ -1,6 +1,7 @@
 <template>
   <div>
     <mapgis-3d-scene-setting
+      v-if="showComponents"
       @loaded="loaded"
       :initialStatebar="initialStatebar"
       :initParams="config"
@@ -31,6 +32,7 @@ import {
   LayerType,
   IGSSceneSublayerType,
   LoadStatus,
+  baseConfigInstance,
 } from '@mapgis/web-app-framework'
 
 export default {
@@ -46,6 +48,7 @@ export default {
       baseLayerIds: [],
       isWidgetOpen: false,
       stuffWidth: 48,
+      showComponents: false,
     }
   },
 
@@ -59,6 +62,17 @@ export default {
       handler: 'getBaseLayerMap',
       immediate: true,
       deep: true,
+    },
+    /**
+     * 监听: is2DMapMode变化
+     */
+    is2DMapMode: {
+      immediate: true,
+      handler(nV) {
+        if (!this.is2DMapMode && !this.showComponents) {
+          this.showComponents = true
+        }
+      },
     },
   },
 
@@ -95,6 +109,11 @@ export default {
     },
   },
   created() {
+    // 如果初始化的时候，不是三维模式，则不显示组件,不然时间轴显示异常
+    const initMode = baseConfigInstance.config.initMode
+    if (initMode && initMode === 'globe') {
+      this.showComponents = true
+    }
     this.getStuffWidth()
     eventBus.$on(events.SCENE_CONFIG_INFO, this.getSceneConfig)
   },
