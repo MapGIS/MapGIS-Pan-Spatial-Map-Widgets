@@ -255,7 +255,6 @@ export default {
     },
 
     onActive() {
-      this.profileAnalysis.mount()
       this.isActive = true
     },
 
@@ -263,6 +262,7 @@ export default {
      * 打开模块
      */
     onOpen() {
+      this.profileAnalysis.mount()
       this.isActive = true
       this.changeLayer()
       this.changeProfileWindowApha()
