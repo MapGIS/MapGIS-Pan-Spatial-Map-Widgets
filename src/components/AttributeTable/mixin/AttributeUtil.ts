@@ -240,7 +240,6 @@ export default {
         layerIndex,
         gdbp,
         f,
-        is3dBind2dData = false,
         token,
       } = this.optionVal
       let { domain } = this.optionVal
@@ -419,8 +418,7 @@ export default {
             })
             this.attrTableToJsonData = this.setTable20(
               jsonData.features,
-              jsonData.fields,
-              is3dBind2dData
+              jsonData.fields
             )
             return
           } else {
@@ -444,11 +442,7 @@ export default {
             columns = this.setTableScroll20(jsonData.fields)
             this.tableColumns = columns
           }
-          this.tableData = this.setTable20(
-            jsonData.features,
-            jsonData.fields,
-            is3dBind2dData
-          )
+          this.tableData = this.setTable20(jsonData.features, jsonData.fields)
           this.removeMarkers()
           // 如果当前是激活状态，则添加markers
           if (this.isExhibitionActive) {
@@ -568,8 +562,7 @@ export default {
             })
             this.attrTableToJsonData = this.setTable20(
               jsonData.features,
-              jsonData.fields,
-              is3dBind2dData
+              jsonData.fields
             )
             return
           } else {
@@ -769,7 +762,7 @@ export default {
       })
     },
     // 设置属性表table数据
-    setTable20(features, fields, is3dBind2dData) {
+    setTable20(features, fields) {
       return (features || []).map(
         ({ attributes = {}, bound = {}, geometry = {} }) => {
           const properties = {
@@ -777,7 +770,6 @@ export default {
             specialLayerId: this.optionVal.id,
             specialLayerBound: bound,
             specialLayerType: geometry.type,
-            is3dBind2dData,
           }
           return {
             geometry: {

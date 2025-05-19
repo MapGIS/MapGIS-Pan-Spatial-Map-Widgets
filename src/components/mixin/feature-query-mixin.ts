@@ -39,25 +39,81 @@ export default {
       const { type } = layer
       let { fullExtent } = layer
       let { ymax, ymin, xmax, xmin } = fullExtent
-      if (type === LayerType.IGSScene || type === LayerType.ModelCache) {
-        if (
-          xmax > 180 ||
-          xmin < -180 ||
-          ymax > 90 ||
-          ymin < -90 ||
-          (xmax === 0 && xmin === 0 && ymax === 0 && ymin === 0)
-        ) {
-          // 在TreeLayer/index.vue里会定义window.layers3D，并设置三维模型的fullExtent和boundingSphere
-          if (window.layers3D && window.layers3D[layer.id]) {
-            fullExtent = window.layers3D[layer.id].fullExtent
-            xmin = fullExtent.xmin
-            ymin = fullExtent.ymin
-            xmax = fullExtent.xmax
-            ymax = fullExtent.ymax
-          }
-        }
+      if (
+        type === LayerType.IGSScene ||
+        type === LayerType.ModelCache ||
+        type === LayerType.IGSTile
+      ) {
+        // 通过绑定查询服务的图层不再进行图层与绘制区域是否有交集的判断，改为绑定的查询服务与绘制区域是否有交集判断
+        return true
       }
 
+      let geometry
+      const extentPolygon = polygon([
+        [
+          [Number(xmin), Number(ymin)],
+          [Number(xmax), Number(ymin)],
+          [Number(xmax), Number(ymax)],
+          [Number(xmin), Number(ymax)],
+          [Number(xmin), Number(ymin)],
+        ],
+      ])
+      switch (queryType) {
+        case QueryType.Point:
+          geometry = point([shape.x, shape.y])
+          break
+        case QueryType.LineString:
+          geometry = lineString(shape.map((point) => [point.x, point.y]))
+          break
+        case QueryType.Polygon:
+          geometry = polygon([shape.map((point) => [point.x, point.y])])
+          break
+        case QueryType.Cube:
+        case QueryType.Circle:
+        case QueryType.Rectangle:
+          const { ymax, ymin, xmax, xmin } = shape
+          geometry = polygon([
+            [
+              [xmin, ymin],
+              [xmax, ymin],
+              [xmax, ymax],
+              [xmin, ymax],
+              [xmin, ymin],
+            ],
+          ])
+          break
+        case QueryType.MultiPolygon:
+          geometry = multiPolygon(shape)
+          break
+        default:
+          return false
+      }
+      if (
+        geometry.geometry.type === 'Point' ||
+        geometry.geometry.type === 'LineString'
+      ) {
+        return (
+          // 交叉或者包含都会继续查询
+          !booleanDisjoint(extentPolygon, geometry) ||
+          booleanContains(extentPolygon, geometry)
+        )
+      }
+      return (
+        // 交叉或者包含都会继续查询
+        !booleanDisjoint(extentPolygon, geometry) ||
+        booleanContains(extentPolygon, geometry) ||
+        booleanContains(geometry, extentPolygon)
+      )
+    },
+    /**
+     * 关联的查询服务图层与查询范围是否有交集
+     * @param range 图层范围
+     * @param shape 查询范围
+     * @param queryType 查询类型
+     * @returns
+     */
+    isCrossWithBindLayer(range, shape, queryType): boolean {
+      const { ymax, ymin, xmax, xmin } = range
       let geometry
       const extentPolygon = polygon([
         [
@@ -361,7 +417,7 @@ export default {
         popupOption: extend.popupOption,
       }
 
-      const sublayers = this.isShowLayerList
+      const sublayers = this.showLayerList
         ? this.getSublayers(layer.id)
         : layer.allSublayers
 
