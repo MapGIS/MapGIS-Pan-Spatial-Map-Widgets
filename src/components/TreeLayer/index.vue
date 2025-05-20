@@ -36,20 +36,6 @@
             </i>
             <img v-else class="tree-item-icon" :src="nodeIcon(data).icon" />
           </div>
-          <!-- wmts图层的子图层start ：当为wmts图层时，子图层是展示当前选中的图层， -->
-          <mapgis-ui-iconfont
-            v-if="
-              data.layer && isWMTSLayer(data.layer) && isActiveWMTSLayer(data)
-            "
-            type="mapgis-check"
-            :style="{ color: '#52c41a', fontSize: '16px' }"
-          />
-          <i
-            v-else-if="
-              data.layer && isWMTSLayer(data.layer) && !isActiveWMTSLayer(data)
-            "
-          />
-          <!--------------------------- wmts图层的子图层end -------------------------->
 
           <!---------------------------- 图层的子图层start -------------------------->
           <mapgis-ui-tooltip
@@ -443,7 +429,9 @@ export default {
               if (this.isWMTSLayer(item)) {
                 // 用于切换图层
                 item.sublayersBackup = item.sublayers
-                // 用于图层树显示
+                // 子图层的可见性与父图层保持一致
+                item.activeLayer.isVisible = item.isVisible || item.visible
+                // 用于图层树显示，因为只有当前显示的图层需要控制显示隐藏，所以sublayers上只放activeLayer
                 item.sublayers = [item.activeLayer]
               }
             } else if (
@@ -951,10 +939,6 @@ export default {
           layerProperty: item.layer?.layerProperty,
         }
         layerSublayers.push(sublayerConfig)
-        if (item.layer && this.isWMTSLayer(item.layer)) {
-          item.disabled = true
-          return
-        }
         if (item.layer && this.isIgsTileLayer(item.layer)) {
           item.disabled = true
           if (item.sublayers && item.sublayers.length > 0) {
