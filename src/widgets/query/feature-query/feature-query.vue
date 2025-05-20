@@ -671,22 +671,18 @@ export default {
         return
       }
 
-      const layers = this.isShowLayerList
+      // 如果图层列表处于打开状态则使用图层列表，如果配置显示但未打开依然使用document中的图层列表
+      const layers = this.showLayerList
         ? this.checkLayer
         : this.document.defaultMap.layers()
 
       layers.forEach((layer) => {
-        let isCrossWithLayer = this.isCrossWithLayer(
+        const isCrossWithLayer = this.isCrossWithLayer(
           layer,
           shape,
           this.queryType
         )
-        if (!isCrossWithLayer) {
-          isCrossWithLayer = this.isCrossWithLayerForBoundingSphere(
-            layer,
-            shape
-          )
-        }
+
         if (!isCrossWithLayer) {
           return
         }
@@ -719,9 +715,19 @@ export default {
               layer.searchParams.mapList &&
               layer.searchParams.mapList.length > 0
             ) {
-              this.queryFeaturesByBindDoc(layer, geometry)
+              this.queryFeaturesByBindDoc(
+                layer,
+                geometry,
+                shape,
+                this.queryType
+              )
             } else {
-              this.queryFeaturesByIGSScene(layer, geometry)
+              this.queryFeaturesByIGSScene(
+                layer,
+                geometry,
+                shape,
+                this.queryType
+              )
             }
 
             break
@@ -733,9 +739,14 @@ export default {
               return
             }
             if (layer.sublayers && layer.sublayers.length > 0) {
-              this.queryFeaturesByBindDoc(layer, geometry)
+              this.queryFeaturesByBindDoc(
+                layer,
+                geometry,
+                shape,
+                this.queryType
+              )
             } else {
-              this.quertFeatruesByVector(layer, geometry)
+              this.quertFeatruesByVector(layer, geometry, shape, this.queryType)
             }
             break
           default:
@@ -745,15 +756,16 @@ export default {
     },
 
     // 关联二维地图文档的三维服务或瓦片服务走这个查询
-    async queryFeaturesByBindDoc(layer, geometry) {
+    async queryFeaturesByBindDoc(layer, geometry, shape, queryType) {
       if (!layer.isVisible) {
         return
       }
       const url = new URL(layer.url)
-      const domain = url.origin
+      let domain = url.origin
       const {
         extend,
         searchParams: {
+          searchFullExtent,
           searchName,
           searchServiceType,
           searchIp,
@@ -805,6 +817,7 @@ export default {
             )
             break
           case LayerType.IGSTile:
+            map.Range = searchFullExtent
             map.URL = sublayer.url
             break
           default:
@@ -812,6 +825,19 @@ export default {
         }
 
         if (map) {
+          // 如果匹配到了绑定的查询服务子图层，再进行绘制区域与子图层是否有交集判断
+          let isExecuteQuery = false
+          if (map.Range) {
+            isExecuteQuery = this.isCrossWithBindLayer(
+              map.Range,
+              shape,
+              queryType
+            )
+          }
+
+          if (!isExecuteQuery) {
+            continue
+          }
           const isDataStoreQuery = false
           const ipPortObj = this.getIpPort({
             isDataStoreQuery,
@@ -824,6 +850,10 @@ export default {
 
           if (searchPort) {
             ipPortObj.port = searchPort
+          }
+
+          if (searchIp && searchPort) {
+            domain = `${url.protocol}//${searchIp}:${searchPort}`
           }
 
           const options = {
@@ -881,7 +911,7 @@ export default {
       })
     },
 
-    async queryFeaturesByIGSScene(layer, geometry) {
+    async queryFeaturesByIGSScene(layer, geometry, shape, queryType) {
       if (!layer.isVisible) {
         return
       }
@@ -901,8 +931,26 @@ export default {
 
       const { searchParams } = layer
       if (searchParams) {
-        const { searchIp, searchPort, searchTokenKey, searchTokenValue } =
-          searchParams
+        const {
+          searchFullExtent,
+          searchIp,
+          searchPort,
+          searchTokenKey,
+          searchTokenValue,
+        } = searchParams
+
+        let isExecuteQuery = false
+        if (searchFullExtent) {
+          isExecuteQuery = this.isCrossWithBindLayer(
+            searchFullExtent,
+            shape,
+            queryType
+          )
+        }
+
+        if (!isExecuteQuery) {
+          return
+        }
 
         if (searchIp) {
           ip = searchIp
@@ -930,7 +978,7 @@ export default {
         popupOption: extend.popupOption,
       }
       let activeOptionId = ''
-      const sublayers = this.isShowLayerList
+      const sublayers = this.showLayerList
         ? this.getSublayers(layer.id)
         : layer.activeScene?.sublayers
       if (
@@ -946,6 +994,7 @@ export default {
           serverType: layer.type,
           gdbp: layer.searchParams.searchName,
           geometry: geometry,
+          is3dBind2dData: true,
           token: {
             tokenKey,
             tokenValue,
@@ -980,7 +1029,12 @@ export default {
       }
     },
 
-    async quertFeatruesByVector(layer: IGSVectorLayer, geometry) {
+    async quertFeatruesByVector(
+      layer: IGSVectorLayer,
+      geometry,
+      shape,
+      queryType
+    ) {
       if (!layer.isVisible) {
         return
       }
@@ -1003,8 +1057,26 @@ export default {
 
       const { searchParams } = layer
       if (searchParams && searchParams.searchName) {
-        const { searchIp, searchPort, searchTokenKey, searchTokenValue } =
-          searchParams
+        const {
+          searchFullExtent,
+          searchIp,
+          searchPort,
+          searchTokenKey,
+          searchTokenValue,
+        } = searchParams
+
+        let isExecuteQuery = false
+        if (searchFullExtent) {
+          isExecuteQuery = this.isCrossWithBindLayer(
+            searchFullExtent,
+            shape,
+            queryType
+          )
+        }
+
+        if (!isExecuteQuery) {
+          return
+        }
 
         if (searchIp) {
           ip = searchIp
@@ -1078,7 +1150,7 @@ export default {
       }
       let activeOptionId = ''
 
-      const sublayers = this.isShowLayerList
+      const sublayers = this.showLayerList
         ? this.getSublayers(layer.id)
         : layer.allSublayers
       for (let index = 0; index < sublayers.length; index++) {

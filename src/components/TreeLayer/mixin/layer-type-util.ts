@@ -282,6 +282,8 @@ export default {
 
             return layer.searchParams.mapList.some((map) => {
               return (
+                `${queryPrefix}${map.LayerName}${querySuffix}` ===
+                  item.serviceName ||
                 `${queryPrefix}${map.LayerName}${querySuffix}` === item.title
               )
             })
@@ -453,7 +455,7 @@ export default {
         {
           type: this.isIgsVectorLayer(layer),
           setValue: () => {
-            const igsVectorLayer = layer.dataRef
+            const igsVectorLayer = layer
             const targetLayer = igsVectorLayer.layer
             let { domain, docName } = igsVectorLayer.layer._parseUrl(
               targetLayer.url
@@ -515,10 +517,10 @@ export default {
         {
           type: this.isIGSScene(layer),
           setValue: () => {
-            const sceneLayer = layer.dataRef
+            const sceneLayer = layer
             const queryPrefix = parent.extend.queryPrefix || ''
             const querySuffix = parent.extend.querySuffix || ''
-            const { id, name, title } = sceneLayer
+            const { id, title } = sceneLayer
 
             const { tokenKey, tokenValue } = parent
             let { domain } = parent._parseUrl(parent.url)
@@ -589,10 +591,10 @@ export default {
         {
           type: this.isModelCacheLayer(layer) && !this.isVoxelLayer(layer),
           setValue: () => {
-            const sceneLayer = layer.dataRef
+            const sceneLayer = layer
             // const url = new URL(layer.url)
             // const domain = url.origin
-            const { id, name, title } = sceneLayer
+            const { id, title } = sceneLayer
             const queryPrefix = layer.extend.queryPrefix || ''
             const querySuffix = layer.extend.querySuffix || ''
 
@@ -634,7 +636,8 @@ export default {
             if (is3dBind2dData) {
               const map = layer.searchParams.mapList.find(
                 (map) =>
-                  `${queryPrefix}${map.LayerName}${querySuffix}` === layer.title
+                  `${queryPrefix}${map.LayerName}${querySuffix}` ===
+                  layer.serviceName
               )
               if (!map) return
               gdbp = map.URL
@@ -681,7 +684,7 @@ export default {
         {
           type: this.isIgsVector3dLayer(layer),
           setValue: () => {
-            const igsVector3dLayer = layer.dataRef
+            const igsVector3dLayer = layer
             const { domain, docName } = igsVector3dLayer._parseUrl(layer.url)
             const isDataStoreQuery = false
             const DNSName = undefined
@@ -841,7 +844,7 @@ export default {
           // 时间轴
           type: this.isVoxelLayer(layer),
           setValue: () => {
-            const sceneLayer = layer.dataRef
+            const sceneLayer = layer
             const url = new URL(layer.url)
             const domain = url.origin
             const { id, name, title } = sceneLayer
