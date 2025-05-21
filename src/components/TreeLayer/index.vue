@@ -937,7 +937,7 @@ export default {
         }
         layerSublayers.push(sublayerConfig)
         if (item.layer && this.isIgsTileLayer(item.layer)) {
-          item.disabled = true
+          item.hidden = true
           if (item.sublayers && item.sublayers.length > 0) {
             this.setSublayers(item.sublayers, item.key, arr, layerSublayers)
           }
