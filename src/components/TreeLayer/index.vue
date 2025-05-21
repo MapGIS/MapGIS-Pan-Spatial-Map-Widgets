@@ -422,17 +422,17 @@ export default {
                 title: row.description || row.id,
               }))
             }
-            if (this.isWMTSLayer(item) || this.isIgsTileLayer(item)) {
+            if (this.isWMTSLayer(item)) {
+              // 用于切换图层
+              item.sublayersBackup = item.sublayers
+              // 子图层的可见性与父图层保持一致
+              item.activeLayer.isVisible = item.isVisible || item.visible
+              // 用于图层树显示，因为只有当前显示的图层需要控制显示隐藏，所以sublayers上只放activeLayer
+              item.sublayers = [item.activeLayer]
+            }
+            if (this.isIgsTileLayer(item)) {
               if (item.isVisible || item.visible) {
                 arr.push(item.key)
-              }
-              if (this.isWMTSLayer(item)) {
-                // 用于切换图层
-                item.sublayersBackup = item.sublayers
-                // 子图层的可见性与父图层保持一致
-                item.activeLayer.isVisible = item.isVisible || item.visible
-                // 用于图层树显示，因为只有当前显示的图层需要控制显示隐藏，所以sublayers上只放activeLayer
-                item.sublayers = [item.activeLayer]
               }
             } else if (
               (item.sublayers && item.sublayers.length === 0) ||
@@ -821,9 +821,6 @@ export default {
     changeSublayersVisible(sublayers: Array, parentVisible: boolean) {
       for (let index = 0; index < sublayers.length; index++) {
         const item = sublayers[index]
-        if (item.layer && this.isWMTSLayer(item.layer)) {
-          return
-        }
         let subParentVisible
         if (item.isVisible !== undefined) {
           if (parentVisible === false) {
