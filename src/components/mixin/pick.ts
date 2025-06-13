@@ -116,7 +116,9 @@ export default {
           const ray = scene.camera.getPickRay(position, tempRay)
           const cartesian2 = scene.globe.pick(ray, scene, tempPos)
 
-          let longitudeString2; let latitudeString2; let heightString2
+          let longitudeString2
+          let latitudeString2
+          let heightString2
 
           if (Cesium.defined(cartesian2)) {
             const cartographic2 = Cesium.Cartographic.fromCartesian(cartesian)
@@ -254,7 +256,7 @@ export default {
         layerIdxs: '*',
         docName: docName,
         geometry: queryGeometry,
-        coordPrecision:8
+        coordPrecision: 8,
       }
       let properties
       const results = await FeatureQuery.query(option)
@@ -262,23 +264,34 @@ export default {
         return
       }
       let geojson
+      let sublayerId
       if (results.value && results.value.length) {
         for (let i = results.value.length - 1; i >= 0; i--) {
           const res = results.value[i]
           if (res.features && res.features.length > 0) {
             geojson = res.features[0]
+            sublayerId = res.layerId
             break
           }
         }
       } else if (results.features && results.features.length > 0) {
         geojson = results.features[0]
+        sublayerId = results.layerId
+      }
+      let layerTitle = layer.title
+      if (sublayerId && layer.sublayers && layer.sublayers.length) {
+        const sublayer = this.getSublayerById(sublayerId, layer.sublayers)
+        if (sublayer) {
+          layerTitle = sublayer.title
+        }
       }
       if (geojson && geojson.properties) {
-        properties = geojson.properties
+        properties = { '图层名': layerTitle, ...geojson.properties }
       }
 
       const pickInfo = {
         layerId: layer.id,
+        sublayerId,
         queryLayers,
         position: {
           height: shape.z,
@@ -290,6 +303,10 @@ export default {
 
       eventBus.$emit(events.SEND_MODEL_PICK_INFO, pickInfo)
 
+      if (!geojson) {
+        return
+      }
+
       let showPopup = true
       if (layer.layerProperty.extensions) {
         const extensions = JSON.parse(layer.layerProperty.extensions)
@@ -300,11 +317,36 @@ export default {
         this.popupInfo = {
           id: UUID.uuid(),
           coordinates: [shape.x, shape.y, shape.z],
-          fid: geojson.properties.FID,
-          properties: geojson.properties,
+          fid: geojson.properties?.FID,
+          properties,
           feature: geojson,
         }
       }
+    },
+    /**
+     * 根据子图层id获取子图层对象
+     * @param sublayerId 子图层id
+     * @param sublayers 子图层数组
+     * @returns
+     */
+    getSublayerById(sublayerId, sublayers) {
+      let sublayer
+      if (!sublayers || !sublayers.length) {
+        return
+      }
+      for (let i = 0; i < sublayers.length; i++) {
+        const layer = sublayers[i]
+        if (layer.id === sublayerId) {
+          sublayer = layer
+          break
+        } else if (layer.sublayers && layer.sublayers.length) {
+          sublayer = this.getSublayerById(sublayerId, layer.sublayers)
+          if (sublayer) {
+            break
+          }
+        }
+      }
+      return sublayer
     },
   },
 }
