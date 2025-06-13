@@ -286,7 +286,7 @@ export default {
         }
       }
       if (geojson && geojson.properties) {
-        properties = { '图层名': layerTitle, ...geojson.properties }
+        properties = { title: layerTitle, ...geojson.properties }
       }
 
       const pickInfo = {

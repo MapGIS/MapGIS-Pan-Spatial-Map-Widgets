@@ -9,25 +9,30 @@
       :showed="showPopup"
       @removed="clearHighlight"
     >
-      <mapgis-ui-list
-        item-layout="horizontal"
-        :data-source="Object.keys(popupInfo.properties)"
-        size="small"
-        class="table-popupInfo"
-      >
-        <mapgis-ui-list-item
-          slot="renderItem"
-          slot-scope="item"
-          class="table-popupInfo-item"
+      <div>
+        <div v-if="title" class="pick-popup-title">
+          {{ title }}
+        </div>
+        <mapgis-ui-list
+          item-layout="horizontal"
+          :data-source="propertyKeys"
+          size="small"
+          class="table-popupInfo"
         >
-          <div style="width: 130px" :title="item">
-            {{ item }}
-          </div>
-          <div style="width: 170px" :title="popupInfo.properties[item]">
-            {{ popupInfo.properties[item] }}
-          </div>
-        </mapgis-ui-list-item>
-      </mapgis-ui-list>
+          <mapgis-ui-list-item
+            slot="renderItem"
+            slot-scope="item"
+            class="table-popupInfo-item"
+          >
+            <div style="width: 130px" :title="item">
+              {{ item }}
+            </div>
+            <div style="width: 170px" :title="popupInfo.properties[item]">
+              {{ popupInfo.properties[item] }}
+            </div>
+          </mapgis-ui-list-item>
+        </mapgis-ui-list>
+      </div>
     </mapgis-popup>
     <mapgis-3d-feature-popup
       v-if="!is2DMapMode && hasGlobeDisplay"
@@ -72,6 +77,16 @@ export default {
   },
 
   computed: {
+    // 根据filedConfigs做一个过滤，去除不可见的
+    propertyKeys() {
+      const keys = []
+      Object.keys(this.popupInfo.properties).forEach((key) => {
+        if (key !== 'title') {
+          keys.push(key)
+        }
+      })
+      return keys
+    },
     // 要素高亮样式
     highlightStyle() {
       return baseConfigInstance.config.colorConfig
@@ -90,6 +105,12 @@ export default {
         height: Number(coordinates[2]) || 0,
       }
       return position
+    },
+    title() {
+      if (this.popupInfo.properties.title) {
+        return this.popupInfo.properties.title
+      }
+      return null
     },
   },
 
@@ -305,5 +326,25 @@ export default {
       }
     }
   }
+}
+
+.pick-popup-title {
+  margin-top: 5px;
+  padding: 6px;
+  color: #b2b2b2;
+  font-weight: bold;
+  border-bottom: 1px solid var(--border-color-split);
+  line-height: 11px;
+  text-align: left;
+  white-space: nowrap;
+  min-width: 240px;
+  font-size: 14px;
+}
+
+::v-deep .mapgis-popup-title {
+  border-bottom: unset;
+  padding: 6px 0 0px 0;
+  font-size: 14px;
+  border-left: unset;
 }
 </style>
