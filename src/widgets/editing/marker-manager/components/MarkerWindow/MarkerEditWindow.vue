@@ -102,7 +102,12 @@ export default {
     onFileChange({ fileList, file }) {
       this.fileList = fileList
       if (file.status === 'done') {
-        this.markerValue.picture = file.response.url
+        const fileName = file.name.split('.')[0]
+        const url = file.response.url.replace(
+          fileName,
+          encodeURIComponent(fileName)
+        )
+        this.markerValue.picture = url
       }
     },
 
@@ -114,7 +119,12 @@ export default {
 
     onFilePreview(file) {
       this.previewVisible = true
-      this.previewImage = file.url || `${this.baseUrl}${file.response.url}`
+      const fileName = file.name.split('.')[0]
+      const url = (file.url || `${this.baseUrl}${file.response.url}`).replace(
+        fileName,
+        encodeURIComponent(fileName)
+      )
+      this.previewImage = url
     },
 
     onPreviewCancel() {
