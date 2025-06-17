@@ -134,9 +134,17 @@ export default {
   },
 }
 </script>
-<style lang="less">
+<style lang="scss" scoped>
 #mp-3d-particle-effects {
   width: 300px;
   max-width: 100%;
+}
+
+::v-deep .mapgis-ui-tab-panel-item-active .anticon {
+  color: var(--primary-color);
+}
+
+::v-deep .mapgis-ui-tab-panel-item-active {
+  background: unset;
 }
 </style>
