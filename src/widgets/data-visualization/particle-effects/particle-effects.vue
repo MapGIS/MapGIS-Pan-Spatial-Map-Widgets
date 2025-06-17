@@ -145,6 +145,6 @@ export default {
 }
 
 ::v-deep .mapgis-ui-tab-panel-item-active {
-  background: unset;
+  background: var(--panel-background);
 }
 </style>
