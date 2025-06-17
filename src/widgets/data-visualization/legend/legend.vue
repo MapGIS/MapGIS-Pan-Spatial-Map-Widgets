@@ -256,10 +256,6 @@ export default {
           labelLengendArr[length - 1] && labelLengendArr[length - 1].name
             ? labelLengendArr[length - 1].name
             : null
-        if (!tempLegend || tempLegend == '') {
-          // 如果图例为空，继续
-          continue
-        }
         for (let j = length - 1; j >= 0; j--) {
           const { name, legend } = labelLengendArr[j]
           const description = labelArr.slice(0, j + 1).join('-')
