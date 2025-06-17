@@ -44,8 +44,13 @@
             @change="onFileChange"
           >
             <div v-if="fileList.length < 1">
-              <mapgis-ui-iconfont type="mapgis-plus" />
-              <div class="ant-upload-text">上传</div>
+              <mapgis-ui-tooltip slot="tip" placement="top">
+                <template slot="title">
+                  <span>{{ info }}</span>
+                </template>
+                <mapgis-ui-iconfont type="mapgis-plus" />
+                <div class="ant-upload-text">上传</div>
+              </mapgis-ui-tooltip>
             </div>
           </mapgis-ui-upload>
           <mapgis-ui-modal
@@ -84,6 +89,7 @@ export default {
       previewVisible: false,
       previewImage: '',
       fileList: [],
+      info: `文件名不能包含下列任何字符：.\\*/:'?"<>|%`,
     }
   },
 
