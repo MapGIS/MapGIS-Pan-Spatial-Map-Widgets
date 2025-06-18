@@ -51,11 +51,16 @@
           @change="handleChange"
         >
           <div class="upload-content">
-            <mapgis-ui-iconfont
-              type="mapgis-upload"
-              :style="{ fontSize: '36px' }"
-            />
-            <p>{{ label }}</p>
+            <mapgis-ui-tooltip slot="tip" placement="top">
+              <template slot="title">
+                <span>{{ info }}</span>
+              </template>
+              <mapgis-ui-iconfont
+                type="mapgis-upload"
+                :style="{ fontSize: '36px' }"
+              />
+              <p>{{ label }}</p>
+            </mapgis-ui-tooltip>
           </div>
         </mapgis-ui-upload-dragger>
         <!-- 走一张图服务服务要这种方式 -->
@@ -67,11 +72,16 @@
           @change="handleChange"
         >
           <div class="upload-content">
-            <mapgis-ui-iconfont
-              type="mapgis-upload"
-              :style="{ fontSize: '36px' }"
-            />
-            <p>{{ label }}</p>
+            <mapgis-ui-tooltip slot="tip" placement="top">
+              <template slot="title">
+                <span>{{ info }}</span>
+              </template>
+              <mapgis-ui-iconfont
+                type="mapgis-upload"
+                :style="{ fontSize: '36px' }"
+              />
+              <p>{{ label }}</p>
+            </mapgis-ui-tooltip>
           </div>
         </mapgis-ui-upload-dragger>
       </mapgis-ui-row>
@@ -125,6 +135,7 @@ export default {
       // 接受的上传文件类型
       accept: '',
       fileList: [],
+      info: `文件名不能包含下列任何字符：.\\*/:'?"<>|%#$&()_+=@《》{}[]~^`,
     }
   },
 
@@ -290,7 +301,7 @@ export default {
     handleChange(info) {
       if (info.file.status === 'done') {
         this.isDisabled = false
-        this.file = `${window.location.origin}${info.file.response.url}`
+        this.file = `${window.location.origin}${this.baseUrl}${info.file.response.url}`
       }
     },
   },

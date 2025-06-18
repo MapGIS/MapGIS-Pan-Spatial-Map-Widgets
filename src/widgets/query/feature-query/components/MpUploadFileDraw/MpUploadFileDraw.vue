@@ -23,15 +23,23 @@
         :remove="handleRemove"
         :before-upload="beforeUpload"
       >
-        <mapgis-ui-ant-icon type="cloud-upload"></mapgis-ui-ant-icon>
-        <div class="mapgis-ui-upload__text">
-          将文件拖到此处，或<em>点击上传</em>
-        </div>
-        <div class="mapgis-ui-upload__text" style="font-size: 12px">
-          只支持.wp,.WP,.WL,.wl(经纬度)文件
-        </div>
-        <div class="mapgis-ui-upload__text" style="font-size: 12px">
-          请确保已在后台配置IP地址和端口号
+        <div>
+          <mapgis-ui-tooltip slot="tip" placement="top">
+            <template slot="title">
+              <span>{{ info }}</span>
+            </template>
+
+            <mapgis-ui-ant-icon type="cloud-upload"></mapgis-ui-ant-icon>
+            <div class="mapgis-ui-upload__text">
+              将文件拖到此处，或<em>点击上传</em>
+            </div>
+            <div class="mapgis-ui-upload__text" style="font-size: 12px">
+              只支持.wp,.WP,.WL,.wl(经纬度)文件
+            </div>
+            <div class="mapgis-ui-upload__text" style="font-size: 12px">
+              请确保已在后台配置IP地址和端口号
+            </div>
+          </mapgis-ui-tooltip>
         </div>
       </mapgis-ui-upload-dragger>
     </div>
@@ -69,6 +77,7 @@ export default {
       fileList: [],
       ip: baseConfigInstance.config.ip,
       port: baseConfigInstance.config.port,
+      info: `文件名不能包含下列任何字符：.\\*/:'?"<>|%#$&()_+=@《》{}[]~^`,
     }
   },
   methods: {
