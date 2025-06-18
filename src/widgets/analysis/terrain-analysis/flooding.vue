@@ -170,6 +170,7 @@ export default {
       this.progressData = JSON.parse(JSON.stringify(progressData))
       this.progressVisible = true
       this.currentHeight = 0
+      this.start()
     },
     start() {
       let isPause = false
