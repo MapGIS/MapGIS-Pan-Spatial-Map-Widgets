@@ -693,7 +693,15 @@ export default {
         // 通过缓冲半径单位，将用户设置的缓冲半径值，转化为服务需要的缓冲半径值
         // 默认单位为像素，根据分辨率计算一像素代表多少米，之后换算为服务端需要的缓冲半径值
         // 其他可选单位为千米、米、厘米，当前仅支持经纬度坐标系图层的要素查询
-        const nearDis = this.getNearDistance(shape, layer, this.nearDistance)
+        let nearDis
+        if ([QueryType.Point, QueryType.LineString].includes(this.queryType)) {
+          // 线类型取第一个点算缓冲半径
+          nearDis = this.getNearDistance(
+            QueryType.Point === this.queryType ? shape : shape[0],
+            layer,
+            this.nearDistance
+          )
+        }
 
         const geometry = this.toQueryGeometry(
           layer,
