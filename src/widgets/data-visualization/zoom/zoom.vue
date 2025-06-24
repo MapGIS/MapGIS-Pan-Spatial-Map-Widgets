@@ -74,6 +74,7 @@ export default {
       cameraView: null,
       mapBounds: null,
       enableZoomSnap: true, // 是否开启级别吸附
+      mapCesiumInitialized: false, // map和cesium是否都已初始化
     }
   },
 
@@ -211,6 +212,19 @@ export default {
         }, 300)
       } else {
         FitBound.fitBound3D(bound, mapParams)
+      }
+    },
+
+    /**
+     * 二三维切换变化后
+     */
+    onMapModeChanged() {
+      if (!this.mapCesiumInitialized) {
+        // 第一次切换视图后，才能保证视图都被初始化
+        this.mapCesiumInitialized = true
+        this.nextTick(() => {
+          this.onRestore()
+        })
       }
     },
 
