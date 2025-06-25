@@ -637,6 +637,9 @@ export default {
               if (this.currentId) {
                 this.currentId = '' // 清空当前id用于清除页面已绘制图形
               }
+            }else {
+              this.drawComponent &&
+              this.drawComponent.removeLastDraw()
             }
             this.drawComponent &&
               this.drawComponent.openDraw(
