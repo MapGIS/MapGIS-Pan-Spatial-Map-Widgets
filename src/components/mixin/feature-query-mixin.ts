@@ -173,12 +173,12 @@ export default {
     },
     /**
      * 根据坐标计算缓冲半径
-     * @param {Object} shape 点坐标
+     * @param {Object} point 点坐标
      * @param {Object} layer 图层对象
      * @param {Number} nearDistance 设置的缓冲半径，换算前
      * @return {Number} 缓冲半径
      * */
-    getNearDistance(shape: Record<string, number>, layer, nearDistance) {
+    getNearDistance(point: Record<string, number>, layer, nearDistance) {
       // 默认缓冲半径，单位和图层的坐标系挂钩
       let nearDis = 0.0001
       // 当前的级数和分辨率
@@ -196,7 +196,7 @@ export default {
             default:
               // 根据分辨率计算缓冲半径
               nearDis = this.getNearDistanceByResolution(
-                shape,
+                point,
                 distanceUnits,
                 nearDistance
               )
@@ -218,7 +218,7 @@ export default {
         else {
           // 根据分辨率计算缓冲半径
           nearDis = this.getNearDistanceByResolution(
-            shape,
+            point,
             distanceUnits,
             nearDistance
           )
@@ -228,13 +228,13 @@ export default {
     },
     /**
      * 根据分辨率计算缓冲半径
-     * @param {Object} shape 点坐标
+     * @param {Object} point 点坐标
      * @param {Number} distanceUnits 一度代表多少米，纬度不同，数值也不同，没有直接返回默认缓冲半径
      * @param {Number} nearDistance 设置的缓冲半径，换算前
      * @return {Number} 缓冲半径
      * */
     getNearDistanceByResolution(
-      shape: Record<string, number>,
+      point: Record<string, number>,
       distanceUnits,
       nearDistance
     ) {
@@ -251,8 +251,8 @@ export default {
           // 获取地图中心点经纬度
           const { map } = this
           const coord = {
-            lng: shape.x,
-            lat: shape.y,
+            lng: point.x,
+            lat: point.y,
           }
 
           // 将坐标点转换为屏幕像素坐标
@@ -270,8 +270,8 @@ export default {
           nearDis = ((resolutionX + resolutionY) / 2) * nearDistance
         } else {
           const zoomAndResolution = this.sceneController.getZoomAndResolution({
-            lng: shape.x,
-            lat: shape.y,
+            lng: point.x,
+            lat: point.y,
           })
           nearDis =
             (zoomAndResolution.resolution * nearDistance) / distanceUnits
