@@ -67,6 +67,7 @@ import {
   Feature,
   baseConfigInstance,
   api,
+  UrlUtil,
 } from '@mapgis/web-app-framework'
 import axios from 'axios'
 import ZoneFrameMapbox from './ZoneFrameMapbox.vue'
@@ -133,8 +134,8 @@ export default {
       try {
         const { scale, pageNum, pageSize, keyword } = this
         // 通过sheetConfig内的ip、port、name去获取地图范围，构造成[xMin, yMin, xMax, yMax]，用于查询图幅号
-        const protocol = window.location.protocol
-        const domain = `${protocol}//${this.frameConfig.ip}:${this.frameConfig.port}`
+        const { ip, port } = this.frameConfig
+        const domain = `${UrlUtil.getOrigin({ ip, port })}`
         const {
           data: { xMin, yMin, xMax, yMax },
         } = await axios.get(

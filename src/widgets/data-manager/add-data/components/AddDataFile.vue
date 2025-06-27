@@ -175,17 +175,16 @@ export default {
   },
   computed: {
     domain() {
-      const protocol = window.location.protocol
       let ip
       let port
-      if (!!this.config && !!this.config.igsIp && !!this.config.igsPort) {
+      if (!!this.config && !!this.config.igsIp) {
         ip = this.config.igsIp
         port = this.config.igsPort
       } else {
         ip = baseConfigInstance.config.ip
         port = baseConfigInstance.config.port
       }
-      const domain = `${protocol}//${ip}:${port}`
+      const domain = `${UrlUtil.getOrigin({ ip, port })}`
       return domain
     },
     action() {

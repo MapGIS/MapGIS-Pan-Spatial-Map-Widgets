@@ -48,7 +48,7 @@
 <script>
 /* eslint-disable */
 // @ts-nocheck
-import { UUID, baseConfigInstance } from '@mapgis/web-app-framework'
+import { UUID, baseConfigInstance, UrlUtil } from '@mapgis/web-app-framework'
 import axios from 'axios'
 
 export default {
@@ -143,15 +143,23 @@ export default {
       }
     },
     uploadFile(param) {
+      const { ip, port } = this
       return axios.post(
-        `${window.location.protocol}//${this.ip}:${this.port}/igs/rest/services/system/ResourceServer/files`,
+        `${UrlUtil.getOrigin({
+          ip,
+          port,
+        })}/igs/rest/services/system/ResourceServer/files`,
         param,
         { headers: { 'Content-type': 'multipart/form-data' } }
       )
     },
     featureQuery(path) {
+      const { ip, port } = this
       return axios.get(
-        `${window.location.protocol}//${this.ip}:${this.port}/igs/rest/services/system/ResourceServer/tempData/features/query?f=json&url=${path}`
+        `${UrlUtil.getOrigin({
+          ip,
+          port,
+        })}/igs/rest/services/system/ResourceServer/tempData/features/query?f=json&url=${path}`
       )
     },
     clear() {

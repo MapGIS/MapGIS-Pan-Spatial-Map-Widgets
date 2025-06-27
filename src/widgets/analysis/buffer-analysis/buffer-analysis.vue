@@ -111,6 +111,7 @@ import {
   baseConfigInstance,
   ActiveResultSet,
   dataCatalogManagerInstance,
+  UrlUtil,
 } from '@mapgis/web-app-framework'
 import { Style } from '@mapgis/webclient-es6-service'
 import MpExportLayer from '../../../components/ExportLayer/export-layer.vue'
@@ -190,7 +191,8 @@ export default {
         const url = new URL(this.baseBufferUrl)
         return url.origin
       }
-      return `${window.location.protocol}//${baseConfigInstance.config.ip}:${baseConfigInstance.config.port}`
+      const { ip, port } = baseConfigInstance.config
+      return `${UrlUtil.getOrigin({ ip, port })}`
     },
   },
 
