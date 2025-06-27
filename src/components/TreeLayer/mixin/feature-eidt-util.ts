@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { Statistics } from '@mapgis/web-app-framework'
+import { Statistics, UrlUtil } from '@mapgis/web-app-framework'
 
 export default {
   inject: ['getApplication'],
@@ -98,7 +98,7 @@ export default {
       } catch (error) {
         const ip = this.getApplication()?.baseConfig?.ip
         const port = this.getApplication()?.baseConfig?.port
-        origin = `${window.location.protocol}//${ip}:${port}`
+        origin = `${UrlUtil.getOrigin({ ip, port })}`
       }
       return origin
     },

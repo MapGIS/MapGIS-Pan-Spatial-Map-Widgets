@@ -5,6 +5,7 @@ import {
   LoadStatus,
   FitBound,
   DataCatalogManager,
+  UrlUtil,
 } from '@mapgis/web-app-framework'
 import MpBasemapItem from '../BasemapItem/BasemapItem.vue'
 import { inOrderPromise } from '@mapgis/webclient-common'
@@ -322,6 +323,8 @@ export default {
           protocol = tempUrl.protocol
         }
         const newLayer = { name: layerName, url: serverUrl }
+        const ip = serverip
+        const port = serverport
         // 类型映射表
         let map: Record<string, string>
         switch (serverType) {
@@ -374,19 +377,28 @@ export default {
           case 'tile':
             newLayer.type = 'IGSTile'
             if (!serverUrl) {
-              newLayer.url = `${protocol}//${serverip}:${serverport}/igs/rest/mrms/tile/${layerName}`
+              newLayer.url = `${UrlUtil.getOrigin({
+                ip,
+                port,
+              })}/igs/rest/mrms/tile/${layerName}`
             }
             break
           case 'doc':
             newLayer.type = 'IGSMapImage'
             if (!serverUrl) {
-              newLayer.url = `${protocol}//${serverip}:${serverport}/igs/rest/mrms/docs/${layerName}`
+              newLayer.url = `${UrlUtil.getOrigin({
+                ip,
+                port,
+              })}/igs/rest/mrms/docs/${layerName}`
             }
             break
           case 'layer':
             newLayer.type = 'IGSVector'
             if (!serverUrl) {
-              newLayer.url = `${protocol}//${serverip}:${serverport}/igs/rest/mrms/layers?gdbps=${layerName}`
+              newLayer.url = `${UrlUtil.getOrigin({
+                ip,
+                port,
+              })}/igs/rest/mrms/layers?gdbps=${layerName}`
             }
             break
           default:
