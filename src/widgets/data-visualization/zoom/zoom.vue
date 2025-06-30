@@ -48,31 +48,11 @@ export default {
   watch: {
     is2DMapMode: {
       handler: 'is2DMapModeChange',
-      immediate: true,
     },
   },
 
   data() {
     return {
-      defaultCameraView: {
-        destination: {
-          x: -8579846.669255955,
-          y: 20871852.812287178,
-          z: 16141755.871903004,
-        },
-        orientation: {
-          heading: 0.03209985611581789,
-          pitch: -1.5635848496585378,
-          roll: 0,
-        },
-        positionWC: {
-          x: -8579846.66925595,
-          y: 20871852.812287178,
-          z: 16141755.871903006,
-        },
-      },
-      cameraView: null,
-      mapBounds: null,
       enableZoomSnap: true, // 是否开启级别吸附
       mapCesiumInitialized: false, // map和cesium是否都已初始化
     }
@@ -109,14 +89,12 @@ export default {
 
   methods: {
     is2DMapModeChange(mode2D) {
-      if (!mode2D) {
-        if (this.viewer && !this.cameraView) {
-          // fixme 目前的首次加载的初始视角效果不好，先使用defaultCameraView视角做重置视角
-          // this.cameraView = this.viewer.camera.getView()
-          this.cameraView = this.defaultCameraView
-        }
-      } else if (this.map && !this.mapBounds) {
-        this.mapBounds = this.map.getBounds()
+      if (!this.mapCesiumInitialized) {
+        // 第一次切换视图后，才能保证视图都被初始化
+        this.mapCesiumInitialized = true
+        this.$nextTick(() => {
+          this.onRestore()
+        })
       }
     },
 
@@ -212,19 +190,6 @@ export default {
         }, 300)
       } else {
         FitBound.fitBound3D(bound, mapParams)
-      }
-    },
-
-    /**
-     * 二三维切换变化后
-     */
-    onMapModeChanged() {
-      if (!this.mapCesiumInitialized) {
-        // 第一次切换视图后，才能保证视图都被初始化
-        this.mapCesiumInitialized = true
-        this.nextTick(() => {
-          this.onRestore()
-        })
       }
     },
 
