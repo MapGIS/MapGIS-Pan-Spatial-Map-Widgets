@@ -13,6 +13,7 @@
         :tab="option.name"
       >
         <component
+          v-if="option.id === activeOptionId"
           :is="attributeTableComponent"
           :ref="option.id"
           :option="option"

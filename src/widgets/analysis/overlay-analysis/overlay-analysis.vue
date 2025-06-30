@@ -122,6 +122,7 @@ import {
   events,
   baseConfigInstance,
   dataCatalogManagerInstance,
+  UrlUtil,
 } from '@mapgis/web-app-framework'
 import MpExportLayer from '../../../components/ExportLayer/export-layer.vue'
 
@@ -195,7 +196,8 @@ export default {
         const url = new URL(this.baseOverlayUrl)
         return url.origin
       }
-      return `${window.location.protocol}//${baseConfigInstance.config.ip}:${baseConfigInstance.config.port}`
+      const { ip, port } = baseConfigInstance.config
+      return `${UrlUtil.getOrigin({ ip, port })}`
     },
   },
 

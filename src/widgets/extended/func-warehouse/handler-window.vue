@@ -55,6 +55,7 @@ import {
   DataCatalogManager,
   eventBus,
   events,
+  UrlUtil,
 } from '@mapgis/web-app-framework'
 
 // {
@@ -302,10 +303,10 @@ export default {
       const nameStr = nameStrs[nameStrs.length - 1]
       const ip = this.ip || baseConfigInstance.config.ip
       const port = this.port || baseConfigInstance.config.port
-      const protocol = window.location.protocol
-      const url = `${protocol}//${ip}:${port}/igs/rest/mrms/layers?gdbps=${
-        gdbp as string
-      }`
+      const url = `${UrlUtil.getOrigin({
+        ip,
+        port,
+      })}/igs/rest/mrms/layers?gdbps=${gdbp as string}`
 
       const data = {
         name: 'IGS图层',
