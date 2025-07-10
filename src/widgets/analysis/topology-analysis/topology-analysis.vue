@@ -548,6 +548,7 @@ export default {
             const analysisGeom = analysis.fGeom.RegGeom[0]
             analysisService.setReg(analysisGeom)
           }
+          analysisService.nearDis = 0.0000000001;
           analysisService.execute(
             (res) => {
               let msg = ''
