@@ -13405,20 +13405,13 @@ proj4@2.9.0:
     mgrs "1.0.0"
     wkt-parser "^1.3.1"
 
-proj4@^2.3.14, proj4@^2.7.5, proj4@^2.9.0:
+proj4@^2.7.5, proj4@^2.9.0:
   version "2.15.0"
   resolved "http://192.168.11.130:4873/proj4/-/proj4-2.15.0.tgz#d77c9956861c8ed516071c4208d576cebe800eb5"
   integrity sha512-LqCNEcPdI03BrCHxPLj29vsd5afsm+0sV1H/O3nTDKrv8/LA01ea1z4QADDMjUqxSXWnrmmQDjqFm1J/uZ5RLw==
   dependencies:
     mgrs "1.0.0"
     wkt-parser "^1.4.0"
-
-proj4leaflet@1.0.2:
-  version "1.0.2"
-  resolved "http://192.168.11.130:4873/proj4leaflet/-/proj4leaflet-1.0.2.tgz#dec59f1e8a77a1682e320673e1e56f4161714d2a"
-  integrity sha512-6GdDeUlhX/tHUiMEj80xQhlPjwrXcdfD0D5OBymY8WvxfbmZcdhNqQk7n7nFf53ue6QdP9ls9ZPjsAxnbZDTsw==
-  dependencies:
-    proj4 "^2.3.14"
 
 promise-inflight@^1.0.1:
   version "1.0.1"
