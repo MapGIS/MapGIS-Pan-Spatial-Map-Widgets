@@ -151,10 +151,7 @@ export default {
                   layers.push(layer)
                 }
               }
-            } else if (
-              layer.type === LayerType.ModelCache &&
-              layer.format === ModelCacheFormat.m3d
-            ) {
+            } else if (layer.type === LayerType.ModelCache) {
               layers.push(layer)
             }
           }
@@ -190,7 +187,7 @@ export default {
     },
     updateLayerProperty() {
       const { enableModelStretch, scaleZ, offset, textureScale } = this
-      const { layerProperty } = this.layer
+      const layerProperty = this.layer?.layerProperty
       if (layerProperty) {
         this.layer.layerProperty = {
           ...layerProperty,
