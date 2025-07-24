@@ -103,7 +103,7 @@ export default {
         // mapbox如果有旋转，恢复到平面模式
         this.map.resetNorthPitch({ duration: 100 })
       }
-      const { initPositionMode } = baseConfigInstance.config
+      const { initPositionMode, duration } = baseConfigInstance.config
       const { Cesium, map, vueCesium, viewer } = this
       const mapParams = { Cesium, map, vueCesium, viewer }
       switch (initPositionMode) {
@@ -142,12 +142,12 @@ export default {
                   pitch: Cesium.Math.toRadians(pitch),
                   roll: Cesium.Math.toRadians(roll),
                 },
-                duration: 1.0,
+                duration,
               })
             } else {
               viewer.camera.flyTo({
                 destination: center,
-                duration: 1.0,
+                duration,
               })
             }
           }
@@ -184,12 +184,14 @@ export default {
     },
 
     initFitBound(bound, mapParams) {
+      const duration = baseConfigInstance.config.duration
+
       if (this.is2DMapMode) {
         setTimeout(() => {
-          FitBound.fitBound2D(bound, mapParams)
+          FitBound.fitBound2D(bound, mapParams, undefined, duration)
         }, 300)
       } else {
-        FitBound.fitBound3D(bound, mapParams)
+        FitBound.fitBound3D(bound, mapParams, undefined, undefined, duration)
       }
     },
 
@@ -217,6 +219,7 @@ export default {
     },
 
     fitBounds(item) {
+      const duration = baseConfigInstance.config.duration
       const { Cesium, map, vueCesium, viewer } = this
       const isOutOfRange = FitBound.fitBoundByLayer(
         item,
@@ -226,7 +229,10 @@ export default {
           viewer,
           vueCesium,
         },
-        this.is2DMapMode
+        this.is2DMapMode,
+        undefined,
+        undefined,
+        duration
       )
       if (isOutOfRange) {
         this.$message.error('初始底图范围有误，已调整为经纬度最大范围')
