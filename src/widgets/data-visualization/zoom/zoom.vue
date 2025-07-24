@@ -128,6 +128,8 @@ export default {
               this.map.flyTo({
                 center: [x, y],
                 zoom,
+                essential: true,
+                duration: duration * 1000
               })
             }, 300)
           } else {
