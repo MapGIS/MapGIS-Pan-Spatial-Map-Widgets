@@ -7,9 +7,9 @@
       v-if="is2DMapMode && hasMapDisplay"
       :coordinates="popupInfo.coordinates"
       :showed="showPopup"
-      @removed="clearHighlight"
+      @close="clearHighlight"
     >
-      <div>
+      <div class="pick-popup-container">
         <div v-if="title" class="pick-popup-title">
           {{ title }}
         </div>
@@ -18,16 +18,17 @@
           :data-source="propertyKeys"
           size="small"
           class="table-popupInfo"
+          bordered
         >
           <mapgis-ui-list-item
             slot="renderItem"
             slot-scope="item"
             class="table-popupInfo-item"
           >
-            <div style="width: 130px" :title="item">
+            <div :title="item">
               {{ item }}
             </div>
-            <div style="width: 170px" :title="popupInfo.properties[item]">
+            <div :title="popupInfo.properties[item]">
               {{ popupInfo.properties[item] }}
             </div>
           </mapgis-ui-list-item>
@@ -146,9 +147,18 @@ export default {
     },
     is2DMapMode: {
       deep: true,
-      immediate: true,
+      immediate: false,
       handler(newValue) {
-        this.clearHighlight()
+        this.init()
+        // 如果当前是二维模式则表示是从三维切换到二维，反之则是从二维切换到三维
+        if (newValue) {
+          // 清除三维上的高亮
+          this.clearHighlightOnCesium()
+        } else {
+          // 清除二维上的高亮
+          this.mapOverlays.clearHighlightFeature(this.prePopupId)
+        }
+        this.popupOverlayInstance.setContent(null)
       },
     },
   },
@@ -262,22 +272,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.table-popupInfo {
-  max-height: 200px;
-  overflow: auto;
-  margin-top: 10px;
-  .table-popupInfo-item {
-    padding: 0;
-    font-size: 12px;
-    div {
-      padding: 2px 2px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  }
-}
-
 .cesium-popup {
   .cesium-popup-content-wrapper {
     .table-marker {
@@ -328,17 +322,47 @@ export default {
   }
 }
 
-.pick-popup-title {
-  margin-top: 5px;
-  padding: 6px;
-  color: #b2b2b2;
-  font-weight: bold;
-  border-bottom: 1px solid var(--border-color-split);
-  line-height: 11px;
-  text-align: left;
-  white-space: nowrap;
-  min-width: 240px;
-  font-size: 14px;
+.pick-popup-container {
+  padding: 10px;
+  .pick-popup-title {
+    margin-top: 5px;
+    padding: 6px 0 0 0;
+    color: $text-color;
+    font-weight: bold;
+    line-height: 11px;
+    text-align: left;
+    white-space: nowrap;
+    min-width: 240px;
+    font-size: 14px;
+  }
+  .table-popupInfo {
+    max-height: 200px;
+    overflow: auto;
+    margin-top: 20px;
+    .table-popupInfo-item {
+      padding: 0;
+      font-size: 12px;
+      font-family: sans-serif;
+      div {
+        padding: 2px 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+}
+.table-popupInfo-item:nth-child(2n) {
+  background-color: var(--background-light);
+}
+
+.table-popupInfo-item > div:first-child {
+  width: 120px;
+  border-right: 1px solid var(--border-color-base);
+}
+
+.table-popupInfo-item > div:last-child {
+  flex: 1 0 0%;
 }
 
 ::v-deep .mapgis-popup-title {

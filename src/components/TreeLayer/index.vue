@@ -311,6 +311,8 @@ export default {
       iconArrCache: {},
       // 模型元数据的变换矩阵、中心点位置等信息
       modelMetadataList: [],
+      // 拾取微件中改变了图层的拾取信息是否同步当前currentLayerInfo
+      isUpdateCurrentLayerInfo: false,
     }
   },
   computed: {
@@ -497,6 +499,21 @@ export default {
           }
 
           this.resetPickLayers(layers)
+          if (this.isUpdateCurrentLayerInfo) {
+            let targetLayer
+            const callback = (layer) => {
+              targetLayer = layer
+            }
+            this.getTargetLayerNodeByNodeId(
+              layers,
+              this.currentLayerInfo.id,
+              callback
+            )
+            if (targetLayer) {
+              Object.assign(this.currentLayerInfo, targetLayer)
+            }
+            this.isUpdateCurrentLayerInfo = !this.isUpdateCurrentLayerInfo
+          }
         }
       },
     },
@@ -753,9 +770,10 @@ export default {
         this.layerDocument.defaultMap.layers() &&
         this.layerDocument.defaultMap.layers().length > 0
       ) {
-        layer = this.layerDocument.defaultMap.findLayerById(
-          this.currentLayerInfo.id
-        )
+        const id = this.currentLayerInfo.layer
+          ? this.currentLayerInfo.layer.id
+          : this.currentLayerInfo.id
+        layer = this.layerDocument.defaultMap.findLayerById(id)
       }
       if (!layer && this.widgetRouters && this.widgetRouters.length > 1) {
         this.widgetRouters.splice(1)
@@ -1373,6 +1391,9 @@ export default {
           },
           'update:modelCoordinateGrid': (val, type, layerId) => {
             this.updateModelCoordinateGrid(val, type, layerId)
+          },
+          'update:pick': (layerId, isOpen) => {
+            this.updateModelPick(layerId, isOpen)
           },
         },
       })
@@ -2127,15 +2148,36 @@ export default {
         ) {
           item.childIds.forEach((change) => {
             const indexArr = change.split(':')
-            const [firstIndex, secondIndex] = indexArr
-            if (indexArr.length === 2) {
+            const [firstIndex, secondIndex, thirdIndex] = indexArr
+            let sublayer
+            if (indexArr.length === 1) {
+              sublayer = targetLayer
+              targetLayer.enablePopup = modelPickOpen
+              targetLayer.layerProperty = {
+                ...targetLayer.layerProperty,
+                enablePopup: modelPickOpen,
+              }
+            } else if (indexArr.length === 2) {
               const { sublayers } = targetLayer.activeScene
-              const sublayer = sublayers[secondIndex]
+              sublayer = sublayers[secondIndex]
               sublayer.layer.enablePopup = modelPickOpen
               sublayer.layer.layerProperty = {
                 ...sublayer.layer.layerProperty,
                 enablePopup: modelPickOpen,
               }
+            } else if (indexArr.length === 3) {
+              const { sublayers } =
+                layers[firstIndex].activeScene.sublayers[secondIndex]
+              sublayer = sublayers[thirdIndex]
+              sublayer.layer.enablePopup = modelPickOpen
+              sublayer.layer.layerProperty = {
+                ...sublayer.layer.layerProperty,
+                enablePopup: modelPickOpen,
+              }
+            }
+            // 如果当前已打开二级路由页面则同步图层信息
+            if (this.currentLayerInfo.id === sublayer?.id) {
+              this.isUpdateCurrentLayerInfo = true
             }
           })
         } else {
@@ -2143,6 +2185,9 @@ export default {
           targetLayer.layerProperty = {
             ...targetLayer.layerProperty,
             enablePopup: modelPickOpen,
+          }
+          if (this.currentLayerInfo.id === targetLayer.id) {
+            this.isUpdateCurrentLayerInfo = true
           }
         }
       })
@@ -2251,6 +2296,36 @@ export default {
             })
           }
         })
+    },
+    // 根据图层阶段id获取对应的节点
+    getTargetLayerNodeByNodeId(layers, nodeId, callback) {
+      layers.forEach((layer) => {
+        if (layer.id === nodeId) {
+          callback(layer)
+        } else {
+          if (layer.sublayers && layer.sublayers.length) {
+            this.getTargetLayerNodeByNodeId(layer.sublayers, nodeId, callback)
+          }
+        }
+      })
+    },
+    updateModelPick(layerId, isOpen) {
+      const targetPickObj = ModelPickController.pickLayerObj.find(
+        (item) => item.parentId === layerId
+      )
+
+      if (targetPickObj) {
+        targetPickObj.isOpen = isOpen
+        ModelPickController.pickLayerObj = [targetPickObj]
+      } else {
+        const data = {
+          parentId: layerId,
+          isOpen,
+          childIds: this.modelPickController.layerRelation[layerId],
+        }
+        ModelPickController.pickLayerObj = [data]
+      }
+      ModelPickController.modelPickOpen = isOpen
     },
   },
   beforeDestroy() {

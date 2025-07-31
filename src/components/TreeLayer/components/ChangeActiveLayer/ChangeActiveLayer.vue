@@ -11,6 +11,7 @@
             v-for="{ title, id } in Sublayers"
             :key="id"
             :value="id"
+            :title="title"
           >
             {{ title }}
           </mapgis-ui-select-option>
@@ -22,6 +23,7 @@
             v-for="{ id } in tileMatrixSets"
             :key="id"
             :value="id"
+            :title="id"
           >
             {{ id }}
           </mapgis-ui-select-option>

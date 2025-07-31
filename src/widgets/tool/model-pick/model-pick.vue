@@ -88,7 +88,7 @@ export default {
       }
     },
     layerPickChange(val, isOpen, index) {
-      const childLayer = this.layerRelation[val]
+      const childLayer = this.modelPickController.layerRelation[val]
       const layer = this.pickLayers.find((item) => item.key === val)
       const data = {
         isOpen: layer.value,
@@ -109,7 +109,7 @@ export default {
     changeLayer(changeArr, isOpen) {
       const changeLayerArr = []
       changeArr.forEach((item) => {
-        const childLayer = this.layerRelation[item.key]
+        const childLayer = this.modelPickController.layerRelation[item.key]
         const data = {
           isOpen: !item.value,
           parentId: item.key,

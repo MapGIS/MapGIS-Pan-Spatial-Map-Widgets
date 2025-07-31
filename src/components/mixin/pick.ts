@@ -70,12 +70,24 @@ export default {
           isOpen: false,
         }
         const childLayer = []
-        if (
-          layer.type !== LayerType.IGSVector &&
-          layer.sublayers &&
-          layer.sublayers.length > 0
-        ) {
-          this.getLayerRelation(layer.sublayers, childLayer, openObj)
+        if (layer.type !== LayerType.IGSVector) {
+          if (
+            layer.activeScene &&
+            layer.activeScene.sublayers &&
+            layer.activeScene.sublayers.length > 0
+          ) {
+            this.getLayerRelation(
+              layer.activeScene.sublayers,
+              childLayer,
+              openObj
+            )
+          } else {
+            this.getLayerRelation(
+              layer.sublayers ? layer.sublayers : [layer],
+              childLayer,
+              openObj
+            )
+          }
         } else {
           openObj.isOpen = layer.layerProperty?.enablePopup
         }
@@ -96,6 +108,7 @@ export default {
         }
       })
       ModelPickController.pickLayers = pickArr
+      ModelPickController.layerRelation = this.layerRelation
       this.openPickLayers = openPickArr
       const { Cesium, viewer, map } = this
       const self = this
