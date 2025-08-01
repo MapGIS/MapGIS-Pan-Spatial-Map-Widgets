@@ -1924,11 +1924,12 @@ export default {
       const layers: Array<unknown> = doc.defaultMap.layers()
       if (indexArr.length === 1) {
         const layerItem: OGCWMTSLayer = layers[indexArr[0]]
-        const activeLayer = layerItem.findSublayerById(id)
-        if (activeLayer) {
-          activeLayer.tileMatrixSetId = tileMatrixSetId
-          layerItem.activeLayer = activeLayer
+        const layerProperty = {
+          ...layerItem.layerProperty,
+          activeLayerId: id,
+          tileMatrixSetId: tileMatrixSetId,
         }
+        layerItem.layerProperty = layerProperty
       }
       this.$emit('update:layerDocument', doc)
     },
@@ -1951,7 +1952,8 @@ export default {
           activeLayerId: id,
           tileMatrixSetId: tileMatrixSetId,
         }
-
+        layerItem.layerProperty = layerProperty
+        this.$emit('update:layerDocument', doc)
         api
           .updateData({
             dataId: layerItem.dataId,
