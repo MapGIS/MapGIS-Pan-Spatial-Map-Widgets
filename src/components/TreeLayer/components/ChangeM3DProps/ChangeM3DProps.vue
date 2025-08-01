@@ -20,7 +20,7 @@
         />
       </mapgis-ui-form-item>
       <mapgis-ui-form-item label="开启拾取">
-        <mapgis-ui-switch v-model="enablePopup" />
+        <mapgis-ui-switch v-model="enablePopup" @change="enablePopupChange" />
       </mapgis-ui-form-item>
       <mapgis-ui-form-item label="开启模型包围盒">
         <mapgis-ui-switch
@@ -113,11 +113,14 @@ export default {
     },
   },
   watch: {
-    // layer: {
-    //   handler: 'init',
-    //   immediate: true,
-    //   deep: true,
-    // },
+    layer: {
+      // 深度监听传入的layer对象，处理enablePopup属性
+      handler() {
+        this.handelEnablePopupChange()
+      },
+      immediate: false,
+      deep: true,
+    },
     scaleZ: {
       handler(val) {
         this.$emit('update:scaleZ', {
@@ -263,6 +266,23 @@ export default {
         val.target.value,
         this.layer.id
       )
+    },
+    handelEnablePopupChange() {
+      const layer = this.layer.layer ? this.layer.layer : this.layer
+      if (layer) {
+        const { layerProperty } = layer
+        let { enablePopup } = layer
+        if (layerProperty) {
+          if (layerProperty.enablePopup !== undefined) {
+            enablePopup = layerProperty.enablePopup
+          }
+          this.enablePopup = enablePopup !== undefined ? enablePopup : false
+        }
+      }
+    },
+    enablePopupChange() {
+      const layer = this.layer.layer ? this.layer.layer : this.layer
+      this.$emit('update:pick', layer.id, this.enablePopup)
     },
   },
 }

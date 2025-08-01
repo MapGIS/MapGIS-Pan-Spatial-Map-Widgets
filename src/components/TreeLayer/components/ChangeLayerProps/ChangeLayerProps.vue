@@ -58,23 +58,6 @@ export default {
         layer.type === LayerType.IGSVector
       )
     },
-    enablePopup: {
-      get() {
-        const layer = this.layer.layer ? this.layer.layer : this.layer
-        if (layer) {
-          const { layerProperty } = layer
-          if (layerProperty) {
-            if (layerProperty.enablePopup !== undefined) {
-              return layerProperty.enablePopup
-            }
-          }
-        }
-        return false
-      },
-      set(enable) {
-        this.submit()
-      },
-    },
   },
   watch: {
     layer: {
