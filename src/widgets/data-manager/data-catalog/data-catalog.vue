@@ -1503,6 +1503,7 @@ export default {
     // 图层自动定位方法
     fitBounds(item, layeExtent) {
       const { Cesium, map, viewer, vueCesium } = this
+      const duration = baseConfigInstance.config.duration
       const isOutOfRange = FitBound.fitBoundByLayer(
         item,
         {
@@ -1512,7 +1513,9 @@ export default {
           vueCesium,
         },
         this.is2DMapMode,
-        layeExtent
+        layeExtent,
+        undefined,
+        duration
       )
       if (isOutOfRange) {
         this.$message.error('地图范围有误，已调整为经纬度最大范围')
