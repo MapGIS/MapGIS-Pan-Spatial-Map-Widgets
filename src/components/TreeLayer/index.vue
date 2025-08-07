@@ -830,13 +830,43 @@ export default {
         } else if (item.visible !== undefined) {
           parentVisible = item.visible
         }
+        const { wkid } = baseConfigInstance.config
+        let layerWkid = Number(item.spatialReference?.wkid)
+        if (
+          layerWkid === 4326 ||
+          layerWkid === 4490 ||
+          layerWkid === 4610 ||
+          layerWkid === 4214 ||
+          layerWkid === 20010201 ||
+          layerWkid === 20020901
+        ) {
+          layerWkid = 4326
+        } else {
+          layerWkid = 3857
+        }
+        if (
+          ![LayerType.GeoJson, LayerType.Plot, LayerType.IGSPanoramic].includes(
+            item.type
+          ) &&
+          layerWkid !== Number(wkid)
+        ) {
+          item['checkbox-class'] = 'tree-item-custom-checkbox'
+        }
         if (item.sublayers && item.sublayers.length > 0) {
-          this.changeSublayersVisible(item.sublayers, parentVisible)
+          this.changeSublayersVisible(
+            item.sublayers,
+            parentVisible,
+            item['checkbox-class']
+          )
         }
       }
     },
 
-    changeSublayersVisible(sublayers: Array, parentVisible: boolean) {
+    changeSublayersVisible(
+      sublayers: Array,
+      parentVisible: boolean,
+      parentCheckboxClass?: string
+    ) {
       for (let index = 0; index < sublayers.length; index++) {
         const item = sublayers[index]
         let subParentVisible
@@ -851,8 +881,13 @@ export default {
           }
           subParentVisible = item.visible
         }
+        item['checkbox-class'] = parentCheckboxClass
         if (item.sublayers && item.sublayers.length > 0) {
-          this.changeSublayersVisible(item.sublayers, subParentVisible)
+          this.changeSublayersVisible(
+            item.sublayers,
+            subParentVisible,
+            parentCheckboxClass
+          )
         }
       }
     },
@@ -2407,6 +2442,11 @@ export default {
     }
   }
 }
+
+.tree-item-custom-checkbox {
+  border: 2px solid #e6ff00 !important;
+}
+
 .mapgis-ui-iconfont :hover {
   color: $primary-color;
 }

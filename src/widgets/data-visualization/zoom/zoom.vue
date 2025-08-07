@@ -41,6 +41,12 @@ import {
   baseConfigInstance,
   DataCatalogManager,
 } from '@mapgis/web-app-framework'
+import {
+  Projection,
+  Point,
+  SpatialReference,
+  Extent,
+} from '@mapgis/webclient-common'
 
 export default {
   name: 'MpZoom',
@@ -103,13 +109,32 @@ export default {
         // mapbox如果有旋转，恢复到平面模式
         this.map.resetNorthPitch({ duration: 100 })
       }
-      const { initPositionMode, duration } = baseConfigInstance.config
+      const { initPositionMode, duration, wkid } = baseConfigInstance.config
       const { Cesium, map, vueCesium, viewer } = this
       const mapParams = { Cesium, map, vueCesium, viewer }
       switch (initPositionMode) {
         // 根据范围重置
         case 'initExtent':
-          const { xmin, ymin, xmax, ymax } = baseConfigInstance.config
+          let { xmin, ymin, xmax, ymax } = baseConfigInstance.config
+          if (wkid && Number(wkid) === 3857) {
+            const projectedGeometry = Projection.project(
+              new Extent({
+                xmin: Number(xmin),
+                ymin: Number(ymin),
+                xmax: Number(xmax),
+                ymax: Number(ymax),
+                // 当不是4326时请指定坐标系，方便进行投影转换
+                spatialReference: new SpatialReference('EPSG:3857'),
+              }),
+              new SpatialReference({
+                wkid: 4326,
+              })
+            )
+            xmin = projectedGeometry.xmin
+            ymin = projectedGeometry.ymin
+            xmax = projectedGeometry.xmax
+            ymax = projectedGeometry.ymax
+          }
           const bound = { xmin, ymin, xmax, ymax }
           this.initFitBound(bound, mapParams)
           break
@@ -121,37 +146,55 @@ export default {
             initAltitude: cameraHeight,
             initOrientation,
           } = baseConfigInstance.config
-          const x = center.split(',')[0]
-          const y = center.split(',')[1]
+          let x = Number(center.split(',')[0])
+          let y = Number(center.split(',')[1])
+          if (wkid && Number(wkid) === 3857) {
+            const projectedGeometry = Projection.project(
+              new Point({
+                // 现在为3857坐标系
+                coordinates: [x, y],
+                // 当不是4326时请指定坐标系，方便进行投影转换
+                spatialReference: new SpatialReference('EPSG:3857'),
+              }),
+              new SpatialReference({
+                wkid: 4326,
+              })
+            )
+            x = projectedGeometry.coordinates[0]
+            y = projectedGeometry.coordinates[1]
+          }
           if (this.is2DMapMode) {
             setTimeout(() => {
               this.map.flyTo({
                 center: [x, y],
                 zoom,
                 essential: true,
-                duration: duration * 1000
+                duration: duration * 1000,
               })
             }, 300)
           } else {
             // 获取基础配置中相机视角信息，并设置
             const center = new Cesium.Cartesian3.fromDegrees(x, y, cameraHeight)
-            if (initOrientation) {
-              const { heading, pitch, roll } = initOrientation
-              viewer.camera.flyTo({
-                destination: center,
-                orientation: {
-                  heading: Cesium.Math.toRadians(heading),
-                  pitch: Cesium.Math.toRadians(pitch),
-                  roll: Cesium.Math.toRadians(roll),
-                },
-                duration,
-              })
-            } else {
-              viewer.camera.flyTo({
-                destination: center,
-                duration,
-              })
-            }
+            // 增加延时，确保设置生效
+            setTimeout(() => {
+              if (initOrientation) {
+                const { heading, pitch, roll } = initOrientation
+                viewer.camera.flyTo({
+                  destination: center,
+                  orientation: {
+                    heading: Cesium.Math.toRadians(heading),
+                    pitch: Cesium.Math.toRadians(pitch),
+                    roll: Cesium.Math.toRadians(roll),
+                  },
+                  duration,
+                })
+              } else {
+                viewer.camera.flyTo({
+                  destination: center,
+                  duration,
+                })
+              }
+            }, 300)
           }
           break
         case 'basemapExtent':

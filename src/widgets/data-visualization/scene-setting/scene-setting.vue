@@ -11,6 +11,7 @@
       :publicPath="publicPath"
       :isWidgetOpen="isWidgetOpen"
       :stuffWidth="stuffWidth"
+      :crs="crs"
       ref="sceneSetting"
     >
     </mapgis-3d-scene-setting>
@@ -34,6 +35,7 @@ import {
   LoadStatus,
   baseConfigInstance,
 } from '@mapgis/web-app-framework'
+import { AlgorithmLib } from '@mapgis/webclient-cesium-plugin'
 
 export default {
   name: 'MpSceneSetting',
@@ -49,6 +51,7 @@ export default {
       isWidgetOpen: false,
       stuffWidth: 48,
       showComponents: false,
+      crs: 'EPSG:4326',
     }
   },
 
@@ -116,6 +119,12 @@ export default {
     }
     this.getStuffWidth()
     eventBus.$on(events.SCENE_CONFIG_INFO, this.getSceneConfig)
+    if (
+      baseConfigInstance.config.wkid &&
+      baseConfigInstance.config.wkid !== ''
+    ) {
+      this.crs = `EPSG:${baseConfigInstance.config.wkid}`
+    }
   },
 
   methods: {
@@ -223,8 +232,7 @@ export default {
           }
         }
       }
-      const boundingSphere =
-        zondy.cesium.AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
+      const boundingSphere = AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
       if (boundingSphere && boundingSphere.radius !== undefined) {
         this.boundingSphereRadius = boundingSphere.radius
       }

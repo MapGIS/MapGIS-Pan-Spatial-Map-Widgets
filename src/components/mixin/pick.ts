@@ -10,12 +10,19 @@ import {
   eventBus,
   events,
   UUID,
+  CoordinateSystemType,
 } from '@mapgis/web-app-framework'
 import { lineString, polygon, point, multiPolygon } from '@turf/helpers'
 import booleanDisjoint from '@turf/boolean-disjoint'
 import booleanContains from '@turf/boolean-contains'
 import * as Zondy from '@mapgis/webclient-es6-service'
 import featureQueryMixin from './feature-query-mixin'
+import {
+  Projection,
+  Geometry,
+  SpatialReference,
+  Point,
+} from '@mapgis/webclient-common'
 
 import QueryType from './query-type'
 
@@ -220,7 +227,14 @@ export default {
         ) {
           continue
         }
-        if (!this.isCrossWithLayer(layer, shape, QueryType.Point)) {
+        if (
+          !this.isCrossWithRange(
+            layer.fullExtent,
+            shape,
+            QueryType.Point,
+            layer.spatialReference?.wkid
+          )
+        ) {
           continue
         }
         // fix(6188): 三维视图倾斜一定角度，绘制交互异常
@@ -254,6 +268,27 @@ export default {
         return
       }
       const { layer, queryGeometry } = queryLayers[queryLayers.length - 1]
+      if (
+        layer.type === LayerType.IGSMapImage &&
+        Number(layer.spatialReference?.wkid) ===
+          CoordinateSystemType.webMercator
+      ) {
+        // 如果是地图服务，需要将查询几何空间参考系转换成图层一致的空间参考系
+        const { x, y } = queryGeometry
+        const projectedGeometry = Projection.project(
+          new Point({
+            coordinates: [x, y],
+            spatialReference: new SpatialReference({
+              wkid: 4326,
+            }),
+          }),
+          new SpatialReference({
+            wkid: 3857,
+          })
+        )
+        queryGeometry.x = projectedGeometry.coordinates[0]
+        queryGeometry.y = projectedGeometry.coordinates[1]
+      }
       const { domain, docName } = layer._parseUrl(layer.url)
       const isDataStoreQuery = false
       const DNSName = undefined

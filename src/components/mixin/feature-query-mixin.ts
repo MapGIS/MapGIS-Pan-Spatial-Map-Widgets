@@ -9,12 +9,19 @@ import {
   Exhibition,
   Feature,
   baseConfigInstance,
+  CoordinateSystemType,
 } from '@mapgis/web-app-framework'
 import * as Zondy from '@mapgis/webclient-es6-service'
 import { lineString, polygon, point, multiPolygon } from '@turf/helpers'
 import booleanDisjoint from '@turf/boolean-disjoint'
 import booleanContains from '@turf/boolean-contains'
 import QueryType from './query-type'
+import {
+  Projection,
+  Geometry,
+  SpatialReference,
+  Extent,
+} from '@mapgis/webclient-common'
 
 const { IAttributeTableListExhibition, AttributeTableListExhibition } =
   Exhibition
@@ -29,90 +36,14 @@ export default {
   computed: {},
   methods: {
     /**
-     * 图层与查询范围是否有交集
-     * @param layer 图层对象
-     * @param shape 查询范围
-     * @param queryType 查询类型
-     * @returns
-     */
-    isCrossWithLayer(layer, shape, queryType): boolean {
-      const { type } = layer
-      let { fullExtent } = layer
-      let { ymax, ymin, xmax, xmin } = fullExtent
-      if (
-        type === LayerType.IGSScene ||
-        type === LayerType.ModelCache ||
-        type === LayerType.IGSTile
-      ) {
-        // 通过绑定查询服务的图层不再进行图层与绘制区域是否有交集的判断，改为绑定的查询服务与绘制区域是否有交集判断
-        return true
-      }
-
-      let geometry
-      const extentPolygon = polygon([
-        [
-          [Number(xmin), Number(ymin)],
-          [Number(xmax), Number(ymin)],
-          [Number(xmax), Number(ymax)],
-          [Number(xmin), Number(ymax)],
-          [Number(xmin), Number(ymin)],
-        ],
-      ])
-      switch (queryType) {
-        case QueryType.Point:
-          geometry = point([shape.x, shape.y])
-          break
-        case QueryType.LineString:
-          geometry = lineString(shape.map((point) => [point.x, point.y]))
-          break
-        case QueryType.Polygon:
-          geometry = polygon([shape.map((point) => [point.x, point.y])])
-          break
-        case QueryType.Cube:
-        case QueryType.Circle:
-        case QueryType.Rectangle:
-          const { ymax, ymin, xmax, xmin } = shape
-          geometry = polygon([
-            [
-              [xmin, ymin],
-              [xmax, ymin],
-              [xmax, ymax],
-              [xmin, ymax],
-              [xmin, ymin],
-            ],
-          ])
-          break
-        case QueryType.MultiPolygon:
-          geometry = multiPolygon(shape)
-          break
-        default:
-          return false
-      }
-      if (
-        geometry.geometry.type === 'Point' ||
-        geometry.geometry.type === 'LineString'
-      ) {
-        return (
-          // 交叉或者包含都会继续查询
-          !booleanDisjoint(extentPolygon, geometry) ||
-          booleanContains(extentPolygon, geometry)
-        )
-      }
-      return (
-        // 交叉或者包含都会继续查询
-        !booleanDisjoint(extentPolygon, geometry) ||
-        booleanContains(extentPolygon, geometry) ||
-        booleanContains(geometry, extentPolygon)
-      )
-    },
-    /**
-     * 关联的查询服务图层与查询范围是否有交集
+     * 图层范围与查询范围是否有交集
      * @param range 图层范围
      * @param shape 查询范围
      * @param queryType 查询类型
+     * @param wkid 查询服务的wkid
      * @returns
      */
-    isCrossWithBindLayer(range, shape, queryType): boolean {
+    isCrossWithRange(range, shape, queryType, wkid?): boolean {
       const { ymax, ymin, xmax, xmin } = range
       let geometry
       const extentPolygon = polygon([
@@ -153,6 +84,19 @@ export default {
           break
         default:
           return false
+      }
+      if (wkid && Number(wkid) === CoordinateSystemType.webMercator) {
+        const projectedGeometry = Projection.project(
+          Geometry.fromGeoJSON(geometry),
+          new SpatialReference({
+            wkid: 3857,
+          })
+        )
+        geometry = {
+          geometry: projectedGeometry.toGeoJSON(),
+          properties: {},
+          type: 'Feature',
+        }
       }
       if (
         geometry.geometry.type === 'Point' ||
@@ -296,14 +240,22 @@ export default {
     ) {
       let geometry
       let pointArray
-
+      let is3DQuery = false
+      if (
+        !this.is2DMapMode &&
+        [LayerType.IGSScene, LayerType.ModelCache].includes(layer.type) &&
+        !(
+          layer.searchParams &&
+          ((layer.searchParams.mapList &&
+            layer.searchParams.mapList.length > 0) ||
+            layer.searchParams.searchName?.includes('gdbp'))
+        )
+      ) {
+        is3DQuery = true
+      }
       switch (queryType) {
         case QueryType.Point:
-          if (
-            !this.is2DMapMode &&
-            (layer.type === LayerType.IGSScene ||
-              layer.type === LayerType.ModelCache)
-          ) {
+          if (is3DQuery) {
             let pointNearDis = nearDis
             const { x, y, z } = shape
             if (!pointNearDis) {
@@ -362,11 +314,7 @@ export default {
         case QueryType.Cube:
         case QueryType.Circle:
         case QueryType.Rectangle:
-          if (
-            !this.is2DMapMode &&
-            (layer.type === LayerType.IGSScene ||
-              layer.type === LayerType.ModelCache)
-          ) {
+          if (is3DQuery) {
             const { xmin, ymin, xmax, ymax, zmin, zmax } = shape
             const tempZmin = zmin !== undefined ? zmin : -10000
             const tempZmax = zmax !== undefined ? zmax : 10000

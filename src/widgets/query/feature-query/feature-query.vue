@@ -637,9 +637,8 @@ export default {
               if (this.currentId) {
                 this.currentId = '' // 清空当前id用于清除页面已绘制图形
               }
-            }else {
-              this.drawComponent &&
-              this.drawComponent.removeLastDraw()
+            } else {
+              this.drawComponent && this.drawComponent.removeLastDraw()
             }
             this.drawComponent &&
               this.drawComponent.openDraw(
@@ -650,22 +649,6 @@ export default {
       }
       if (!this.isContinuous) {
         this.queryType = ''
-      }
-    },
-
-    // 通过模型包围盒计算范围，再计算图层与查询范围是否有交集
-    isCrossWithLayerForBoundingSphere(layer, shape) {
-      const targetLayer = this.sceneController.findSource(layer.id)
-      if (targetLayer) {
-        const boundingSphere = targetLayer._root.boundingVolume.boundingSphere
-        const { center, radius } = boundingSphere
-        const fullExtent = this.getFullExtentByBoundingSphere(center, radius)
-        const isCrossWithLayer = this.isCrossWithLayer(
-          { type: layer.type, fullExtent },
-          shape,
-          this.queryType
-        )
-        return isCrossWithLayer
       }
     },
 
@@ -680,14 +663,24 @@ export default {
         : this.document.defaultMap.layers()
 
       layers.forEach((layer) => {
-        const isCrossWithLayer = this.isCrossWithLayer(
-          layer,
-          shape,
-          this.queryType
-        )
+        if (
+          ![
+            LayerType.IGSScene,
+            LayerType.ModelCache,
+            LayerType.IGSTile,
+          ].includes(layer.type)
+        ) {
+          // 通过绑定查询服务的图层不再进行图层与绘制区域是否有交集的判断，改为绑定的查询服务与绘制区域是否有交集判断
+          const isCrossWithLayer = this.isCrossWithRange(
+            layer.fullExtent,
+            shape,
+            this.queryType,
+            layer.spatialReference?.wkid
+          )
 
-        if (!isCrossWithLayer) {
-          return
+          if (!isCrossWithLayer) {
+            return
+          }
         }
 
         // fix(6188): 三维视图倾斜一定角度，绘制交互异常
@@ -839,10 +832,11 @@ export default {
           // 如果匹配到了绑定的查询服务子图层，再进行绘制区域与子图层是否有交集判断
           let isExecuteQuery = false
           if (map.Range) {
-            isExecuteQuery = this.isCrossWithBindLayer(
+            isExecuteQuery = this.isCrossWithRange(
               map.Range,
               shape,
-              queryType
+              queryType,
+              layer.spatialReference?.wkid
             )
           }
 
@@ -952,10 +946,11 @@ export default {
 
         let isExecuteQuery = false
         if (searchFullExtent) {
-          isExecuteQuery = this.isCrossWithBindLayer(
+          isExecuteQuery = this.isCrossWithRange(
             searchFullExtent,
             shape,
-            queryType
+            queryType,
+            layer.spatialReference?.wkid
           )
         }
 
@@ -1011,21 +1006,21 @@ export default {
             tokenValue,
           },
         })
-        const { xmin, ymin, xmax, ymax, zmin, zmax } = geometry
-        const queryGeometry = new Rectangle3D(
-          xmin,
-          ymin,
-          zmin,
-          xmax,
-          ymax,
-          zmax
-        )
+        // const { xmin, ymin, xmax, ymax, zmin, zmax } = geometry
+        // const queryGeometry = new Rectangle3D(
+        //   xmin,
+        //   ymin,
+        //   zmin,
+        //   xmax,
+        //   ymax,
+        //   zmax
+        // )
 
         const options = {
           ip: ip || baseConfigInstance.config.ip,
           port: port || Number(baseConfigInstance.config.port),
           domain,
-          geometry: queryGeometry,
+          geometry,
           url: layer.searchParams.searchName,
           returnCountOnly: true,
           tokenKey,
@@ -1078,10 +1073,11 @@ export default {
 
         let isExecuteQuery = false
         if (searchFullExtent) {
-          isExecuteQuery = this.isCrossWithBindLayer(
+          isExecuteQuery = this.isCrossWithRange(
             searchFullExtent,
             shape,
-            queryType
+            queryType,
+            layer.spatialReference?.wkid
           )
         }
 
