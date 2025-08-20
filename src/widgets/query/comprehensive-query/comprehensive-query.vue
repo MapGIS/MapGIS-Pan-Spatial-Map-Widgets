@@ -465,7 +465,7 @@ export default {
         const dataCopy = JSON.parse(JSON.stringify(data))
         dataCopy.features.forEach((item) => {
           const property = {}
-          const properties = item.properties
+          const properties = item.properties || item.attributes
           Object.keys(properties).forEach((key) => {
             const info = this.selectShowProperty.find(
               (itemKey) => itemKey.fieldName === key
