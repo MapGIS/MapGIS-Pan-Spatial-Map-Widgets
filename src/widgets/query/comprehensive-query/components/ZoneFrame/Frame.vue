@@ -103,7 +103,7 @@ export default {
 
       list: [],
 
-      pageNum: 0,
+      pageNum: 1,
 
       pageSize: 20,
 
@@ -134,34 +134,33 @@ export default {
       try {
         const { scale, pageNum, pageSize, keyword } = this
         // 通过sheetConfig内的ip、port、name去获取地图范围，构造成[xMin, yMin, xMax, yMax]，用于查询图幅号
-        const { ip, port } = this.frameConfig
+        const { ip, port, tokenKey, token, name, gdbp } = this.frameConfig
         const domain = `${UrlUtil.getOrigin({ ip, port })}`
         const {
           data: { xMin, yMin, xMax, yMax },
-        } = await axios.get(
-          `${domain}/igs/rest/mrms/info/${this.frameConfig.name}`
-        )
-
-        const { rows, total } = await api.getFrameNoList(
-          this.frameConfig.ip,
-          this.frameConfig.port,
-          this.frameConfig.gdbp,
+        } = await axios.get(`${domain}/igs/rest/mrms/info/${name}`)
+        const options = {
+          ip,
+          port,
+          gdbp,
           xMin,
           yMin,
           xMax,
           yMax,
           scale,
-          pageNum,
+          pageNum: pageNum - 1,
           pageSize,
           keyword,
-          baseConfigInstance.config.projectionName,
-          baseConfigInstance.config.projectionName
-        )
+          originSrs: baseConfigInstance.config.projectionName,
+          destSrs: baseConfigInstance.config.projectionName,
+          tokenKey,
+          token,
+        }
+
+        const { rows, total } = await api.getFrameNoList(options)
         this.list = rows || []
         this.total = total || 0
       } catch (error) {
-        this.list = []
-        this.total = 0
       } finally {
         this.loading = false
       }
@@ -239,7 +238,7 @@ export default {
       handler() {
         this.list = []
         this.total = 0
-        this.pageNum = 0
+        this.pageNum = 1
         this.pageSize = 20
         this.onSearch()
       },

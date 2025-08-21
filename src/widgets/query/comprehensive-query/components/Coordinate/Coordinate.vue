@@ -2,7 +2,7 @@
   <div class="coordinate-container">
     <mapgis-ui-setting-form layout="vertical">
       <mapgis-ui-form-item label="坐标系">
-        <mapgis-ui-select v-model="crs">
+        <mapgis-ui-select v-model="crs" @change="changeCrs">
           <mapgis-ui-select-option
             v-for="item in crsOptions"
             :key="item"
@@ -28,8 +28,6 @@
         <mapgis-ui-input-number
           v-if="type === 'd'"
           type="number"
-          :max="180"
-          :min="-180"
           style="width: 100%"
           v-model="coordDecimal[0]"
           @change="onDecimalCoordChanged"
@@ -73,8 +71,6 @@
         <mapgis-ui-input-number
           v-if="type === 'd'"
           type="number"
-          :max="90"
-          :min="-90"
           style="width: 100%"
           v-model="coordDecimal[1]"
           @change="onDecimalCoordChanged"
@@ -136,7 +132,7 @@
           type="primary"
           @click="onLocate"
           style="width: 100%; margin-top: 10px"
-          :disabled="coordDecimal[0].length == 0 || coordDecimal[1].length == 0"
+          :disabled="disableLocateButton"
         >
           坐标定位
         </mapgis-ui-button>
@@ -197,12 +193,6 @@ export default {
       // 坐标系
       crs: this.defaultCrs,
 
-      // 坐标单位列表
-      typeOptions: [
-        { label: '十进制', value: 'd' },
-        { label: '度分秒', value: 'dms' },
-      ],
-
       // 坐标单位
       type: 'd',
 
@@ -256,6 +246,16 @@ export default {
     }
   },
   methods: {
+    // crs变化，重新计算坐标
+    async changeCrs() {
+      if (
+        this.crs &&
+        (this.crs.includes('高斯') || this.crs.includes('墨卡托'))
+      ) {
+        this.type = 'd'
+      }
+      await this.onPickedCoordinate(this.coordInDefaultCRS, this.is2DMapMode)
+    },
     change(val) {
       this.$emit('change', val)
     },
@@ -397,7 +397,7 @@ export default {
         this.coordInDefaultCRS[1],
         this.scale,
         baseConfigInstance.config.projectionName,
-        this.crs
+        baseConfigInstance.config.projectionName
       )
       this.frameNo = frameNo
       this.frameNochange(frameNo)
@@ -415,6 +415,30 @@ export default {
   computed: {
     highlightStyle() {
       return baseConfigInstance.config.colorConfig
+    },
+    // 当坐标值为空时，禁用定位按钮
+    disableLocateButton() {
+      const { coordDecimal } = this
+      if (
+        (coordDecimal[0] === 0 || Number(coordDecimal[0]) !== 0) &&
+        (coordDecimal[1] === 0 || Number(coordDecimal[1]) !== 0)
+      ) {
+        return false
+      }
+      return true
+    },
+    // 坐标单位列表
+    typeOptions() {
+      if (
+        this.crs &&
+        (this.crs.includes('高斯') || this.crs.includes('墨卡托'))
+      ) {
+        return [{ label: '十进制', value: 'd' }]
+      }
+      return [
+        { label: '十进制', value: 'd' },
+        { label: '度分秒', value: 'dms' },
+      ]
     },
   },
   watch: {
