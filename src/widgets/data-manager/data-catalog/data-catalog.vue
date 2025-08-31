@@ -1752,8 +1752,13 @@ export default {
       // 初始化数据目录
       this.dataCatalogManager.init(config)
 
-      this.dataCatalogTreeData =
-        await this.dataCatalogManager.getDataCatalogTreeData(true)
+      if (this.designTime) {
+        this.dataCatalogTreeData = this.dataCatalogManager.refreshTreeData()
+      } else {
+        this.dataCatalogTreeData =
+          await this.dataCatalogManager.getDataCatalogTreeData(true)
+      }
+
       const _allTreeDataConfigs = []
       // 组装tree组件展示需要的属性
       const { treeData, allTreeDataConfigs } = this.handleTreeData(
