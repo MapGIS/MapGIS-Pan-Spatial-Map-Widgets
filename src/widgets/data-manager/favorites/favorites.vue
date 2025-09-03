@@ -82,7 +82,6 @@ export default {
     if (!this.widgetInfo.config.showType) {
       this.$set(this.widgetInfo.config, 'showType', 'image')
     }
-    this.dataList = JSON.parse(JSON.stringify(this.widgetInfo.config.data))
     this.dataList = this.initData(
       JSON.parse(JSON.stringify(this.widgetInfo.config.data))
     )
@@ -260,24 +259,28 @@ export default {
       return new File([ia], `${id}.jpeg`, { type: mime })
     },
     async saveData() {
-      const originConfig = await api.getWidgetConfig('favorites')
-      originConfig.data = this.dataList
-      if (!originConfig.showType) {
-        originConfig.showType = this.showType
-      }
-      api
-        .saveWidgetConfig({
-          name: 'favorites',
-          config: JSON.stringify(originConfig),
-        })
-        .catch(() => {
-          this.$message.config({
-            top: '100px',
-            duration: 1,
-            maxCount: 3,
+      if (!this.designTime) {
+        const originConfig = await api.getWidgetConfig('favorites')
+        originConfig.data = this.dataList
+        if (!originConfig.showType) {
+          originConfig.showType = this.showType
+        }
+        api
+          .saveWidgetConfig({
+            name: 'favorites',
+            config: JSON.stringify(originConfig),
           })
-          this.$message.error('保存信息失败')
-        })
+          .catch(() => {
+            this.$message.config({
+              top: '100px',
+              duration: 1,
+              maxCount: 3,
+            })
+            this.$message.error('保存信息失败')
+          })
+      } else {
+        this.widgetInfo.config.data = this.dataList
+      }
     },
     uploadImage(image) {
       const file = new FormData()
