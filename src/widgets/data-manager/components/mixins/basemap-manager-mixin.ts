@@ -169,7 +169,7 @@ export default {
 
             const layerConfig: any = {
               name: layer.name,
-              guid: UUID.uuid(),
+              guid: layer.guid || UUID.uuid(),
               description,
               serverURL: layer.url,
               serverType: this.parseLayerType(layer.type),
@@ -220,6 +220,10 @@ export default {
               this.getLayerTypeString(layer.serverType),
             commonData: layer.commonData,
             serviceType: layer.serviceType,
+          }
+          // 应用搭建模式下记录guid
+          if (this.designTime) {
+            layerConfig.guid = layer.guid
           }
           if (layer.tokenValue) {
             layerConfig.token = layer.tokenValue
@@ -301,6 +305,7 @@ export default {
         }
       }
       this.updateCurrentBaseMapConfig()
+      this.updateWidgetConfig()
     },
 
     updateLayer(layer) {
