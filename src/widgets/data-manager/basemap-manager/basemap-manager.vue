@@ -90,7 +90,11 @@ export default {
   },
   mounted() {
     // 配置文件无isShow属性时默认设置为true
-    const { indexBaseMapGUID, isShow = true } = { ...this.widgetInfo.config }
+    const {
+      indexBaseMapGUID,
+      isShow = true,
+      loadOrder = [],
+    } = { ...this.widgetInfo.config }
     const { initPositionMode } = baseConfigInstance.config
     // 获取到初始化底图信息
     const initConfig = this.baseMapConfig()
@@ -188,18 +192,40 @@ export default {
 
     // 加载显示配置里已设置默认选中的底图
     if (this.defaultSelect && this.defaultSelect.length > 0) {
-      for (let i = 0; i < this.defaultSelect.length; i++) {
-        let isZoomTo = false
-        let init = false
-        // 以索引底图的范围为初始范围
-        if (
-          initPositionMode === 'basemapExtent' &&
-          this.defaultSelect[i].guid === indexBaseMapGUID
-        ) {
-          isZoomTo = true
-          init = true
+      // 应用搭建状态下恢复底图加载顺序
+      if (loadOrder && loadOrder.length) {
+        for (let i = 0; i < loadOrder.length; i++) {
+          const isMapExsit = this.defaultSelect.find(
+            (item) => item.guid === loadOrder[i]
+          )
+          if (isMapExsit) {
+            let isZoomTo = false
+            let init = false
+            // 以索引底图的范围为初始范围
+            if (
+              initPositionMode === 'basemapExtent' &&
+              loadOrder[i] === indexBaseMapGUID
+            ) {
+              isZoomTo = true
+              init = true
+            }
+            this.onSelect(loadOrder[i], isZoomTo, init)
+          }
         }
-        this.onSelect(this.defaultSelect[i].guid, isZoomTo, init)
+      } else {
+        for (let i = 0; i < this.defaultSelect.length; i++) {
+          let isZoomTo = false
+          let init = false
+          // 以索引底图的范围为初始范围
+          if (
+            initPositionMode === 'basemapExtent' &&
+            this.defaultSelect[i].guid === indexBaseMapGUID
+          ) {
+            isZoomTo = true
+            init = true
+          }
+          this.onSelect(this.defaultSelect[i].guid, isZoomTo, init)
+        }
       }
     }
   },
@@ -207,6 +233,7 @@ export default {
     isShowBasemapChange(val) {
       this.changeBaseMap(val)
       this.isShowChange(val)
+      this.updateWidgetConfig()
     },
     changeBaseMap(val) {
       const baseMapInfo = { ...this.baseMapController.currentBaseMapInfo }
@@ -334,6 +361,7 @@ export default {
       this.basemapNames.push(guid)
       this.updateCurrentBaseMapConfig()
       this.renderMaps(guid, isZoomTo, init)
+      this.updateWidgetConfig()
     },
     updateCurrentBaseMapConfig() {
       const config = this.baseMapConfig()
@@ -358,18 +386,33 @@ export default {
       return config
     },
     saveConfig() {
-      const config = this.getSaveConfig(this.basemaps)
-      api
-        .saveWidgetConfig({
-          name: 'basemap-manager',
-          config: JSON.stringify(config),
-        })
-        .then(() => {
-          console.log('更新底图配置成功')
-        })
-        .catch(() => {
-          console.log('更新底图配置失败')
-        })
+      if (this.designTime) {
+        this.updateWidgetConfig()
+      } else {
+        const config = this.getSaveConfig(this.basemaps)
+        api
+          .saveWidgetConfig({
+            name: 'basemap-manager',
+            config: JSON.stringify(config),
+          })
+          .then(() => {
+            console.log('更新底图配置成功')
+          })
+          .catch(() => {
+            console.log('更新底图配置失败')
+          })
+      }
+    },
+    // 应用搭建状态下直接修改widgeConfig
+    updateWidgetConfig() {
+      if (this.designTime) {
+        const config = this.getSaveConfig(this.basemaps)
+        // 记录加载顺序
+        config.loadOrder = this.basemapNames
+        // 更新数据
+        this.widget.config = config
+        this.widget.configDetial = config
+      }
     },
   },
 }
