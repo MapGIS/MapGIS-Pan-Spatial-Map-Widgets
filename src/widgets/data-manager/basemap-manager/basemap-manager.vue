@@ -257,23 +257,13 @@ export default {
         this.isShow = !this.isShow
       }
       const { onSelect, zoomArr } = val
-      this.basemapNames = [...onSelect]
+      this.basemapNames = []
       // 通过baseMapController控制的地图设置信息不同步到_currentBaseMapInfo中，直接存放在_setBaseMapInfo
       // this.updateCurrentBaseMapConfig()
       if (onSelect && onSelect.length > 0) {
         const promiseAll = []
         onSelect.forEach((item) => {
-          promiseAll.push(
-            zoomArr.includes(item)
-              ? this.generateLayer(item, true)
-              : this.generateLayer(item)
-          )
-        })
-        Promise.all(promiseAll).then((result) => {
-          // 调整图层顺序,忽略无法加载的图层
-          result.forEach((item) => {
-            item && this.document.baseLayerMap.add(item)
-          })
+          this.onSelect(item, zoomArr.includes(item))
         })
       }
     },
@@ -281,12 +271,12 @@ export default {
       return new Promise((resolve, reject) => {
         const basemap = this.basemaps.find((item) => item.guid === guid)
         if (basemap) {
-          basemap.children.forEach(async (layer) => {
+          const allLayers = []
+          basemap.children.forEach(async (layer, index) => {
             const mapLayer = DataCatalogManager.generateLayerByConfig(layer)
             mapLayer.description = layer.description
             if (mapLayer.loadStatus === LoadStatus.notLoaded) {
               await mapLayer.load()
-              // this.document.baseLayerMap.add(mapLayer)
               // 正常来说收藏夹不会走此逻辑
               if (isZoomTo) {
                 if (this.is3DLayer(mapLayer)) {
@@ -298,7 +288,11 @@ export default {
                 }
               }
             }
-            resolve(mapLayer)
+            allLayers.push(mapLayer)
+            // 最后一个图层
+            if (basemap.children.length === index + 1) {
+              resolve(allLayers)
+            }
           })
           if (!basemap.select) {
             basemap.select = true
@@ -350,6 +344,7 @@ export default {
         this.clearBasemap()
       }
       this.basemapNames.push(guid)
+      this.updateCurrentBaseMapConfig()
       this.renderMaps(guid, isZoomTo, init)
     },
     // 通过点击底图进行勾选使用onCheck方法，用于区分是否为点击底图进行勾选
