@@ -62,7 +62,7 @@ export default {
               feature,
               picture,
             } = marker
-
+            
             return {
               id: markerId,
               title,
@@ -200,10 +200,12 @@ export default {
     // 导出格式为csv
     ouputToCSV(fileName: string, exportedMarkers) {
       exportedMarkers = exportedMarkers.map((item) => {
+        const feature = JSON.stringify(item.features[0]).replace(/"/g, '""')
+        delete item.features
         return {
           ...item,
           center: `${item.center[0]}, ${item.center[1]}`,
-          features: `type: ${item.features[0].geometry.type}`,
+          feature,
         }
       })
       let csvContent = ''
