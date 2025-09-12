@@ -106,15 +106,24 @@ export default {
     },
 
     async save(e) {
-      let config = await api.getWidgetConfig('overlay-manager')
-      if (!config) {
-        config = {}
+      if (this.designTime) {
+        const config = {
+          models: this.widget.config.models || {},
+          dataSource: e,
+        }
+        this.setWidgetData(JSON.parse(JSON.stringify(config)))
+      } else if (this.previewTime) {
+      } else {
+        let config = await api.getWidgetConfig('overlay-manager')
+        if (!config) {
+          config = {}
+        }
+        config.dataSource = e
+        api.saveWidgetConfig({
+          name: 'overlay-manager',
+          config: JSON.stringify(config),
+        })
       }
-      config.dataSource = e
-      api.saveWidgetConfig({
-        name: 'overlay-manager',
-        config: JSON.stringify(config),
-      })
     },
   },
 }

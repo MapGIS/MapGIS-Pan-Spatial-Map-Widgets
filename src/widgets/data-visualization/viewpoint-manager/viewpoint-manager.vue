@@ -155,10 +155,15 @@ export default {
       this.openPromptWindow = false
     },
     configSave(newConfig) {
-      api.saveWidgetConfig({
-        name: 'viewpoint-manager',
-        config: JSON.stringify(newConfig),
-      })
+      if (this.designTime) {
+        this.setWidgetData(JSON.parse(JSON.stringify(newConfig)))
+      } else if (this.previewTime) {
+      } else {
+        api.saveWidgetConfig({
+          name: 'viewpoint-manager',
+          config: JSON.stringify(newConfig),
+        })
+      }
     },
 
     /**

@@ -81,18 +81,22 @@ export default {
     },
     saveConfig() {
       const config = this.getSaveConfig(this.basemaps)
-      console.log(config, 'config')
-      api
-        .saveWidgetConfig({
-          name: 'topography-manager',
-          config: JSON.stringify(config),
-        })
-        .then(() => {
-          console.log('更新地形配置成功')
-        })
-        .catch(() => {
-          console.log('更新地形配置失败')
-        })
+      if (this.designTime) {
+        this.widget.config = config
+      } else if (this.previewTime) {
+      } else {
+        api
+          .saveWidgetConfig({
+            name: 'topography-manager',
+            config: JSON.stringify(config),
+          })
+          .then(() => {
+            console.log('更新地形配置成功')
+          })
+          .catch(() => {
+            console.log('更新地形配置失败')
+          })
+      }
     },
   },
 }

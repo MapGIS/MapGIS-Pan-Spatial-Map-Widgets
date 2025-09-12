@@ -173,19 +173,24 @@ export default {
       const config = {
         projectorOverlayLayerList: [...this.projectorOverlayLayerList],
       }
-      api
-        .saveWidgetConfig({
-          name: 'projector-manager',
-          config: JSON.stringify(config),
-        })
-        .then(() => {
-          // this.$message.success('更新projector配置成功')
-          // console.log('更新projector配置成功')
-        })
-        .catch(() => {
-          // this.$message.error('更新projector配置失败')
-          // console.log('更新projector配置失败')
-        })
+      if (this.designTime) {
+        this.setWidgetData(JSON.parse(JSON.stringify(config)))
+      } else if (this.previewTime) {
+      } else {
+        api
+          .saveWidgetConfig({
+            name: 'projector-manager',
+            config: JSON.stringify(config),
+          })
+          .then(() => {
+            // this.$message.success('更新projector配置成功')
+            // console.log('更新projector配置成功')
+          })
+          .catch(() => {
+            // this.$message.error('更新projector配置失败')
+            // console.log('更新projector配置失败')
+          })
+      }
     },
   },
 }

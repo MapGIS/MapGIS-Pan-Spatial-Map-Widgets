@@ -94,17 +94,22 @@ export default {
     onSaveConfig(paths) {
       const this_ = this
 
-      api
-        .saveWidgetConfig({
-          name: 'scene-roaming',
-          config: JSON.stringify(paths),
-        })
-        .then(() => {
-          this_.$message.success('保存成功')
-        })
-        .catch(() => {
-          this_.$message.error('保存失败')
-        })
+      if (this.designTime) {
+        this.setWidgetData(JSON.parse(JSON.stringify(paths)))
+      } else if (this.previewTime) {
+      } else {
+        api
+          .saveWidgetConfig({
+            name: 'scene-roaming',
+            config: JSON.stringify(paths),
+          })
+          .then(() => {
+            this_.$message.success('保存成功')
+          })
+          .catch(() => {
+            this_.$message.error('保存失败')
+          })
+      }
     },
   },
 }
