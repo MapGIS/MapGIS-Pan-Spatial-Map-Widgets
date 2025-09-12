@@ -319,19 +319,24 @@ export default {
 
     saveConfig() {
       const config = this.getConfig()
-      api
-        .saveWidgetConfig({
-          name: 'scene-setting',
-          config: JSON.stringify(config),
-        })
-        .then(() => {
-          this.$message.success('更新场景设置配置成功')
-          // console.log('更新场景设置配置成功')
-        })
-        .catch(() => {
-          this.$message.error('更新场景设置配置失败')
-          // console.log('更新场景设置配置失败')
-        })
+      if (this.designTime) {
+        this.setWidgetConfig(JSON.parse(JSON.stringify(config)))
+      } else if (this.previewTime) {
+      } else {
+        api
+          .saveWidgetConfig({
+            name: 'scene-setting',
+            config: JSON.stringify(config),
+          })
+          .then(() => {
+            this.$message.success('更新场景设置配置成功')
+            // console.log('更新场景设置配置成功')
+          })
+          .catch(() => {
+            this.$message.error('更新场景设置配置失败')
+            // console.log('更新场景设置配置失败')
+          })
+      }
     },
     getSceneConfig() {
       const config = this.getConfig()

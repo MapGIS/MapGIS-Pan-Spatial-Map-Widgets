@@ -259,7 +259,14 @@ export default {
       return new File([ia], `${id}.jpeg`, { type: mime })
     },
     async saveData() {
-      if (!this.designTime) {
+      if (this.designTime) {
+        const originConfig = {
+          data: this.dataList,
+          showType: this.showType,
+        }
+        this.setWidgetData(JSON.parse(JSON.stringify(originConfig)))
+      } else if (this.previewTime) {
+      } else {
         const originConfig = await api.getWidgetConfig('favorites')
         originConfig.data = this.dataList
         if (!originConfig.showType) {
@@ -278,8 +285,6 @@ export default {
             })
             this.$message.error('保存信息失败')
           })
-      } else {
-        this.widgetInfo.config.data = this.dataList
       }
     },
     uploadImage(image) {

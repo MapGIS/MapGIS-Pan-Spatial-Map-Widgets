@@ -536,17 +536,22 @@ export default {
 
       const newConfig = { ...this.widgetInfo.config, markers: savedMarkers }
 
-      api
-        .saveWidgetConfig({
-          name: 'marker-manager',
-          config: JSON.stringify(newConfig),
-        })
-        .then(() => {
-          this_.$message.success('保存成功')
-        })
-        .catch(() => {
-          this_.$message.error('保存失败')
-        })
+      if (this.designTime) {
+        this.setWidgetData(JSON.parse(JSON.stringify(newConfig)))
+      } else if (this.previewTime) {
+      } else {
+        api
+          .saveWidgetConfig({
+            name: 'marker-manager',
+            config: JSON.stringify(newConfig),
+          })
+          .then(() => {
+            this_.$message.success('保存成功')
+          })
+          .catch(() => {
+            this_.$message.error('保存失败')
+          })
+      }
     },
 
     // 关闭标注工具
