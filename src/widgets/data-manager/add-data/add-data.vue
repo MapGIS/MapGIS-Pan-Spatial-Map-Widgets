@@ -338,17 +338,22 @@ export default {
         })
       })
 
-      api
-        .saveWidgetConfig({
-          name: 'add-data',
-          config: JSON.stringify(savedConfig),
-        })
-        .then(() => {
-          this_.$message.success('保存成功')
-        })
-        .catch(() => {
-          this_.$message.error('保存失败')
-        })
+      if (this.designTime) {
+        this.setWidgetData(JSON.parse(JSON.stringify(savedConfig)))
+      } else if (this.previewTime) {
+      } else {
+        api
+          .saveWidgetConfig({
+            name: 'add-data',
+            config: JSON.stringify(savedConfig),
+          })
+          .then(() => {
+            this_.$message.success('保存成功')
+          })
+          .catch(() => {
+            this_.$message.error('保存失败')
+          })
+      }
     },
 
     async onAddLayer(data) {

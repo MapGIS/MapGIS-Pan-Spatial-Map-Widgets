@@ -310,6 +310,7 @@ export default {
     saveConfig() {
       if (this.designTime) {
         this.updateWidgetConfig()
+      } else if (this.previewTime) {
       } else {
         const config = this.getSaveConfig(this.basemaps)
         api
@@ -332,8 +333,7 @@ export default {
         // 记录加载顺序
         config.loadOrder = this.basemapNames
         // 更新数据
-        this.widget.config = config
-        this.widget.configDetial = config
+        this.setWidgetData(config)
       }
     },
   },

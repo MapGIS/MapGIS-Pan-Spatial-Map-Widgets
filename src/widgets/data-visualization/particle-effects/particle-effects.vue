@@ -87,19 +87,31 @@ export default {
     },
 
     async saveConfig() {
-      const originConfig = await api.getWidgetConfig('particle-effects')
-      originConfig.particleListConfig = this.recursion(this.particleChangedList)
-      api
-        .saveWidgetConfig({
-          name: 'particle-effects',
-          config: JSON.stringify(originConfig),
-        })
-        .then(() => {
-          console.log('更新particle配置成功')
-        })
-        .catch(() => {
-          console.log('更新particle配置失败')
-        })
+      if (this.designTime) {
+        const particleListConfig = this.recursion(this.particleChangedList)
+        const originConfig = {
+          particleListConfig,
+          symbolList: this.widget.config.symbolList,
+        }
+        this.setWidgetData(originConfig)
+      } else if (this.previewTime) {
+      } else {
+        const originConfig = await api.getWidgetConfig('particle-effects')
+        originConfig.particleListConfig = this.recursion(
+          this.particleChangedList
+        )
+        api
+          .saveWidgetConfig({
+            name: 'particle-effects',
+            config: JSON.stringify(originConfig),
+          })
+          .then(() => {
+            console.log('更新particle配置成功')
+          })
+          .catch(() => {
+            console.log('更新particle配置失败')
+          })
+      }
     },
 
     // 递归删除对象数组中的__ob__属性
