@@ -1153,11 +1153,15 @@ export default {
         // 将目录树对应节点设置为不可勾选
         const recordCheckLayer = this.disableTreeNodeCheckBox(layer.id)
         // 2.1加载图层
+        let layerLoadStatus
         try {
           if (layer.loadStatus === LoadStatus.notLoaded) {
             await layer.load()
           }
         } catch (error) {
+          if (error && error.status) {
+            layerLoadStatus = error.status
+          }
         } finally {
           // 2.2判断图层是否载成功。如果成功则将图层添加到documet中。否则，给出提示，并将数据目录树中对应的节点设为未选中状态。
           if (layer.loadStatus === LoadStatus.loaded) {
@@ -1254,7 +1258,13 @@ export default {
               }
             }
           } else {
-            this.$message.error(`图层:${layer.title}加载失败`)
+            if (layerLoadStatus === 401 || layerLoadStatus === 403) {
+              this.$message.error(
+                `${layer.title}加载失败，请检查该数据的访问权限`
+              )
+            } else {
+              this.$message.error(`${layer.title}加载失败`)
+            }
             if (this.is3DLayer(layer)) {
               // 图层加载完毕，恢复checkbox可选状态
               this.setCheckBoxEnable(recordCheckLayer, false)
