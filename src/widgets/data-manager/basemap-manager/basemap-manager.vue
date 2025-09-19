@@ -29,8 +29,10 @@ import {
   Layer3D,
   DataCatalogManager,
   LoadStatus,
+  eventBus,
 } from '@mapgis/web-app-framework'
 import basemapManagerMixins from '../components/mixins/basemap-manager-mixin.ts'
+import { remove } from '../../../../../MapGIS-Web-App-Framework/src/utils/array-util'
 
 export default {
   name: 'MpBasemapManager',
@@ -155,6 +157,8 @@ export default {
         }
       }
     }
+
+    eventBus.$on('basemap-manager-change', this.updateBaseMap)
   },
   methods: {
     isShowBasemapChange(val) {
@@ -294,6 +298,43 @@ export default {
       config.onSelect = onSelect
       config.unSelect = unSelect
       this.baseMapController.currentBaseMapInfo = config
+    },
+    updateBaseMap({ removeBaseMapList, addBaseMapList, isShow }) {
+      // 更新是否显示底图
+      if (isShow !== this.isShow) {
+        this.changeBaseMap(isShow)
+        this.isShowChange(isShow)
+      }
+      let newBasemapList = JSON.parse(JSON.stringify(this.basemapNames))
+      // 清空底图
+      this.document.baseLayerMap.removeAll()
+
+      // 移除已加载底图
+      removeBaseMapList.forEach((basemap) => {
+        if (newBasemapList.includes(basemap.guid)) {
+          newBasemapList = newBasemapList.filter(
+            (item) => item !== basemap.guid
+          )
+        }
+      })
+
+      // 添加新增的底图，不改变已加载的底图顺序
+      addBaseMapList.forEach((item) => {
+        if (!newBasemapList.includes(item.guid)) {
+          newBasemapList.push(item.guid)
+        }
+      })
+
+      this.basemapNames = newBasemapList
+      this.basemapNamesCopy = newBasemapList
+      // 添加底图
+      this.basemapNames.forEach((guid) => {
+        this.renderMaps(guid)
+      })
+
+      setTimeout(() => {
+        this.updateCurrentBaseMapConfig()
+      }, 1000)
     },
     getSaveConfig() {
       const baseMapList = this.transfromationMapData()
