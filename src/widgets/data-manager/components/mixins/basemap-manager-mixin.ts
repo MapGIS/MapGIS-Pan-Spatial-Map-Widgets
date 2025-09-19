@@ -6,6 +6,7 @@ import {
   FitBound,
   DataCatalogManager,
   UrlUtil,
+  baseConfigInstance,
 } from '@mapgis/web-app-framework'
 import MpBasemapItem from '../BasemapItem/BasemapItem.vue'
 import { inOrderPromise } from '@mapgis/webclient-common'
@@ -113,6 +114,33 @@ export default {
 
       return type
     },
+    parseServerURL(url: string) {
+      let newUrl
+      if (this.designTime || this.previewTime) {
+        // 门户的相对路径服务进行地址拼接
+        if (url && url.startsWith('/')) {
+          const { origin } = window.location
+          newUrl = decodeURIComponent(origin + url)
+        } else {
+          newUrl = url
+        }
+      } else {
+        if (url && url.startsWith('/')) {
+          const { ip, port } = baseConfigInstance.config
+          // 如果没有ip则不进行组装
+          if (ip) {
+            newUrl = port
+              ? decodeURIComponent(`http://${ip}:${port}${url}`)
+              : decodeURIComponent(`http://${ip}${url}`)
+          } else {
+            newUrl = url
+          }
+        } else {
+          newUrl = url
+        }
+      }
+      return newUrl
+    },
     getLayerTypeString(type: number) {
       return LayerType[type]
     },
@@ -171,7 +199,7 @@ export default {
               name: layer.name,
               guid: layer.guid || UUID.uuid(),
               description,
-              serverURL: layer.url,
+              serverURL: this.parseServerURL(layer.url),
               serverType: this.parseLayerType(layer.type),
               commonData: layer.commonData,
               serviceType: layer.serviceType,
@@ -191,7 +219,20 @@ export default {
             if (layer.token) {
               layerConfig.tokenValue = layer.token
               layerConfig.tokenKey = layer.tokenKey ? layer.tokenKey : 'token'
+            } else {
+              // 门户的服务加上token
+              if (
+                layerConfig.serverURL &&
+                layerConfig.serverURL.startsWith(window.location.origin) &&
+                (this.designTime || this.previewTime)
+              ) {
+                layerConfig.tokenValue =
+                  'Bearer ' +
+                  JSON.parse(localStorage.getItem('app_builder_token'))
+                layerConfig.tokenKey = 'Authorization'
+              }
             }
+
             layers.push(layerConfig)
           }
           return {
@@ -214,7 +255,7 @@ export default {
           const layerConfig = {
             name: layer.name,
             description,
-            url: layer.serverURL,
+            url: this.getServerUrl(layer.serverURL),
             type:
               layer.commonData?.layerServiceType ||
               this.getLayerTypeString(layer.serverType),
@@ -226,8 +267,16 @@ export default {
             layerConfig.guid = layer.guid
           }
           if (layer.tokenValue) {
-            layerConfig.token = layer.tokenValue
-            layerConfig.tokenKey = layer.tokenKey ? layer.tokenKey : 'token'
+            if (
+              layerConfig.url &&
+              layerConfig.url.startsWith(window.location.origin) &&
+              (this.designTime || this.previewTime)
+            ) {
+              // 门户服务不保存token信息，初始化时自动组装
+            } else {
+              layerConfig.token = layer.tokenValue
+              layerConfig.tokenKey = layer.tokenKey ? layer.tokenKey : 'token'
+            }
           }
           return layerConfig
         })
@@ -236,6 +285,19 @@ export default {
           children: layers,
         }
       })
+    },
+    getServerUrl(url) {
+      let newUrl
+      if (
+        url &&
+        url.startsWith(window.location.origin) &&
+        (this.designTime || this.previewTime)
+      ) {
+        newUrl = url.replace(window.location.origin, '')
+      } else {
+        newUrl = url
+      }
+      return newUrl
     },
 
     // 渲染底图到页面
