@@ -372,12 +372,15 @@ export default {
 
       const layer = DataCatalogManager.generateLayerByConfig(layerConfig)
       if (layer) {
+        let layerLoadStatus
         try {
           if (layer.loadStatus === LoadStatus.notLoaded) {
             await layer.load()
           }
         } catch (error) {
-          console.log(error)
+          if (error && error.status) {
+            layerLoadStatus = error.status
+          }
         } finally {
           if (layer.loadStatus === LoadStatus.loaded) {
             if (
@@ -405,7 +408,13 @@ export default {
               this.isZoomLayer = false
             }
           } else {
-            this.$message.error(`图层:${layer.title}加载失败`)
+            if (layerLoadStatus === 401 || layerLoadStatus === 403) {
+              this.$message.error(
+                `${layer.title}加载失败，请检查该数据的访问权限`
+              )
+            } else {
+              this.$message.error(`${layer.title}加载失败`)
+            }
             this.$refs.refAddDataList.unSelectData(layer.id)
           }
         }
