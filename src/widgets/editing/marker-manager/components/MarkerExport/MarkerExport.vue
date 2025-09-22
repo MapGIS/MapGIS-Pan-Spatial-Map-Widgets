@@ -33,7 +33,7 @@ export default {
         exportFileType: 'shp格式',
       },
       // 导出格式下拉项配置
-      exportFileTypes: ['shp格式', '6x格式', 'csv格式'],
+      exportFileTypes: ['shp格式', '6x格式', 'csv格式', 'geojson格式'],
       // private shpOr6xOption: any
       shpOr6xOption: {},
     }
@@ -62,7 +62,7 @@ export default {
               feature,
               picture,
             } = marker
-            
+
             return {
               id: markerId,
               title,
@@ -103,6 +103,12 @@ export default {
               break
             case 'csv格式':
               this.ouputToCSV(
+                this.exportOptions.exportFileName,
+                exportedMarkers
+              )
+              break
+            case 'geojson格式':
+              this.ouputToGEOJSON(
                 this.exportOptions.exportFileName,
                 exportedMarkers
               )
@@ -231,6 +237,91 @@ export default {
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+    },
+
+    // 导出格式为geojson
+    ouputToGEOJSON(fileName: string, exportedMarkers) {
+      // 将标记按要素类型分组
+      const featuresByType = {
+        point: [],
+        line: [],
+        polygon: [],
+      }
+
+      exportedMarkers.forEach((item) => {
+        const originalFeature = item.features[0]
+        const { type } = originalFeature.geometry
+
+        const geojsonFeature = {
+          type: 'Feature',
+          properties: {
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            center: item.center,
+          },
+          geometry: originalFeature.geometry,
+        }
+
+        switch (type) {
+          case 'Point':
+            featuresByType.point.push(geojsonFeature)
+            break
+          case 'LineString':
+            featuresByType.line.push(geojsonFeature)
+            break
+          case 'Polygon':
+            featuresByType.polygon.push(geojsonFeature)
+            break
+          default:
+            break
+        }
+      })
+
+      // 为每种要素类型创建单独的GeoJSON文件
+      Object.keys(featuresByType).forEach((featureType) => {
+        const features = featuresByType[featureType]
+        if (features.length > 0) {
+          let typeName = ''
+          switch (featureType) {
+            case 'point':
+              typeName = 'Pnt'
+              break
+            case 'line':
+              typeName = 'Lin'
+              break
+            case 'polygon':
+              typeName = 'Reg'
+              break
+            default:
+              typeName = featureType
+          }
+
+          // 构建GeoJSON数据
+          const geojsonData = {
+            type: 'FeatureCollection',
+            features: features,
+          }
+
+          // 转换为字符串
+          const geojsonStr = JSON.stringify(geojsonData, null, 2)
+
+          // 创建Blob对象
+          const blob = new Blob([geojsonStr], {
+            type: 'application/json;charset=utf-8;',
+          })
+
+          // 创建下载链接
+          const link = document.createElement('a')
+          const url = URL.createObjectURL(blob)
+          link.setAttribute('href', url)
+          link.setAttribute('download', `${fileName}_${typeName}.geojson`)
+          link.style.visibility = 'hidden'
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+        }
+      })
     },
 
     markers2Features(markers: Record<string, any>[]) {
