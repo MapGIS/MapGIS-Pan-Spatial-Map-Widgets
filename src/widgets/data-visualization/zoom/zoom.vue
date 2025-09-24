@@ -236,7 +236,9 @@ export default {
           FitBound.fitBound2D(bound, mapParams, undefined, duration)
         }, 300)
       } else {
-        FitBound.fitBound3D(bound, mapParams, undefined, undefined, duration)
+        setTimeout(() => {
+          FitBound.fitBound3D(bound, mapParams)
+        }, 300)
       }
     },
 
