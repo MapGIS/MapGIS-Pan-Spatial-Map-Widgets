@@ -63,6 +63,10 @@ export default {
     showType() {
       return this.widgetInfo.config.showType
     },
+    // 搜索路径类型 relative | absolute
+    searchPathType() {
+      return this.widgetInfo.config.searchPathType
+    },
     imagesUploadApi() {
       // return `${this.baseUrl}/psmap/rest/manager/file/upload`
       return `${this.baseUrl}/${this.appProductName}/rest/services/system/ResourceServer/files/pictures`
@@ -81,6 +85,9 @@ export default {
     }
     if (!this.widgetInfo.config.showType) {
       this.$set(this.widgetInfo.config, 'showType', 'image')
+    }
+    if (!this.widgetInfo.config.searchPathType) {
+      this.$set(this.widgetInfo.config, 'searchPathType', 'absolute')
     }
     this.dataList = this.initData(
       JSON.parse(JSON.stringify(this.widgetInfo.config.data))
@@ -315,9 +322,8 @@ export default {
       Object.keys(layerInfo).forEach((item) => {
         // 兼容guid的情况
         if (item.includes('://')) {
-          const find = this.dataCatalogLayerArr.find(
-            (config) => config.serverURL === item
-          )
+          const find = this.findDataCatalognNode(item)
+
           if (find) {
             transferLayerInfo[find.guid] = layerInfo[item]
           }
@@ -327,9 +333,8 @@ export default {
       })
       Object.keys(relation).forEach((item) => {
         if (item.includes('://')) {
-          const find = this.dataCatalogLayerArr.find(
-            (config) => config.serverURL === item
-          )
+          const find = this.findDataCatalognNode(item)
+
           if (find) {
             transferRelation[find.guid] = relation[item]
           }
@@ -404,8 +409,24 @@ export default {
             flag = true
             const { children } = item
             children.forEach((item) => {
-              if (!url.includes(item.serverURL)) {
-                flag = false
+              if (this.searchPathType === 'relative') {
+                if (flag) {
+                  const relativeUrl = this.getRelativeUrl(item.serverURL)
+
+                  if (relativeUrl) {
+                    flag = url.find(
+                      (child) => child && child.includes(relativeUrl)
+                    )
+                  } else {
+                    if (!url.includes(item.serverURL)) {
+                      flag = false
+                    }
+                  }
+                }
+              } else {
+                if (!url.includes(item.serverURL)) {
+                  flag = false
+                }
               }
             })
           }
@@ -447,9 +468,8 @@ export default {
       const transferCheckKeys = []
       checkKeys.forEach((item) => {
         if (item.indexOf('://') > -1) {
-          const find = this.dataCatalogLayerArr.find(
-            (config) => config.serverURL === item
-          )
+          const find = this.findDataCatalognNode(item)
+
           if (find) {
             transferCheckKeys.push(find.guid)
           }
@@ -469,9 +489,7 @@ export default {
             const frist = subArr[0]
             let fristData
             if (frist.indexOf('://') > -1) {
-              fristData = this.dataCatalogAllArr.find(
-                (layer) => layer.serverURL === frist
-              )
+              fristData = this.findDataCatalognNode(frist)
             } else {
               fristData = this.dataCatalogAllArr.find(
                 (layer) => layer.guid === frist
@@ -482,9 +500,7 @@ export default {
             const transferSubArr = []
             subArr.forEach((item) => {
               if (item.indexOf('://') > -1) {
-                const find = this.dataCatalogLayerArr.find(
-                  (config) => config.serverURL === item
-                )
+                const find = this.findDataCatalognNode(item)
                 if (find) {
                   transferSubArr.push(find.guid)
                 }
@@ -537,6 +553,33 @@ export default {
         }
       }
       return target
+    },
+    findDataCatalognNode(url) {
+      // 以绝对路径还是相对路径进行匹配
+      let find
+      if (this.searchPathType === 'relative') {
+        const relativeUrl = this.getRelativeUrl(url)
+        if (relativeUrl) {
+          // 查找相对路径的地址
+          find = this.dataCatalogLayerArr.find(
+            (node) => node.serverURL && node.serverURL.includes(relativeUrl)
+          )
+        } else {
+          // url解析失败走绝对路径的方式匹配
+          find = this.dataCatalogLayerArr.find((node) => node.serverURL === url)
+        }
+      } else {
+        find = this.dataCatalogLayerArr.find((node) => node.serverURL === url)
+      }
+      return find
+    },
+    getRelativeUrl(url) {
+      let relativeUrl
+      try {
+        const { origin } = new URL(url)
+        relativeUrl = url.replace(origin, '')
+      } catch (error) {}
+      return relativeUrl
     },
   },
   beforeDestroy() {
