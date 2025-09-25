@@ -223,6 +223,7 @@ import {
   ModelPickController,
   LayerPropertyEdit,
   Metadata,
+  dataCatalogManagerInstance,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../MetadataInfo/MetadataInfo.vue'
 import MpCustomQuery from '../CustomQuery/CustomQuery.vue'
@@ -2112,10 +2113,15 @@ export default {
       //   const find = layerArr.find((layer) => layer.key === item)
       //   find && checkNodeKeys.push(find.url)
       // })
+      const dataCatalogLayerArr =
+        dataCatalogManagerInstance.getAllLayerConfigItems()
       this.layers.forEach((layer) => {
-        // relation[layer.id] = layer.key
-        relation[layer.url] = layer.key
-        this.getLayerProperty(layer, layerInfo)
+        // 通过id查找对应的目录树节点
+        const node = dataCatalogLayerArr.find((item) => item.guid === layer.id)
+        // 以目录树节点的url作为key值进行保存，防止layer对象的url与原始节点不一样，如携带了token信息
+        const url = node.serverURL
+        relation[url] = layer.key
+        this.getLayerProperty(layer, layerInfo, url)
       })
       return {
         expandedKeys,
@@ -2125,8 +2131,8 @@ export default {
         ...checkLayerConfig,
       }
     },
-    getLayerProperty(layer, config) {
-      config[layer.url] = {
+    getLayerProperty(layer, config, configKey) {
+      config[configKey] = {
         layerProperty: layer.layerProperty || null,
         opacity: layer.opacity,
         isVisible: layer.isVisible,
@@ -2136,7 +2142,7 @@ export default {
       if (layer.sublayers && layer.sublayers.length > 0) {
         this.getSublayers(layer.sublayers, sublayerArr)
       }
-      config[layer.url].sublayers = sublayerArr
+      config[configKey].sublayers = sublayerArr
     },
     getSublayers(layer, sublayerArr) {
       if (layer && layer.length > 0) {
