@@ -82,7 +82,7 @@ export default {
       maximumScreenSpaceError: 16,
       maximumMemoryUsage: 512,
       enablePopup: false,
-      luminanceAtZenith: 10,
+      luminanceAtZenith: 0.2,
       enableModelStretch: false,
       scaleZ: 1,
       offset: -2,
@@ -199,7 +199,7 @@ export default {
         this.enablePopup = enablePopup !== undefined ? enablePopup : false
 
         this.luminanceAtZenith =
-          luminanceAtZenith !== undefined ? luminanceAtZenith : 10
+          luminanceAtZenith !== undefined ? luminanceAtZenith : 0.2
 
         if (this.enableModelStretch) {
           this.$emit('update:scaleZ', {
