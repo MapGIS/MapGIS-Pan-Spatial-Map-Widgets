@@ -270,6 +270,7 @@ export default {
         const originConfig = {
           data: this.dataList,
           showType: this.showType,
+          searchPathType: this.searchPathType,
         }
         this.setWidgetData(JSON.parse(JSON.stringify(originConfig)))
       } else if (this.previewTime) {
@@ -278,6 +279,9 @@ export default {
         originConfig.data = this.dataList
         if (!originConfig.showType) {
           originConfig.showType = this.showType
+        }
+        if (!originConfig.searchPathType) {
+          originConfig.searchPathType = this.searchPathType
         }
         api
           .saveWidgetConfig({
