@@ -150,7 +150,7 @@
                     -1
                 "
               >
-                <span class="unfilter-words" :title="item.description">
+                <span class="unfilter-words" :title="item.name">
                   {{
                     item.name.substr(
                       0,
@@ -158,7 +158,7 @@
                     )
                   }}
                 </span>
-                <span class="filter-words" :title="item.description">
+                <span class="filter-words" :title="item.name">
                   {{
                     item.name.substr(
                       item.name
@@ -168,7 +168,7 @@
                     )
                   }}
                 </span>
-                <span class="unfilter-words" :title="item.description">
+                <span class="unfilter-words" :title="item.name">
                   {{
                     item.name.substr(
                       item.name
@@ -178,7 +178,7 @@
                   }}
                 </span>
               </span>
-              <span v-else :title="item.description"
+              <span v-else :title="item.name"
                 >{{ item.name
                 }}<span class="total-text">{{
                   `${getLeafStatus(item)}`
@@ -197,7 +197,7 @@
             "
             :id="`tree_${item.guid}`"
           >
-            <mapgis-ui-tooltip>
+            <mapgis-ui-tooltip v-if="item.serverType">
               <template slot="title">
                 {{ getLeafTooltip(item) }}
               </template>
@@ -208,7 +208,7 @@
                     -1
                 "
               >
-                <span class="unfilter-words" :title="item.description">
+                <span class="unfilter-words">
                   {{
                     item.name.substr(
                       0,
@@ -216,7 +216,7 @@
                     )
                   }}
                 </span>
-                <span class="filter-words" :title="item.description">
+                <span class="filter-words">
                   {{
                     item.name.substr(
                       item.name
@@ -226,7 +226,7 @@
                     )
                   }}
                 </span>
-                <span class="unfilter-words" :title="item.description">
+                <span class="unfilter-words">
                   {{
                     item.name.substr(
                       item.name
@@ -236,10 +236,9 @@
                   }}
                 </span>
               </span>
-              <span v-else @click="onClick(item)" :title="item.description">{{
-                item.name
-              }}</span>
+              <span v-else @click="onClick(item)">{{ item.name }}</span>
             </mapgis-ui-tooltip>
+            <span v-else :title="item.name">{{ item.name }}</span>
             <mapgis-ui-menu slot="overlay">
               <mapgis-ui-menu-item
                 v-if="
@@ -2106,11 +2105,14 @@ export default {
       for (let i = 0; i < item.children.length; i++) {
         const children = item.children[i]
         if (!children.children || children.children.length === 0) {
-          leafTotal++
-          const id = children.guid
-          // 判断该节点是否被勾选
-          if (this.dataCatalogManager.checkedLayerConfigIDs.includes(id)) {
-            leafChecked++
+          if (children.serverType) {
+            // 只有统计服务节点
+            leafTotal++
+            const id = children.guid
+            // 判断该节点是否被勾选
+            if (this.dataCatalogManager.checkedLayerConfigIDs.includes(id)) {
+              leafChecked++
+            }
           }
         } else {
           const childrenStatus = this.getLeafStatusRecursion(children)
