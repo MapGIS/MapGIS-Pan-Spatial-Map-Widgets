@@ -45,26 +45,9 @@ export default {
   computed: {
     basemaps() {
       const baseMapList = this.widgetInfo.config.baseMapList
-      const indexBaseMapGUID = this.widgetInfo.config.indexBaseMapGUID
-      let defaultBasemap
-      for (let i = 0; i < baseMapList.length; i++) {
-        const basemap = baseMapList[i]
-        if (basemap.guid == indexBaseMapGUID) {
-          baseMapList.splice(i, 1)
-          defaultBasemap = basemap
-          break
-        }
-      }
-      if (defaultBasemap) {
-        baseMapList.push(defaultBasemap)
-      }
 
       // 将配置转换成可用于添加到map中的配置
-      const maps = this.mapDataTransfromation(
-        baseMapList,
-        true,
-        indexBaseMapGUID
-      )
+      const maps = this.mapDataTransfromation(baseMapList, true)
       return maps
     },
     isResize() {
@@ -119,6 +102,8 @@ export default {
       return
     }
 
+    const defaultSelectedBasemaps = []
+
     // 加载显示配置里已设置默认选中的底图
     if (this.defaultSelect && this.defaultSelect.length > 0) {
       // 应用搭建状态下恢复底图加载顺序
@@ -128,39 +113,39 @@ export default {
             (item) => item.guid === loadOrder[i]
           )
           if (isMapExsit) {
-            let isZoomTo = false
-            let init = false
-            // 以索引底图的范围为初始范围
-            if (
-              initPositionMode === 'basemapExtent' &&
-              loadOrder[i] === indexBaseMapGUID
-            ) {
-              isZoomTo = true
-              init = true
-            }
-            this.onSelect(loadOrder[i], isZoomTo, init)
+            defaultSelectedBasemaps.push(loadOrder[i])
           }
         }
       } else {
         for (let i = 0; i < this.defaultSelect.length; i++) {
-          let isZoomTo = false
-          let init = false
-          // 以索引底图的范围为初始范围
-          if (
-            initPositionMode === 'basemapExtent' &&
-            this.defaultSelect[i].guid === indexBaseMapGUID
-          ) {
-            isZoomTo = true
-            init = true
-          }
-          this.onSelect(this.defaultSelect[i].guid, isZoomTo, init)
+          defaultSelectedBasemaps.push(this.defaultSelect[i].guid)
         }
       }
+      this.initSelectedBasemap(defaultSelectedBasemaps)
     }
 
     eventBus.$on('basemap-manager-change', this.updateBaseMap)
   },
   methods: {
+    /**
+     * 默认选中底图加载
+     * @param {Array} defaultSelectedBasemaps
+     */
+    initSelectedBasemap(defaultSelectedBasemaps) {
+      let selectedBasemaps = [...defaultSelectedBasemaps]
+      if (!this.isShow) return
+      if (this.widgetInfo.config.isSingleMode) {
+        // 单底图模式，只加载最后一个底图
+        selectedBasemaps = [
+          defaultSelectedBasemaps[defaultSelectedBasemaps.length - 1],
+        ]
+      }
+      for (let i = 0; i < selectedBasemaps.length; i++) {
+        this.basemapNames.push(selectedBasemaps[i])
+      }
+      this.updateCurrentBaseMapConfig()
+      this.initRenderMaps(selectedBasemaps)
+    },
     isShowBasemapChange(val) {
       this.changeBaseMap(val)
       this.isShowChange(val)
@@ -198,7 +183,7 @@ export default {
         })
       }
     },
-    generateLayer(guid, isZoomTo = false) {
+    generateLayer(guid) {
       return new Promise((resolve, reject) => {
         const basemap = this.basemaps.find((item) => item.guid === guid)
         if (basemap) {
@@ -208,16 +193,6 @@ export default {
             mapLayer.description = layer.description
             if (mapLayer.loadStatus === LoadStatus.notLoaded) {
               await mapLayer.load()
-              // 正常来说收藏夹不会走此逻辑
-              if (isZoomTo) {
-                if (this.is3DLayer(mapLayer)) {
-                  setTimeout(() => {
-                    // this.fitBounds(mapLayer, false)
-                  }, 500)
-                } else {
-                  this.fitBounds(mapLayer, false)
-                }
-              }
             }
             allLayers.push(mapLayer)
             // 最后一个图层
@@ -250,43 +225,33 @@ export default {
       } = {
         ...this.widgetInfo.config,
       }
-      const baseMapZoomTo =
-        this.defaultSelect.includes(indexBaseMapGUID) ||
-        this.basemapNames.includes(indexBaseMapGUID)
-      // onSelect和unSelect根据场景不同自己组装
-      // const onSelect = this.defaultSelect
-      //   .filter((item) => item.guid !== indexBaseMapGUID)
-      //   .map((item) => item.guid)
-      // const unSelect = baseMapList
-      //   .filter((item) => !item.select)
-      //   .map((item) => item.guid)
       const config = {
         baseMapShow: isShow,
         isSingleMode,
         indexBaseMapGUID,
-        baseMapZoomTo,
+        baseMapZoomTo: false,
         zoomArr: [],
       }
       return config
     },
-    onSelect(guid, isZoomTo = false, init = false) {
+    onSelect(guid) {
       if (!this.isShow) return
       if (this.widgetInfo.config.isSingleMode) {
         this.clearBasemap()
       }
       this.basemapNames.push(guid)
       this.updateCurrentBaseMapConfig()
-      this.renderMaps(guid, isZoomTo, init)
+      this.renderMaps(guid)
     },
     // 通过点击底图进行勾选使用onCheck方法，用于区分是否为点击底图进行勾选
-    onCheck(guid, isZoomTo = false, init = false) {
+    onCheck(guid) {
       if (!this.isShow) return
       if (this.widgetInfo.config.isSingleMode) {
         this.clearBasemap()
       }
       this.basemapNames.push(guid)
       this.updateCurrentBaseMapConfig()
-      this.renderMaps(guid, isZoomTo, init)
+      this.renderMaps(guid)
       this.updateWidgetConfig()
     },
     updateCurrentBaseMapConfig() {

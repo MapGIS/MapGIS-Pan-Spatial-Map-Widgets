@@ -3,7 +3,6 @@ import {
   UUID,
   LayerType,
   LoadStatus,
-  FitBound,
   DataCatalogManager,
   UrlUtil,
   baseConfigInstance,
@@ -85,24 +84,6 @@ export default {
         })
       }
     },
-    fitBounds(item, init) {
-      const { Cesium, map, vueCesium, viewer } = this
-      const isOutOfRange = FitBound.fitBoundByLayer(
-        item,
-        {
-          Cesium,
-          map,
-          viewer,
-          vueCesium,
-        },
-        this.is2DMapMode === true,
-        undefined,
-        init
-      )
-      if (isOutOfRange) {
-        this.$message.error('初始底图范围有误，已调整为经纬度最大范围')
-      }
-    },
     parseLayerType(typeString: string): LayerType {
       if (typeString === 'TILE3D') {
         return LayerType.ModelCache
@@ -173,7 +154,7 @@ export default {
     },
 
     // 将配置转换成可用于添加到map中的配置
-    mapDataTransfromation(mapData, check, indexBaseMapGUID) {
+    mapDataTransfromation(mapData, check) {
       return mapData
         .map((basemap) => {
           const { children } = basemap
@@ -185,14 +166,6 @@ export default {
             if (check) {
               // 如果要兼容老版格式，可以在这里进行升级，转换成新的数据结构（数据与添加数据配置一致）
               layer = this.updateLayer(layer)
-
-              if (basemap.guid == indexBaseMapGUID && i == 0) {
-                description = '索引底图'
-              } else {
-                if (description === '索引底图') {
-                  description = ''
-                }
-              }
             }
 
             const layerConfig: any = {
@@ -300,43 +273,66 @@ export default {
       return newUrl
     },
 
+    /**
+     * 初始化加载底图，按顺序加载底图
+     * @param defaultSelectedBasemaps 默认选中的底图
+     */
+    initRenderMaps(defaultSelectedBasemaps) {
+      const self = this
+      let funcs = []
+      for (let i = 0; i < defaultSelectedBasemaps.length; i++) {
+        const guid = defaultSelectedBasemaps[i]
+        for (let j = 0; j < self.basemaps.length; j++) {
+          const basemap = self.basemaps[j]
+          if (basemap.guid === guid) {
+            funcs = [...funcs, ...self._getOrderPromise(basemap)]
+            break
+          }
+        }
+      }
+      // 修改说明：引用@mapgis/webclient-common里的inOrderPromise,确保在同时加多个图层时，能按顺序加载
+      // 修改人：龚跃健
+      // 修改时间；2024-11-21
+      inOrderPromise(funcs).then(() => {})
+    },
+
+    _getOrderPromise(basemap) {
+      const self = this
+      const funcs = []
+      const { children } = basemap
+      for (let k = 0; k < children.length; k++) {
+        const layer = children[k]
+        funcs.push(() => {
+          return new Promise<void>((reslove) => {
+            const mapLayer = DataCatalogManager.generateLayerByConfig(layer)
+            mapLayer.description = layer.description
+            if (mapLayer.loadStatus === LoadStatus.notLoaded) {
+              mapLayer.load().then(() => {
+                self.document.baseLayerMap.add(mapLayer)
+                reslove()
+              })
+            } else {
+              self.document.baseLayerMap.add(mapLayer)
+              reslove()
+            }
+          })
+        })
+      }
+      return funcs
+    },
+
     // 渲染底图到页面
-    renderMaps(guid, isZoomTo, init) {
+    renderMaps(guid) {
       const self = this
       for (let i = 0; i < self.basemaps.length; i++) {
         const basemap = self.basemaps[i]
         if (basemap.guid === guid) {
-          const funcs = basemap.children.map((layer) => {
-            return () => {
-              return new Promise<void>((reslove) => {
-                const mapLayer = DataCatalogManager.generateLayerByConfig(layer)
-                mapLayer.description = layer.description
-                if (mapLayer.loadStatus === LoadStatus.notLoaded) {
-                  mapLayer.load().then(() => {
-                    self.document.baseLayerMap.add(mapLayer)
-                    reslove()
-                  })
-                } else {
-                  self.document.baseLayerMap.add(mapLayer)
-                  reslove()
-                }
-              })
-            }
-          })
+          const funcs = [...this._getOrderPromise(basemap)]
 
           // 修改说明：引用@mapgis/webclient-common里的inOrderPromise,确保在同时加多个图层时，能按顺序加载
           // 修改人：龚跃健
           // 修改时间；2024-11-21
-          inOrderPromise(funcs).then(() => {
-            // 如果一次添加多个图层,则等多个图层加载完后再进行缩放
-            const layers = self.document.baseLayerMap.allLayers
-            if (layers && layers.length > 0) {
-              const mapLayer = layers[layers.length - 1]
-              if (isZoomTo || mapLayer.type === LayerType.STKTerrain) {
-                self.fitBounds(mapLayer, init)
-              }
-            }
-          })
+          inOrderPromise(funcs).then(() => {})
 
           if (!basemap.select) {
             basemap.select = true
