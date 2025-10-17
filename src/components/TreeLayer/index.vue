@@ -1283,12 +1283,11 @@ export default {
           viewer,
           vueCesium,
         },
-        this.is2DMapMode === true,
-        layeExtent
+        this.is2DMapMode === true
       )
       this.clickPopover(item, false)
       if (isOutOfRange) {
-        this.$message.error('地图范围有误，已调整为经纬度最大范围')
+        this.$message.info('地图范围无效，无法执行跳转')
       }
     },
 

@@ -1241,7 +1241,7 @@ export default {
                     !engineType
                   ) {
                     setTimeout(() => {
-                      this.fitBounds(layer, this.getDataFlowExtent(layer))
+                      this.fitBounds(layer)
                     }, 1000)
                   }
                 } else {
@@ -1250,7 +1250,7 @@ export default {
                     !['Mapbox', 'Leaflet', 'Openlayers'].includes(engineType)
                   ) {
                     setTimeout(() => {
-                      this.fitBounds(layer, this.getDataFlowExtent(layer))
+                      this.fitBounds(laye)
                     }, 1000)
                   }
                 }
@@ -1505,7 +1505,7 @@ export default {
         }
         setTimeout(() => {
           // 自动定位至图层所在位置
-          this.fitBounds(layer, this.getDataFlowExtent(layer))
+          this.fitBounds(layer)
         }, 1000)
       }
     },
@@ -1520,11 +1520,10 @@ export default {
           viewer,
           vueCesium,
         },
-        this.is2DMapMode,
-        layeExtent
+        this.is2DMapMode
       )
       if (isOutOfRange) {
-        this.$message.error('地图范围有误，已调整为经纬度最大范围')
+        this.$message.info('地图范围无效，无法执行跳转')
       }
     },
     // 获取流图层范围

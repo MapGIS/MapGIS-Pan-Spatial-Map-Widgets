@@ -164,11 +164,9 @@ export default {
     },
 
     fitBounds() {
-      this.getDataFlowExtent(this.layerItem)
       this.$emit(
         'fit-bounds',
-        this.layerItem,
-        this.getDataFlowExtent(this.layerItem)
+        this.layerItem
       )
     },
 
