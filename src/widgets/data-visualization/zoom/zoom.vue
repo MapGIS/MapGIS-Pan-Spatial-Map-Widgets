@@ -282,7 +282,7 @@ export default {
         duration
       )
       if (isOutOfRange) {
-        this.$message.error('初始底图范围有误，已调整为经纬度最大范围')
+        this.$message.info('地图范围无效，无法执行跳转')
       }
     },
 
