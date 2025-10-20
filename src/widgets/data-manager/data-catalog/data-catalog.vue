@@ -1250,7 +1250,7 @@ export default {
                     !['Mapbox', 'Leaflet', 'Openlayers'].includes(engineType)
                   ) {
                     setTimeout(() => {
-                      this.fitBounds(laye)
+                      this.fitBounds(layer)
                     }, 1000)
                   }
                 }
