@@ -1190,6 +1190,10 @@ export default {
                   this.$message.info(
                     `${layer.title}瓦片第0级张数大于9，为了显示性能，已关闭瓦片拉伸（缩小）显示`
                   )
+                } else {
+                  layer.layerProperty.extensions = JSON.stringify({
+                    isStretchImage: true,
+                  })
                 }
               }
             }
