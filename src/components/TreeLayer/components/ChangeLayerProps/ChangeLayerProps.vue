@@ -20,14 +20,21 @@
         <mapgis-ui-switch v-model="enablePopup" @change="submit" />
       </mapgis-ui-form-item>
     </mapgis-ui-form>
+    <mp-change-extensions
+      v-if="showExtensions"
+      :extensions.sync="extensions"
+      :type="this.layer.layer ? this.layer.layer.type : this.layer.type"
+    ></mp-change-extensions>
   </div>
 </template>
 
 <script lang="ts">
 import { LayerType } from '@mapgis/web-app-framework'
+import MpChangeExtensions from '../ChangeExtensions/ChangeExtensions.vue'
 
 export default {
   name: 'MpChangeLayerProps',
+  components: { MpChangeExtensions },
   props: ['layer'],
   data() {
     return {
@@ -56,6 +63,27 @@ export default {
       return (
         layer.type === LayerType.IGSMapImage ||
         layer.type === LayerType.IGSVector
+      )
+    },
+    extensions: {
+      get() {
+        const layer = this.layer.layer ? this.layer.layer : this.layer
+        return layer.layerProperty?.extensions || '{}'
+      },
+      set(val) {
+        const layer = this.layer.layer ? this.layer.layer : this.layer
+        layer.layerProperty.extensions = val
+        this.$emit('update:layer', this.layer)
+      },
+    },
+    showExtensions() {
+      const layer = this.layer.layer ? this.layer.layer : this.layer
+      return (
+        layer.type === LayerType.IGSTile ||
+        layer.type === LayerType.VectorTile ||
+        layer.type === LayerType.ArcGISTile ||
+        layer.type === LayerType.WMTS ||
+        layer.type === LayerType.WebTile
       )
     },
   },

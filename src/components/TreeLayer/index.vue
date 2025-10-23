@@ -1774,10 +1774,6 @@ export default {
       this.$emit('update:layerDocument', doc)
     },
 
-    // updateLuminanceAtZenith(luminanceAtZenith) {
-    //   const { key, luminanceAtZenith } = val
-    //   const indexArr: Array<string> = key.split('-')
-    // },
     updateM3DProps(val, onlyUpdateLuminanceAtZenith, changeEnablePopup) {
       let enablePopup
       let enableModelSwitch
@@ -1845,19 +1841,31 @@ export default {
             luminanceAtZenith,
           }
           const m3d = this.sceneController.findSource(id)
-          m3d.maximumScreenSpaceError = maximumScreenSpaceError
-          // @ts-ignore
-          m3d.cacheBytes =
-            layerProperty && layerProperty.maximumCacheOverflowBytes
-              ? layerProperty.maximumCacheOverflowBytes
-              : 536870912
-          // m3d.enablePopup = enablePopup
+          if (m3d) {
+            m3d.maximumScreenSpaceError = maximumScreenSpaceError
+            m3d.imageBasedLighting.luminanceAtZenith = luminanceAtZenith
+
+            // @ts-ignore
+            m3d.cacheBytes =
+              layerProperty && layerProperty.maximumCacheOverflowBytes
+                ? layerProperty.maximumCacheOverflowBytes
+                : 536870912
+            // m3d.enablePopup = enablePopup
+            const extensions = JSON.parse(layerProperty.extensions || '{}')
+            const extensionsKeys = Object.keys(extensions)
+            if (extensionsKeys.length > 0) {
+              extensionsKeys.forEach((key) => {
+                m3d[key] = extensions[key]
+              })
+            }
+          }
           if (onlyUpdateLuminanceAtZenith) {
             // 模型阴影区亮度设置，如果是g3d，则对里面的图层都进行设置
             for (let i = 0; i < sublayers.length; i++) {
               const sublayerId = sublayers[i].id
               const sublayerM3d = this.sceneController.findSource(sublayerId)
-              sublayerM3d.luminanceAtZenith = luminanceAtZenith
+              sublayerM3d.imageBasedLighting.luminanceAtZenith =
+                luminanceAtZenith
             }
           } else {
             this.$emit('update:layerDocument', doc)
@@ -1875,27 +1883,26 @@ export default {
             maximumScreenSpaceError,
             luminanceAtZenith,
           }
-          const m3d = this.sceneController.findM3DIgsSource(MC.id)
-          if (m3d) {
-            m3d.maximumScreenSpaceError = maximumScreenSpaceError
-            m3d.imageBasedLighting.luminanceAtZenith = luminanceAtZenith
+
+          let tileset = this.sceneController.findM3DIgsSource(MC.id)
+          if (!tileset) {
+            tileset = this.sceneController.findSource(MC.id)
+          }
+          if (tileset) {
+            tileset.maximumScreenSpaceError = maximumScreenSpaceError
+            tileset.imageBasedLighting.luminanceAtZenith = luminanceAtZenith
+
             // @ts-ignore
-            m3d.cacheBytes =
+            tileset.cacheBytes =
               layerProperty && layerProperty.maximumCacheOverflowBytes
                 ? layerProperty.maximumCacheOverflowBytes
                 : 536870912
-          } else {
-            const cesium3DTileset = this.sceneController.findSource(MC.id)
-            if (cesium3DTileset) {
-              cesium3DTileset.maximumScreenSpaceError = maximumScreenSpaceError
-              cesium3DTileset.imageBasedLighting.luminanceAtZenith =
-                luminanceAtZenith
-
-              // @ts-ignore
-              cesium3DTileset.cacheBytes =
-                layerProperty && layerProperty.maximumCacheOverflowBytes
-                  ? layerProperty.maximumCacheOverflowBytes
-                  : 536870912
+            const extensions = JSON.parse(layerProperty.extensions || '{}')
+            const extensionsKeys = Object.keys(extensions)
+            if (extensionsKeys.length > 0) {
+              extensionsKeys.forEach((key) => {
+                tileset[key] = extensions[key]
+              })
             }
           }
           if (!onlyUpdateLuminanceAtZenith) {
