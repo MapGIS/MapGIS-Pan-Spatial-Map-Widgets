@@ -59,12 +59,14 @@
         :offset.sync="offset"
         :textureScale.sync="textureScale"
       />
-      <div style="textalign: right">
-        <mapgis-ui-button type="primary" @click="submit">
-          确认
-        </mapgis-ui-button>
-      </div>
     </mapgis-ui-form>
+    <mp-change-extensions
+      :extensions.sync="extensions"
+      :type="this.layer.layer ? this.layer.layer.type : this.layer.type"
+    ></mp-change-extensions>
+    <div style="textalign: right">
+      <mapgis-ui-button type="primary" @click="submit"> 确认 </mapgis-ui-button>
+    </div>
   </div>
 </template>
 
@@ -72,10 +74,14 @@
 import { LayerType, IGSSceneSublayerType } from '@mapgis/web-app-framework'
 import UnifyModifyVue from '../UnifyModify/UnifyModify.vue'
 import MpModelStretchUi from '../../../ModelStretch/ModelStretchUi.vue'
+import MpChangeExtensions from '../ChangeExtensions/ChangeExtensions.vue'
 
 export default {
   name: 'MpChangeM3DProps',
-  components: { 'mp-model-stretch-ui': MpModelStretchUi },
+  components: {
+    'mp-model-stretch-ui': MpModelStretchUi,
+    'mp-change-extensions': MpChangeExtensions,
+  },
   props: ['layer'],
   data() {
     return {
@@ -111,13 +117,19 @@ export default {
       }
       return false
     },
+    extensions: {
+      get() {
+        const layer = this.layer.layer ? this.layer.layer : this.layer
+        return layer.layerProperty?.extensions || '{}'
+      },
+      set(val) {
+        const layer = this.layer.layer ? this.layer.layer : this.layer
+        layer.layerProperty.extensions = val
+        this.$emit('update:layer', this.layer)
+      },
+    },
   },
   watch: {
-    // layer: {
-    //   handler: 'init',
-    //   immediate: true,
-    //   deep: true,
-    // },
     scaleZ: {
       handler(val) {
         this.$emit('update:scaleZ', {
