@@ -1,5 +1,5 @@
 <template>
-  <div :class="['basemap-item', { active }]" @click="onClick">
+  <div v-if="visible" :class="['basemap-item', { active }]" @click="onClick">
     <div class="item-image">
       <img :src="image" />
     </div>
@@ -19,6 +19,7 @@ export default {
     active: Boolean,
     icon: String,
     guid: String,
+    visible: Boolean,
   },
   methods: {
     onClick() {

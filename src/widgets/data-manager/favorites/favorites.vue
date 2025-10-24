@@ -585,6 +585,12 @@ export default {
       } catch (error) {}
       return relativeUrl
     },
+    // 微件配置变化事件
+    onWidgetConfigChange(newValue, oldValue) {
+      this.dataList = this.initData(
+        JSON.parse(JSON.stringify(newValue.data || []))
+      )
+    },
   },
   beforeDestroy() {
     eventBus.$off(events.DATA_CATALOG_ADD_COLLECT)
