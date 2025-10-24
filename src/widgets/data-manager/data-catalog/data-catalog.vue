@@ -561,42 +561,11 @@ export default {
   async mounted() {
     this.uploadUrl = `${this.baseUrl}/${this.appProductName}/rest/services/system/ResourceServer/files/pictures`
 
-    // 使用新的app.json中的规范，判断this.application.data是否有且有值就替换this.widgetInfo.config.treeConfig.treeData
-    if (this.application.data && this.application.data.length > 0) {
-      this.widgetInfo.config.treeConfig.treeData = this.application.data
-    }
+    const config = JSON.parse(JSON.stringify(this.widgetInfo.config))
+    config.treeConfig.treeData = this.application.data
+    this.setWidgetData(config)
 
-    // 初始化目录树数据
-    this.dataCatalogManager.init(this.widgetInfo.config)
-    // 是否对图层节点进行过滤
-    const filtTree = this.widgetInfo.config.otherConfig.filtTree || false
-    // 组装目录树数据
-    this.dataCatalogTreeData =
-      await this.dataCatalogManager.getDataCatalogTreeData(filtTree)
-    const _allTreeDataConfigs = []
-    const { treeData, allTreeDataConfigs } = this.handleTreeData(
-      this.dataCatalogTreeData,
-      _allTreeDataConfigs
-    )
-    this.dataCatalogTreeData = treeData
-    // 记录将目录树转化为一维数组的所有数据
-    this.allTreeDataConfigs = allTreeDataConfigs
-    // 目录树分类展示
-    if (this.isClassify) {
-      this.dataCatalogTreeDataCopy = treeData
-      this.dataCatalogTabData = this.getTabsData(treeData)
-      // 分类展示默认选中的tab
-      this.activeTreeTab =
-        this.dataCatalogTabData.length > 0
-          ? this.dataCatalogTabData[0].guid
-          : ''
-      this.activeTreeTab && this.treeTabChange(this.activeTreeTab)
-    }
-
-    // 初始化存储点击跳转图层
-    this.initLocationKeys()
-    // 初始化加载图层
-    this.initLoadKeys()
+    await this.onTreeDataChange()
 
     // 监听tree-tabs-list，当面板宽度超过scrollWidth取消前后处的箭头
     const targetNode = document.getElementById('tree-tabs-list')
@@ -624,6 +593,12 @@ export default {
     eventBus.$on(
       events.DATA_CATALOG_SELECT_LOADED_NODE_CALLBACK,
       this.selectLoadedNodeCallback
+    )
+
+    // 添加对widegt.config.treeConfig.treeData的监听
+    this.addWidgetConfigPropertiesWatchEvent(
+      'treeConfig.treeData',
+      this.onTreeDataChange
     )
   },
   watch: {
@@ -1822,11 +1797,13 @@ export default {
     // 刷新按钮
     async refreshTree() {
       // 获取数据目录微件的配置信息
-      const config = await api.getWidgetConfig('data-catalog')
+      let config
       // 如果处于应用搭建状态下直接从application对象中获取
       if (this.designTime) {
+        config = JSON.parse(JSON.stringify(this.widgetInfo.config))
         config.treeConfig.treeData = this.application.data
       } else {
+        config = await api.getWidgetConfig('data-catalog')
         // 获取一张图的应用信息
         const appConfig = await AppManager.getInstance().getRequest()({
           url: this.application.appConfigPath,
@@ -1840,8 +1817,11 @@ export default {
         config.treeConfig.treeData = appConfig.data
       }
 
+      this.setWidgetData(config)
+    },
+    async onTreeDataChange(newValue, oldValue) {
       // 初始化数据目录
-      this.dataCatalogManager.init(config)
+      this.dataCatalogManager.init(this.widgetInfo.config)
 
       if (this.designTime) {
         this.dataCatalogTreeData = this.dataCatalogManager.refreshTreeData()
@@ -1858,6 +1838,9 @@ export default {
       )
       this.dataCatalogTreeData = treeData
       this.allTreeDataConfigs = allTreeDataConfigs
+      // 初始化存储点击跳转图层
+      this.initLocationKeys()
+      // 初始化加载图层
       this.initLocationKeys()
       const removeKeys = []
       this.checkedNodeKeys = this.checkedNodeKeys.filter((item) => {
@@ -1873,6 +1856,12 @@ export default {
       if (this.isClassify) {
         this.dataCatalogTreeDataCopy = treeData
         this.dataCatalogTabData = this.getTabsData(treeData)
+        if (!this.activeTreeTab) {
+          this.activeTreeTab =
+            this.dataCatalogTabData.length > 0
+              ? this.dataCatalogTabData[0].guid
+              : ''
+        }
         this.activeTreeTab && this.treeTabChange(this.activeTreeTab)
       }
     },
