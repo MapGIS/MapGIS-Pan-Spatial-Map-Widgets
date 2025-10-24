@@ -47,8 +47,8 @@ export default {
      */
     defaultSelect() {
       return this.basemaps.filter((basemap) => {
-        const { select = false } = basemap
-        return select
+        const { select = false, visible = false } = basemap
+        return select && JSON.parse(visible)
       })
     },
   },
@@ -61,7 +61,7 @@ export default {
   },
   methods: {
     // 清空底图
-    clearBasemap() {
+    clearBasemap(clearSelect = true) {
       this.basemaps.forEach((basemap) => {
         basemap.children.forEach((layer) => {
           const maplayer = this.document.baseLayerMap.findLayerById(layer.guid)
@@ -71,7 +71,9 @@ export default {
           basemap.select = false
         }
       })
-      this.basemapNames = []
+      if (clearSelect) {
+        this.basemapNames = []
+      }
     },
     isShowChange(val) {
       if (!val) {
@@ -226,6 +228,7 @@ export default {
         const layers = children.map((layer) => {
           const description = layer.description || ''
           const layerConfig = {
+            guid: layer.guid,
             name: layer.name,
             description,
             url: this.getServerUrl(layer.serverURL),
@@ -234,10 +237,6 @@ export default {
               this.getLayerTypeString(layer.serverType),
             commonData: layer.commonData,
             serviceType: layer.serviceType,
-          }
-          // 应用搭建模式下记录guid
-          if (this.designTime) {
-            layerConfig.guid = layer.guid
           }
           if (layer.tokenValue) {
             if (
@@ -302,21 +301,25 @@ export default {
       const { children } = basemap
       for (let k = 0; k < children.length; k++) {
         const layer = children[k]
-        funcs.push(() => {
-          return new Promise<void>((reslove) => {
-            const mapLayer = DataCatalogManager.generateLayerByConfig(layer)
-            mapLayer.description = layer.description
-            if (mapLayer.loadStatus === LoadStatus.notLoaded) {
-              mapLayer.load().then(() => {
+        // 判断图层是否已加载
+        const isAddMap = self.document.baseLayerMap.findLayerById(layer.guid)
+        if (!isAddMap) {
+          funcs.push(() => {
+            return new Promise<void>((reslove) => {
+              const mapLayer = DataCatalogManager.generateLayerByConfig(layer)
+              mapLayer.description = layer.description
+              if (mapLayer.loadStatus === LoadStatus.notLoaded) {
+                mapLayer.load().then(() => {
+                  self.document.baseLayerMap.add(mapLayer)
+                  reslove()
+                })
+              } else {
                 self.document.baseLayerMap.add(mapLayer)
                 reslove()
-              })
-            } else {
-              self.document.baseLayerMap.add(mapLayer)
-              reslove()
-            }
+              }
+            })
           })
-        })
+        }
       }
       return funcs
     },
@@ -363,7 +366,6 @@ export default {
         }
       }
       this.updateCurrentBaseMapConfig()
-      this.updateWidgetConfig()
     },
 
     updateLayer(layer) {

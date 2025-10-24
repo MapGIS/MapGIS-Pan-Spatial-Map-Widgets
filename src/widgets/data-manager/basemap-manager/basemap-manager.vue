@@ -13,6 +13,7 @@
         :name="basemap.name"
         :image="imageUrl(basemap.image)"
         :active="basemapNames.includes(basemap.guid)"
+        :visible="JSON.parse(basemap.visible)"
         @select="onCheck"
         @un-select="onUnSelect"
       >
@@ -24,7 +25,6 @@
 <script lang="ts">
 import {
   api,
-  baseConfigInstance,
   BaseMapController,
   Layer3D,
   DataCatalogManager,
@@ -80,7 +80,6 @@ export default {
       isShow = true,
       loadOrder = [],
     } = { ...this.widgetInfo.config }
-    const { initPositionMode } = baseConfigInstance.config
     // 获取到初始化底图信息
     const initConfig = this.baseMapConfig()
     const onSelect = this.defaultSelect.map((item) => item.guid)
@@ -101,7 +100,6 @@ export default {
       })
       return
     }
-
     const defaultSelectedBasemaps = []
 
     // 加载显示配置里已设置默认选中的底图
@@ -123,10 +121,103 @@ export default {
       }
       this.initSelectedBasemap(defaultSelectedBasemaps)
     }
-
-    eventBus.$on('basemap-manager-change', this.updateBaseMap)
   },
   methods: {
+    onWidgetConfigChange(config, preConfig) {
+      // 处理变化的底图
+      const baseMapList = config.baseMapList
+      const preBaseMapList = preConfig.baseMapList
+      // 判断是否有移除的底图，记录移除的底图，在底图管理微件中进行移除操作，需要考虑已加载的底图
+      const removeBaseMapList = preBaseMapList.filter((layer) => {
+        return !baseMapList.find((item) => item.guid === layer.guid)
+      })
+
+      // 除了要考虑底图是否被选中，还需要考虑底图是否显示
+      const loadBaseMapList = baseMapList.filter(
+        (layer) => layer.select && JSON.parse(layer.visible)
+      )
+
+      const hasLoadBaseMap = this.onBaseMapListChange(
+        baseMapList,
+        removeBaseMapList,
+        loadBaseMapList
+      )
+
+      // 如果是单底图模式只加载最后一个底图
+      if (config.isSingleMode) {
+        this.basemapNames = this.basemapNames.slice(-1)
+        // 如果是单底图模式先移除所有底图再添加
+        this.clearBasemap(false)
+      }
+
+      // 判断是否显示底图选项是否变化
+      if (config.isShow !== preConfig.isShow) {
+        // 如果是由不显示底图到显示底图则直接加载所有
+        if (config.isShow) {
+          // 如果是单底图模式只加载最后一个底图
+          this.initRenderMaps(this.basemapNames)
+        } else {
+          this.clearBasemap()
+        }
+        // 微件配置改变后，清空用于开启/关闭底图显示时记录上一次加载的底图信息
+        this.basemapNamesCopy = []
+      } else {
+        // 如果是否显示底图选项不变则直接加载已选中未加载的底图
+        if (hasLoadBaseMap.length) {
+          this.initRenderMaps(
+            config.isSingleMode ? hasLoadBaseMap.slice(-1) : hasLoadBaseMap
+          )
+        } else {
+          // 没有需要加载的底图使用已经加载的底图
+          this.initRenderMaps(this.basemapNames)
+        }
+      }
+
+      this.changeBaseMap(config.isShow)
+      this.updateCurrentBaseMapConfig()
+    },
+    onBaseMapListChange(baseMapList, removeBaseMapList, loadBaseMapList) {
+      // basemapNames中移除地图视图已加载底图但被删除的底图
+      removeBaseMapList.forEach((basemap) => {
+        if (this.basemapNames.includes(basemap.guid)) {
+          this.basemapNames = this.basemapNames.filter(
+            (item) => item !== basemap.guid
+          )
+          basemap.children.forEach((layer) => {
+            const maplayer = this.document.baseLayerMap.findLayerById(
+              layer.guid
+            )
+            this.document.baseLayerMap.remove(maplayer)
+          })
+        }
+      })
+
+      // 移除未删除但取消加载的底图
+      const hasRemoveLoadBaseMap = []
+      this.basemapNames = this.basemapNames.filter((item) => {
+        const target = loadBaseMapList.find((layer) => layer.guid === item)
+        if (!target) {
+          hasRemoveLoadBaseMap.push(item)
+        }
+        return target
+      })
+
+      hasRemoveLoadBaseMap.forEach((item) => {
+        const basemap = baseMapList.find((basemap) => basemap.guid === item)
+        basemap.children.forEach((layer) => {
+          const maplayer = this.document.baseLayerMap.findLayerById(layer.guid)
+          this.document.baseLayerMap.remove(maplayer)
+        })
+      })
+
+      // 当前未删除但加载的底图
+      const hasLoadBaseMap = loadBaseMapList
+        .filter((item) => !this.basemapNames.includes(item.guid))
+        .map((item) => item.guid)
+
+      this.basemapNames = [...this.basemapNames, ...hasLoadBaseMap]
+      return hasLoadBaseMap
+    },
     /**
      * 默认选中底图加载
      * @param {Array} defaultSelectedBasemaps
@@ -149,7 +240,6 @@ export default {
     isShowBasemapChange(val) {
       this.changeBaseMap(val)
       this.isShowChange(val)
-      this.updateWidgetConfig()
     },
     changeBaseMap(val) {
       const baseMapInfo = { ...this.baseMapController.currentBaseMapInfo }
@@ -252,7 +342,6 @@ export default {
       this.basemapNames.push(guid)
       this.updateCurrentBaseMapConfig()
       this.renderMaps(guid)
-      this.updateWidgetConfig()
     },
     updateCurrentBaseMapConfig() {
       const config = this.baseMapConfig()
@@ -263,43 +352,6 @@ export default {
       config.onSelect = onSelect
       config.unSelect = unSelect
       this.baseMapController.currentBaseMapInfo = config
-    },
-    updateBaseMap({ removeBaseMapList, addBaseMapList, isShow }) {
-      // 更新是否显示底图
-      if (isShow !== this.isShow) {
-        this.changeBaseMap(isShow)
-        this.isShowChange(isShow)
-      }
-      let newBasemapList = JSON.parse(JSON.stringify(this.basemapNames))
-      // 清空底图
-      this.document.baseLayerMap.removeAll()
-
-      // 移除已加载底图
-      removeBaseMapList.forEach((basemap) => {
-        if (newBasemapList.includes(basemap.guid)) {
-          newBasemapList = newBasemapList.filter(
-            (item) => item !== basemap.guid
-          )
-        }
-      })
-
-      // 添加新增的底图，不改变已加载的底图顺序
-      addBaseMapList.forEach((item) => {
-        if (!newBasemapList.includes(item.guid)) {
-          newBasemapList.push(item.guid)
-        }
-      })
-
-      this.basemapNames = newBasemapList
-      this.basemapNamesCopy = newBasemapList
-      // 添加底图
-      this.basemapNames.forEach((guid) => {
-        this.renderMaps(guid)
-      })
-
-      setTimeout(() => {
-        this.updateCurrentBaseMapConfig()
-      }, 1000)
     },
     getSaveConfig() {
       const baseMapList = this.transfromationMapData()
