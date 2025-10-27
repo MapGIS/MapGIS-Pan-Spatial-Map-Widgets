@@ -7,7 +7,7 @@
       <mapgis-ui-row>
         <add-data-category-select
           :categories="categories"
-          :value="categoryName"
+          :value="showCategoryName"
           @select="onCategorySelect"
           class="full-width"
         />
@@ -126,7 +126,7 @@ export default {
   data() {
     return {
       isDisabled: true,
-      categoryName: this.categories.length ? this.categories[0].name : '',
+      categoryId: this.categories.length ? this.categories[0].id : '',
       fileDataType: {},
       file: '',
       name: '',
@@ -194,6 +194,20 @@ export default {
         return `${this.baseUrl}/${this.appProductName}/rest/services/system/ResourceServer/files`
       }
     },
+    showCategoryName: {
+      get() {
+        if (this.categoryId) {
+          const category = this.categories.find(
+            (item) => item.id === this.categoryId
+          )
+          return category?.name || ''
+        }
+        return ''
+      },
+      set(val) {
+        this.categoryId = val
+      },
+    },
   },
 
   created() {
@@ -209,7 +223,9 @@ export default {
     },
 
     onCategorySelect(val) {
-      this.categoryName = val
+      // 通过name寻找对应的category中的id
+      const targetCategory = this.categories.find((item) => item.name === val)
+      this.categoryId = targetCategory?.id
     },
 
     onDataTypeSelect(val) {
@@ -244,7 +260,7 @@ export default {
           break
       }
       const data = {
-        name: this.categoryName,
+        name: this.showCategoryName,
         data: { type, url: this.file, name: this.name },
       }
       this.$emit('added', data)

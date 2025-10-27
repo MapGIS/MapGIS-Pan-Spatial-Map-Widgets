@@ -7,7 +7,7 @@
       <mapgis-ui-row>
         <add-data-category-select
           :categories="categories"
-          :value="categoryName"
+          :value="showCategoryName"
           @select="onCategorySelect"
           class="full-width"
         />
@@ -84,7 +84,7 @@ export default {
 
   data() {
     return {
-      categoryName: this.categories.length ? this.categories[0].name : '',
+      categoryId: this.categories.length ? this.categories[0].id : '',
       urlDataType: this.urlDataTypes.length ? this.urlDataTypes[0] : null,
       url: '',
       name: '',
@@ -98,11 +98,27 @@ export default {
         (this.urlDataType && this.urlDataType.value === 'IMAGEARCGIS') || false
       )
     },
+    showCategoryName: {
+      get() {
+        if (this.categoryId) {
+          const category = this.categories.find(
+            (item) => item.id === this.categoryId
+          )
+          return category?.name || ''
+        }
+        return ''
+      },
+      set(val) {
+        this.categoryId = val
+      },
+    },
   },
 
   methods: {
     onCategorySelect(val) {
-      this.categoryName = val
+      // 通过name寻找对应的category中的id
+      const targetCategory = this.categories.find((item) => item.name === val)
+      this.categoryId = targetCategory?.id
     },
 
     onDataTypeSelect(val) {
@@ -117,7 +133,7 @@ export default {
 
       // 应该要对地址进行解析，判断是否有效
       const data = {
-        name: this.categoryName,
+        name: this.showCategoryName,
         data: { type: this.urlDataType.value, url: this.url, name: this.name },
       }
       if (this.hasToken) {
