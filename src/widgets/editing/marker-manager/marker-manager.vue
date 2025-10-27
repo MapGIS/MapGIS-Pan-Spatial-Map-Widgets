@@ -86,6 +86,7 @@
       :popup-toggle-type="popupToggleType"
       :selected-markers="selectedMarkers"
       :marker-show-type="markerShowType"
+      :zoom-to-selected-markers="zoomToSelectedMarkers"
     >
       <template slot="popup" slot-scope="{ marker }">
         <marker-show-window :marker="marker"></marker-show-window>
@@ -101,6 +102,7 @@
       :popup-toggle-type="popupToggleType"
       :selected-markers="selectedMarkers"
       :marker-show-type="markerShowType"
+      :zoom-to-selected-markers="zoomToSelectedMarkers"
       @popupload="popupLoad"
     >
       <template slot="popup" slot-scope="{ marker }">
@@ -144,6 +146,7 @@ import {
   markerIconInstance,
   eventBus,
   DisplayModeMixin,
+  WidgetState,
 } from '@mapgis/web-app-framework'
 
 import MarkerAdd from './components/MarkerAdd/MarkerAdd'
@@ -242,6 +245,8 @@ export default {
       )}-marker-list`,
       // 判断微件是否执行了失活onDeActive函数
       doDeActive: false,
+      // 标注范围点亮方式为"常亮"模式下，是否自动跳转到最后一个标注的位置
+      zoomToSelectedMarkers: true,
     }
   },
 
@@ -284,8 +289,7 @@ export default {
     },
 
     selectedMarkers() {
-      return !this.stateClosed &&
-        this.widgetInfo.config.markerShowType === 'default'
+      return !this.stateClosed && this.markerShowType === 'default'
         ? this.markers
         : []
     },
@@ -299,7 +303,7 @@ export default {
     },
 
     isActive() {
-      return this.widget.state === 'active'
+      return this.widget.state === WidgetState.ACTIVE
     },
   },
 
@@ -320,70 +324,84 @@ export default {
   async mounted() {
     this.$message.config({ top: '100px', duration: 2, maxCount: 1 })
 
-    const unSelectIcon = await markerIconInstance.unSelectIcon()
-
-    if (!this.widgetInfo.config.markers) {
-      this.markers = []
-    } else {
-      // 下面的操作都是为了兼容老版的三个标注点的数据(因为老版标注点的构造和新版的标注点构造不一样)
-      this.markers = this.widgetInfo.config.markers.reduce((result, item) => {
-        if (Object.keys(item).includes('ftype')) {
-          // 老版标注点包含'ftype'属性
-          let coordinates = []
-          switch (item.fileType) {
-            case 'Polygon':
-              coordinates = [item.coordinates]
-              break
-            case 'LineString':
-              coordinates = item.coordinates
-              break
-            default:
-              coordinates = item.point
-              break
-          }
-          const geoJsonFeature = {
-            geometry: {
-              coordinates: coordinates,
-              type: item.fileType || 'Point',
-            },
-            properties: {},
-            type: 'Feature',
-          }
-          const marker = {
-            markerId: UUID.uuid(),
-            title: item.name,
-            description: item.info,
-            coordinates: item.point,
-            img: unSelectIcon,
-            properties: geoJsonFeature.properties,
-            feature: geoJsonFeature,
-          }
-          result.push(marker)
-        } else {
-          // 新版标注点不包含'ftype'属性
-          const marker = {
-            markerId: item.id,
-            title: item.title,
-            description: item.description,
-            coordinates: item.center,
-            img: unSelectIcon,
-            properties: item.feature.properties,
-            feature: item.feature,
-            picture: item.picture,
-          }
-          result.push(marker)
-        }
-        return result
-      }, [])
-    }
+    await this.initData()
   },
 
   methods: {
-    // @Watch('currentMarkerId')
-    // async currentMarkerIdChange() {
-    //   await this.hightlightSelectionMarkers()
-    // },
+    async initData() {
+      const selectIcon = await markerIconInstance.selectIcon()
+      const unSelectIcon = await markerIconInstance.unSelectIcon()
 
+      // 处理marker
+      if (!this.widgetInfo.config.markers) {
+        this.markers = []
+      } else {
+        // 下面的操作都是为了兼容老版的三个标注点的数据(因为老版标注点的构造和新版的标注点构造不一样)
+        this.markers = this.widgetInfo.config.markers.reduce((result, item) => {
+          // 当前marker是否处于高亮,处于高亮使用selectIcon，反之则使用unSelectIcon
+          const markerImg =
+            this.currentMarkerId === item.id ? selectIcon : unSelectIcon
+          if (Object.keys(item).includes('ftype')) {
+            // 老版标注点包含'ftype'属性
+            let coordinates = []
+            switch (item.fileType) {
+              case 'Polygon':
+                coordinates = [item.coordinates]
+                break
+              case 'LineString':
+                coordinates = item.coordinates
+                break
+              default:
+                coordinates = item.point
+                break
+            }
+            const geoJsonFeature = {
+              geometry: {
+                coordinates: coordinates,
+                type: item.fileType || 'Point',
+              },
+              properties: {},
+              type: 'Feature',
+            }
+            const marker = {
+              markerId: item.id || UUID.uuid(),
+              title: item.name,
+              description: item.info,
+              coordinates: item.point,
+              img: markerImg,
+              properties: geoJsonFeature.properties,
+              feature: geoJsonFeature,
+            }
+            result.push(marker)
+          } else {
+            // 新版标注点不包含'ftype'属性
+            const marker = {
+              markerId: item.id,
+              title: item.title,
+              description: item.description,
+              coordinates: item.center,
+              img: markerImg,
+              properties: item.feature.properties,
+              feature: item.feature,
+              picture: item.picture,
+            }
+            result.push(marker)
+          }
+          return result
+        }, [])
+      }
+
+      // 处理鼠标样式
+      if (this.isActive && this.map) {
+        this.map.getCanvas().style.cursor = this.widgetInfo.config.cursorType
+      }
+    },
+    // 微件配置改变时
+    async onWidgetConfigChange(config, preConfig) {
+      // 防止修改配置后地图视图跳转到最后一个标注，将zoomToSelectedMarkers设为false
+      this.zoomToSelectedMarkers = false
+      await this.initData()
+    },
     // 微件打开时
     onOpen() {
       this.stateClosed = false

@@ -134,6 +134,8 @@ export default {
       ],
       isZoomLayer: false,
       dataCatalogManager: dataCatalogManagerInstance,
+      // 添加到地图上的图层id
+      addMapLayersId: [],
     }
   },
 
@@ -216,31 +218,23 @@ export default {
         : [...this.fileDataTypes2D, ...this.fileDataTypes3D]
       // return this.fileDataTypes2D
     },
-
     dataList() {
       return this.config && this.config.data
     },
 
     categories() {
       return this.dataList.map((item) => {
-        return { name: item.name, description: item.description }
+        return { id: item.id, name: item.name, description: item.description }
       })
     },
   },
 
   mounted() {
-    if (this.widgetInfo.config.data) {
-      this.widgetInfo.config.data.forEach((category) => {
-        category.children.forEach((item) => {
-          item.id = UUID.uuid()
-          item.visible = false
-        })
-      })
-    } else {
+    if (!this.widgetInfo.config.data) {
       this.$set(this.widgetInfo.config, 'data', [])
     }
+    this.initData(this.widgetInfo.config)
 
-    this.config = this.widgetInfo.config
     this.loaded = true
 
     eventBus.$on(events.ADD_DATA_EVENT, this.onAddData)
@@ -248,8 +242,25 @@ export default {
   },
 
   methods: {
-    onAddCategory({ name, description }) {
-      this.dataList.push({ name, description, children: [] })
+    onWidgetConfigChange(config, preConfig) {
+      // 更新this.config
+      this.initData(config)
+    },
+    initData(config) {
+      const configData = JSON.parse(JSON.stringify(config))
+      if (configData.data) {
+        configData.data.forEach((category) => {
+          category.id = category.id || UUID.uuid()
+          category.children.forEach((item) => {
+            item.id = item.id || UUID.uuid()
+            item.visible = this.addMapLayersId.includes(item.id)
+          })
+        })
+      }
+      this.config = configData
+    },
+    onAddCategory({ id, name, description }) {
+      this.dataList.push({ id, name, description, children: [] })
     },
 
     onAddData({ name, description, data, isZoom = false }) {
@@ -333,7 +344,6 @@ export default {
       const savedConfig = ObjectUtil.deepClone(this.config)
       savedConfig.data.forEach((category) => {
         category.children.forEach((item) => {
-          this.$delete(item, 'id')
           this.$delete(item, 'visible')
         })
       })
@@ -390,6 +400,8 @@ export default {
               this.switchMapMode()
             }
             this.document.defaultMap.add(layer)
+            // 记录添加图层的id
+            this.addMapLayersId.push(layer.id)
 
             if (this.isZoomLayer) {
               if (layer.type !== LayerType.IGSScene) {
@@ -424,7 +436,13 @@ export default {
     onRemoveLayer(data) {
       const layer = this.document.defaultMap.findLayerById(data.id)
 
-      this.document.defaultMap.remove(layer)
+      if (layer) {
+        this.document.defaultMap.remove(layer)
+        // 移除图层时将对应的记录一起移除
+        this.addMapLayersId = this.addMapLayersId.filter(
+          (id) => id !== layer.id
+        )
+      }
     },
 
     parseIssueType(typeString: string): LayerType {
