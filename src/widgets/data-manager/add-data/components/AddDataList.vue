@@ -3,7 +3,7 @@
     <mapgis-ui-toolbar class="add-data-toolbar">
       <add-data-category-select
         :categories="categories"
-        :value="categoryName"
+        :value="showCategoryName"
         @select="onCategorySelect"
         size="small"
         class="add-data-category-select"
@@ -200,6 +200,7 @@
 import AddDataCategorySelect from './AddDataCategorySelect.vue'
 import AddDataCategory from './AddDataCategory.vue'
 import { MapgisUiEmpty } from '@mapgis/webclient-vue-ui'
+import { UUID } from '@mapgis/web-app-framework'
 
 export default {
   name: 'AddDataList',
@@ -215,7 +216,7 @@ export default {
 
   data() {
     return {
-      categoryName: this.categories.length ? this.categories[0].name : '',
+      categoryId: this.categories.length ? this.categories[0].id : '',
       categoryDataList: [],
       pagination: {
         current: 1,
@@ -300,10 +301,24 @@ export default {
         return type ? type.text : ''
       }
     },
+    showCategoryName: {
+      get() {
+        if (this.categoryId) {
+          const category = this.categories.find(
+            (item) => item.id === this.categoryId
+          )
+          return category?.name || ''
+        }
+        return ''
+      },
+      set(val) {
+        this.categoryId = val
+      },
+    },
   },
 
   watch: {
-    categoryName: {
+    categoryId: {
       immediate: true,
       handler() {
         this.changeCategory()
@@ -334,7 +349,9 @@ export default {
     },
 
     onCategorySelect(val) {
-      this.categoryName = val
+      // 通过name寻找对应的category中的id
+      const targetCategory = this.categories.find((item) => item.name === val)
+      this.categoryId = targetCategory?.id
     },
 
     onAddCategory() {
@@ -411,8 +428,9 @@ export default {
     },
 
     onAddCategoryOk({ name, description }) {
-      this.$emit('add-category', { name, description })
-      this.categoryName = name
+      const id = UUID.uuid()
+      this.$emit('add-category', { id, name, description })
+      this.categoryId = id
     },
 
     onDeleteData(dataItem) {
@@ -433,7 +451,7 @@ export default {
 
     queryData() {
       const category = this.dataList.find((category) => {
-        return category.name === this.categoryName
+        return category.id === this.categoryId
       })
 
       if (!category) {
@@ -443,7 +461,13 @@ export default {
     },
 
     selectData(name, data) {
-      this.categoryName = name
+      // 通过name查找对应的category
+      const targetCategory = this.dataList.find((category) => {
+        return category.name === name
+      })
+      if (targetCategory) {
+        this.categoryId = targetCategory.id
+      }
       this.queryData()
       this.selectedRowKeys.push(data.id)
       this.onSelectChange(this.selectedRowKeys)
