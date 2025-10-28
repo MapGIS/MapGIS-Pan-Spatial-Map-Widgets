@@ -101,10 +101,9 @@ export default {
                 this.isArcgisMapLayer(this.layerItem))) ||
             this.isIgsTileLayer(this.layerItem) ||
             this.isVectorTile(this.layerItem) ||
-            this.isArcgisTileLayer(this.layerItem) ||
+            this.isArcGISTile(this.layerItem) ||
             this.isWMTSLayer(this.layerItem) ||
-            this.isWebTileLayer(this.layerItem) ||
-            this.isArcgisTileLayer(this.layerItem),
+            this.isWebTile(this.layerItem),
           click: () => this.showAdvancedSetting(),
         },
         /**
@@ -187,10 +186,9 @@ export default {
             this.isArcgisMapLayer(this.layerItem))) ||
         this.isIgsTileLayer(this.layerItem) ||
         this.isVectorTile(this.layerItem) ||
-        this.isArcgisTileLayer(this.layerItem) ||
+        this.isArcGISTile(this.layerItem) ||
         this.isWMTSLayer(this.layerItem) ||
-        this.isWebTileLayer(this.layerItem) ||
-        this.isArcgisTileLayer(this.layerItem)
+        this.isWebTile(this.layerItem)
       ) {
         // 新增地图文档和arcgis地图服务图层属性设置，只是设置图层渲染模式
         // 龚跃健-202407017

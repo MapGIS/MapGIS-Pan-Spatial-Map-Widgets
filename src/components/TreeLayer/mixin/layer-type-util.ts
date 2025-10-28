@@ -353,6 +353,19 @@ export default {
       return layerType === LayerType.ArcGISTile
     },
     /**
+     * 判断是否是互联网瓦片
+     * @param item layer图层
+     * @returns boolean
+     */
+    isWebTile({ layer, type }) {
+      let layerType = type
+      if (layer) {
+        layerType = layer.type
+        return layerType === LayerType.WebTile
+      }
+      return layerType === LayerType.WebTile
+    },
+    /**
      * 判断是否是DataFlow
      * @param item layer图层
      * @returns boolean
