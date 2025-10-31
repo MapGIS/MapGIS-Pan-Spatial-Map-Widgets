@@ -102,7 +102,7 @@ export default {
         case 'line':
           transformType = 'Lin'
           break
-        case 'polygon':
+        case 'fill':
           transformType = 'Reg'
           break
         default:
