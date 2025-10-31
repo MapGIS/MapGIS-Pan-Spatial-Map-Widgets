@@ -52,7 +52,7 @@ export default {
     },
     transformFeaturesField(features) {
       // 默认取第一个feature获取properties属性
-      const { properties } = features[0]
+      const properties = features[0].properties || features[0].attributes
       const data = []
       Object.keys(properties).forEach((item) => {
         const info = {
@@ -168,7 +168,7 @@ export default {
       }
       const result = []
       featureSet.forEach((feature) => {
-        const { properties } = feature
+        const properties = feature.properties || feature.attributes
         if (!result.includes(properties[targetValue])) {
           result.push(properties[targetValue])
         }
@@ -181,7 +181,7 @@ export default {
       }
       const result = []
       featureSet.forEach((feature) => {
-        const { properties } = feature
+        const properties = feature.properties || feature.attributes
         result.push(properties[targetValue])
       })
       return [Math.min(...result), Math.max(...result)]
