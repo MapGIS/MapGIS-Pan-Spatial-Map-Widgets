@@ -1136,41 +1136,22 @@ export default {
                 LayerType.IGSTile,
                 LayerType.VectorTile,
                 LayerType.ArcGISTile,
-                LayerType.WMTS,
+                LayerType.OGCWMTS,
                 LayerType.WebTile,
               ].includes(layer.type)
             ) {
               // 瓦片图层计算第0级瓦片数量，判断是否需要关闭瓦片拉伸显示
-              let isStretchImage
-              const extensions = JSON.parse(
-                layer?.layerProperty?.extensions || '{}'
-              )
-              if (Object.keys(extensions).includes('isStretchImage')) {
-                isStretchImage = extensions.isStretchImage
+              const selfLayerPropertyEdit = LayerPropertyEdit
+              const { isStretchImage, firstTilesNum } =
+                selfLayerPropertyEdit.setExtension(layer)
+              if (firstTilesNum > 9) {
+                this.$message.info(
+                  `${layer.title}瓦片第0级张数大于9，为了显示性能，已关闭瓦片拉伸（缩小）显示`
+                )
               }
-              if (
-                isStretchImage == undefined ||
-                isStretchImage == 'undefined'
-              ) {
-                // 如果用户没有设置isStretchImage，则根据瓦片数量判断是否需要关闭瓦片拉伸显示
-                const { tilesX, tilesY, totalTiles } =
-                  this.calculateCustomLevel0Tiles(
-                    layer._innerLayer.tileInfo,
-                    layer._innerLayer.extent
-                  )
-                if (totalTiles > 9) {
-                  layer.layerProperty.extensions = JSON.stringify({
-                    isStretchImage: false,
-                  })
-                  this.$message.info(
-                    `${layer.title}瓦片第0级张数大于9，为了显示性能，已关闭瓦片拉伸（缩小）显示`
-                  )
-                } else {
-                  layer.layerProperty.extensions = JSON.stringify({
-                    isStretchImage: true,
-                  })
-                }
-              }
+              layer.layerProperty.extensions = JSON.stringify({
+                isStretchImage,
+              })
             }
           }
         } catch (error) {
@@ -1296,45 +1277,6 @@ export default {
           }
         }
         return layer.loadStatus === LoadStatus.loaded ? layer : null
-      }
-    },
-    // 计算第一级瓦片数量
-    calculateCustomLevel0Tiles(tileInfo, layerExtent) {
-      if (!tileInfo || !layerExtent || !tileInfo.size || !tileInfo.size[0]) {
-        return {
-          tilesX: 0,
-          tilesY: 0,
-          totalTiles: 0,
-        }
-      }
-      const { xmin, ymin, xmax, ymax } = layerExtent
-      if (xmin >= xmax || ymin >= ymax) {
-        return {
-          tilesX: 0,
-          tilesY: 0,
-          totalTiles: 0,
-        }
-      }
-      const lod0 = tileInfo.lods[0]
-      const tileWidth = tileInfo.size[0] // 瓦片宽度(像素)
-      const tileHeight = tileInfo.size[1] // 瓦片高度(像素)
-
-      // 计算每个瓦片覆盖的实际距离
-      const tileCoverageX = lod0.resolution * tileWidth // 单个瓦片X方向覆盖距离
-      const tileCoverageY = lod0.resolution * tileHeight // 单个瓦片Y方向覆盖距离
-
-      // 计算瓦片数量（向上取整）
-      const tilesX = Math.ceil(
-        (layerExtent.xmax - layerExtent.xmin) / tileCoverageX
-      )
-      const tilesY = Math.ceil(
-        (layerExtent.ymax - layerExtent.ymin) / tileCoverageY
-      )
-
-      return {
-        tilesX: tilesX,
-        tilesY: tilesY,
-        totalTiles: tilesX * tilesY,
       }
     },
     // 分类展示情况下清除选中的节点check状态
