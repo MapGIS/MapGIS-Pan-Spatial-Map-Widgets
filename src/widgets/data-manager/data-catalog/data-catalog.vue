@@ -1149,9 +1149,17 @@ export default {
                   `${layer.title}瓦片第0级张数大于9，为了显示性能，已关闭瓦片拉伸（缩小）显示`
                 )
               }
-              layer.layerProperty.extensions = JSON.stringify({
-                isStretchImage,
-              })
+              if (layer.layerProperty) {
+                layer.layerProperty.extensions = JSON.stringify({
+                  isStretchImage,
+                })
+              } else {
+                layer.layerProperty = {
+                  extensions: JSON.stringify({
+                    isStretchImage,
+                  }),
+                }
+              }
             }
           }
         } catch (error) {

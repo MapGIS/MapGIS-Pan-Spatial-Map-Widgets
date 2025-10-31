@@ -394,7 +394,7 @@ export default {
                 LayerType.ArcGISTile,
                 LayerType.OGCWMTS,
                 LayerType.WebTile,
-              ].includes(mapLayer.type)
+              ].includes(layer.type)
             ) {
               // 瓦片图层计算第0级瓦片数量，判断是否需要关闭瓦片拉伸显示
               const selfLayerPropertyEdit = LayerPropertyEdit
@@ -402,12 +402,20 @@ export default {
                 selfLayerPropertyEdit.setExtension(layer)
               if (firstTilesNum > 9) {
                 this.$message.info(
-                  `${mapLayer.title}瓦片第0级张数大于9，为了显示性能，已关闭瓦片拉伸（缩小）显示`
+                  `${layer.title}瓦片第0级张数大于9，为了显示性能，已关闭瓦片拉伸（缩小）显示`
                 )
               }
-              mapLayer.layerProperty.extensions = JSON.stringify({
-                isStretchImage,
-              })
+              if (layer.layerProperty) {
+                layer.layerProperty.extensions = JSON.stringify({
+                  isStretchImage,
+                })
+              } else {
+                layer.layerProperty = {
+                  extensions: JSON.stringify({
+                    isStretchImage,
+                  }),
+                }
+              }
             }
           }
         } catch (error) {
