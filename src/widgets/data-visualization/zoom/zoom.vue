@@ -175,26 +175,23 @@ export default {
           } else {
             // 获取基础配置中相机视角信息，并设置
             const center = new Cesium.Cartesian3.fromDegrees(x, y, cameraHeight)
-            // 增加延时，确保设置生效
-            setTimeout(() => {
-              if (initOrientation) {
-                const { heading, pitch, roll } = initOrientation
-                viewer.camera.flyTo({
-                  destination: center,
-                  orientation: {
-                    heading: Cesium.Math.toRadians(heading),
-                    pitch: Cesium.Math.toRadians(pitch),
-                    roll: Cesium.Math.toRadians(roll),
-                  },
-                  duration,
-                })
-              } else {
-                viewer.camera.flyTo({
-                  destination: center,
-                  duration,
-                })
-              }
-            }, 300)
+            if (initOrientation) {
+              const { heading, pitch, roll } = initOrientation
+              viewer.camera.flyTo({
+                destination: center,
+                orientation: {
+                  heading: Cesium.Math.toRadians(heading),
+                  pitch: Cesium.Math.toRadians(pitch),
+                  roll: Cesium.Math.toRadians(roll),
+                },
+                duration: 1.0,
+              })
+            } else {
+              viewer.camera.flyTo({
+                destination: center,
+                duration: 1.0,
+              })
+            }
           }
           break
         case 'basemapExtent':
@@ -282,9 +279,7 @@ export default {
           FitBound.fitBound2D(bound, mapParams, undefined, duration)
         }, 300)
       } else {
-        setTimeout(() => {
-          FitBound.fitBound3D(bound, mapParams)
-        }, 300)
+        FitBound.fitBound3D(bound, mapParams)
       }
     },
 
