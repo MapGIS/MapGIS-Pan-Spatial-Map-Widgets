@@ -135,24 +135,20 @@ export default {
             const center = new Cesium.Cartesian3.fromDegrees(x, y, cameraHeight)
             if (initOrientation) {
               const { heading, pitch, roll } = initOrientation
-              setTimeout(() => {
-                viewer.camera.flyTo({
-                  destination: center,
-                  orientation: {
-                    heading: Cesium.Math.toRadians(heading),
-                    pitch: Cesium.Math.toRadians(pitch),
-                    roll: Cesium.Math.toRadians(roll),
-                  },
-                  duration: 1.0,
-                })
-              }, 300)
+              viewer.camera.flyTo({
+                destination: center,
+                orientation: {
+                  heading: Cesium.Math.toRadians(heading),
+                  pitch: Cesium.Math.toRadians(pitch),
+                  roll: Cesium.Math.toRadians(roll),
+                },
+                duration: 1.0,
+              })
             } else {
-              setTimeout(() => {
-                viewer.camera.flyTo({
-                  destination: center,
-                  duration: 1.0,
-                })
-              }, 300)
+              viewer.camera.flyTo({
+                destination: center,
+                duration: 1.0,
+              })
             }
           }
           break
@@ -239,9 +235,7 @@ export default {
           FitBound.fitBound2D(bound, mapParams)
         }, 300)
       } else {
-        setTimeout(() => {
-          FitBound.fitBound3D(bound, mapParams)
-        }, 300)
+        FitBound.fitBound3D(bound, mapParams)
       }
     },
 
