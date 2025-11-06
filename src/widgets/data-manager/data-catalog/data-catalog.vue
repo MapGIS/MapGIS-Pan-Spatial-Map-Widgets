@@ -1788,7 +1788,7 @@ export default {
       // 初始化存储点击跳转图层
       this.initLocationKeys()
       // 初始化加载图层
-      this.initLocationKeys()
+      this.initLoadKeys()
       const removeKeys = []
       this.checkedNodeKeys = this.checkedNodeKeys.filter((item) => {
         const layerConfig = this.dataCatalogManager.getLayerConfigByID(item)
