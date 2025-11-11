@@ -428,10 +428,24 @@ export default {
             if (this.isWMTSLayer(item)) {
               // 用于切换图层
               item.sublayersBackup = item.sublayers
-              // 子图层的可见性与父图层保持一致
-              item.activeLayer.isVisible = item.isVisible || item.visible
-              // 用于图层树显示，因为只有当前显示的图层需要控制显示隐藏，所以sublayers上只放activeLayer
-              item.sublayers = [item.activeLayer]
+              /*
+               * feat(7686): vue2组件和一张图中支持GeoServer发布的WMTS和WMTS服务
+               * 修改说明: innerLayer.activeLayer来渲染WMTS子图层树
+               * 版权所有: 武汉中地数码科技有限公司
+               * 修改人: 杨琨 2025-11-11
+               */
+              const innerLayerJSON = item._innerLayer.toJSON()
+              item.sublayers = [innerLayerJSON.activeLayer]
+            }
+            /*
+             * feat(7686): vue2组件和一张图中支持GeoServer发布的WMTS和WMTS服务
+             * 修改说明: 使用innerLayer.sublayers来渲染WMS子图层树
+             * 版权所有: 武汉中地数码科技有限公司
+             * 修改人: 杨琨 2025-11-11
+             */
+            if (this.isWMSLayer(item)) {
+              const innerLayerJSON = item._innerLayer.toJSON()
+              item.sublayers[0].sublayers = innerLayerJSON.sublayers
             }
             if (this.isIgsTileLayer(item)) {
               if (item.isVisible || item.visible) {
@@ -909,6 +923,21 @@ export default {
           const parentIndex: string = item.split('-')[0]
           const childrenArr: Array<string> = item.split('-')
           let layerItem = layers[parentIndex]
+          /*
+           * feat(7686): vue2组件和一张图中支持GeoServer发布的WMTS和WMTS服务
+           * 修改说明: 
+           * 本方法是图层树显隐参数修改后的回调函数，返回的是要修改的图层下标数组，示例如下['0-0-0']，
+           * '0-0-0'表示在document.defaultMap.layers中第0个图层的第0个子图层的第0个子图层
+           * 在后续代码中，会根据子图层下标在子图层数组中找到对应的子图层，之后更改显隐参数
+           * 当使用common的WMSLayer的子图层构造图层列表时，为保证顺序一致，子图层数组也要是common的子图层对象数组
+           * 版权所有: 武汉中地数码科技有限公司
+           * 修改人: 杨琨 2025-11-11
+           */
+          if (this.isWMSLayer(layerItem)) {
+            layerItem = layerItem.clone()
+            const innerLayerJSON = layerItem._innerLayer.toJSON()
+            layerItem.sublayers[0].sublayers = innerLayerJSON.sublayers
+          } 
           childrenArr.forEach((i, index) => {
             if (index === 0) {
               return
@@ -944,7 +973,32 @@ export default {
                   }
                 }
               } else {
+                
                 layerItem.sublayers[i].visible = !layerItem.sublayers[i].visible
+                /*
+                 * feat(7686): vue2组件和一张图中支持GeoServer发布的WMTS和WMTS服务
+                 * 修改说明: 通过common库WMSSubLayer的id找到对应的WAF的WMSSubLayer，更新其上的显隐参数
+                 * 版权所有: 武汉中地数码科技有限公司
+                 * 修改人: 杨琨 2025-11-11
+                 */
+                if (this.isWMSLayer(layers[parentIndex])) {
+                  for (let sublayerIndex = 0; sublayerIndex < layers[parentIndex].allSublayers.length; sublayerIndex++) {
+                    const WAFWMSSubLayer = layers[parentIndex].allSublayers[sublayerIndex]
+                    if (WAFWMSSubLayer.name === layerItem.sublayers[i].id) {
+                      WAFWMSSubLayer.visible = !WAFWMSSubLayer.visible
+                      break
+                    }
+                  }
+                }
+                /*
+                 * feat(7686): vue2组件和一张图中支持GeoServer发布的WMTS和WMTS服务
+                 * 修改说明: 若WAF的图层有updateInnerLayer，则更新innerLayer，之后会更新图层管理微件UI
+                 * 版权所有: 武汉中地数码科技有限公司
+                 * 修改人: 杨琨 2025-11-11
+                 */
+                if (layers[parentIndex].updateInnerLayer && layers[parentIndex].updateInnerLayer instanceof Function) {
+                  layers[parentIndex].updateInnerLayer()
+                }
               }
             } else {
               if (this.isIGSScene(layerItem)) {
@@ -961,6 +1015,9 @@ export default {
           })
         } else {
           layers[item].isVisible = !layers[item].isVisible
+          if (layers[item].updateInnerLayer && layers[item].updateInnerLayer instanceof Function) {
+            layers[item].updateInnerLayer()
+          }
         }
       })
       this.ticked = e.checkedKeys
@@ -1972,6 +2029,7 @@ export default {
           tileMatrixSetId: tileMatrixSetId,
         }
         layerItem.layerProperty = layerProperty
+        layerItem.updateInnerLayer()
       }
       this.$emit('update:layerDocument', doc)
     },
@@ -2077,7 +2135,21 @@ export default {
             return
           }
         } else {
-          window.open(layer.url)
+          /*
+           * feat(7686): vue2组件和一张图中支持GeoServer发布的WMTS和WMTS服务
+           * 修改说明: 一张图【后台管理-数据目录】中的服务地址指的是元信息地址，这个定义仅针对部分服务有效，如果是OGC相关的服务，要按照OGC标准拼接元信息地址
+           * 版权所有: 武汉中地数码科技有限公司
+           * 修改人: 杨琨 2025-11-11
+           */
+          let metaDataUrl 
+          if (this.isWMTSLayer(layer)) {
+            metaDataUrl = `${layer._innerLayer._WMTSServer._baseUrl}?version=${layer._innerLayer.version}&service=WMTS&request=GetCapabilities`
+          } else if (this.isWMSLayer(layer)) {
+            metaDataUrl = `${layer._innerLayer._WMSServer._baseUrl}?version=${layer._innerLayer.version}&service=WMS&request=GetCapabilities`
+          } else {
+            metaDataUrl = layer.url
+          }
+          window.open(metaDataUrl)
         }
       } else {
         this.showMetadataInfo = true
