@@ -831,7 +831,7 @@ export default {
         } else if (item.visible !== undefined) {
           parentVisible = item.visible
         }
-        const { wkid } = baseConfigInstance.config
+        const wkid = baseConfigInstance.config.wkid || 4326
         let layerWkid = Number(item.spatialReference?.wkid)
         if (
           layerWkid === 4326 ||
