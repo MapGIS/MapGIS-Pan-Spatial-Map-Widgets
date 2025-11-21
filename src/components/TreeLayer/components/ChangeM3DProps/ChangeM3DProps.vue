@@ -264,6 +264,13 @@ export default {
       if (this.layer.layerProperty !== undefined) {
         this.layer.layerProperty.luminanceAtZenith = this.luminanceAtZenith
       }
+      /*
+       * feat(9025): 在一张图中可以预览带注记图层的三维场景服务
+       * 修改说明: 在treeLayer/index.vue中，在更新luminanceAtZenith时，也更新了maximumScreenSpaceError，在此处保证更新时有值
+       * 版权所有: 武汉中地数码科技有限公司
+       * 修改人: 杨琨 2025-11-18
+       */
+      this.layer.maximumScreenSpaceError = this.maximumScreenSpaceError
       this.$emit('update:luminanceAtZenith', this.layer)
     },
     enableModelBoundingBoxChange(val) {

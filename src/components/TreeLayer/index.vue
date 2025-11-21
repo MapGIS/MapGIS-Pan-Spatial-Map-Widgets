@@ -124,6 +124,7 @@
                 @to-top="toTop"
                 @edit-data-flow-style="editDataFlowStyle"
                 @change-m3d-props="changeM3DProps"
+                @change-annotation-props="changeAnnotationProps"
                 @change-layer-props="changeLayerProps"
                 @model-edit="modelEdit"
                 @feature-edit="featureEdit"
@@ -237,6 +238,7 @@ import { defaultDataIconsConfig } from '../../theme/dataIconsConfig.js'
 import ModelEditControlList from '../ModelStretch/model-edit-control-list'
 import picker from '../mixin/pick'
 import MpPickPopup from '../pick-popup/PickPopup.vue'
+import { AlgorithmLib, ModelTransformTool } from '@mapgis/webclient-cesium-plugin'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
@@ -402,9 +404,30 @@ export default {
                     )
                   })
                 }
-                item.sublayers = item.activeScene.sublayers.map((row) => ({
-                  ...row,
-                }))
+                /*
+                 * feat(9025): 在一张图中可以预览带注记图层的三维场景服务
+                 * 修改说明: 使用innerLayer的子图层来构造图参树UI
+                 * 版权所有: 武汉中地数码科技有限公司
+                 * 修改人: 杨琨 2025-11-18
+                 */
+                const innerLayerJSON = item._innerLayer.toJSON()
+                /**
+                 * 使用WAF的场景图层更新innerLayer的子图层数组
+                 * @private
+                 * @param {Object} WAF的场景图层
+                 * @param {Array<Object>} innerLayer的子图层数组
+                */
+                function updateCommonIGSSceneSubLayers(wafLayer, sublayers) {
+                  sublayers.forEach((sublayer) => {
+                    sublayer.layer = wafLayer
+                    sublayer.type = Number(sublayer.originLayerType)
+                    sublayer.id = wafLayer.id + ':' + sublayer.id
+                    updateCommonIGSSceneSubLayers(wafLayer, sublayer.sublayers)
+                  })
+                }
+                item.sublayers = innerLayerJSON.activeScene.sublayers
+                // 使用WAF的场景图层更新innerLayer的子图层数组
+                updateCommonIGSSceneSubLayers(item, item.sublayers)
               }
             }
 
@@ -954,6 +977,13 @@ export default {
                   layerItem.sublayers[i].visible =
                     !layerItem.sublayers[i].visible
                 }
+                /*
+                 * feat(9025): 在一张图中可以预览带注记图层的三维场景服务
+                 * 修改说明: 图层树更新后，更新innerLayer的属性
+                 * 版权所有: 武汉中地数码科技有限公司
+                 * 修改人: 杨琨 2025-11-18
+                 */
+                layers[parentIndex].updateInnerLayer()
               } else if (this.isVectorTile(layers[parentIndex])) {
                 /**
                  * 修改说明：矢量瓦片里的layers没有row.layout或者没有row.layout.visibility字段时，是默认显示，这里默认设置为可见
@@ -1160,7 +1190,7 @@ export default {
             )
             if (exitMetadata) return
             const model = this.getSceneLayer3DSet(subLayerObject.id)
-            if (!model._root) {
+            if (!model || !model._root) {
               return
             }
             const transform = new this.Cesium.Matrix4()
@@ -1299,8 +1329,7 @@ export default {
       let ymax
       let zmin
       let zmax
-      const boundingSphere =
-        zondy.cesium.AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
+      const boundingSphere = AlgorithmLib.mergeLayersBoundingSphere(m3dSetArray)
       for (let i = 0; i < m3dSetArray.length; i++) {
         const m3d = m3dSetArray[i]
         if (!m3d._root) {
@@ -1492,6 +1521,35 @@ export default {
     },
 
     /**
+     * 打开注记编辑属性页面
+     */
+    changeAnnotationProps(item) {
+      this.currentLayerInfo = item
+      this.openPage({
+        title: '注记样式',
+        name: 'MpChangeM3DProps',
+        component: () =>
+          import('./components/ChangeAnnotationProps/ChangeAnnotationProps.vue'),
+        props: {
+          layerInfo: this.currentLayerInfo,
+          layerIndex: item.layerIndex
+        },
+        listeners: {
+          'update:layer': (val) => {
+            const doc = this.layerDocument.clone()
+            const layers: Array<unknown> = doc.defaultMap.layers()
+            for (let index = 0; index < layers.length; index++) {
+              if (layers[index].id === val.layer.id) {
+                layers[index]._innerLayer = val.layer._innerLayer.clone()
+              }
+            }
+            this.$emit('update:layerDocument', doc)
+          }
+        },
+      })
+    },
+
+    /**
      * 新增地图文档和arcgis地图服务图层属性设置，只是设置图层渲染模式
      * 龚跃健-202407017
      * 打开图层属性编辑页面
@@ -1562,7 +1620,7 @@ export default {
         const editorCallback = function (value) {
           self.$parent?.$parent?.$refs['模型变换']?.transformUpdate(value)
         }
-        window.transformEditor = new zondy.cesium.ModelTransformTool(
+        window.transformEditor = new ModelTransformTool(
           layerOption,
           editorCallback
         )
@@ -1855,15 +1913,18 @@ export default {
       const layers: Array<unknown> = doc.defaultMap.layers()
 
       // 记录修改后的值
+      /*
+       * feat(9025): 在一张图中可以预览带注记图层的三维场景服务
+       * 修改说明: 删除的属性已在ChangeM3DProps组件中更新过，此处就不重复更新了
+       * 版权所有: 武汉中地数码科技有限公司
+       * 修改人: 杨琨 2025-11-18
+       */
       const editConfig = {
         parentId: idArr[0],
         id: id,
         layerProperty: {
           ...layerProperty,
-          enablePopup,
-          enableModelSwitch,
-          maximumScreenSpaceError,
-          luminanceAtZenith,
+          enableModelSwitch
         },
       }
       LayerPropertyEdit.propertyConfigArr = editConfig
@@ -1892,10 +1953,7 @@ export default {
           sublayer.layer.enablePopup = enablePopup
           sublayer.layer.layerProperty = {
             ...layerProperty,
-            enablePopup,
-            enableModelSwitch,
-            maximumScreenSpaceError,
-            luminanceAtZenith,
+            enableModelSwitch
           }
           const m3d = this.sceneController.findSource(id)
           if (m3d) {
@@ -1921,8 +1979,15 @@ export default {
             for (let i = 0; i < sublayers.length; i++) {
               const sublayerId = sublayers[i].id
               const sublayerM3d = this.sceneController.findSource(sublayerId)
-              sublayerM3d.imageBasedLighting.luminanceAtZenith =
-                luminanceAtZenith
+              /*
+              * feat(9025): 在一张图中可以预览带注记图层的三维场景服务
+              * 修改说明: 只有场景子图层类型为模型缓存时，才更新luminanceAtZenith属性
+              * 版权所有: 武汉中地数码科技有限公司
+              * 修改人: 杨琨 2025-11-18
+              */
+              if (sublayers[i].type === IGSSceneSublayerType.modelCache) {
+                sublayerM3d.imageBasedLighting.luminanceAtZenith = luminanceAtZenith
+              }
             }
           } else {
             this.$emit('update:layerDocument', doc)
@@ -1935,10 +2000,7 @@ export default {
           MC.luminanceAtZenith = luminanceAtZenith
           MC.layerProperty = {
             ...layerProperty,
-            enablePopup,
-            enableModelSwitch,
-            maximumScreenSpaceError,
-            luminanceAtZenith,
+            enableModelSwitch
           }
 
           let tileset = this.sceneController.findM3DIgsSource(MC.id)
@@ -2431,6 +2493,9 @@ export default {
       })
     },
     updateModelPick(layerId, isOpen) {
+      if (!ModelPickController.pickLayerObj) {
+        return
+      }
       const targetPickObj = ModelPickController.pickLayerObj.find(
         (item) => item.parentId === layerId
       )

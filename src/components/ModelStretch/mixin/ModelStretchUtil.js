@@ -4,6 +4,7 @@ import {
   ModelCacheFormat,
 } from '@mapgis/web-app-framework'
 import ModelEditControlList from '../model-edit-control-list'
+import { ModelTransformTool } from '@mapgis/webclient-cesium-plugin'
 
 export default {
   data() {
@@ -65,7 +66,7 @@ export default {
           } else if (type === LayerType.ModelCache) {
             m3dSet = this.getM3DSet(layerId)
           }
-          window.transformEditor = new zondy.cesium.ModelTransformTool(m3dSet)
+          window.transformEditor = new ModelTransformTool(m3dSet)
           window.transformEditor.initModelEditor(viewer)
           ModelEditControlList[layerId] = window.transformEditor
           const initTransform = m3dSet._transform || m3dSet._root.transform
@@ -250,7 +251,13 @@ export default {
     changeTextureScale(scaleXY, scaleZ, id) {
       let m3dSet = this.getM3DSet(id)
       if (!m3dSet) {
-        m3dSet = this.getSceneLayer3DSet(id)[0]
+        /*
+         * feat(9025): 在一张图中可以预览带注记图层的三维场景服务
+         * 修改说明: 确保可以正确获取m3d对象
+         * 版权所有: 武汉中地数码科技有限公司
+         * 修改人: 杨琨 2025-11-18
+         */
+        m3dSet = this.getSceneLayer3DSet(id)
       }
       m3dSet.textureCoordScale = new this.Cesium.Cartesian2(scaleXY, scaleZ)
     },

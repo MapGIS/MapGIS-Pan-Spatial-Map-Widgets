@@ -93,18 +93,23 @@ export default {
           name: '高级选项',
           show:
             (this.isIGSScene(this.layerItem) &&
-              this.isSubLayer(this.layerItem)) ||
+              this.isIGSSceneSubLayerModelCache(this.layerItem)) ||
             (this.isModelCacheLayer(this.layerItem) &&
               !this.isVoxelLayer(this.layerItem)) ||
             (this.isParentLayer(this.layerItem) &&
               (this.isIgsDocLayer(this.layerItem) ||
                 this.isArcgisMapLayer(this.layerItem))) ||
-            this.isIgsTileLayer(this.layerItem) ||
+            !this.isIGSScene(this.layerItem) && this.isIgsTileLayer(this.layerItem) ||
             this.isVectorTile(this.layerItem) ||
             this.isArcGISTile(this.layerItem) ||
             this.isWMTSLayer(this.layerItem) ||
             this.isWebTile(this.layerItem),
           click: () => this.showAdvancedSetting(),
+        },
+        {
+          name: '注记样式',
+          show: this.isIGSSceneSubLayerAnnotation(this.layerItem),
+          click: () => this.showAnnotationSetting(),
         },
         /**
          * 修改说明:删除模型变换对场景图层的支持，模型变换现在不支持场景图层
@@ -194,6 +199,10 @@ export default {
         // 龚跃健-202407017
         this.$emit('change-layer-props', this.layerItem)
       }
+    },
+
+    showAnnotationSetting() {
+      this.$emit('change-annotation-props', this.layerItem)
     },
 
     modelEdit() {
