@@ -1,3 +1,5 @@
+import { zondy } from '@mapgis/webclient-common'
+
 export default {
   inject: ['vueCesium', 'Cesium', 'viewer'],
   data() {

@@ -85,6 +85,20 @@ export default {
       return isModelCache
     },
     /**
+     * 判断是否是场景图层的注记子图层
+     * @param layerItem 图层信息
+     * @returns boolean
+     */
+    isIGSSceneSubLayerAnnotation(layerItem) {
+      let isAnnotation = false
+      if (this.isIGSScene(layerItem) && this.isSubLayer(layerItem)) {
+        if (layerItem.type === IGSSceneSublayerType.label3D) {
+          isAnnotation = true
+        }
+      }
+      return isAnnotation
+    },
+    /**
      * 判断是否是瓦片图层
      * @param item layer图层
      * @returns boolean

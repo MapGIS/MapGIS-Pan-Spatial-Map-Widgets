@@ -2,7 +2,7 @@
   <ul class="beauty-scroll">
     <li
       v-for="item in layers"
-      v-show="isIgsTerrainLayer(item) && !isDataFlow(item)"
+      v-show="isShowOpacitySlider(item)"
       :key="item.id"
     >
       <div style="width: 100%">
@@ -138,21 +138,26 @@ export default {
       !flag && this.$emit('restore-set-opacity')
       item.opacityFactor = factor
     },
-    isIgsTerrainLayer(layer) {
-      let elevation = false
-      if (layer.type === LayerType.IGSScene) {
+    isShowOpacitySlider(layer) {
+      let isShow = true
+      if (layer.type === LayerType.DataFlow) {
+        isShow = false
+      } else if (layer.type === LayerType.IGSScene) {
         if (layer.activeScene) {
-          layer.activeScene.sublayers.forEach((igsSceneSublayer) => {
-            if (igsSceneSublayer.type === IGSSceneSublayerType.elevation) {
-              elevation = true
-            }
-          })
+          for (let index = 0; index < layer.activeScene.sublayers.length; index++) {
+            const igsSceneSublayer = layer.activeScene.sublayers[index]
+            if (
+              igsSceneSublayer.type === IGSSceneSublayerType.elevation || 
+              igsSceneSublayer.type === IGSSceneSublayerType.label3D ||
+              igsSceneSublayer.type === IGSSceneSublayerType.mapRef 
+            ) {
+              isShow = false
+              break
+            } 
+          }
         }
       }
-      return !elevation
-    },
-    isDataFlow(layer) {
-      return layer.type === LayerType.DataFlow
+      return isShow
     },
     /**
      * 透明度系数变化时，修改图层和模型的透明度
