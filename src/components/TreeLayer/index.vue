@@ -225,6 +225,7 @@ import {
   LayerPropertyEdit,
   Metadata,
   dataCatalogManagerInstance,
+  canShowInMapboxgl,
 } from '@mapgis/web-app-framework'
 import MpMetadataInfo from '../MetadataInfo/MetadataInfo.vue'
 import MpCustomQuery from '../CustomQuery/CustomQuery.vue'
@@ -238,7 +239,10 @@ import { defaultDataIconsConfig } from '../../theme/dataIconsConfig.js'
 import ModelEditControlList from '../ModelStretch/model-edit-control-list'
 import picker from '../mixin/pick'
 import MpPickPopup from '../pick-popup/PickPopup.vue'
-import { AlgorithmLib, ModelTransformTool } from '@mapgis/webclient-cesium-plugin'
+import {
+  AlgorithmLib,
+  ModelTransformTool,
+} from '@mapgis/webclient-cesium-plugin'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
@@ -416,7 +420,7 @@ export default {
                  * @private
                  * @param {Object} WAF的场景图层
                  * @param {Array<Object>} innerLayer的子图层数组
-                */
+                 */
                 function updateCommonIGSSceneSubLayers(wafLayer, sublayers) {
                   sublayers.forEach((sublayer) => {
                     sublayer.layer = wafLayer
@@ -868,26 +872,15 @@ export default {
         } else if (item.visible !== undefined) {
           parentVisible = item.visible
         }
+        /*
+         * feat(8351): 一张图支持加载平面坐标的管网矢量图和栅格瓦片底图
+         * 修改说明:不能在mapboxgl中加载的图层，在图层树上高亮显示
+         * 版权所有: 武汉中地数码科技有限公司
+         * 修改人: 龚跃健 2025-11-21
+         */
         const wkid = baseConfigInstance.config.wkid || 4326
-        let layerWkid = Number(item.spatialReference?.wkid)
-        if (
-          layerWkid === 4326 ||
-          layerWkid === 4490 ||
-          layerWkid === 4610 ||
-          layerWkid === 4214 ||
-          layerWkid === 20010201 ||
-          layerWkid === 20020901
-        ) {
-          layerWkid = 4326
-        } else {
-          layerWkid = 3857
-        }
-        if (
-          ![LayerType.GeoJson, LayerType.Plot, LayerType.IGSPanoramic].includes(
-            item.type
-          ) &&
-          layerWkid !== Number(wkid)
-        ) {
+        const showInMapboxgl = canShowInMapboxgl(Number(wkid), item)
+        if (!showInMapboxgl) {
           item['checkbox-class'] = 'tree-item-custom-checkbox'
         }
         if (item.sublayers && item.sublayers.length > 0) {
@@ -948,7 +941,7 @@ export default {
           let layerItem = layers[parentIndex]
           /*
            * feat(7686): vue2组件和一张图中支持GeoServer发布的WMTS和WMTS服务
-           * 修改说明: 
+           * 修改说明:
            * 本方法是图层树显隐参数修改后的回调函数，返回的是要修改的图层下标数组，示例如下['0-0-0']，
            * '0-0-0'表示在document.defaultMap.layers中第0个图层的第0个子图层的第0个子图层
            * 在后续代码中，会根据子图层下标在子图层数组中找到对应的子图层，之后更改显隐参数
@@ -960,7 +953,7 @@ export default {
             layerItem = layerItem.clone()
             const innerLayerJSON = layerItem._innerLayer.toJSON()
             layerItem.sublayers[0].sublayers = innerLayerJSON.sublayers
-          } 
+          }
           childrenArr.forEach((i, index) => {
             if (index === 0) {
               return
@@ -1003,7 +996,6 @@ export default {
                   }
                 }
               } else {
-                
                 layerItem.sublayers[i].visible = !layerItem.sublayers[i].visible
                 /*
                  * feat(7686): vue2组件和一张图中支持GeoServer发布的WMTS和WMTS服务
@@ -1012,8 +1004,13 @@ export default {
                  * 修改人: 杨琨 2025-11-11
                  */
                 if (this.isWMSLayer(layers[parentIndex])) {
-                  for (let sublayerIndex = 0; sublayerIndex < layers[parentIndex].allSublayers.length; sublayerIndex++) {
-                    const WAFWMSSubLayer = layers[parentIndex].allSublayers[sublayerIndex]
+                  for (
+                    let sublayerIndex = 0;
+                    sublayerIndex < layers[parentIndex].allSublayers.length;
+                    sublayerIndex++
+                  ) {
+                    const WAFWMSSubLayer =
+                      layers[parentIndex].allSublayers[sublayerIndex]
                     if (WAFWMSSubLayer.name === layerItem.sublayers[i].id) {
                       WAFWMSSubLayer.visible = !WAFWMSSubLayer.visible
                       break
@@ -1026,7 +1023,10 @@ export default {
                  * 版权所有: 武汉中地数码科技有限公司
                  * 修改人: 杨琨 2025-11-11
                  */
-                if (layers[parentIndex].updateInnerLayer && layers[parentIndex].updateInnerLayer instanceof Function) {
+                if (
+                  layers[parentIndex].updateInnerLayer &&
+                  layers[parentIndex].updateInnerLayer instanceof Function
+                ) {
                   layers[parentIndex].updateInnerLayer()
                 }
               }
@@ -1045,7 +1045,10 @@ export default {
           })
         } else {
           layers[item].isVisible = !layers[item].isVisible
-          if (layers[item].updateInnerLayer && layers[item].updateInnerLayer instanceof Function) {
+          if (
+            layers[item].updateInnerLayer &&
+            layers[item].updateInnerLayer instanceof Function
+          ) {
             layers[item].updateInnerLayer()
           }
         }
@@ -1529,10 +1532,12 @@ export default {
         title: '注记样式',
         name: 'MpChangeM3DProps',
         component: () =>
-          import('./components/ChangeAnnotationProps/ChangeAnnotationProps.vue'),
+          import(
+            './components/ChangeAnnotationProps/ChangeAnnotationProps.vue'
+          ),
         props: {
           layerInfo: this.currentLayerInfo,
-          layerIndex: item.layerIndex
+          layerIndex: item.layerIndex,
         },
         listeners: {
           'update:layer': (val) => {
@@ -1544,7 +1549,7 @@ export default {
               }
             }
             this.$emit('update:layerDocument', doc)
-          }
+          },
         },
       })
     },
@@ -1924,7 +1929,7 @@ export default {
         id: id,
         layerProperty: {
           ...layerProperty,
-          enableModelSwitch
+          enableModelSwitch,
         },
       }
       LayerPropertyEdit.propertyConfigArr = editConfig
@@ -1953,7 +1958,7 @@ export default {
           sublayer.layer.enablePopup = enablePopup
           sublayer.layer.layerProperty = {
             ...layerProperty,
-            enableModelSwitch
+            enableModelSwitch,
           }
           const m3d = this.sceneController.findSource(id)
           if (m3d) {
@@ -1980,13 +1985,14 @@ export default {
               const sublayerId = sublayers[i].id
               const sublayerM3d = this.sceneController.findSource(sublayerId)
               /*
-              * feat(9025): 在一张图中可以预览带注记图层的三维场景服务
-              * 修改说明: 只有场景子图层类型为模型缓存时，才更新luminanceAtZenith属性
-              * 版权所有: 武汉中地数码科技有限公司
-              * 修改人: 杨琨 2025-11-18
-              */
+               * feat(9025): 在一张图中可以预览带注记图层的三维场景服务
+               * 修改说明: 只有场景子图层类型为模型缓存时，才更新luminanceAtZenith属性
+               * 版权所有: 武汉中地数码科技有限公司
+               * 修改人: 杨琨 2025-11-18
+               */
               if (sublayers[i].type === IGSSceneSublayerType.modelCache) {
-                sublayerM3d.imageBasedLighting.luminanceAtZenith = luminanceAtZenith
+                sublayerM3d.imageBasedLighting.luminanceAtZenith =
+                  luminanceAtZenith
               }
             }
           } else {
@@ -2000,7 +2006,7 @@ export default {
           MC.luminanceAtZenith = luminanceAtZenith
           MC.layerProperty = {
             ...layerProperty,
-            enableModelSwitch
+            enableModelSwitch,
           }
 
           let tileset = this.sceneController.findM3DIgsSource(MC.id)
@@ -2203,7 +2209,7 @@ export default {
            * 版权所有: 武汉中地数码科技有限公司
            * 修改人: 杨琨 2025-11-11
            */
-          let metaDataUrl 
+          let metaDataUrl
           if (this.isWMTSLayer(layer)) {
             metaDataUrl = `${layer._innerLayer._WMTSServer._baseUrl}?version=${layer._innerLayer.version}&service=WMTS&request=GetCapabilities`
           } else if (this.isWMSLayer(layer)) {
