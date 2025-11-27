@@ -104,6 +104,13 @@ export default {
     setOpacity(val, item, flag) {
       const factor = this.getFactor(item)
       item.opacity = Number((100 - val) / 100) * factor
+      /*
+       * feat(3395): PTSYB-天地图放大到一定程度后，不显示“此级别下，该区域无影像”
+       * 修改说明: 更新图层透明度属性时同步更新InnerLayer
+       * 版权所有: 武汉中地数码科技有限公司
+       * 修改人: 杨琨 2025-11-27
+       */
+      item.updateInnerLayer({})
       if (item.layerProperty) {
         item.layerProperty.alpha = Number(100 - val)
         const { dataId, layerProperty } = item

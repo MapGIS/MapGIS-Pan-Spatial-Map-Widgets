@@ -1574,6 +1574,15 @@ export default {
             const doc = this.layerDocument.clone()
             const docLayer = doc.defaultMap.findLayerById(layer.id)
             docLayer.layerProperty = layerProperty
+            /*
+             * feat(3395): PTSYB-天地图放大到一定程度后，不显示“此级别下，该区域无影像”
+             * 修改说明: 更新图层属性时同步更新InnerLayer
+             * 版权所有: 武汉中地数码科技有限公司
+             * 修改人: 杨琨 2025-11-27
+             */
+            if (docLayer.updateInnerLayer) {
+              docLayer.updateInnerLayer({})
+            }
             // 更新document
             this.$emit('update:layerDocument', doc)
           },
@@ -1620,7 +1629,7 @@ export default {
         const editorCallback = function (value) {
           self.$parent?.$parent?.$refs['模型变换']?.transformUpdate(value)
         }
-        window.transformEditor = new ModelTransformTool(
+        window.transformEditor = new zondy.cesium.ModelTransformTool(
           layerOption,
           editorCallback
         )

@@ -2,8 +2,8 @@
   <div class="change-layer-props-container">
     <mapgis-ui-form
       labelAlign="left"
-      :label-col="{ span: 6 }"
-      :wrapper-col="{ span: 18 }"
+      :label-col="{ span: 8 }"
+      :wrapper-col="{ span: 16 }"
     >
       <a-form-item label="渲染模式" v-if="showRenderMode">
         <a-select v-model="renderMode" @change="submit">
@@ -19,18 +19,103 @@
       <mapgis-ui-form-item label="开启拾取" v-if="showPopupSwitch">
         <mapgis-ui-switch v-model="enablePopup" @change="submit" />
       </mapgis-ui-form-item>
+      <mapgis-ui-form-item v-if="showtileRenderMode">
+        <span slot="label">
+          显示模式
+          <mapgis-ui-tooltip
+            title="超过瓦片的请求层级范围后，设置拉伸瓦片还是隐藏瓦片"
+          >
+            <mapgis-ui-iconfont type="mapgis-info"></mapgis-ui-iconfont>
+          </mapgis-ui-tooltip>
+        </span>
+        <a-select v-model="tileDisplayMode" @change="submit">
+          <a-select-option
+            v-for="item in tileDisplayModes"
+            :key="item.value"
+            :value="item.value"
+          >
+            {{ item.label }}
+          </a-select-option>
+        </a-select>
+      </mapgis-ui-form-item>
+      <mapgis-ui-form-item v-if="showtileRenderMode">
+        <span slot="label">
+          层级范围
+          <mapgis-ui-tooltip
+            title="请求瓦片的层级范围，不在这个范围内不会发送瓦片请求，当显示模式设置为拉伸时，最小层级设置过大可能有性能问题"
+          >
+            <mapgis-ui-iconfont type="mapgis-info"></mapgis-ui-iconfont>
+          </mapgis-ui-tooltip>
+        </span>
+        <mapgis-ui-slider
+          range
+          :marks="marks"
+          :default-value="layerLevelRange"
+          :step="1"
+          :min="0"
+          :max="lods.length - 1"
+          @change="changeLayerLevels"
+        />
+      </mapgis-ui-form-item>
     </mapgis-ui-form>
+    <mapgis-ui-form-item v-if="showtileRenderMode" label="瓦片信息">
+      <mapgis-ui-table
+        size="small"
+        :columns="columns"
+        :data-source="lodSource"
+        :pagination="false"
+        :scroll="{ y: 240, x: 'max-content' }"
+      >
+        <!-- 自定义index列 -->
+        <span
+          slot="index"
+          slot-scope="text, record"
+          :style="{ color: getTextColorByLevel(record.level) }"
+          >{{ text }}
+        </span>
+
+        <!-- 自定义level列 -->
+        <span
+          slot="level"
+          slot-scope="text, record"
+          :style="{ color: getTextColorByLevel(record.level) }"
+        >
+          {{ text }}
+        </span>
+
+        <!-- 自定义scale列 -->
+        <span
+          slot="scale"
+          slot-scope="text, record"
+          :style="{ color: getTextColorByLevel(record.level) }"
+        >
+          {{ text }}
+        </span>
+      </mapgis-ui-table>
+    </mapgis-ui-form-item>
     <mp-change-extensions
       v-if="showExtensions"
       :extensions.sync="extensions"
       :type="this.layer.layer ? this.layer.layer.type : this.layer.type"
+      @update:extensions="changeExtensions"
     ></mp-change-extensions>
+    <div>
+      <mapgis-ui-button
+        class="edit-tool-button"
+        type="primary"
+        @click="saveConfig"
+        style="width: 48%; margin-right: 4%"
+      >
+        保存设置
+      </mapgis-ui-button>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
-import { LayerType } from '@mapgis/web-app-framework'
+import { LayerType, api } from '@mapgis/web-app-framework'
 import MpChangeExtensions from '../ChangeExtensions/ChangeExtensions.vue'
+import { TileInfoUtil } from '@mapgis/webclient-common'
 
 export default {
   name: 'MpChangeLayerProps',
@@ -42,8 +127,39 @@ export default {
         { label: '瓦片', value: 'tile' },
         { label: '图片', value: 'image' },
       ],
+      tileDisplayModes: [
+        { label: '拉伸', value: 'stretch' },
+        { label: '隐藏', value: 'hide' },
+      ],
+      tileDisplayMode: 'stretch',
       renderMode: 'tile',
       enablePopup: false,
+      layerLevelRange: [0, 22],
+      marks: {
+        0: '0',
+        22: '22',
+      },
+      columns: [
+        {
+          title: '层级',
+          dataIndex: 'index',
+          key: 'index',
+          scopedSlots: { customRender: 'index' },
+        },
+        {
+          title: '层级值',
+          dataIndex: 'level',
+          key: 'level',
+          scopedSlots: { customRender: 'level' },
+        },
+        {
+          title: '比例尺',
+          dataIndex: 'scale',
+          key: 'scale',
+          scopedSlots: { customRender: 'scale' },
+        },
+      ],
+      extensions: '{}',
     }
   },
   computed: {
@@ -52,39 +168,55 @@ export default {
      * @returns boolean
      */
     showRenderMode() {
-      const layer = this.layer.layer ? this.layer.layer : this.layer
       return (
-        layer.type === LayerType.IGSMapImage ||
-        layer.type === LayerType.ArcGISMapImage
+        this.targetLayer.type === LayerType.IGSMapImage ||
+        this.targetLayer.type === LayerType.ArcGISMapImage
       )
     },
     showPopupSwitch() {
-      const layer = this.layer.layer ? this.layer.layer : this.layer
       return (
-        layer.type === LayerType.IGSMapImage ||
-        layer.type === LayerType.IGSVector
+        this.targetLayer.type === LayerType.IGSMapImage ||
+        this.targetLayer.type === LayerType.IGSVector
       )
-    },
-    extensions: {
-      get() {
-        const layer = this.layer.layer ? this.layer.layer : this.layer
-        return layer.layerProperty?.extensions || '{}'
-      },
-      set(val) {
-        const layer = this.layer.layer ? this.layer.layer : this.layer
-        layer.layerProperty.extensions = val
-        this.$emit('update:layer', this.layer)
-      },
     },
     showExtensions() {
-      const layer = this.layer.layer ? this.layer.layer : this.layer
       return (
-        layer.type === LayerType.IGSTile ||
-        layer.type === LayerType.VectorTile ||
-        layer.type === LayerType.ArcGISTile ||
-        layer.type === LayerType.WMTS ||
-        layer.type === LayerType.WebTile
+        this.targetLayer.type === LayerType.IGSTile ||
+        this.targetLayer.type === LayerType.VectorTile ||
+        this.targetLayer.type === LayerType.ArcGISTile ||
+        this.targetLayer.type === LayerType.OGCWMTS ||
+        this.targetLayer.type === LayerType.WebTile
       )
+    },
+    showtileRenderMode() {
+      return (
+        this.targetLayer.type === LayerType.IGSTile ||
+        this.targetLayer.type === LayerType.VectorTile ||
+        this.targetLayer.type === LayerType.ArcGISTile ||
+        this.targetLayer.type === LayerType.OGCWMTS ||
+        this.targetLayer.type === LayerType.WebTile
+      )
+    },
+    lods() {
+      const tileInfo = TileInfoUtil.getTileInfoByLayer(
+        this.targetLayer._innerLayer
+      )
+      return tileInfo.lods
+    },
+    lodSource() {
+      const lodSource = []
+      this.lods.forEach((lod, index) => {
+        lodSource.push({
+          key: index,
+          index: index,
+          level: lod.level,
+          scale: '1:' + lod.scale,
+        })
+      })
+      return lodSource
+    },
+    targetLayer() {
+      return this.layer.layer ? this.layer.layer : this.layer
     },
   },
   watch: {
@@ -104,9 +236,8 @@ export default {
      * 初始化
      */
     init() {
-      const layer = this.layer.layer ? this.layer.layer : this.layer
-      if (layer) {
-        const { layerProperty } = layer
+      if (this.targetLayer) {
+        const { layerProperty } = this.targetLayer
         if (layerProperty) {
           if (layerProperty.renderMode !== undefined) {
             this.renderMode = layerProperty.renderMode
@@ -115,24 +246,99 @@ export default {
             this.enablePopup = layerProperty.enablePopup
           }
         }
+        if (this.showtileRenderMode) {
+          const startLevel =
+            layerProperty.startLevel >= 0 ? layerProperty.startLevel : 0
+          const endLevel =
+            layerProperty.endLevel >= 0 ? layerProperty.endLevel : 22
+          this.layerLevelRange = [startLevel, endLevel]
+          this.marks = {
+            0: 0,
+          }
+          this.marks[this.lods.length - 1] = this.lods.length - 1
+          this.tileDisplayMode =
+            layerProperty.tileDisplayMode || this.tileDisplayMode
+        }
       }
+      debugger
+      this.extensions = this.targetLayer.layerProperty?.extensions || '{}'
     },
     /**
      * 更新配置
      */
     submit() {
-      const layer = this.layer.layer ? this.layer.layer : this.layer
-      if (layer) {
-        const { layerProperty } = layer
+      if (this.targetLayer) {
+        const { layerProperty } = this.targetLayer
         if (layerProperty) {
           layerProperty.renderMode = this.renderMode
           layerProperty.enablePopup = this.enablePopup
+          if (this.showtileRenderMode) {
+            layerProperty.tileDisplayMode = this.tileDisplayMode
+            this.extensions = JSON.parse(this.extensions)
+            if (this.extensions.hasOwnProperty('isStretchImage')) {
+              this.extensions.isStretchImage =
+                this.tileDisplayMode === 'stretch'
+            }
+            this.extensions = JSON.stringify(this.extensions)
+            layerProperty.extensions = this.extensions
+          }
         }
       }
       this.$emit('update:layer', this.layer)
+    },
+    changeExtensions(val) {
+      this.targetLayer.layerProperty.extensions = val
+      const extensions = JSON.parse(val)
+      if (extensions.hasOwnProperty('isStretchImage')) {
+        if (extensions.isStretchImage) {
+          this.tileDisplayMode = 'stretch'
+        } else {
+          this.tileDisplayMode = 'hide'
+        }
+        this.targetLayer.layerProperty.tileDisplayMode = this.tileDisplayMode
+      }
+      this.$emit('update:layer', this.layer)
+    },
+    changeLayerLevels(val) {
+      if (this.targetLayer) {
+        const { layerProperty } = this.targetLayer
+        if (layerProperty) {
+          layerProperty.startLevel = val[0]
+          layerProperty.endLevel = val[1]
+          this.layerLevelRange = [val[0], val[1]]
+        }
+      }
+      this.$emit('update:layer', this.layer)
+    },
+    getTextColorByLevel(level) {
+      let color = 'gray'
+      if (
+        level >= this.layerLevelRange[0] &&
+        level <= this.layerLevelRange[1]
+      ) {
+        color = ''
+      }
+      return color
+    },
+    saveConfig() {
+      debugger
+      api
+        .updateData({
+          dataId: this.targetLayer.dataId,
+          layerProperty: this.targetLayer.layerProperty,
+        })
+        .then((response) => {
+          if (response.code === 200) {
+            this.$message.success('保存成功')
+          }
+        })
     },
   },
 }
 </script>
 
-<style lang="less" scoped></style>
+<style lang="less" scoped>
+.mapgis-ui-form-item {
+  margin-bottom: 10px;
+}
+</style>
