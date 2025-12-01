@@ -29,21 +29,61 @@ export default {
     }
   },
 
-  async mounted() {
-    const config = await api.getWidgetConfig('particle-effects')
-    this.symbolList = config.symbolList.map((item) => {
-      return {
-        guid: item.guid,
-        name: item.name,
-        image: this.imageUrl(item.image),
-        iconUrl: item.iconUrl,
-        config: item.config,
-      }
-    })
-    this.particleListArray = config.particleListConfig
+  mounted() {
+    this.onWidgetConfigChange(this.widgetInfo.config, undefined)
   },
 
   methods: {
+    // 监听config变化
+    onWidgetConfigChange(newValue, oldValue) {
+      const { symbolList, particleListConfig } = newValue
+      this.onSymbolListChange(symbolList)
+      this.onParticleListConfigChange(particleListConfig)
+      // 添加对widegt.config.symbolList的监听
+      if (symbolList && !this.symbolListWatchAdded) {
+        // 接口内部会过滤重复添加的监听
+        this.addWidgetConfigPropertiesWatchEvent(
+          'symbolList',
+          this.onSymbolListChange
+        )
+        // 标识已添加监听事件
+        this.symbolListWatchAdded = true
+      }
+      // 添加对widegt.config.particleListConfig的监听
+      if (particleListConfig && !this.particleListWatchAdded) {
+        // 接口内部会过滤重复添加的监听
+        this.addWidgetConfigPropertiesWatchEvent(
+          'particleListConfig',
+          this.onParticleListConfigChange
+        )
+        // 标识已添加监听事件
+        this.particleListWatchAdded = true
+      }
+    },
+    // 粒子符号变化
+    onSymbolListChange(val) {
+      if (!val || val.length == 0) {
+        return []
+      }
+      this.symbolList = val.map((item) => {
+        return {
+          guid: item.guid,
+          name: item.name,
+          image: this.imageUrl(item.image),
+          iconUrl: item.iconUrl,
+          config: item.config,
+        }
+      })
+    },
+    // 粒子列表变化
+    onParticleListConfigChange(val) {
+      if (!val || val.length == 0) {
+        return []
+      }
+      this.particleListArray = val
+      this.particleList = val
+      this.particleChangedList = val
+    },
     imageUrl(url) {
       if (url.startsWith('/file')) {
         return `${this.baseUrl}/${this.appProductName}${url}`
@@ -87,19 +127,31 @@ export default {
     },
 
     async saveConfig() {
-      const originConfig = await api.getWidgetConfig('particle-effects')
-      originConfig.particleListConfig = this.recursion(this.particleChangedList)
-      api
-        .saveWidgetConfig({
-          name: 'particle-effects',
-          config: JSON.stringify(originConfig),
-        })
-        .then(() => {
-          console.log('更新particle配置成功')
-        })
-        .catch(() => {
-          console.log('更新particle配置失败')
-        })
+      if (this.designTime) {
+        const particleListConfig = this.recursion(this.particleChangedList)
+        const originConfig = {
+          particleListConfig,
+          symbolList: this.widget.config.symbolList,
+        }
+        this.setWidgetData(originConfig)
+      } else if (this.previewTime) {
+      } else {
+        const originConfig = await api.getWidgetConfig('particle-effects')
+        originConfig.particleListConfig = this.recursion(
+          this.particleChangedList
+        )
+        api
+          .saveWidgetConfig({
+            name: 'particle-effects',
+            config: JSON.stringify(originConfig),
+          })
+          .then(() => {
+            console.log('更新particle配置成功')
+          })
+          .catch(() => {
+            console.log('更新particle配置失败')
+          })
+      }
     },
 
     // 递归删除对象数组中的__ob__属性

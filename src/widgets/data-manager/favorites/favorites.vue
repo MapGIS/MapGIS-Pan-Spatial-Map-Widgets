@@ -63,6 +63,10 @@ export default {
     showType() {
       return this.widgetInfo.config.showType
     },
+    // 搜索路径类型 relative | absolute
+    searchPathType() {
+      return this.widgetInfo.config.searchPathType
+    },
     imagesUploadApi() {
       // return `${this.baseUrl}/psmap/rest/manager/file/upload`
       return `${this.baseUrl}/${this.appProductName}/rest/services/system/ResourceServer/files/pictures`
@@ -82,7 +86,9 @@ export default {
     if (!this.widgetInfo.config.showType) {
       this.$set(this.widgetInfo.config, 'showType', 'image')
     }
-    this.dataList = JSON.parse(JSON.stringify(this.widgetInfo.config.data))
+    if (!this.widgetInfo.config.searchPathType) {
+      this.$set(this.widgetInfo.config, 'searchPathType', 'absolute')
+    }
     this.dataList = this.initData(
       JSON.parse(JSON.stringify(this.widgetInfo.config.data))
     )
@@ -260,24 +266,37 @@ export default {
       return new File([ia], `${id}.jpeg`, { type: mime })
     },
     async saveData() {
-      const originConfig = await api.getWidgetConfig('favorites')
-      originConfig.data = this.dataList
-      if (!originConfig.showType) {
-        originConfig.showType = this.showType
-      }
-      api
-        .saveWidgetConfig({
-          name: 'favorites',
-          config: JSON.stringify(originConfig),
-        })
-        .catch(() => {
-          this.$message.config({
-            top: '100px',
-            duration: 1,
-            maxCount: 3,
+      if (this.designTime) {
+        const originConfig = {
+          data: this.dataList,
+          showType: this.showType,
+          searchPathType: this.searchPathType,
+        }
+        this.setWidgetData(JSON.parse(JSON.stringify(originConfig)))
+      } else if (this.previewTime) {
+      } else {
+        const originConfig = await api.getWidgetConfig('favorites')
+        originConfig.data = this.dataList
+        if (!originConfig.showType) {
+          originConfig.showType = this.showType
+        }
+        if (!originConfig.searchPathType) {
+          originConfig.searchPathType = this.searchPathType
+        }
+        api
+          .saveWidgetConfig({
+            name: 'favorites',
+            config: JSON.stringify(originConfig),
           })
-          this.$message.error('保存信息失败')
-        })
+          .catch(() => {
+            this.$message.config({
+              top: '100px',
+              duration: 1,
+              maxCount: 3,
+            })
+            this.$message.error('保存信息失败')
+          })
+      }
     },
     uploadImage(image) {
       const file = new FormData()
@@ -307,9 +326,8 @@ export default {
       Object.keys(layerInfo).forEach((item) => {
         // 兼容guid的情况
         if (item.includes('://')) {
-          const find = this.dataCatalogLayerArr.find(
-            (config) => config.serverURL === item
-          )
+          const find = this.findDataCatalognNode(item)
+
           if (find) {
             transferLayerInfo[find.guid] = layerInfo[item]
           }
@@ -319,9 +337,8 @@ export default {
       })
       Object.keys(relation).forEach((item) => {
         if (item.includes('://')) {
-          const find = this.dataCatalogLayerArr.find(
-            (config) => config.serverURL === item
-          )
+          const find = this.findDataCatalognNode(item)
+
           if (find) {
             transferRelation[find.guid] = relation[item]
           }
@@ -396,8 +413,24 @@ export default {
             flag = true
             const { children } = item
             children.forEach((item) => {
-              if (!url.includes(item.serverURL)) {
-                flag = false
+              if (this.searchPathType === 'relative') {
+                if (flag) {
+                  const relativeUrl = this.getRelativeUrl(item.serverURL)
+
+                  if (relativeUrl) {
+                    flag = url.find(
+                      (child) => child && child.includes(relativeUrl)
+                    )
+                  } else {
+                    if (!url.includes(item.serverURL)) {
+                      flag = false
+                    }
+                  }
+                }
+              } else {
+                if (!url.includes(item.serverURL)) {
+                  flag = false
+                }
               }
             })
           }
@@ -439,9 +472,8 @@ export default {
       const transferCheckKeys = []
       checkKeys.forEach((item) => {
         if (item.indexOf('://') > -1) {
-          const find = this.dataCatalogLayerArr.find(
-            (config) => config.serverURL === item
-          )
+          const find = this.findDataCatalognNode(item)
+
           if (find) {
             transferCheckKeys.push(find.guid)
           }
@@ -461,9 +493,7 @@ export default {
             const frist = subArr[0]
             let fristData
             if (frist.indexOf('://') > -1) {
-              fristData = this.dataCatalogAllArr.find(
-                (layer) => layer.serverURL === frist
-              )
+              fristData = this.findDataCatalognNode(frist)
             } else {
               fristData = this.dataCatalogAllArr.find(
                 (layer) => layer.guid === frist
@@ -474,9 +504,7 @@ export default {
             const transferSubArr = []
             subArr.forEach((item) => {
               if (item.indexOf('://') > -1) {
-                const find = this.dataCatalogLayerArr.find(
-                  (config) => config.serverURL === item
-                )
+                const find = this.findDataCatalognNode(item)
                 if (find) {
                   transferSubArr.push(find.guid)
                 }
@@ -529,6 +557,39 @@ export default {
         }
       }
       return target
+    },
+    findDataCatalognNode(url) {
+      // 以绝对路径还是相对路径进行匹配
+      let find
+      if (this.searchPathType === 'relative') {
+        const relativeUrl = this.getRelativeUrl(url)
+        if (relativeUrl) {
+          // 查找相对路径的地址
+          find = this.dataCatalogLayerArr.find(
+            (node) => node.serverURL && node.serverURL.includes(relativeUrl)
+          )
+        } else {
+          // url解析失败走绝对路径的方式匹配
+          find = this.dataCatalogLayerArr.find((node) => node.serverURL === url)
+        }
+      } else {
+        find = this.dataCatalogLayerArr.find((node) => node.serverURL === url)
+      }
+      return find
+    },
+    getRelativeUrl(url) {
+      let relativeUrl
+      try {
+        const { origin } = new URL(url)
+        relativeUrl = url.replace(origin, '')
+      } catch (error) {}
+      return relativeUrl
+    },
+    // 微件配置变化事件
+    onWidgetConfigChange(newValue, oldValue) {
+      this.dataList = this.initData(
+        JSON.parse(JSON.stringify(newValue.data || []))
+      )
     },
   },
   beforeDestroy() {

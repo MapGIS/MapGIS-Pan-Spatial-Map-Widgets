@@ -3,9 +3,10 @@ import {
   UUID,
   LayerType,
   LoadStatus,
-  FitBound,
   DataCatalogManager,
   UrlUtil,
+  baseConfigInstance,
+  LayerPropertyEdit,
 } from '@mapgis/web-app-framework'
 import MpBasemapItem from '../BasemapItem/BasemapItem.vue'
 import { inOrderPromise } from '@mapgis/webclient-common'
@@ -47,8 +48,8 @@ export default {
      */
     defaultSelect() {
       return this.basemaps.filter((basemap) => {
-        const { select = false } = basemap
-        return select
+        const { select = false, visible = false } = basemap
+        return select && JSON.parse(visible)
       })
     },
   },
@@ -61,7 +62,7 @@ export default {
   },
   methods: {
     // 清空底图
-    clearBasemap() {
+    clearBasemap(clearSelect = true) {
       this.basemaps.forEach((basemap) => {
         basemap.children.forEach((layer) => {
           const maplayer = this.document.baseLayerMap.findLayerById(layer.guid)
@@ -71,7 +72,9 @@ export default {
           basemap.select = false
         }
       })
-      this.basemapNames = []
+      if (clearSelect) {
+        this.basemapNames = []
+      }
     },
     isShowChange(val) {
       if (!val) {
@@ -84,24 +87,6 @@ export default {
         })
       }
     },
-    fitBounds(item, init) {
-      const { Cesium, map, vueCesium, viewer } = this
-      const isOutOfRange = FitBound.fitBoundByLayer(
-        item,
-        {
-          Cesium,
-          map,
-          viewer,
-          vueCesium,
-        },
-        this.is2DMapMode === true,
-        undefined,
-        init
-      )
-      if (isOutOfRange) {
-        this.$message.error('初始底图范围有误，已调整为经纬度最大范围')
-      }
-    },
     parseLayerType(typeString: string): LayerType {
       if (typeString === 'TILE3D') {
         return LayerType.ModelCache
@@ -112,6 +97,33 @@ export default {
       }
 
       return type
+    },
+    parseServerURL(url: string) {
+      let newUrl
+      if (this.designTime || this.previewTime) {
+        // 门户的相对路径服务进行地址拼接
+        if (url && url.startsWith('/')) {
+          const { origin } = window.location
+          newUrl = decodeURIComponent(origin + url)
+        } else {
+          newUrl = url
+        }
+      } else {
+        if (url && url.startsWith('/')) {
+          const { ip, port } = baseConfigInstance.config
+          // 如果没有ip则不进行组装
+          if (ip) {
+            newUrl = port
+              ? decodeURIComponent(`http://${ip}:${port}${url}`)
+              : decodeURIComponent(`http://${ip}${url}`)
+          } else {
+            newUrl = url
+          }
+        } else {
+          newUrl = url
+        }
+      }
+      return newUrl
     },
     getLayerTypeString(type: number) {
       return LayerType[type]
@@ -145,7 +157,7 @@ export default {
     },
 
     // 将配置转换成可用于添加到map中的配置
-    mapDataTransfromation(mapData, check, indexBaseMapGUID) {
+    mapDataTransfromation(mapData, check) {
       return mapData
         .map((basemap) => {
           const { children } = basemap
@@ -157,21 +169,13 @@ export default {
             if (check) {
               // 如果要兼容老版格式，可以在这里进行升级，转换成新的数据结构（数据与添加数据配置一致）
               layer = this.updateLayer(layer)
-
-              if (basemap.guid == indexBaseMapGUID && i == 0) {
-                description = '索引底图'
-              } else {
-                if (description === '索引底图') {
-                  description = ''
-                }
-              }
             }
 
             const layerConfig: any = {
               name: layer.name,
-              guid: UUID.uuid(),
+              guid: layer.guid || UUID.uuid(),
               description,
-              serverURL: layer.url,
+              serverURL: this.parseServerURL(layer.url),
               serverType: this.parseLayerType(layer.type),
               commonData: layer.commonData,
               serviceType: layer.serviceType,
@@ -191,7 +195,20 @@ export default {
             if (layer.token) {
               layerConfig.tokenValue = layer.token
               layerConfig.tokenKey = layer.tokenKey ? layer.tokenKey : 'token'
+            } else {
+              // 门户的服务加上token
+              if (
+                layerConfig.serverURL &&
+                layerConfig.serverURL.startsWith(window.location.origin) &&
+                (this.designTime || this.previewTime)
+              ) {
+                layerConfig.tokenValue =
+                  'Bearer ' +
+                  JSON.parse(localStorage.getItem('app_builder_token'))
+                layerConfig.tokenKey = 'Authorization'
+              }
             }
+
             layers.push(layerConfig)
           }
           return {
@@ -212,9 +229,10 @@ export default {
         const layers = children.map((layer) => {
           const description = layer.description || ''
           const layerConfig = {
+            guid: layer.guid,
             name: layer.name,
             description,
-            url: layer.serverURL,
+            url: this.getServerUrl(layer.serverURL),
             type:
               layer.commonData?.layerServiceType ||
               this.getLayerTypeString(layer.serverType),
@@ -222,8 +240,16 @@ export default {
             serviceType: layer.serviceType,
           }
           if (layer.tokenValue) {
-            layerConfig.token = layer.tokenValue
-            layerConfig.tokenKey = layer.tokenKey ? layer.tokenKey : 'token'
+            if (
+              layerConfig.url &&
+              layerConfig.url.startsWith(window.location.origin) &&
+              (this.designTime || this.previewTime)
+            ) {
+              // 门户服务不保存token信息，初始化时自动组装
+            } else {
+              layerConfig.token = layer.tokenValue
+              layerConfig.tokenKey = layer.tokenKey ? layer.tokenKey : 'token'
+            }
           }
           return layerConfig
         })
@@ -233,44 +259,114 @@ export default {
         }
       })
     },
+    getServerUrl(url) {
+      let newUrl
+      if (
+        url &&
+        url.startsWith(window.location.origin) &&
+        (this.designTime || this.previewTime)
+      ) {
+        newUrl = url.replace(window.location.origin, '')
+      } else {
+        newUrl = url
+      }
+      return newUrl
+    },
+
+    /**
+     * 初始化加载底图，按顺序加载底图
+     * @param defaultSelectedBasemaps 默认选中的底图
+     */
+    initRenderMaps(defaultSelectedBasemaps) {
+      const self = this
+      let funcs = []
+      for (let i = 0; i < defaultSelectedBasemaps.length; i++) {
+        const guid = defaultSelectedBasemaps[i]
+        for (let j = 0; j < self.basemaps.length; j++) {
+          const basemap = self.basemaps[j]
+          if (basemap.guid === guid) {
+            funcs = [...funcs, ...self._getOrderPromise(basemap)]
+            break
+          }
+        }
+      }
+      // 修改说明：引用@mapgis/webclient-common里的inOrderPromise,确保在同时加多个图层时，能按顺序加载
+      // 修改人：龚跃健
+      // 修改时间；2024-11-21
+      inOrderPromise(funcs).then(() => {})
+    },
+
+    _getOrderPromise(basemap) {
+      const self = this
+      const funcs = []
+      const { children } = basemap
+      for (let k = 0; k < children.length; k++) {
+        const layer = children[k]
+        // 判断图层是否已加载
+        const isAddMap = self.document.baseLayerMap.findLayerById(layer.guid)
+        if (!isAddMap) {
+          funcs.push(() => {
+            return new Promise<void>((reslove) => {
+              const mapLayer = DataCatalogManager.generateLayerByConfig(layer)
+              mapLayer.description = layer.description
+              if (mapLayer.loadStatus === LoadStatus.notLoaded) {
+                mapLayer.load().then(() => {
+                  if (
+                    [
+                      LayerType.IGSTile,
+                      LayerType.VectorTile,
+                      LayerType.ArcGISTile,
+                      LayerType.OGCWMTS,
+                      LayerType.WebTile,
+                    ].includes(mapLayer.type)
+                  ) {
+                    // 瓦片图层计算第0级瓦片数量，判断是否需要关闭瓦片拉伸显示
+                    const selfLayerPropertyEdit = LayerPropertyEdit
+                    const { isStretchImage, firstTilesNum } =
+                      selfLayerPropertyEdit.setExtension(mapLayer)
+                    if (firstTilesNum > 9) {
+                      this.$message.info(
+                        `${mapLayer.title}瓦片第0级张数大于9，为了显示性能，已关闭瓦片拉伸（缩小）显示`
+                      )
+                    }
+                    if (mapLayer.layerProperty) {
+                      mapLayer.layerProperty.extensions = JSON.stringify({
+                        isStretchImage,
+                      })
+                    } else {
+                      mapLayer.layerProperty = {
+                        extensions: JSON.stringify({
+                          isStretchImage,
+                        }),
+                      }
+                    }
+                  }
+                  self.document.baseLayerMap.add(mapLayer)
+                  reslove()
+                })
+              } else {
+                self.document.baseLayerMap.add(mapLayer)
+                reslove()
+              }
+            })
+          })
+        }
+      }
+      return funcs
+    },
 
     // 渲染底图到页面
-    renderMaps(guid, isZoomTo, init) {
+    renderMaps(guid) {
       const self = this
       for (let i = 0; i < self.basemaps.length; i++) {
         const basemap = self.basemaps[i]
         if (basemap.guid === guid) {
-          const funcs = basemap.children.map((layer) => {
-            return () => {
-              return new Promise<void>((reslove) => {
-                const mapLayer = DataCatalogManager.generateLayerByConfig(layer)
-                mapLayer.description = layer.description
-                if (mapLayer.loadStatus === LoadStatus.notLoaded) {
-                  mapLayer.load().then(() => {
-                    self.document.baseLayerMap.add(mapLayer)
-                    reslove()
-                  })
-                } else {
-                  self.document.baseLayerMap.add(mapLayer)
-                  reslove()
-                }
-              })
-            }
-          })
+          const funcs = [...this._getOrderPromise(basemap)]
 
           // 修改说明：引用@mapgis/webclient-common里的inOrderPromise,确保在同时加多个图层时，能按顺序加载
           // 修改人：龚跃健
           // 修改时间；2024-11-21
-          inOrderPromise(funcs).then(() => {
-            // 如果一次添加多个图层,则等多个图层加载完后再进行缩放
-            const layers = self.document.baseLayerMap.allLayers
-            if (layers && layers.length > 0) {
-              const mapLayer = layers[layers.length - 1]
-              if (isZoomTo || mapLayer.type === LayerType.STKTerrain) {
-                self.fitBounds(mapLayer, init)
-              }
-            }
-          })
+          inOrderPromise(funcs).then(() => {})
 
           if (!basemap.select) {
             basemap.select = true

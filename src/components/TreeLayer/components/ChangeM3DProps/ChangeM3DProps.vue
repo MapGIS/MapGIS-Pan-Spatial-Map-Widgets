@@ -12,9 +12,9 @@
           style="width: 100%"
         />
       </mapgis-ui-form-item>
-      <mapgis-ui-form-item label="最大内存使用量">
+      <mapgis-ui-form-item label="GPU内存最大附加容量(字节)">
         <mapgis-ui-input-number
-          v-model="maximumMemoryUsage"
+          v-model="maximumCacheOverflowBytes"
           :min="0"
           style="width: 100%"
         />
@@ -59,12 +59,14 @@
         :offset.sync="offset"
         :textureScale.sync="textureScale"
       />
-      <div style="textalign: right">
-        <mapgis-ui-button type="primary" @click="submit">
-          确认
-        </mapgis-ui-button>
-      </div>
     </mapgis-ui-form>
+    <mp-change-extensions
+      :extensions.sync="extensions"
+      :type="this.layer.layer ? this.layer.layer.type : this.layer.type"
+    ></mp-change-extensions>
+    <div style="textalign: right">
+      <mapgis-ui-button type="primary" @click="submit"> 确认 </mapgis-ui-button>
+    </div>
   </div>
 </template>
 
@@ -72,17 +74,21 @@
 import { LayerType, IGSSceneSublayerType } from '@mapgis/web-app-framework'
 import UnifyModifyVue from '../UnifyModify/UnifyModify.vue'
 import MpModelStretchUi from '../../../ModelStretch/ModelStretchUi.vue'
+import MpChangeExtensions from '../ChangeExtensions/ChangeExtensions.vue'
 
 export default {
   name: 'MpChangeM3DProps',
-  components: { 'mp-model-stretch-ui': MpModelStretchUi },
+  components: {
+    'mp-model-stretch-ui': MpModelStretchUi,
+    'mp-change-extensions': MpChangeExtensions,
+  },
   props: ['layer'],
   data() {
     return {
       maximumScreenSpaceError: 16,
-      maximumMemoryUsage: 512,
+      maximumCacheOverflowBytes: 536870912,
       enablePopup: false,
-      luminanceAtZenith: 10,
+      luminanceAtZenith: 0.2,
       enableModelStretch: false,
       scaleZ: 1,
       offset: -2,
@@ -111,13 +117,19 @@ export default {
       }
       return false
     },
+    extensions: {
+      get() {
+        const layer = this.layer.layer ? this.layer.layer : this.layer
+        return layer.layerProperty?.extensions || '{}'
+      },
+      set(val) {
+        const layer = this.layer.layer ? this.layer.layer : this.layer
+        layer.layerProperty.extensions = val
+        this.$emit('update:layer', this.layer)
+      },
+    },
   },
   watch: {
-    // layer: {
-    //   handler: 'init',
-    //   immediate: true,
-    //   deep: true,
-    // },
     scaleZ: {
       handler(val) {
         this.$emit('update:scaleZ', {
@@ -185,10 +197,10 @@ export default {
             layerProperty.textureScale !== undefined
               ? layerProperty.textureScale
               : false
-          this.maximumMemoryUsage =
-            layerProperty.maximumMemoryUsage !== undefined
-              ? layerProperty.maximumMemoryUsage
-              : this.maximumMemoryUsage
+          this.maximumCacheOverflowBytes =
+            layerProperty.maximumCacheOverflowBytes !== undefined
+              ? layerProperty.maximumCacheOverflowBytes
+              : this.maximumCacheOverflowBytes
         }
         this.maximumScreenSpaceError =
           maximumScreenSpaceError !== undefined ? maximumScreenSpaceError : 16
@@ -196,7 +208,7 @@ export default {
         this.enablePopup = enablePopup !== undefined ? enablePopup : false
 
         this.luminanceAtZenith =
-          luminanceAtZenith !== undefined ? luminanceAtZenith : 10
+          luminanceAtZenith !== undefined ? luminanceAtZenith : 0.2
 
         if (this.enableModelStretch) {
           this.$emit('update:scaleZ', {
@@ -225,7 +237,8 @@ export default {
         const { layerProperty } = layer
         if (layerProperty) {
           layerProperty.maximumScreenSpaceError = this.maximumScreenSpaceError
-          layerProperty.maximumMemoryUsage = this.maximumMemoryUsage
+          layerProperty.maximumCacheOverflowBytes =
+            this.maximumCacheOverflowBytes
           layerProperty.luminanceAtZenith = this.luminanceAtZenith
           layerProperty.enablePopup = this.enablePopup
           layerProperty.enableModelStretch = this.enableModelStretch

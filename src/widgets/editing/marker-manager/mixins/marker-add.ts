@@ -1,10 +1,20 @@
 import { Vue, Component } from 'vue-property-decorator'
-import { ProjectionTransformationUtil } from '@mapgis/web-app-framework'
+import {
+  ProjectionTransformationUtil,
+  baseConfigInstance,
+} from '@mapgis/web-app-framework'
 
 @Component({})
 export default class MarkerAddMixin extends Vue {
   async transPoints(points: any[], srcSref: string, destSref: string) {
-    if (srcSref === destSref) {
+    const { gdbIp, gdbPort } = baseConfigInstance.config
+    if (
+      !gdbIp ||
+      gdbIp === '' ||
+      !gdbPort ||
+      gdbPort === '' ||
+      srcSref === destSref
+    ) {
       return points
     }
     const result: any = await ProjectionTransformationUtil.projectPoints(

@@ -54,6 +54,7 @@ import {
   DataCatalogManager,
   eventBus,
   events,
+  LayerPropertyEdit,
 } from '@mapgis/web-app-framework'
 
 import AddDataList from './components/AddDataList.vue'
@@ -134,6 +135,8 @@ export default {
       ],
       isZoomLayer: false,
       dataCatalogManager: dataCatalogManagerInstance,
+      // 添加到地图上的图层id
+      addMapLayersId: [],
     }
   },
 
@@ -216,31 +219,23 @@ export default {
         : [...this.fileDataTypes2D, ...this.fileDataTypes3D]
       // return this.fileDataTypes2D
     },
-
     dataList() {
       return this.config && this.config.data
     },
 
     categories() {
       return this.dataList.map((item) => {
-        return { name: item.name, description: item.description }
+        return { id: item.id, name: item.name, description: item.description }
       })
     },
   },
 
   mounted() {
-    if (this.widgetInfo.config.data) {
-      this.widgetInfo.config.data.forEach((category) => {
-        category.children.forEach((item) => {
-          item.id = UUID.uuid()
-          item.visible = false
-        })
-      })
-    } else {
+    if (!this.widgetInfo.config.data) {
       this.$set(this.widgetInfo.config, 'data', [])
     }
+    this.initData(this.widgetInfo.config)
 
-    this.config = this.widgetInfo.config
     this.loaded = true
 
     eventBus.$on(events.ADD_DATA_EVENT, this.onAddData)
@@ -248,8 +243,25 @@ export default {
   },
 
   methods: {
-    onAddCategory({ name, description }) {
-      this.dataList.push({ name, description, children: [] })
+    onWidgetConfigChange(config, preConfig) {
+      // 更新this.config
+      this.initData(config)
+    },
+    initData(config) {
+      const configData = JSON.parse(JSON.stringify(config))
+      if (configData.data) {
+        configData.data.forEach((category) => {
+          category.id = category.id || UUID.uuid()
+          category.children.forEach((item) => {
+            item.id = item.id || UUID.uuid()
+            item.visible = this.addMapLayersId.includes(item.id)
+          })
+        })
+      }
+      this.config = configData
+    },
+    onAddCategory({ id, name, description }) {
+      this.dataList.push({ id, name, description, children: [] })
     },
 
     onAddData({ name, description, data, isZoom = false }) {
@@ -333,22 +345,26 @@ export default {
       const savedConfig = ObjectUtil.deepClone(this.config)
       savedConfig.data.forEach((category) => {
         category.children.forEach((item) => {
-          this.$delete(item, 'id')
           this.$delete(item, 'visible')
         })
       })
 
-      api
-        .saveWidgetConfig({
-          name: 'add-data',
-          config: JSON.stringify(savedConfig),
-        })
-        .then(() => {
-          this_.$message.success('保存成功')
-        })
-        .catch(() => {
-          this_.$message.error('保存失败')
-        })
+      if (this.designTime) {
+        this.setWidgetData(JSON.parse(JSON.stringify(savedConfig)))
+      } else if (this.previewTime) {
+      } else {
+        api
+          .saveWidgetConfig({
+            name: 'add-data',
+            config: JSON.stringify(savedConfig),
+          })
+          .then(() => {
+            this_.$message.success('保存成功')
+          })
+          .catch(() => {
+            this_.$message.error('保存失败')
+          })
+      }
     },
 
     async onAddLayer(data) {
@@ -367,12 +383,45 @@ export default {
 
       const layer = DataCatalogManager.generateLayerByConfig(layerConfig)
       if (layer) {
+        let layerLoadStatus
         try {
           if (layer.loadStatus === LoadStatus.notLoaded) {
             await layer.load()
+            if (
+              [
+                LayerType.IGSTile,
+                LayerType.VectorTile,
+                LayerType.ArcGISTile,
+                LayerType.OGCWMTS,
+                LayerType.WebTile,
+              ].includes(layer.type)
+            ) {
+              // 瓦片图层计算第0级瓦片数量，判断是否需要关闭瓦片拉伸显示
+              const selfLayerPropertyEdit = LayerPropertyEdit
+              const { isStretchImage, firstTilesNum } =
+                selfLayerPropertyEdit.setExtension(layer)
+              if (firstTilesNum > 9) {
+                this.$message.info(
+                  `${layer.title}瓦片第0级张数大于9，为了显示性能，已关闭瓦片拉伸（缩小）显示`
+                )
+              }
+              if (layer.layerProperty) {
+                layer.layerProperty.extensions = JSON.stringify({
+                  isStretchImage,
+                })
+              } else {
+                layer.layerProperty = {
+                  extensions: JSON.stringify({
+                    isStretchImage,
+                  }),
+                }
+              }
+            }
           }
         } catch (error) {
-          console.log(error)
+          if (error && error.status) {
+            layerLoadStatus = error.status
+          }
         } finally {
           if (layer.loadStatus === LoadStatus.loaded) {
             if (
@@ -382,6 +431,8 @@ export default {
               this.switchMapMode()
             }
             this.document.defaultMap.add(layer)
+            // 记录添加图层的id
+            this.addMapLayersId.push(layer.id)
 
             if (this.isZoomLayer) {
               if (layer.type !== LayerType.IGSScene) {
@@ -400,7 +451,13 @@ export default {
               this.isZoomLayer = false
             }
           } else {
-            this.$message.error(`图层:${layer.title}加载失败`)
+            if (layerLoadStatus === 401 || layerLoadStatus === 403) {
+              this.$message.error(
+                `${layer.title}加载失败，请检查该数据的访问权限`
+              )
+            } else {
+              this.$message.error(`${layer.title}加载失败`)
+            }
             this.$refs.refAddDataList.unSelectData(layer.id)
           }
         }
@@ -410,7 +467,13 @@ export default {
     onRemoveLayer(data) {
       const layer = this.document.defaultMap.findLayerById(data.id)
 
-      this.document.defaultMap.remove(layer)
+      if (layer) {
+        this.document.defaultMap.remove(layer)
+        // 移除图层时将对应的记录一起移除
+        this.addMapLayersId = this.addMapLayersId.filter(
+          (id) => id !== layer.id
+        )
+      }
     },
 
     parseIssueType(typeString: string): LayerType {

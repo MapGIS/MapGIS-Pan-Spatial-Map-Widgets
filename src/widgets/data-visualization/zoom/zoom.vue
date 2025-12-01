@@ -159,7 +159,7 @@ export default {
            * 修改人：龚跃健
            * 修改日期：2021/12/23
            */
-          const config = await api.getWidgetConfig('basemap-manager')
+          const config = await this.getBasemapManagerWidgetConfig()
           // 获取地图底图
           const baseMap = config.baseMapList.find(
             (item) => item.guid === config.indexBaseMapGUID
@@ -181,6 +181,52 @@ export default {
           }
           break
       }
+    },
+    async getBasemapManagerWidgetConfig() {
+      let config
+      // 如果是应用搭建模式或者应用搭建预览模式直接从application对象上获取底图管理微件的配置
+      if (this.designTime || this.previewTime) {
+        const { contentWidgets, mapWidgets } = this.application
+        // 从contentWidgets中查找
+        contentWidgets.groups.forEach((group) => {
+          group.widgets.forEach((widget) => {
+            // 通过微件的uri查找底图管理微件的配置
+            const widgetConfig = this.getTargetWidgetConfig(
+              widget,
+              'basemap-manager'
+            )
+            if (widgetConfig) {
+              config = widgetConfig
+            }
+          })
+        })
+
+        // contentWidgets中未找到再去mapWidgets中查找
+        if (!config) {
+          mapWidgets.widgets.forEach((widget) => {
+            const widgetConfig = this.getTargetWidgetConfig(
+              widget,
+              'basemap-manager'
+            )
+            if (widgetConfig) {
+              config = widgetConfig
+            }
+          })
+        }
+      } else {
+        config = await api.getWidgetConfig('basemap-manager')
+      }
+      return Promise.resolve(config)
+    },
+    getTargetWidgetConfig(widget, targetWidgetName) {
+      if (widget.uri) {
+        const strs = widget.uri.split('/')
+        const widgetName = strs[strs.length - 1]
+        if (widgetName === targetWidgetName) {
+          return JSON.parse(JSON.stringify(widget.config))
+        }
+      }
+      return null
     },
 
     initFitBound(bound, mapParams) {
@@ -229,7 +275,7 @@ export default {
         this.is2DMapMode
       )
       if (isOutOfRange) {
-        this.$message.error('初始底图范围有误，已调整为经纬度最大范围')
+        this.$message.info('地图范围无效，无法执行跳转')
       }
     },
 

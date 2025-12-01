@@ -194,19 +194,24 @@ export default {
       })
     },
     saveBookmarks() {
-      api
-        .saveWidgetConfig({
-          name: 'bookmark',
-          config: JSON.stringify(this.treeData),
-        })
-        .catch(() => {
-          this.$message.config({
-            top: '100px',
-            duration: 1,
-            maxCount: 3,
+      if (this.designTime) {
+        this.setWidgetData(JSON.parse(JSON.stringify(this.treeData)))
+      } else if (this.previewTime) {
+      } else {
+        api
+          .saveWidgetConfig({
+            name: 'bookmark',
+            config: JSON.stringify(this.treeData),
           })
-          this.$message.error('配置文件更新失败')
-        })
+          .catch(() => {
+            this.$message.config({
+              top: '100px',
+              duration: 1,
+              maxCount: 3,
+            })
+            this.$message.error('配置文件更新失败')
+          })
+      }
     },
   },
   beforeDestroy() {

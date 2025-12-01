@@ -150,7 +150,7 @@
                     -1
                 "
               >
-                <span class="unfilter-words" :title="item.description">
+                <span class="unfilter-words" :title="item.name">
                   {{
                     item.name.substr(
                       0,
@@ -158,7 +158,7 @@
                     )
                   }}
                 </span>
-                <span class="filter-words" :title="item.description">
+                <span class="filter-words" :title="item.name">
                   {{
                     item.name.substr(
                       item.name
@@ -168,7 +168,7 @@
                     )
                   }}
                 </span>
-                <span class="unfilter-words" :title="item.description">
+                <span class="unfilter-words" :title="item.name">
                   {{
                     item.name.substr(
                       item.name
@@ -178,7 +178,7 @@
                   }}
                 </span>
               </span>
-              <span v-else :title="item.description"
+              <span v-else :title="item.name"
                 >{{ item.name
                 }}<span class="total-text">{{
                   `${getLeafStatus(item)}`
@@ -197,7 +197,7 @@
             "
             :id="`tree_${item.guid}`"
           >
-            <mapgis-ui-tooltip>
+            <mapgis-ui-tooltip v-if="item.serverType">
               <template slot="title">
                 {{ getLeafTooltip(item) }}
               </template>
@@ -208,7 +208,7 @@
                     -1
                 "
               >
-                <span class="unfilter-words" :title="item.description">
+                <span class="unfilter-words">
                   {{
                     item.name.substr(
                       0,
@@ -216,7 +216,7 @@
                     )
                   }}
                 </span>
-                <span class="filter-words" :title="item.description">
+                <span class="filter-words">
                   {{
                     item.name.substr(
                       item.name
@@ -226,7 +226,7 @@
                     )
                   }}
                 </span>
-                <span class="unfilter-words" :title="item.description">
+                <span class="unfilter-words">
                   {{
                     item.name.substr(
                       item.name
@@ -236,10 +236,9 @@
                   }}
                 </span>
               </span>
-              <span v-else @click="onClick(item)" :title="item.description">{{
-                item.name
-              }}</span>
+              <span v-else @click="onClick(item)">{{ item.name }}</span>
             </mapgis-ui-tooltip>
+            <span v-else :title="item.name">{{ item.name }}</span>
             <mapgis-ui-menu slot="overlay">
               <mapgis-ui-menu-item
                 v-if="
@@ -562,42 +561,11 @@ export default {
   async mounted() {
     this.uploadUrl = `${this.baseUrl}/${this.appProductName}/rest/services/system/ResourceServer/files/pictures`
 
-    // 使用新的app.json中的规范，判断this.application.data是否有且有值就替换this.widgetInfo.config.treeConfig.treeData
-    if (this.application.data && this.application.data.length > 0) {
-      this.widgetInfo.config.treeConfig.treeData = this.application.data
-    }
+    const config = JSON.parse(JSON.stringify(this.widgetInfo.config))
+    config.treeConfig.treeData = this.application.data
+    this.setWidgetData(config)
 
-    // 初始化目录树数据
-    this.dataCatalogManager.init(this.widgetInfo.config)
-    // 是否对图层节点进行过滤
-    const filtTree = this.widgetInfo.config.otherConfig.filtTree || false
-    // 组装目录树数据
-    this.dataCatalogTreeData =
-      await this.dataCatalogManager.getDataCatalogTreeData(filtTree)
-    const _allTreeDataConfigs = []
-    const { treeData, allTreeDataConfigs } = this.handleTreeData(
-      this.dataCatalogTreeData,
-      _allTreeDataConfigs
-    )
-    this.dataCatalogTreeData = treeData
-    // 记录将目录树转化为一维数组的所有数据
-    this.allTreeDataConfigs = allTreeDataConfigs
-    // 目录树分类展示
-    if (this.isClassify) {
-      this.dataCatalogTreeDataCopy = treeData
-      this.dataCatalogTabData = this.getTabsData(treeData)
-      // 分类展示默认选中的tab
-      this.activeTreeTab =
-        this.dataCatalogTabData.length > 0
-          ? this.dataCatalogTabData[0].guid
-          : ''
-      this.activeTreeTab && this.treeTabChange(this.activeTreeTab)
-    }
-
-    // 初始化存储点击跳转图层
-    this.initLocationKeys()
-    // 初始化加载图层
-    this.initLoadKeys()
+    await this.onTreeDataChange()
 
     // 监听tree-tabs-list，当面板宽度超过scrollWidth取消前后处的箭头
     const targetNode = document.getElementById('tree-tabs-list')
@@ -625,6 +593,12 @@ export default {
     eventBus.$on(
       events.DATA_CATALOG_SELECT_LOADED_NODE_CALLBACK,
       this.selectLoadedNodeCallback
+    )
+
+    // 添加对widegt.config.treeConfig.treeData的监听
+    this.addWidgetConfigPropertiesWatchEvent(
+      'treeConfig.treeData',
+      this.onTreeDataChange
     )
   },
   watch: {
@@ -1153,11 +1127,45 @@ export default {
         // 将目录树对应节点设置为不可勾选
         const recordCheckLayer = this.disableTreeNodeCheckBox(layer.id)
         // 2.1加载图层
+        let layerLoadStatus
         try {
           if (layer.loadStatus === LoadStatus.notLoaded) {
             await layer.load()
+            if (
+              [
+                LayerType.IGSTile,
+                LayerType.VectorTile,
+                LayerType.ArcGISTile,
+                LayerType.OGCWMTS,
+                LayerType.WebTile,
+              ].includes(layer.type)
+            ) {
+              // 瓦片图层计算第0级瓦片数量，判断是否需要关闭瓦片拉伸显示
+              const selfLayerPropertyEdit = LayerPropertyEdit
+              const { isStretchImage, firstTilesNum } =
+                selfLayerPropertyEdit.setExtension(layer)
+              if (firstTilesNum > 9) {
+                this.$message.info(
+                  `${layer.title}瓦片第0级张数大于9，为了显示性能，已关闭瓦片拉伸（缩小）显示`
+                )
+              }
+              if (layer.layerProperty) {
+                layer.layerProperty.extensions = JSON.stringify({
+                  isStretchImage,
+                })
+              } else {
+                layer.layerProperty = {
+                  extensions: JSON.stringify({
+                    isStretchImage,
+                  }),
+                }
+              }
+            }
           }
         } catch (error) {
+          if (error && error.status) {
+            layerLoadStatus = error.status
+          }
         } finally {
           // 2.2判断图层是否载成功。如果成功则将图层添加到documet中。否则，给出提示，并将数据目录树中对应的节点设为未选中状态。
           if (layer.loadStatus === LoadStatus.loaded) {
@@ -1238,7 +1246,7 @@ export default {
                     !engineType
                   ) {
                     setTimeout(() => {
-                      this.fitBounds(layer, this.getDataFlowExtent(layer))
+                      this.fitBounds(layer)
                     }, 1000)
                   }
                 } else {
@@ -1247,14 +1255,20 @@ export default {
                     !['Mapbox', 'Leaflet', 'Openlayers'].includes(engineType)
                   ) {
                     setTimeout(() => {
-                      this.fitBounds(layer, this.getDataFlowExtent(layer))
+                      this.fitBounds(layer)
                     }, 1000)
                   }
                 }
               }
             }
           } else {
-            this.$message.error(`图层:${layer.title}加载失败`)
+            if (layerLoadStatus === 401 || layerLoadStatus === 403) {
+              this.$message.error(
+                `${layer.title}加载失败，请检查该数据的访问权限`
+              )
+            } else {
+              this.$message.error(`${layer.title}加载失败`)
+            }
             if (this.is3DLayer(layer)) {
               // 图层加载完毕，恢复checkbox可选状态
               this.setCheckBoxEnable(recordCheckLayer, false)
@@ -1496,7 +1510,7 @@ export default {
         }
         setTimeout(() => {
           // 自动定位至图层所在位置
-          this.fitBounds(layer, this.getDataFlowExtent(layer))
+          this.fitBounds(layer)
         }, 1000)
       }
     },
@@ -1511,11 +1525,10 @@ export default {
           viewer,
           vueCesium,
         },
-        this.is2DMapMode,
-        layeExtent
+        this.is2DMapMode
       )
       if (isOutOfRange) {
-        this.$message.error('地图范围有误，已调整为经纬度最大范围')
+        this.$message.info('地图范围无效，无法执行跳转')
       }
     },
     // 获取流图层范围
@@ -1731,11 +1744,13 @@ export default {
     // 刷新按钮
     async refreshTree() {
       // 获取数据目录微件的配置信息
-      const config = await api.getWidgetConfig('data-catalog')
+      let config
       // 如果处于应用搭建状态下直接从application对象中获取
       if (this.designTime) {
+        config = JSON.parse(JSON.stringify(this.widgetInfo.config))
         config.treeConfig.treeData = this.application.data
       } else {
+        config = await api.getWidgetConfig('data-catalog')
         // 获取一张图的应用信息
         const appConfig = await AppManager.getInstance().getRequest()({
           url: this.application.appConfigPath,
@@ -1749,11 +1764,19 @@ export default {
         config.treeConfig.treeData = appConfig.data
       }
 
+      this.setWidgetData(config)
+    },
+    async onTreeDataChange(newValue, oldValue) {
       // 初始化数据目录
-      this.dataCatalogManager.init(config)
+      this.dataCatalogManager.init(this.widgetInfo.config)
 
-      this.dataCatalogTreeData =
-        await this.dataCatalogManager.getDataCatalogTreeData(true)
+      if (this.designTime) {
+        this.dataCatalogTreeData = this.dataCatalogManager.refreshTreeData()
+      } else {
+        this.dataCatalogTreeData =
+          await this.dataCatalogManager.getDataCatalogTreeData(true)
+      }
+
       const _allTreeDataConfigs = []
       // 组装tree组件展示需要的属性
       const { treeData, allTreeDataConfigs } = this.handleTreeData(
@@ -1762,7 +1785,10 @@ export default {
       )
       this.dataCatalogTreeData = treeData
       this.allTreeDataConfigs = allTreeDataConfigs
+      // 初始化存储点击跳转图层
       this.initLocationKeys()
+      // 初始化加载图层
+      this.initLoadKeys()
       const removeKeys = []
       this.checkedNodeKeys = this.checkedNodeKeys.filter((item) => {
         const layerConfig = this.dataCatalogManager.getLayerConfigByID(item)
@@ -1777,6 +1803,12 @@ export default {
       if (this.isClassify) {
         this.dataCatalogTreeDataCopy = treeData
         this.dataCatalogTabData = this.getTabsData(treeData)
+        if (!this.activeTreeTab) {
+          this.activeTreeTab =
+            this.dataCatalogTabData.length > 0
+              ? this.dataCatalogTabData[0].guid
+              : ''
+        }
         this.activeTreeTab && this.treeTabChange(this.activeTreeTab)
       }
     },
@@ -2088,11 +2120,14 @@ export default {
       for (let i = 0; i < item.children.length; i++) {
         const children = item.children[i]
         if (!children.children || children.children.length === 0) {
-          leafTotal++
-          const id = children.guid
-          // 判断该节点是否被勾选
-          if (this.dataCatalogManager.checkedLayerConfigIDs.includes(id)) {
-            leafChecked++
+          if (children.serverType) {
+            // 只有统计服务节点
+            leafTotal++
+            const id = children.guid
+            // 判断该节点是否被勾选
+            if (this.dataCatalogManager.checkedLayerConfigIDs.includes(id)) {
+              leafChecked++
+            }
           }
         } else {
           const childrenStatus = this.getLeafStatusRecursion(children)

@@ -92,13 +92,18 @@ export default {
         {
           name: '高级选项',
           show:
-            (!this.isParentLayer(this.layerItem) &&
-              this.isIGSScene(this.layerItem)) ||
+            (this.isIGSScene(this.layerItem) &&
+              this.isSubLayer(this.layerItem)) ||
             (this.isModelCacheLayer(this.layerItem) &&
               !this.isVoxelLayer(this.layerItem)) ||
             (this.isParentLayer(this.layerItem) &&
               (this.isIgsDocLayer(this.layerItem) ||
-                this.isArcgisMapLayer(this.layerItem))),
+                this.isArcgisMapLayer(this.layerItem))) ||
+            this.isIgsTileLayer(this.layerItem) ||
+            this.isVectorTile(this.layerItem) ||
+            this.isArcGISTile(this.layerItem) ||
+            this.isWMTSLayer(this.layerItem) ||
+            this.isWebTile(this.layerItem),
           click: () => this.showAdvancedSetting(),
         },
         /**
@@ -164,12 +169,7 @@ export default {
     },
 
     fitBounds() {
-      this.getDataFlowExtent(this.layerItem)
-      this.$emit(
-        'fit-bounds',
-        this.layerItem,
-        this.getDataFlowExtent(this.layerItem)
-      )
+      this.$emit('fit-bounds', this.layerItem)
     },
 
     showAdvancedSetting() {
@@ -181,9 +181,14 @@ export default {
       ) {
         this.$emit('change-m3d-props', this.layerItem)
       } else if (
-        this.isParentLayer(this.layerItem) &&
-        (this.isIgsDocLayer(this.layerItem) ||
-          this.isArcgisMapLayer(this.layerItem))
+        (this.isParentLayer(this.layerItem) &&
+          (this.isIgsDocLayer(this.layerItem) ||
+            this.isArcgisMapLayer(this.layerItem))) ||
+        this.isIgsTileLayer(this.layerItem) ||
+        this.isVectorTile(this.layerItem) ||
+        this.isArcGISTile(this.layerItem) ||
+        this.isWMTSLayer(this.layerItem) ||
+        this.isWebTile(this.layerItem)
       ) {
         // 新增地图文档和arcgis地图服务图层属性设置，只是设置图层渲染模式
         // 龚跃健-202407017

@@ -130,6 +130,10 @@ export default {
       baseConfig.center = `${destination.x},${destination.y}`
       baseConfig.initAltitude = destination.z
       baseConfig.initOrientation = { ...orientation }
+      // 更新基础配置实例
+      this.application.baseConfig.center = `${destination.x},${destination.y}`
+      this.application.baseConfig.initAltitude = destination.z
+      this.application.baseConfig.initOrientation = { ...orientation }
 
       // 更新数据库里对应的配置
       const res = await api.getBaseConfig('app.display')
@@ -155,10 +159,15 @@ export default {
       this.openPromptWindow = false
     },
     configSave(newConfig) {
-      api.saveWidgetConfig({
-        name: 'viewpoint-manager',
-        config: JSON.stringify(newConfig),
-      })
+      if (this.designTime) {
+        this.setWidgetData(JSON.parse(JSON.stringify(newConfig)))
+      } else if (this.previewTime) {
+      } else {
+        api.saveWidgetConfig({
+          name: 'viewpoint-manager',
+          config: JSON.stringify(newConfig),
+        })
+      }
     },
 
     /**
