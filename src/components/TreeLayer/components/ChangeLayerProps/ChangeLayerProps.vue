@@ -70,15 +70,17 @@
         <span
           slot="index"
           slot-scope="text, record"
-          :style="{ color: getTextColorByLevel(record.level) }"
+          :style="{ color: getTextColorByLevel(record.index) }"
+          :title="text"
           >{{ text }}
         </span>
 
         <!-- 自定义level列 -->
         <span
-          slot="level"
+          slot="levelValue"
           slot-scope="text, record"
-          :style="{ color: getTextColorByLevel(record.level) }"
+          :style="{ color: getTextColorByLevel(record.index) }"
+          :title="text"
         >
           {{ text }}
         </span>
@@ -87,7 +89,8 @@
         <span
           slot="scale"
           slot-scope="text, record"
-          :style="{ color: getTextColorByLevel(record.level) }"
+          :style="{ color: getTextColorByLevel(record.index) }"
+          :title="text"
         >
           {{ text }}
         </span>
@@ -143,19 +146,28 @@ export default {
         {
           title: '层级',
           dataIndex: 'index',
+          /**
+           * fix(30079): 对于从第3级开始的WMTS服务，高级属性中查看比例尺信息，始终从0开始
+           * 修改说明：渲染列表时，设置固定宽度，避免渲染table列错位
+           * 修改人：杨琨
+           * 日期：2022-12-5
+           */
+          width: '25%',
           key: 'index',
           scopedSlots: { customRender: 'index' },
         },
         {
           title: '层级值',
-          dataIndex: 'level',
-          key: 'level',
-          scopedSlots: { customRender: 'level' },
+          dataIndex: 'levelValue',
+          key: 'levelValue',
+          width: '25%',
+          scopedSlots: { customRender: 'levelValue' },
         },
         {
           title: '比例尺',
           dataIndex: 'scale',
           key: 'scale',
+          width: '50%',
           scopedSlots: { customRender: 'scale' },
         },
       ],
@@ -209,7 +221,13 @@ export default {
         lodSource.push({
           key: index,
           index: index,
-          level: lod.level,
+          /**
+           * fix(30079): 对于从第3级开始的WMTS服务，高级属性中查看比例尺信息，始终从0开始
+           * 修改说明：渲染层级值列时，使用lod.levelValue来渲染
+           * 修改人：yangkun
+           * 日期：2022-12-5
+           */
+          levelValue: lod.levelValue,
           scale: '1:' + lod.scale,
         })
       })
@@ -260,7 +278,6 @@ export default {
             layerProperty.tileDisplayMode || this.tileDisplayMode
         }
       }
-      debugger
       this.extensions = this.targetLayer.layerProperty?.extensions || '{}'
     },
     /**
@@ -321,7 +338,6 @@ export default {
       return color
     },
     saveConfig() {
-      debugger
       api
         .updateData({
           dataId: this.targetLayer.dataId,
