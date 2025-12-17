@@ -391,10 +391,11 @@ import NonSpatial from './non-spatial.vue'
 import { lineString } from '@turf/helpers'
 import bbox from '@turf/bbox'
 import { defaultDataIconsConfig } from '../../../theme/dataIconsConfig.js'
+import FavoritesMixin from '../favorites/mixins/favorites-mixin'
 
 export default {
   name: 'MpDataCatalog',
-  mixins: [WidgetMixin],
+  mixins: [WidgetMixin, FavoritesMixin],
   components: {
     MpMetadataInfo,
     NonSpatial,
@@ -565,6 +566,8 @@ export default {
     config.treeConfig.treeData = this.application.data
     this.setWidgetData(config)
 
+    // 初始化标识
+    this.init = true
     await this.onTreeDataChange()
 
     // 监听tree-tabs-list，当面板宽度超过scrollWidth取消前后处的箭头
@@ -589,6 +592,8 @@ export default {
     eventBus.$on(events.DATA_CATALOG_CHECK_NODES, this.dataCatalogCheckNodes)
     // 接收数据目录刷新事件
     eventBus.$on(events.DATA_CATALOG_REFRESH, this.refreshTree)
+    // 接受保存视图状态事件
+    eventBus.$on(events.SAVE_VIEW_STATUS, this.saveViewStatus)
 
     eventBus.$on(
       events.DATA_CATALOG_SELECT_LOADED_NODE_CALLBACK,
@@ -813,13 +818,85 @@ export default {
     onClose() {
       this.currentNode = null
     },
-    initLoadKeys() {
+    initLoadKeys(preAllLayerNodes) {
       // 获取所有图层节点
       const allLayerNodes = this.dataCatalogManager.getAllLayerConfigItems()
-      // 获取初始化需要加载的图层id数组
-      const initKeys =
+      // 获取默认化需要加载的图层id数组
+      let initKeys =
         DataCatalogCheckController.getInitLoadLayerKeys(allLayerNodes)
-      this.uninitializedKeys = initKeys
+
+      // 如果有上一次目录树节点记录的信息，进行节点加载的对比
+      if (preAllLayerNodes && preAllLayerNodes.length) {
+        const preInitkeys =
+          DataCatalogCheckController.getInitLoadLayerKeys(preAllLayerNodes)
+        // 当前默认加载的，上一次默认不加载
+        const currentLoadAndPreUnload = initKeys.filter(
+          (key) => !preInitkeys.includes(key)
+        )
+        // 当前默认不加载，上一次默认加载(上次默认加载，然后直接删除该节点也属于这种情况)
+        const preLoadAndCurrentUnload = preInitkeys.filter(
+          (key) => !initKeys.includes(key)
+        )
+
+        // 上一次的加载顺序，以上一次的加载顺序为准，新增的默认加载节点排在后面
+        let loadOrderKeys = [...this.checkedNodeKeys]
+
+        // 合并当前默认加载的，上一次默认不加载的节点
+        loadOrderKeys = [...loadOrderKeys, ...currentLoadAndPreUnload]
+        // 移除当前默认不加载，上一次默认加载
+        loadOrderKeys = loadOrderKeys.filter(
+          (key) => !preLoadAndCurrentUnload.includes(key)
+        )
+        // 去除重复的值
+        loadOrderKeys = [...new Set(loadOrderKeys)]
+
+        // 对已加载但被移除的目录树节点的处理
+        const removeKeys = []
+        // 移除当前勾选的节点中，不存在的节点
+        loadOrderKeys = loadOrderKeys.filter((key) => {
+          const layerConfig = this.dataCatalogManager.getLayerConfigByID(key)
+          !layerConfig && removeKeys.push(key)
+          return layerConfig
+        })
+        // 处理上次默认加载，然后直接删除该节点的情况
+        preLoadAndCurrentUnload.forEach((key) => {
+          const layerConfig = this.dataCatalogManager.getLayerConfigByID(key)
+          !layerConfig && removeKeys.push(key)
+        })
+        // 对加载了的图层进行清除
+        removeKeys.forEach((key) => {
+          const layer = this.document.defaultMap.findLayerById(key)
+          layer && this.document.defaultMap.remove(layer)
+        })
+
+        initKeys = loadOrderKeys
+
+        this.dataCatalogManager.checkedLayerConfigIDs = loadOrderKeys
+      }
+
+      // 只在数据目录初始化的时候执行二维视图下初始加载三维图层不跳转到三维视图
+      if (this.init) {
+        this.uninitializedKeys = initKeys
+        this.init = !this.init
+      }
+
+      // 获取所有初始加载跳转的图层id
+      const allInitAutoResetArr =
+        this.layerAutoResetManager.getInitLayerUnAutoResetArr()
+
+      // 初始加载的多个服务节点只需要最后一个加载的图层跳转即可，需要注意跳转时该图层是否设置了"勾选时跳转"
+      let lastInitKey
+      for (let i = initKeys.length - 1; i >= 0; i--) {
+        if (allInitAutoResetArr.includes(initKeys[i])) {
+          lastInitKey = initKeys[i]
+          break
+        }
+      }
+      if (lastInitKey) {
+        this.layerAutoResetManager.setAutoResetArr([lastInitKey])
+      } else {
+        this.layerAutoResetManager.setAutoResetArr([])
+      }
       // 勾选对应的图层节点
       this.dataCatalogChangeNodes(initKeys, true)
     },
@@ -1212,6 +1289,8 @@ export default {
             // 获取不会自动定位到图层所在位置的图层id
             const unAutoResetArr =
               this.layerAutoResetManager.getUnAutoResetArr()
+            // 获取需要自动定位到图层所在位置的图层id
+            const autoResetArr = this.layerAutoResetManager.getAutoResetArr()
             const index = this.uninitializedKeys.indexOf(layer.id)
             if (index > -1) {
               // 初始化的时候，不自动切换二三维视图，视图初始显示模式以管理平台配置的初始显示模式为主
@@ -1221,7 +1300,8 @@ export default {
             } else if (
               this.is3DLayer(layer) &&
               this.is2DMapMode &&
-              !unAutoResetArr.includes(layer.id)
+              (!unAutoResetArr.includes(layer.id) ||
+                autoResetArr.includes(layer.id))
             ) {
               // 处于二维模式时切换到三维模式
               this.switchMapMode()
@@ -1229,11 +1309,15 @@ export default {
 
             // 二维图层如果配置了extend中的location为true则在加载后要执行缩放至操作，三维图层的跳转逻辑则在WebScenePro组件中通过autoReset控制是否跳转
             if (!this.is3DLayer(layer)) {
-              const autoResetArr =
+              const initAutoResetArr =
                 this.layerAutoResetManager.getInitLayerAutoResetArr()
 
+              // 如果autoResetArr有值的时候表示初始自动跳转的图层,此时使用autoResetArr中的值作为跳转条件
+              // 如果autoResetArr没有值，表示不是初始自动跳转的图层，使用initAutoResetArr中的值作为跳转条件
               if (
-                autoResetArr.includes(layer.id) &&
+                ((autoResetArr.length && autoResetArr.includes(layer.id)) ||
+                  (!autoResetArr.length &&
+                    initAutoResetArr.includes(layer.id))) &&
                 !unAutoResetArr.includes(layer.id)
               ) {
                 // 三维模式下的二维图层若extend中的engineType为Mapbox则不加载也不做跳转
@@ -1383,6 +1467,13 @@ export default {
      * 因为M3D加载到地图上需要时间，当用户快速点击会多次加载而产生bug
      */
     sceneLoadedCallback(id, loaded = true) {
+      // 图层加载完成时取消掉初始加载autoResetArr中对应的值
+      const autoResetArr = this.layerAutoResetManager.getAutoResetArr()
+      if (autoResetArr.includes(id)) {
+        this.layerAutoResetManager.setAutoResetArr(
+          autoResetArr.filter((item) => item !== id)
+        )
+      }
       const layer = this.findTreeNodeConfigById(id)
       if (layer) {
         this.setCheckBoxEnable(layer, false)
@@ -1769,7 +1860,17 @@ export default {
 
       this.setWidgetData(config)
     },
+
+    // 保存视图状态事件
+    saveViewStatus(callback) {
+      callback(this.getFavoriteContent('lastedStatus'))
+    },
     async onTreeDataChange(newValue, oldValue) {
+      // 如果配置改变，根据新的配置处理目录树勾选状态
+      let preAllLayerNodes
+      if (oldValue) {
+        preAllLayerNodes = this.dataCatalogManager.getAllLayerConfigItems()
+      }
       // 初始化数据目录
       this.dataCatalogManager.init(this.widgetInfo.config)
 
@@ -1790,19 +1891,18 @@ export default {
       this.allTreeDataConfigs = allTreeDataConfigs
       // 初始化存储点击跳转图层
       this.initLocationKeys()
-      // 初始化加载图层
-      this.initLoadKeys()
-      const removeKeys = []
-      this.checkedNodeKeys = this.checkedNodeKeys.filter((item) => {
-        const layerConfig = this.dataCatalogManager.getLayerConfigByID(item)
-        !layerConfig && removeKeys.push(item)
-        return layerConfig
-      })
-      // 对加载了的图层进行清除
-      removeKeys.forEach((key) => {
-        const layer = this.document.defaultMap.findLayerById(key)
-        layer && this.document.defaultMap.remove(layer)
-      })
+      // 如果初始加载并且appConfig中有lastedStatus属性，则直接复现保存的收藏信息，不执行服务节点的初始化加载逻辑
+      if (this.init && this.application.lastedStatus) {
+        this.init = !this.init
+        const favoriteContent = JSON.parse(
+          JSON.stringify(this.application.lastedStatus)
+        )
+        this.showFavoriteContent(favoriteContent, 'relative')
+      } else {
+        // 初始化加载图层
+        this.initLoadKeys(preAllLayerNodes)
+      }
+
       if (this.isClassify) {
         this.dataCatalogTreeDataCopy = treeData
         this.dataCatalogTabData = this.getTabsData(treeData)
@@ -2294,6 +2394,15 @@ export default {
         })
       }
     },
+  },
+  beforeDestroy() {
+    // 组件销毁时移除图层
+    // 对加载了的图层进行清除
+    this.checkedNodeKeys.forEach((key) => {
+      const layer = this.document.defaultMap.findLayerById(key)
+      layer && this.document.defaultMap.remove(layer)
+    })
+    this.dataCatalogManager.checkedLayerConfigIDs = []
   },
 }
 </script>
