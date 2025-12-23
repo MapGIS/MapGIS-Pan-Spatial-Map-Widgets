@@ -84,7 +84,18 @@ export default {
         if (this.enableZoomSnap) {
           this.map.scrollZoom.setWheelZoomRate(1)
           this.map.scrollZoom.setZoomRate(1)
-          this.map.transform.resetZoomScale = false
+          // 问题描述：fix(29762)一张图中添加天地图作为底图，添加一个WMS图层，WMS图层在地图视图的1到3级，位置显示异常
+          // 修改说明：在开启级别吸附后，设置WheelZoomRate和ZoomRate；在zoomend事件中，获取当前视图层级，四舍五入取整后，如果值与取整前相等，则不进行缩放
+          // 修改人:龚跃健，2025年12月23日
+          this.map.on('zoomend', () => {
+            const currentZoom = this.map.getZoom()
+            if (this.enableZoomSnap) {
+              const zoomSnap = Math.round(currentZoom)
+              if (zoomSnap !== currentZoom) {
+                this.map.setZoom(zoomSnap)
+              }
+            }
+          })
         }
       }
       // 初始化的时候做复位操作，避免二维初始化默认是原点位置
