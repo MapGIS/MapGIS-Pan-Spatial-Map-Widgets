@@ -42,12 +42,12 @@
               :active="item === locationType"
               @change="change"
             />
-            <frame
+            <!-- <frame
               ref="map-sheet"
               v-if="item === 'map-sheet'"
               @change="change"
               :active="item === locationType"
-            />
+            /> -->
           </mapgis-ui-tab-pane>
         </mapgis-ui-tabs>
       </div>

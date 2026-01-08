@@ -2119,6 +2119,29 @@ export default {
         this.showMetaData = false
         window.open(getCapabilitiesURL)
       } else {
+        if (item.metadataUrl && item.metadataUrl.length > 0) {
+          // 如果配置了元数据服务地址，则直接跳转到元数据服务地址
+          window.open(item.metadataUrl)
+          return
+        }
+        if (item.serverURL && item.serverURL.length > 0) {
+          const urlObj = new URL(item.serverURL)
+          if (urlObj.pathname.startsWith('/proxy-')) {
+            // 如果是云门户的服务则直接打开对应的详情页
+            let openUrl = item.serverURL
+            const { tokenKey, tokenValue } = item
+            if (
+              tokenKey &&
+              tokenValue &&
+              tokenKey !== '' &&
+              tokenValue !== ''
+            ) {
+              openUrl = `${item.serverURL}?${tokenKey}=${tokenValue}`
+            }
+            window.open(openUrl)
+            return
+          }
+        }
         if (item.serverURL.includes('igs/rest')) {
           const layer = {
             ...item,

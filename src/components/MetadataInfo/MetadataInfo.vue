@@ -237,7 +237,7 @@ export default {
             const res = currentLayer._parseUrl(currentLayer.url)
 
             const { domain, docName } = res
-            option = { domain, docName }
+            option = { domain, docName, originalUrl: currentLayer.originalUrl }
             break
           }
           case LayerType.IGSScene: {
@@ -248,7 +248,14 @@ export default {
               res = currentLayer._parseUrl(currentLayer.url)
             }
             const { domain, docName } = res
-            option = { domain, docName, globe: true }
+            option = {
+              domain,
+              docName,
+              globe: true,
+              originalUrl: currentLayer.layer
+                ? currentLayer.layer.originalUrl
+                : currentLayer.originalUrl,
+            }
             break
           }
           case LayerType.IGSMapImage: {
@@ -257,12 +264,21 @@ export default {
               const { domain, docName } = currentLayer.layer._parseUrl(
                 currentLayer.layer.url
               )
-              option = { domain, docName, layerIdxs: id || '' }
+              option = {
+                domain,
+                docName,
+                layerIdxs: id || '',
+                originalUrl: currentLayer.layer.originalUrl,
+              }
             } else {
               const { domain, docName } = currentLayer._parseUrl(
                 currentLayer.url
               )
-              option = { domain, docName }
+              option = {
+                domain,
+                docName,
+                originalUrl: currentLayer.originalUrl,
+              }
             }
 
             break
@@ -271,7 +287,7 @@ export default {
             const { domain, tileName } = currentLayer._parseUrl(
               currentLayer.url
             )
-            option = { domain, tileName }
+            option = { domain, tileName, originalUrl: currentLayer.originalUrl }
             break
           }
           case LayerType.IGSVector: {

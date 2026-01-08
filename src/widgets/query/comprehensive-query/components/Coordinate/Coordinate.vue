@@ -114,10 +114,10 @@
         <div slot="label">
           <mapgis-ui-row type="flex" :gutter="[10, 0]" align="middle">
             <mapgis-ui-col flex="auto"><label>比例尺</label></mapgis-ui-col>
-            <mapgis-ui-col style="display: flex; align-items: center">
+            <!-- <mapgis-ui-col style="display: flex; align-items: center">
               <mapgis-ui-switch size="small" v-model="frameable" />
               <span style="padding-left: 8px">计算图幅</span>
-            </mapgis-ui-col>
+            </mapgis-ui-col> -->
           </mapgis-ui-row>
         </div>
         <mapgis-ui-select :options="scaleArray" v-model="scale" />

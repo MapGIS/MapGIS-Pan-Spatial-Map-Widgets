@@ -2218,15 +2218,15 @@ export default {
            * 版权所有: 武汉中地数码科技有限公司
            * 修改人: 杨琨 2025-11-11
            */
-          let metaDataUrl
+          let metadataUrl
           if (this.isWMTSLayer(layer)) {
-            metaDataUrl = `${layer._innerLayer._WMTSServer._baseUrl}?version=${layer._innerLayer.version}&service=WMTS&request=GetCapabilities`
+            metadataUrl = `${layer._innerLayer._WMTSServer._baseUrl}?version=${layer._innerLayer.version}&service=WMTS&request=GetCapabilities`
           } else if (this.isWMSLayer(layer)) {
-            metaDataUrl = `${layer._innerLayer._WMSServer._baseUrl}?version=${layer._innerLayer.version}&service=WMS&request=GetCapabilities`
+            metadataUrl = `${layer._innerLayer._WMSServer._baseUrl}?version=${layer._innerLayer.version}&service=WMS&request=GetCapabilities`
           } else {
-            metaDataUrl = layer.url
+            metadataUrl = layer.url
           }
-          window.open(metaDataUrl)
+          window.open(metadataUrl)
         }
       } else {
         this.showMetadataInfo = true

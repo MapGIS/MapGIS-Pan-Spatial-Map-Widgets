@@ -891,6 +891,7 @@ export default {
           serverType,
           gdbp,
           name,
+          originalUrl: this.optionVal.originalUrl,
         }
       } else if (serverType === LayerType.ArcGISMapImage) {
         this.statisticAndFilterParamas = {
