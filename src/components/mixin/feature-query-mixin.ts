@@ -407,6 +407,9 @@ export default {
             tokenKey,
             tokenValue,
           },
+          originalUrl: layer.layer
+            ? layer.layer.originalUrl
+            : layer.originalUrl,
         }
 
         exhibition.options.push(option)

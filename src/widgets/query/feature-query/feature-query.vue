@@ -878,6 +878,9 @@ export default {
               tokenKey: searchTokenKey,
               tokenValue: searchTokenValue,
             },
+            originalUrl: layer.layer
+              ? layer.layer.originalUrl
+              : layer.originalUrl,
           }
           exhibition.options.push(options)
           /**
@@ -1005,6 +1008,9 @@ export default {
             tokenKey,
             tokenValue,
           },
+          originalUrl: layer.layer
+            ? layer.layer.originalUrl
+            : layer.originalUrl,
         })
         // const { xmin, ymin, xmax, ymax, zmin, zmax } = geometry
         // const queryGeometry = new Rectangle3D(

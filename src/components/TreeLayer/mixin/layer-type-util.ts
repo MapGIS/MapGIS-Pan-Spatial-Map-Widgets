@@ -456,6 +456,9 @@ export default {
             const isDataStoreQuery = false
             const DNSName = undefined
             const ipPortObj = this.getIpPort({ isDataStoreQuery })
+            // fix(29289)在线地图加载的服务查询不到属性表和元数据，自定义查询和要素查询均失败
+            // 修改说明：记录管理平台配置的原始url，云门户地图服务的属性统计，必须用门户自己的服务地址，即带proxy-标识的地址
+            // 修改人：龚跃健 20260107
             exhibition = {
               id: `${parent.title} ${layer.title} ${layer.id}`,
               name: `${layer.title} ${titleType}`,
@@ -474,6 +477,9 @@ export default {
                 serverUrl: parent.url,
                 f: queryType || '',
                 token,
+                originalUrl: layer.layer
+                  ? layer.layer.originalUrl
+                  : layer.originalUrl,
               },
               popupOption: parent.extend?.popupOption,
             }
@@ -610,6 +616,9 @@ export default {
                 f: queryType || '',
                 is3dBind2dData,
                 token,
+                originalUrl: layer.layer
+                  ? layer.layer.originalUrl
+                  : layer.originalUrl,
               },
               popupOption: parent.extend?.popupOption,
             }
@@ -688,6 +697,9 @@ export default {
                 f: queryType || '',
                 is3dBind2dData,
                 token,
+                originalUrl: layer.layer
+                  ? layer.layer.originalUrl
+                  : layer.originalUrl,
               },
               popupOption: layer.extend?.popupOption,
             }
