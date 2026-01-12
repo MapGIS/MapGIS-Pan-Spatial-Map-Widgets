@@ -293,12 +293,22 @@ export default {
       // 修改说明：引用@mapgis/webclient-common里的inOrderPromise,确保在同时加多个图层时，能按顺序加载
       // 修改人：龚跃健
       // 修改时间；2024-11-21
-      inOrderPromise(funcs).then(() => {})
+      inOrderPromise(funcs).then(() => {
+        if (self.baseLayerMap && self.baseLayerMap.length > 0) {
+          for (let i = 0; i < self.baseLayerMap.length; i++) {
+            self.document.baseLayerMap.add(self.baseLayerMap[i])
+          }
+        }
+      })
     },
 
     _getOrderPromise(basemap) {
       const self = this
       const funcs = []
+      // 修改说明：克隆拿到document原有底图数组，避免重复加载
+      // 修改人：龚跃健
+      // 修改时间；2026-1-12
+      self.baseLayerMap = self.document.baseLayerMap.clone().getFlatLayers()
       const { children } = basemap
       for (let k = 0; k < children.length; k++) {
         const layer = children[k]
@@ -341,11 +351,11 @@ export default {
                       }
                     }
                   }
-                  self.document.baseLayerMap.add(mapLayer)
+                  self.baseLayerMap.push(mapLayer)
                   reslove()
                 })
               } else {
-                self.document.baseLayerMap.add(mapLayer)
+                self.baseLayerMap.push(mapLayer)
                 reslove()
               }
             })
@@ -366,7 +376,21 @@ export default {
           // 修改说明：引用@mapgis/webclient-common里的inOrderPromise,确保在同时加多个图层时，能按顺序加载
           // 修改人：龚跃健
           // 修改时间；2024-11-21
-          inOrderPromise(funcs).then(() => {})
+          inOrderPromise(funcs).then(() => {
+            // 修改说明：排序后，将底图数组重新赋值给document.baseLayerMap
+            // 修改人：龚跃健
+            // 修改时间；2026-1-12
+            if (self.baseLayerMap && self.baseLayerMap.length > 0) {
+              for (let i = 0; i < self.baseLayerMap.length; i++) {
+                const maplayer = this.document.baseLayerMap.findLayerById(
+                  self.baseLayerMap[i].id
+                )
+                if (!maplayer) {
+                  self.document.baseLayerMap.add(self.baseLayerMap[i])
+                }
+              }
+            }
+          })
 
           if (!basemap.select) {
             basemap.select = true
