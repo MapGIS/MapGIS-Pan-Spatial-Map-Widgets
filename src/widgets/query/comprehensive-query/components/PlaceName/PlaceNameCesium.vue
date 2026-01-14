@@ -1,7 +1,7 @@
 <template>
   <div>
     <mapgis-3d-dynamic-marker-layer
-      v-if="!cluster || (unClusterData && unClusterData.length > 0)"
+      v-if="!cluster"
       :data="getMarkerGeoJson()"
       :selects="hoverMarker"
       :highlight="false"
@@ -14,19 +14,10 @@
       @show-popup="showPopup"
       idField="markerId"
     />
-    <!-- 聚合标注专题图 -->
-    <mapgis-3d-mapv-layer
-      v-if="
-        cluster &&
-        geojson &&
-        geojson.features &&
-        geojson.features.length > 0 &&
-        colorCluster
-      "
+    <mapgis-3d-cesium-custer-layer
+      v-else-if="geojson && geojson.features && !!geojson.features.length"
       :geojson="geojson"
-      :options="options"
-      count-field="count"
-      @unClusterData="getUnClusterData"
+      :clusterStyle="clusterStyle"
     />
   </div>
 </template>
@@ -134,6 +125,119 @@ export default {
         context: '2d',
         showUnCluster: false, // 不显示未聚合的点
       }
+    },
+    clusterStyle() {
+      return [
+        {
+          start: 0,
+          end: 1,
+          billboard: {
+            color: [1, 1, 1, 0.6], // rgba
+            horizontalOrigin: 0, //CENTER:0 LEFT:1 RIGHT: -1
+            verticalOrigin: 0, //CENTER:0 BOTTOM:1 TOP: -1 BASELINE:2
+            imageStyle: {
+              radius: 10,
+              fillColor: this.colorCluster, // 填充色
+              borderColor: '#ffffff', // 边框颜色
+              borderWidth: 2, // 边框宽度
+            },
+          },
+          label: {
+            horizontalOrigin: 0, //CENTER:0 LEFT:1 RIGHT: -1
+            verticalOrigin: 0, //CENTER:0 BOTTOM:1 TOP: -1 BASELINE:2
+            scale: 0.5, // 文字放大倍率
+            fillColor: [0, 0, 0, 1], // rgba
+            font: "40px Microsoft YaHei", // 字体
+          },
+        },
+        {
+          start: 2,
+          end: 30,
+          billboard: {
+            color: [1, 1, 1, 0.6], // rgba
+            horizontalOrigin: 0, //CENTER:0 LEFT:1 RIGHT: -1
+            verticalOrigin: 0, //CENTER:0 BOTTOM:1 TOP: -1 BASELINE:2
+            imageStyle: {
+              radius: 30,
+              fillColor: this.colorCluster, // 填充色
+              borderColor: '#ffffff', // 边框颜色
+              borderWidth: 5, // 边框宽度
+            },
+          },
+          label: {
+            horizontalOrigin: 0, //CENTER:0 LEFT:1 RIGHT: -1
+            verticalOrigin: 0, //CENTER:0 BOTTOM:1 TOP: -1 BASELINE:2
+            scale: 0.5, // 文字放大倍率
+            fillColor: [0, 0, 0, 1], // rgba
+            font: "40px Microsoft YaHei", // 字体
+          },
+        },
+        {
+          start: 30,
+          end: 60,
+          billboard: {
+            color: [1, 1, 1, 0.6], // rgba
+            horizontalOrigin: 0, //CENTER:0 LEFT:1 RIGHT: -1
+            verticalOrigin: 0, //CENTER:0 BOTTOM:1 TOP: -1 BASELINE:2
+            imageStyle: {
+              radius: 30,
+              fillColor: this.colorCluster, // 填充色
+              borderColor: '#ffffff', // 边框颜色
+              borderWidth: 5, // 边框宽度
+            },
+          },
+          label: {
+            horizontalOrigin: 0, //CENTER:0 LEFT:1 RIGHT: -1
+            verticalOrigin: 0, //CENTER:0 BOTTOM:1 TOP: -1 BASELINE:2
+            scale: 0.5, // 文字放大倍率
+            fillColor: [0, 0, 0, 1], // rgba
+            font: "40px Microsoft YaHei", // 字体
+          },
+        },
+        {
+          start: 60,
+          end: 90,
+          billboard: {
+            color: [1, 1, 1, 0.6], // rgba
+            horizontalOrigin: 0, //CENTER:0 LEFT:1 RIGHT: -1
+            verticalOrigin: 0, //CENTER:0 BOTTOM:1 TOP: -1 BASELINE:2
+            imageStyle: {
+              radius: 30,
+              fillColor: this.colorCluster, // 填充色
+              borderColor: '#ffffff', // 边框颜色
+              borderWidth: 5, // 边框宽度
+            },
+          },
+          label: {
+            horizontalOrigin: 0, //CENTER:0 LEFT:1 RIGHT: -1
+            verticalOrigin: 0, //CENTER:0 BOTTOM:1 TOP: -1 BASELINE:2
+            scale: 0.5, // 文字放大倍率
+            fillColor: [0, 0, 0, 1], // rgba
+            font: "40px Microsoft YaHei", // 字体
+          },
+        },
+        {
+          start: 90,
+          billboard: {
+            color: [1, 1, 1, 0.6], // rgba
+            horizontalOrigin: 0, //CENTER:0 LEFT:1 RIGHT: -1
+            verticalOrigin: 0, //CENTER:0 BOTTOM:1 TOP: -1 BASELINE:2
+            imageStyle: {
+              radius: 30,
+              fillColor: this.colorCluster, // 填充色
+              borderColor: '#ffffff', // 边框颜色
+              borderWidth: 5, // 边框宽度
+            },
+          },
+          label: {
+            horizontalOrigin: 0, //CENTER:0 LEFT:1 RIGHT: -1
+            verticalOrigin: 0, //CENTER:0 BOTTOM:1 TOP: -1 BASELINE:2
+            scale: 0.5, // 文字放大倍率
+            fillColor: [0, 0, 0, 1], // rgba
+            font: "40px Microsoft YaHei", // 字体
+          },
+        },
+      ]
     },
   },
   data() {

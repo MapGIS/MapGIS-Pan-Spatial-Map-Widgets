@@ -87,6 +87,7 @@ import {
   api,
   markerIconInstance,
   baseConfigInstance,
+  FitBound,
 } from '@mapgis/web-app-framework'
 import Zone from './components/ZoneFrame/Zone.vue'
 import Coordinate from './components/Coordinate/Coordinate.vue'
@@ -94,6 +95,8 @@ import Frame from './components/ZoneFrame/Frame.vue'
 import PlaceNameMapbox from './components/PlaceName/PlaceNameMapbox.vue'
 import PlaceNameCesium from './components/PlaceName/PlaceNameCesium.vue'
 import { polygon } from '@turf/helpers'
+import { bbox } from '@turf/turf'
+import debounce from 'lodash/debounce'
 
 const { IAttributeTableExhibition, AttributeTableExhibition } = Exhibition
 
@@ -346,6 +349,34 @@ export default {
         this.current = this.setAliasKeys(geojson)
       } else {
         this.updateData = !this.updateData
+      }
+      // 查询后跳转到查询结果范围
+      if (!this.debouncedFitBound) {
+        this.debouncedFitBound = debounce(this.fitGeoJSONBound, 300)
+      }
+      this.debouncedFitBound(geojson)
+    },
+
+    fitGeoJSONBound(geojson) {
+      if(!geojson.features || geojson.features.length === 0){
+        return
+      }
+      // 计算 GeoJSON 的边界框 [minX, minY, maxX, maxY]
+      const turfBound = bbox(geojson)
+      const bound = {
+        xmin: turfBound[0],
+        ymin: turfBound[1],
+        xmax: turfBound[2],
+        ymax: turfBound[3],
+      }
+      const duration = baseConfigInstance.config.duration
+      const { Cesium, map, vueCesium, viewer } = this
+      const mapParams = { Cesium, map, vueCesium, viewer }
+
+      if (this.is2DMapMode) {
+        FitBound.fitBound2D(bound, mapParams, undefined, duration)
+      } else {
+        FitBound.fitBound3D(bound, mapParams)
       }
     },
 
