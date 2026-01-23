@@ -103,8 +103,8 @@ export default {
       if (this.designTime || this.previewTime) {
         // 门户的相对路径服务进行地址拼接
         if (url && url.startsWith('/')) {
-          const { origin } = window.location
-          newUrl = decodeURIComponent(origin + url)
+          const { portalPath } = baseConfigInstance.config
+          newUrl = decodeURIComponent(portalPath + url)
         } else {
           newUrl = url
         }
@@ -197,9 +197,10 @@ export default {
               layerConfig.tokenKey = layer.tokenKey ? layer.tokenKey : 'token'
             } else {
               // 门户的服务加上token
+              const { portalPath } = baseConfigInstance.config
               if (
                 layerConfig.serverURL &&
-                layerConfig.serverURL.startsWith(window.location.origin) &&
+                layerConfig.serverURL.startsWith(portalPath) &&
                 (this.designTime || this.previewTime)
               ) {
                 layerConfig.tokenValue =
@@ -240,9 +241,10 @@ export default {
             serviceType: layer.serviceType,
           }
           if (layer.tokenValue) {
+            const { portalPath } = baseConfigInstance.config
             if (
               layerConfig.url &&
-              layerConfig.url.startsWith(window.location.origin) &&
+              layerConfig.url.startsWith(portalPath) &&
               (this.designTime || this.previewTime)
             ) {
               // 门户服务不保存token信息，初始化时自动组装
@@ -261,12 +263,14 @@ export default {
     },
     getServerUrl(url) {
       let newUrl
+
+      const { portalPath } = baseConfigInstance.config
       if (
         url &&
-        url.startsWith(window.location.origin) &&
+        url.startsWith(portalPath) &&
         (this.designTime || this.previewTime)
       ) {
-        newUrl = url.replace(window.location.origin, '')
+        newUrl = url.replace(portalPath, '')
       } else {
         newUrl = url
       }
