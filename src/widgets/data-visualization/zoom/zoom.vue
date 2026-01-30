@@ -107,11 +107,13 @@ export default {
   methods: {
     is2DMapModeChange(mode2D) {
       if (!this.mapCesiumInitialized) {
-        // 第一次切换视图后，才能保证视图都被初始化
+        // 第一次切换视图后，只有在未开启二三维视角同步的情况下才需要执行复位逻辑，保证视图都被初始化
         this.mapCesiumInitialized = true
-        this.$nextTick(() => {
-          this.onRestore()
-        })
+        if (!baseConfigInstance.config.perspectiveSynchronization) {
+          this.$nextTick(() => {
+            this.onRestore()
+          })
+        }
       }
     },
 
