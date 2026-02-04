@@ -21,7 +21,7 @@
       </mapgis-ui-form-item>
       <mapgis-ui-form-item v-if="showtileRenderMode">
         <span slot="label">
-          显示模式
+          显示策略
           <mapgis-ui-tooltip
             title="超过瓦片的请求层级范围后，设置拉伸瓦片还是隐藏瓦片"
           >
@@ -131,8 +131,8 @@ export default {
         { label: '图片', value: 'image' },
       ],
       tileDisplayModes: [
-        { label: '拉伸', value: 'stretch' },
-        { label: '隐藏', value: 'hide' },
+        { label: '超出瓦片层级后拉伸', value: 'stretch' },
+        { label: '超出瓦片层级后隐藏', value: 'hide' },
       ],
       tileDisplayMode: 'stretch',
       renderMode: 'tile',
