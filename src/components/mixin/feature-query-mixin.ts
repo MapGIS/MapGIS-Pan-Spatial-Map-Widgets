@@ -11,6 +11,8 @@ import {
   baseConfigInstance,
   CoordinateSystemType,
 } from '@mapgis/web-app-framework'
+import { LayerType as InnerLayerType } from '@mapgis/webclient-common'
+
 import * as Zondy from '@mapgis/webclient-es6-service'
 import { lineString, polygon, point, multiPolygon } from '@turf/helpers'
 import booleanDisjoint from '@turf/boolean-disjoint'
@@ -353,7 +355,7 @@ export default {
       if (!layer.isVisible) {
         return
       }
-      const { extend, tokenKey, tokenValue } = layer
+      const { extend, tokenKey, tokenValue, _innerLayer } = layer
 
       const { domain, docName } = layer._parseUrl(layer.url)
 
@@ -379,6 +381,9 @@ export default {
         ) {
           continue
         }
+        // 如果存在_innerLayer，则从_innerLayer上获取图层的属性结构信息
+        let fields = this.getLayerFields(_innerLayer, sublayer.id)
+
         /**
          * 修改说明：IGS地图文档和图层服务全部都走IGS的接口，不再判断是否为pg数据
          * 修改人：龚跃健
@@ -410,6 +415,8 @@ export default {
           originalUrl: layer.layer
             ? layer.layer.originalUrl
             : layer.originalUrl,
+          // 将fields字段传入属性表，fields存在且不为空数组时属性表中根据这个属性构造表头
+          fields,
         }
 
         exhibition.options.push(option)
@@ -434,6 +441,61 @@ export default {
         this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
       }
     },
+
+    /**
+     * 获取图层属性结构
+     * @param _innerLayer webclient-common层图层对象
+     * @param layerIndex 图层layerIndex
+     * @returns 图层属性结构
+     */
+    getLayerFields(_innerLayer, layerIndex) {
+      let targetSublayer
+      let fields = []
+      if (_innerLayer) {
+        switch (_innerLayer.type) {
+          case InnerLayerType.IGSMapImage:
+            targetSublayer = _innerLayer.findSublayerById(layerIndex)
+            // 若为IGS1.0的地图服务，从layer对象上获取fields属性时始终为空数组
+            if (targetSublayer?.fields && targetSublayer?.fields.length) {
+              fields = targetSublayer.fields.map((field) => {
+                return {
+                  name: field.name,
+                  alias: field.alias,
+                  type: field.type,
+                }
+              })
+            }
+            break
+          case InnerLayerType.ArcGISMapImage:
+            // _innerLayer中的sublayer.id为字符串类型的数字，此处的layerIndex为数字类型，需要转换为字符串类型
+            targetSublayer = _innerLayer.findSublayerById(layerIndex + '')
+            if (targetSublayer?.fields && targetSublayer?.fields.length) {
+              fields = targetSublayer.fields.map((field) => {
+                return {
+                  name: field.name,
+                  alias: field.alias,
+                  type: field.type,
+                }
+              })
+            }
+            break
+          case InnerLayerType.IGSFeature:
+            fields = _innerLayer.fields.map((field) => {
+              return {
+                name: field.name,
+                alias: field.alias,
+                // 类型带fld前缀的，去掉fld获取真实类型
+                type: field.type.replace('fld', ''),
+              }
+            })
+            break
+          default:
+            break
+        }
+      }
+      return fields
+    },
+
     /**
      * 设置activeExhibitionId和activeOptionId
      * @param exhibition 展示面板对象
