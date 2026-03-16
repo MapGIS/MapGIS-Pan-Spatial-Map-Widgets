@@ -122,8 +122,11 @@ export default {
         case LayerType.IGSScene:
         case LayerType.ModelCache:
         case LayerType.IGSVector3D:
-        case LayerType.IGSTile:
+          // json格式中返回的是FID
           return 'FID'
+        case LayerType.IGSTile:
+          // geojson格式中返回的是fid
+          return 'fid'
         case LayerType.EsGeoCode:
           return 'customerId'
         // case LayerType.DataFlowLayer:
@@ -241,7 +244,13 @@ export default {
         gdbp,
         f,
         token,
+        searchServiceType,
       } = this.optionVal
+
+      let fields
+      if (this.optionVal.fields && this.optionVal.fields.length) {
+        fields = this.optionVal.fields
+      }
       let { domain } = this.optionVal
       if (!domain && !!serverUrl && serverUrl.length > 0) {
         const url = new URL(serverUrl)
@@ -261,8 +270,10 @@ export default {
               queryGeometry,
               queryWhere
             )
+
             if (!(this.tableColumns && this.tableColumns.length > 0)) {
-              columns = this.setTableScroll(AttStruct)
+              columns = this.getTableColumns(fields, AttStruct)
+
               this.tableColumns = columns
             }
             this.pagination.total = TotalCount
@@ -292,10 +303,10 @@ export default {
             geojson = FeatureConvert.featureIGSToFeatureGeoJSON(geojson)
           }
           if (val === '1') {
-            this.attrTableToJsonData = geojson.features
+            this.attrTableToJsonData = this.formatFeatures(geojson.features)
             return
           }
-          this.tableData = geojson.features
+          this.tableData = this.formatFeatures(geojson.features)
           if (isDataStoreQuery) {
             this.setGeoJsonColums(geojson)
             this.pagination.total = geojson.dataCount
@@ -329,46 +340,19 @@ export default {
             totalCount: this.pagination.total,
           })
           if (val === '1') {
-            this.attrTableToJsonData = geojson.feature
+            this.attrTableToJsonData = this.formatFeatures(geojson.features)
             return
           }
-          this.tableData = geojson.features
-
-          const { properties } = geojson.features[0]
-          const tags = Object.keys(properties)
-          if (tags.length <= 10) {
-            // 10个以内，不需要设固定宽度，且不需要启用水平滚动条
-            this.useScrollX = false
-          } else {
-            // 10个以上，每个设固定宽度180，且启用水平滚动条
-            this.useScrollX = true
-          }
           if (!(this.tableColumns && this.tableColumns.length > 0)) {
-            for (let index = 0; index < tags.length; index++) {
-              const name = tags[index]
-              const alias = tags[index] ? `${tags[index]}` : ''
-              const type = 'string'
-              const obj = {
-                title: alias.length ? alias : name,
-                key: name,
-                dataIndex: `properties.${name}`,
-                align: 'left',
-                ellipsis: true,
-              }
-              if (this.useScrollX) {
-                obj.width = 180
-              }
-              // var str = '37'
-              const num = Number(properties[name])
-              if (!isNaN(num)) {
-                obj.sorter = (a, b) =>
-                  Number(a.properties[name]) - Number(b.properties[name])
-              }
-              columns.push(obj)
-            }
+            columns = this.convertArcGISFieldColumns(
+              fields,
+              geojson?.features[0]
+            )
+
             this.tableColumns = columns
           }
-          // this.pagination.total = totalCount
+          this.tableData = this.formatFeatures(geojson.features)
+
           this.removeMarkers()
           // 如果当前是激活状态，则添加markers
           if (this.isExhibitionActive) {
@@ -418,7 +402,8 @@ export default {
             })
             this.attrTableToJsonData = this.setTable20(
               jsonData.features,
-              jsonData.fields
+              jsonData.fields,
+              true
             )
             return
           } else {
@@ -439,7 +424,7 @@ export default {
             })
           }
           if (!(this.tableColumns && this.tableColumns.length > 0)) {
-            columns = this.setTableScroll20(jsonData.fields)
+            columns = this.setTableScroll20(fields || jsonData.fields)
             this.tableColumns = columns
           }
           this.tableData = this.setTable20(jsonData.features, jsonData.fields)
@@ -538,7 +523,7 @@ export default {
               queryWhere
             )
             if (!(this.tableColumns && this.tableColumns.length > 0)) {
-              columns = this.setTableScroll(AttStruct)
+              columns = this.getTableColumns(fields, AttStruct)
               this.tableColumns = columns
             }
             this.pagination.total = TotalCount
@@ -555,15 +540,15 @@ export default {
               page: 0,
               pageCount: this.pagination.total,
               gdbp,
+              DNSName,
+              docName: serverName,
+              layerIdxs: layerIndex,
               coordPrecision: 8,
               requestType: 'POST',
               tokenKey: token?.tokenKey,
               tokenValue: token?.tokenValue,
             })
-            this.attrTableToJsonData = this.setTable20(
-              jsonData.features,
-              jsonData.fields
-            )
+            this.attrTableToJsonData = this.formatFeatures(jsonData.features)
             return
           } else {
             jsonData = await FeatureQuery.query({
@@ -576,6 +561,9 @@ export default {
               page: current - 1,
               pageCount: pageSize,
               gdbp,
+              DNSName,
+              docName: serverName,
+              layerIdxs: layerIndex,
               coordPrecision: 8,
               requestType: 'POST',
               tokenKey: token?.tokenKey,
@@ -591,7 +579,7 @@ export default {
               geometry: item.geometry,
             })
           })
-          this.tableData = tableData
+          this.tableData = this.formatFeatures(tableData)
           this.removeMarkers()
           // 如果当前是激活状态，则添加markers
           if (this.isExhibitionActive) {
@@ -603,6 +591,105 @@ export default {
         default:
           break
       }
+    },
+
+    /**
+     * 获取属性表columns
+     * @param fields 传入的属性结构
+     * @param AttStruct 接口返回的属性结构
+     * @returns 属性表columns
+     */
+    getTableColumns(fields, AttStruct) {
+      let columns = []
+      // 传入了fields值则使用fields中的值构建属性表表头
+      if (fields && fields.length) {
+        columns = this.setTableScroll20(fields)
+      } else {
+        // 若不存在fields值则使用AttStruct中的值构建属性表表头
+        columns = this.setTableScroll(AttStruct)
+        // 添加fid
+        const fidColumn = {
+          title: this.rowKey,
+          key: this.rowKey,
+          dataIndex: `properties.${this.rowKey}`,
+          align: 'left',
+          // 超过宽度将自动省略
+          ellipsis: true,
+          width: 180,
+        }
+        columns.unshift(fidColumn)
+      }
+      return columns
+    },
+
+    /**
+     * 获取ArcGIS服务的属性表columns
+     * @param fields 传入的属性结构
+     * @param feature 接口返回的要素
+     * @returns 属性表columns
+     */
+    convertArcGISFieldColumns(fields, feature) {
+      let useFields
+      const columns = []
+
+      const { properties } = feature
+      // 传入了fields值则使用fields中的值构建属性表表头
+      if (fields && fields.length) {
+        useFields = fields
+      } else {
+        // 传入了fields没有属性结构时使用feature的属性信息构造属性结构
+        useFields = Object.keys(properties).map((key) => {
+          return {
+            name: key,
+          }
+        })
+      }
+
+      if (useFields.length <= 10) {
+        // 10个以内，不需要设固定宽度，且不需要启用水平滚动条
+        this.useScrollX = false
+      } else {
+        // 10个以上，每个设固定宽度180，且启用水平滚动条
+        this.useScrollX = true
+      }
+
+      useFields.forEach((field) => {
+        const { name, alias, type } = field
+        const obj: any = {
+          title: alias ? alias : name,
+          key: name,
+          dataIndex: `properties.${name}`,
+          align: 'left',
+          ellipsis: true,
+        }
+        if (this.useScrollX) {
+          obj.width = 180
+        }
+        const num = Number(properties[name])
+        if (!isNaN(num)) {
+          obj.sorter = (a, b) =>
+            Number(a.properties[name]) - Number(b.properties[name])
+        }
+        columns.push(obj)
+      })
+      return columns
+    },
+
+    /**
+     * 格式化要素
+     * @param features 要素列表
+     */
+    formatFeatures(features) {
+      // 获取展示字段
+      const showPropertiesKeys = this.tableColumns.map((item) => item.key)
+      return features.map((feature) => {
+        let showProperties = {}
+        showPropertiesKeys.forEach((key) => {
+          showProperties[key] = feature.properties[key]
+        })
+        feature.properties = showProperties
+        return feature
+      })
     },
     // 设置表格的列字段
     setTableScroll(AttStruct) {
@@ -741,7 +828,6 @@ export default {
     // 设置IGSScene类型的属性表table数据
     setTable(SFEleArray, FldName, FldNumber) {
       return (SFEleArray || []).map(({ AttValue = [], bound = {}, FID }) => {
-        console.log(this.optionVal)
         const properties = {
           FID,
           specialLayerId: this.optionVal.id,
@@ -762,15 +848,33 @@ export default {
       })
     },
     // 设置属性表table数据
-    setTable20(features, fields) {
+    setTable20(features, fields = [], isExport) {
+      let fieldsObj = []
+      if (this.tableColumns && this.tableColumns.length) {
+        fieldsObj = this.tableColumns.map((item) => {
+          return {
+            name: item.key,
+            alias: item.title,
+          }
+        })
+      } else {
+        fieldsObj = fields
+      }
       return (features || []).map(
         ({ attributes = {}, bound = {}, geometry = {} }) => {
-          const properties = {
-            FID: attributes.FID,
-            specialLayerId: this.optionVal.id,
-            specialLayerBound: bound,
-            specialLayerType: geometry.type,
-          }
+          // 特殊处理字段不进行导出
+          const properties = isExport
+            ? {}
+            : {
+                specialLayerId: this.optionVal.id,
+                specialLayerBound: bound,
+                specialLayerType: geometry.type,
+              }
+
+          fieldsObj.forEach((item) => {
+            const key = item.alias || item.name
+            properties[key] = attributes[item.name]
+          })
           return {
             geometry: {
               coordinates: [],

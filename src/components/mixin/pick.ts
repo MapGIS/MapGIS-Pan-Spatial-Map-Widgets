@@ -334,7 +334,24 @@ export default {
         }
       }
       if (geojson && geojson.properties) {
-        properties = { title: layerTitle, ...geojson.properties }
+        const fields = this.getLayerFields(layer._innerLayer, sublayerId)
+
+        //获取得到属性结构信息则使用属性结构信息展示属性，获取不到属性结构信息直接展示属性
+        if (fields && fields.length) {
+          // 加上fid
+          fields.unshift({
+            name: 'fid',
+            alias: '',
+            type: 'long',
+          })
+          properties = { title: layerTitle }
+          fields.forEach((field) => {
+            const key = field.alias || field.name
+            properties[key] = geojson.properties[field.name]
+          })
+        } else {
+          properties = { title: layerTitle, ...geojson.properties }
+        }
       }
 
       const pickInfo = {

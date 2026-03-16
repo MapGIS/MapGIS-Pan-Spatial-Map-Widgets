@@ -776,6 +776,7 @@ export default {
           searchPort,
           searchTokenKey,
           searchTokenValue,
+          _innerLayer,
         },
       } = layer
       const queryPrefix = extend.queryPrefix || ''
@@ -823,6 +824,7 @@ export default {
           case LayerType.IGSTile:
             map.Range = searchFullExtent
             map.URL = sublayer.url
+            map.ID = sublayer.id
             break
           default:
             break
@@ -861,6 +863,11 @@ export default {
             domain = `${url.protocol}//${searchIp}:${searchPort}`
           }
 
+          let fields
+          if (_innerLayer) {
+            fields = this.getLayerFields(_innerLayer, map.ID)
+          }
+
           const options = {
             id: sublayer.id,
             name: sublayer.title,
@@ -872,7 +879,7 @@ export default {
             is3dBind2dData: true,
             serverName: searchName,
             serverUrl: layer.url,
-            layerIndex: sublayer.id,
+            layerIndex: map.ID,
             searchServiceType,
             token: {
               tokenKey: searchTokenKey,
@@ -881,6 +888,7 @@ export default {
             originalUrl: layer.layer
               ? layer.layer.originalUrl
               : layer.originalUrl,
+            fields,
           }
           exhibition.options.push(options)
           /**
@@ -896,7 +904,7 @@ export default {
           if (!activeOptionId) {
             const { TotalCount } = await this.queryCount(
               options,
-              layer.type !== LayerType.IGSTile
+              layer.type === LayerType.IGSVector3D
             )
             if (TotalCount > 0) {
               activeOptionId = sublayer.id
@@ -994,6 +1002,11 @@ export default {
         layer.searchParams &&
         layer.searchParams.searchName?.includes('gdbp')
       ) {
+        let fields
+        const _innerLayer = layer.searchParams?._innerLayer
+        if (_innerLayer) {
+          fields = this.getLayerFields(_innerLayer)
+        }
         exhibition.options.push({
           id: `${layer.id}:0`,
           name: layer.title,
@@ -1011,6 +1024,7 @@ export default {
           originalUrl: layer.layer
             ? layer.layer.originalUrl
             : layer.originalUrl,
+          fields,
         })
         // const { xmin, ymin, xmax, ymax, zmin, zmax } = geometry
         // const queryGeometry = new Rectangle3D(
@@ -1054,7 +1068,7 @@ export default {
       // const url = new URL(layer.url)
       // const domain = url.origin
 
-      let ip, port, domain, tokenKey, tokenValue
+      let ip, port, domain, tokenKey, tokenValue, fields
 
       const url = new URL(layer.url)
       domain = url.origin
@@ -1075,6 +1089,7 @@ export default {
           searchPort,
           searchTokenKey,
           searchTokenValue,
+          _innerLayer,
         } = searchParams
 
         let isExecuteQuery = false
@@ -1107,6 +1122,10 @@ export default {
           tokenKey = searchTokenKey
           tokenValue = searchTokenValue
         }
+
+        if (_innerLayer) {
+          fields = this.getLayerFields(_innerLayer)
+        }
       }
 
       const isDataStoreQuery = false
@@ -1118,6 +1137,7 @@ export default {
         ipPortObj.ip = ip
         ipPortObj.port = port
       }
+
       const exhibition: IAttributeTableListExhibition = {
         id: `${layer.id}`,
         name: `${layer.title} 查询结果`,
@@ -1129,13 +1149,14 @@ export default {
             isDataStoreQuery,
             domain,
             ...ipPortObj,
-            serverType: LayerType.IGSVector,
+            serverType: layer.type,
             gdbp: layer.gdbps || layer.searchParams.searchName,
             geometry: geometry,
             token: {
               tokenKey,
               tokenValue,
             },
+            fields,
           },
         ],
         popupOption: extend.popupOption,
@@ -1153,7 +1174,7 @@ export default {
       if (!layer.isVisible) {
         return
       }
-      const { extend } = layer
+      const { extend, _innerLayer } = layer
       const exhibition: IAttributeTableListExhibition = {
         id: `${layer.id}`,
         name: `${layer.title} 查询结果`,
@@ -1171,29 +1192,38 @@ export default {
         if (!sublayer.visible) {
           continue
         }
+        let fields
+        if (_innerLayer) {
+          fields = this.getLayerFields(_innerLayer, sublayer.id)
+        }
+
+        // ArcGIS地图服务中sublayer.id为Number类型，转为字符串类型，保持属性表逻辑一致
         exhibition.options.push({
-          id: sublayer.id,
+          id: sublayer.id + '',
           name: sublayer.title,
           serverType: layer.type,
           layerIndex: sublayer.id,
           serverUrl: layer.url,
           geometry: geometry,
+          fields,
         })
         /**
          * 修改说明：先查询图层在当前范围内是否有数据，如果没有数据，则不在当前面板展示。确保当面面板展示有数据的图层
          * 修改人：龚跃健
          * 修改时间：2023/1/31
          */
-        const { count } = await ArcGISFeatureQuery.getTotal({
-          f: 'pjson',
-          where: null,
-          geometry,
-          serverUrl: layer.url,
-          layerIndex: sublayer.id,
-        })
+        if (!activeOptionId) {
+          const { count } = await ArcGISFeatureQuery.getTotal({
+            f: 'pjson',
+            where: null,
+            geometry,
+            serverUrl: layer.url,
+            layerIndex: sublayer.id,
+          })
 
-        if (count > 0) {
-          activeOptionId = sublayer.id
+          if (count > 0) {
+            activeOptionId = sublayer.id + ''
+          }
         }
       }
       this.setActiveExhibitionIdAndOptionId(exhibition, activeOptionId)
