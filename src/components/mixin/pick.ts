@@ -124,46 +124,56 @@ export default {
           return
         }
         // 添加鼠标左键点击监听
-        this.cesiumHandler.setInputAction(function (movement) {
-          if (ModelPickController.unablePick) {
-            return
-          }
-          const position = movement.position || movement.endPosition
-          const cartesian = viewer.getCartesian3Position(position)
-          const tempRay = new Cesium.Ray()
-          const tempPos = new Cesium.Cartesian3()
-          const { scene } = viewer
-          const ray = scene.camera.getPickRay(position, tempRay)
-          const cartesian2 = scene.globe.pick(ray, scene, tempPos)
-
-          let longitudeString2
-          let latitudeString2
-          let heightString2
-
-          if (Cesium.defined(cartesian2)) {
-            const cartographic2 = Cesium.Cartographic.fromCartesian(cartesian)
-            longitudeString2 = Cesium.Math.toDegrees(cartographic2.longitude)
-            latitudeString2 = Cesium.Math.toDegrees(cartographic2.latitude)
-            heightString2 = cartographic2.height
-            const shape = {
-              x: longitudeString2,
-              y: latitudeString2,
-              z: heightString2,
+        if (this.cesiumHandler) {
+          this.cesiumHandler.setInputAction(function (movement) {
+            if (ModelPickController.unablePick) {
+              return
             }
-            self.queryLayers(shape)
-          }
-        }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
-        map.on('click', self.mapClick)
+            const position = movement.position || movement.endPosition
+            const cartesian = viewer.getCartesian3Position(position)
+            const tempRay = new Cesium.Ray()
+            const tempPos = new Cesium.Cartesian3()
+            const { scene } = viewer
+            const ray = scene.camera.getPickRay(position, tempRay)
+            const cartesian2 = scene.globe.pick(ray, scene, tempPos)
+
+            let longitudeString2
+            let latitudeString2
+            let heightString2
+
+            if (Cesium.defined(cartesian2)) {
+              const cartographic2 = Cesium.Cartographic.fromCartesian(cartesian)
+              longitudeString2 = Cesium.Math.toDegrees(cartographic2.longitude)
+              latitudeString2 = Cesium.Math.toDegrees(cartographic2.latitude)
+              heightString2 = cartographic2.height
+              const shape = {
+                x: longitudeString2,
+                y: latitudeString2,
+                z: heightString2,
+              }
+              self.queryLayers(shape)
+            }
+          }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
+        }
+
+        if (map) {
+          map.on('click', self.mapClick)
+        }
+
         this.hasHander = true
       } else {
         if (!this.hasHander) {
           return
         }
         // 移除鼠标左键点击监听
-        this.cesiumHandler.removeInputAction(
-          Cesium.ScreenSpaceEventType.LEFT_CLICK
-        )
-        map.off('click', self.mapClick)
+        if (this.cesiumHandler) {
+          this.cesiumHandler.removeInputAction(
+            Cesium.ScreenSpaceEventType.LEFT_CLICK
+          )
+        }
+        if (map) {
+          map.off('click', self.mapClick)
+        }
         this.hasHander = false
       }
     },

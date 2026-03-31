@@ -168,11 +168,6 @@ export default {
   },
 
   mounted() {
-    this.sceneOverlays = Overlay.SceneOverlays.getInstance(
-      this.Cesium,
-      this.vueCesium,
-      this.viewer
-    )
     this.init()
   },
 
@@ -183,11 +178,20 @@ export default {
       }
     },
     init() {
-      if (!this.mapOverlays) {
-        this.mapOverlays = Overlay.MapOverlays.getInstance(
-          this.mapbox,
-          this.map
+      const { Cesium, vueCesium, viewer } = this
+      const { mapbox, map } = this
+
+      // 三维模式存在时加载
+      if (Cesium && vueCesium && viewer) {
+        this.sceneOverlays = Overlay.SceneOverlays.getInstance(
+          Cesium,
+          vueCesium,
+          viewer
         )
+      }
+      // 二维模式存在时加载
+      if (mapbox && map) {
+        this.mapOverlays = Overlay.MapOverlays.getInstance(mapbox, map)
       }
       if (!this.popupOverlayInstance) {
         this.popupOverlayInstance = PopupOverlay.getInstance()
