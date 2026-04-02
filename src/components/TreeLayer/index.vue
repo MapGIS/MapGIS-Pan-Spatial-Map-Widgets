@@ -591,11 +591,11 @@ export default {
 
     // 三维模式下的对象存在时才进行以下对象的创建，不存在时表示当前一张图未加载三维模式
     if (Cesium && vueCesium && viewer) {
-      this.sceneController = Objects.SceneController.getInstance(
-        Cesium,
-        vueCesium,
-        viewer
-      )
+    this.sceneController = Objects.SceneController.getInstance(
+      Cesium,
+      vueCesium,
+      viewer
+    )
       this.cesiumHandler = new Cesium.ScreenSpaceEventHandler(
         viewer.scene.canvas
       )
@@ -729,8 +729,8 @@ export default {
           let sublayer
           if (this.sceneController) {
             sublayer =
-              this.sceneController.findSource(item.id) ||
-              this.sceneController.findM3DIgsSource(item.id)
+            this.sceneController.findSource(item.id) ||
+            this.sceneController.findM3DIgsSource(item.id)
           }
           sublayer && unSetArr.push(item.id)
           if (sublayer) {
@@ -786,8 +786,8 @@ export default {
             let sublayer
             if (this.sceneController) {
               sublayer =
-                this.sceneController.findSource(item.id) ||
-                this.sceneController.findM3DIgsSource(item.id)
+              this.sceneController.findSource(item.id) ||
+              this.sceneController.findM3DIgsSource(item.id)
             }
             if (sublayer) {
               if (
@@ -1007,6 +1007,12 @@ export default {
                     visibility: visible ? 'none' : 'visible',
                   }
                 }
+                // fix(31589):JJ-SZ-全部取消矢量瓦片的图层，矢量瓦片未隐藏
+                // 问题原因：_innerLayer中未同步图层可见性以及样式参数同步，
+                // 导致图层树以及矢量瓦片制图中勾选或者取消勾选矢量瓦片子图层，视图中无任何变化
+                // 修改说明：调用updateInnerLayer函数更新_innerLayer._style.layers
+                // 修改人：龚跃健-20260331
+                layers[parentIndex].updateInnerLayer()
               } else {
                 layerItem.sublayers[i].visible = !layerItem.sublayers[i].visible
                 /*
