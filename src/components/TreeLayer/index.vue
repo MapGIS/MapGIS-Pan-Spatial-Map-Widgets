@@ -588,12 +588,18 @@ export default {
   },
   created() {
     const { Cesium, vueCesium, viewer } = this
-    this.sceneController = Objects.SceneController.getInstance(
-      Cesium,
-      vueCesium,
-      viewer
-    )
-    this.cesiumHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
+
+    // 三维模式下的对象存在时才进行以下对象的创建，不存在时表示当前一张图未加载三维模式
+    if (Cesium && vueCesium && viewer) {
+      this.sceneController = Objects.SceneController.getInstance(
+        Cesium,
+        vueCesium,
+        viewer
+      )
+      this.cesiumHandler = new Cesium.ScreenSpaceEventHandler(
+        viewer.scene.canvas
+      )
+    }
   },
   mounted() {
     this.$root.$on(events.SCENE_LOADED_ON_MAP, this.sceneLoadedCallback)
@@ -720,9 +726,12 @@ export default {
       // 设置屏幕误差和亮度
       if (layerEditConfig && layerEditConfig.length > 0) {
         layerEditConfig.forEach((item) => {
-          const sublayer =
-            this.sceneController.findSource(item.id) ||
-            this.sceneController.findM3DIgsSource(item.id)
+          let sublayer
+          if (this.sceneController) {
+            sublayer =
+              this.sceneController.findSource(item.id) ||
+              this.sceneController.findM3DIgsSource(item.id)
+          }
           sublayer && unSetArr.push(item.id)
           if (sublayer) {
             if (
@@ -774,9 +783,12 @@ export default {
       if (layerSublayers && layerSublayers.length > 0) {
         layerSublayers.forEach((item) => {
           if (!unSetArr.includes(item.id) && item.layerProperty) {
-            const sublayer =
-              this.sceneController.findSource(item.id) ||
-              this.sceneController.findM3DIgsSource(item.id)
+            let sublayer
+            if (this.sceneController) {
+              sublayer =
+                this.sceneController.findSource(item.id) ||
+                this.sceneController.findM3DIgsSource(item.id)
+            }
             if (sublayer) {
               if (
                 sublayer.maximumScreenSpaceError !==
